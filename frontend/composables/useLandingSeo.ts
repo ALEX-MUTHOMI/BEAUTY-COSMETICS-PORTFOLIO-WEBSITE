@@ -1,3 +1,7 @@
+/**
+ * @module
+ * Handles SEO metadata for the landing page.
+ */
 import { useHead, useRoute, useRuntimeConfig, useSeoMeta } from 'nuxt/app'
 import { localBusinessNap } from '~/src/landing/agentSeo'
 import { LANDING_LOCATION_LABEL } from '~/src/landing/landingContent'
@@ -11,6 +15,10 @@ const LANDING_TITLE =
 const LANDING_DESCRIPTION =
   'Book facials, waxing, massage and makeup at Shee Aesthetics in Meru Town, Meru County, Kenya. Full spa packages Tuesday and Wednesday. Single treatments Mon, Thu to Sat. Pay online to confirm your slot.'
 
+/**
+ * Injects SEO metadata, OpenGraph tags, and JSON-LD schema into the landing page.
+ * Uses current route and runtime config to construct canonical URLs.
+ */
 export function useLandingSeo() {
   const config = useRuntimeConfig()
   const route = useRoute()

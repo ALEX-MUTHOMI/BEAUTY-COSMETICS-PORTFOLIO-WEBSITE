@@ -9,6 +9,12 @@ import { lastBookHref, SERVICES_BOOK_ENTRY } from '~/src/landing/bookingHandoff'
 import { primaryBookHref, primaryBookIsExternal } from '~/src/landing/primaryBookHref'
 import { useLandingContact } from './useLandingContact'
 
+/**
+ * Provides the main booking CTA logic for the landing page.
+ * Prefers the user's last booking step or defaults to the primary booking flow.
+ *
+ * @returns An object with the booking URL, whether it is external, and contact info.
+ */
 export function useLandingBookCta() {
   const contact = useLandingContact()
 

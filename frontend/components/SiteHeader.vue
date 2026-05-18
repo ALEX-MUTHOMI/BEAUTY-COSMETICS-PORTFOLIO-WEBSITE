@@ -57,7 +57,7 @@
         </svg>
       </a>
 
-      <nav class="site-header__nav" aria-label="Primary">
+      <nav class="site-header__nav" aria-label="Main navigation">
         <NuxtLink
           to="/services"
           :class="{ 'is-active': route.path === '/services' && !isPackagesHash && !isSinglesHash }"
