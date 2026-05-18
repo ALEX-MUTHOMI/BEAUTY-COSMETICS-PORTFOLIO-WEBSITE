@@ -14,7 +14,7 @@ import {
 /**
  * Provides live WhatsApp and phone contact details.
  * Falls back to fail-closed configuration if not set in runtime config.
- * 
+ *
  * @returns An object containing computed properties for live status, phone display, phone URL, and WhatsApp URL.
  */
 export function useLandingContact() {
