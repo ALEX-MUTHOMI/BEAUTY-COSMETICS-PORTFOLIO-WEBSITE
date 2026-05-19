@@ -1,3 +1,8 @@
+/**
+ * @module
+ * Defines the content and structure for the services offered on the platform.
+ * Includes categories, treatments, descriptions, and pricing information.
+ */
 import {
   LANDING_LOCATION_LABEL,
   LANDING_PRIMARY_CTA,
