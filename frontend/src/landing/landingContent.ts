@@ -1,3 +1,8 @@
+/**
+ * @module
+ * Contains the main content data and helpers for the landing page.
+ * Includes packages, workflow steps, and social contact placeholders.
+ */
 export interface LandingPackage {
   name: string
   text: string
