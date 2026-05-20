@@ -1,5 +1,5 @@
 <template>
-  <footer id="contact" class="site-footer">
+  <footer id="contact" class="site-footer" aria-label="Site footer">
     <div class="site-footer__glow" aria-hidden="true" />
 
     <div class="site-footer__inner">
