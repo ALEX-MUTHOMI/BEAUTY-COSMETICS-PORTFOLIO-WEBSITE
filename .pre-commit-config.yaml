@@ -1,0 +1,55 @@
+# ==============================================================================
+# Local 'Shift-Left' Git Pre-Commit Hook Architecture
+# ==============================================================================
+repos:
+  # ----------------------------------------------------------------------------
+  # 1. Standard Enterprise Sanitization Hooks
+  # ----------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim Trailing Whitespace
+        description: Trims trailing whitespace from files.
+      - id: end-of-file-fixer
+        name: Fix End of Files
+        description: Ensures files end with a single newline character.
+      - id: check-yaml
+        name: Validate YAML Files
+        description: Checks syntax correctness of YAML configurations.
+      - id: check-added-large-files
+        name: Block Large Binary Files
+        description: Prevents massive binary files from being committed (max 5MB).
+        args: ['--maxkb=5120']
+
+  # ----------------------------------------------------------------------------
+  # 2. Code Quality Formatting & Import Sorting Hooks
+  # ----------------------------------------------------------------------------
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+        name: Apply Black Code Formatter
+        types: [python]
+        args: [--line-length=120]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: Sort Python Imports
+        types: [python]
+        args: ["--profile", "black", "--line-length=120"]
+
+  # ----------------------------------------------------------------------------
+  # 3. Custom Local Secret Scan Gate (Shift-Left Edge Protection)
+  # ----------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: local-secret-hygiene-scan
+        name: Secret Hygiene Edge Scanner
+        description: Fail-safe hook preventing hardcoded credentials from being committed to Git.
+        entry: python scripts/ci/secret_hygiene.py
+        language: system
+        pass_filenames: false
+        always_run: true
