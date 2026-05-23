@@ -1,0 +1,133 @@
+name: Secure Enterprise CI Pipeline
+
+on:
+  push:
+    branches:
+      - development
+  pull_request:
+    branches:
+      - staging
+      - main
+
+jobs:
+  # ============================================================================
+  # JOB 1: STRICT SECURITY AUDITING & CODE QUALITY LINTING
+  # ============================================================================
+  security_and_lint:
+    name: Security Auditing & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full git history required for Git-tracked secret scanning
+
+      - name: Set up Python Runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      # 1. Enforce Secret Hygiene
+      - name: Execute Secret Hygiene Scanner
+        run: |
+          chmod +x scripts/ci/secret_hygiene.py
+          python scripts/ci/secret_hygiene.py
+
+      # 2. Setup Linting and Bandit Dependencies
+      - name: Install Linting & Security Scanners
+        run: |
+          pip install --upgrade pip
+          pip install flake8 bandit
+
+      # 3. Code Style Audit
+      - name: Run Flake8 Code Style Linter
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. Customize max-line-length as appropriate
+          flake8 . --count --max-line-length=120 --statistics
+
+      # 4. AST Security Scanning (Bandit)
+      - name: Run Bandit Security Vulnerability Scanner
+        run: |
+          # Bandit scans for common security vulnerabilities (e.g. exec calls, weak hashing, SQLi, shell=True)
+          bandit -r core/ backend/ -ll -ii
+
+  # ============================================================================
+  # JOB 2: CONTAINERIZED BUILD & RESILIENT INTEGRATION TESTING
+  # ============================================================================
+  build_and_test:
+    name: Containerized Build & Resilience Tests
+    runs-on: ubuntu-latest
+    needs: security_and_lint
+    env:
+      POSTGRES_DB: beauty_db_test
+      POSTGRES_USER: beauty_user_test
+      POSTGRES_PASSWORD: beauty_secure_password_test
+      REDIS_PASSWORD: beauty_redis_secure_password_test
+      SECRET_KEY: django-insecure-ci-test-key-minimum-32-characters-long
+      DEBUG: "True"
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: actions/configure-pages@v5 # Setting up builder
+        uses: docker/setup-buildx-action@v3
+
+      # Cache Docker layers to accelerate pipeline execution
+      - name: Cache Docker Layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      # 1. Build and Start Services Orchestrated via Compose (Production + Toxiproxy Override)
+      - name: Spin up Infrastructure Containers (with Toxiproxy)
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml up -d --build
+
+      # 2. Verify Container Health Natively via Compose Healthchecks
+      - name: Verify Service Health
+        run: |
+          echo "[*] Waiting for PostgreSQL and Redis to report healthy..."
+          # Wait up to 60s for containers to report healthy via compose
+          for i in {1..12}; do
+            STATUS=$(docker compose ps --format json | jq -r '.[].Health')
+            if [[ ! "$STATUS" =~ "starting" ]] && [[ ! "$STATUS" =~ "unhealthy" ]]; then
+              echo "[+] All backend service containers are healthy!"
+              break
+            fi
+            echo "[-] Containers are initializing, sleeping 5s..."
+            sleep 5
+          done
+
+      # 3. Execute Django CI Production Smoke Test inside Application Container
+      - name: Execute Django CI Production Smoke Test
+        run: |
+          docker compose exec -T web chmod +x scripts/ci/django_smoke.sh
+          docker compose exec -T web bash scripts/ci/django_smoke.sh
+
+      # 4. Perform Pytest Suite: Run Unit Tests
+      - name: Run Pytest Unit Tests
+        run: |
+          docker compose exec -T web pytest -m "unit"
+
+      # 5. Perform Pytest Suite: Run Integration Tests
+      - name: Run Pytest Integration Tests
+        run: |
+          docker compose exec -T web pytest -m "integration"
+
+      # 6. Perform Pytest Suite: Run Resilience & Chaos Tests (Toxiproxy M-Pesa Simulations)
+      - name: Run Resilience & Chaos Engineering Tests
+        run: |
+          docker compose exec -T web pytest -m "resilience"
+
+      # 7. Clean up Docker Containers after Pipeline Execution
+      - name: Tear Down Services
+        if: always()
+        run: |
+          docker compose down --volumes --remove-orphans
