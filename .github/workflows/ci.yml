@@ -73,7 +73,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: actions/configure-pages@v5 # Setting up builder
         uses: docker/setup-buildx-action@v3
 
       # Cache Docker layers to accelerate pipeline execution

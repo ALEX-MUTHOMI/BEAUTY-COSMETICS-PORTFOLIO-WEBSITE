@@ -14,7 +14,7 @@ echo "[*] Booting Django Production Smoke Tests..."
 # This forces Django to validate production security checks, host headers,
 # settings parsing, and database adapter loading, avoiding configuration drift.
 export DEBUG="False"
-export SECRET_KEY="django-insecure-smoke-test-production-dummy-key-extremely-long-and-secure-12345"
+export SECRET_KEY="django-insecure-smoke-test-production-dummy-key-extremely-long-and-secure-12345" # nosec
 export ALLOWED_HOSTS="localhost,127.0.0.1,testserver,api.beautycosmetics.com"
 export CORS_ALLOWED_ORIGINS="https://beautycosmetics.com,https://admin.beautycosmetics.com"
 
