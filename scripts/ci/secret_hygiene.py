@@ -71,7 +71,7 @@ def get_git_tracked_files():
 def scan_file(file_path):
     """Scan a file for hardcoded secrets, returning a list of detections."""
     detections = []
-    
+
     if should_exclude(file_path):
         return detections
 
@@ -79,7 +79,7 @@ def scan_file(file_path):
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             for line_num, line in enumerate(f, 1):
                 clean_line = line.strip()
-                
+
                 # Check for inline bypass markers
                 if any(marker in clean_line for marker in IGNORE_MARKERS):
                     continue
@@ -92,7 +92,7 @@ def scan_file(file_path):
                             # Ignore env loader calls (e.g. os.environ, env.str, config('...'))
                             if any(env_call in clean_line for env_call in ["environ", "env.", "config(", "os.getenv"]):
                                 continue
-                        
+
                         if rule_name == "Django Hardcoded SECRET_KEY":
                             # Ignore if we are looking up from an env variable
                             if "os.environ" in clean_line or "env(" in clean_line or "get_env" in clean_line:
@@ -103,7 +103,7 @@ def scan_file(file_path):
                             "line": line_num,
                             "rule": rule_name
                         })
-    except Exception as e:
+    except Exception:
         # Gracefully handle file reading errors (e.g., binary files missed by git filtering)
         pass
 
@@ -128,7 +128,7 @@ def main():
         print("\n[!] CRITICAL: Hardcoded secrets detected in repository!")
         print("[!] SECURITY WARNING: Secrets must never be committed to git.")
         print("-" * 80)
-        
+
         for det in all_detections:
             # STRICT OUTPUT REDACTION: Absolutely NEVER print the matched secret value.
             # Only print the file, line, and rule triggered.
@@ -136,11 +136,11 @@ def main():
             print(f"  File: {det['file']}")
             print(f"  Line: {det['line']}")
             print("-" * 80)
-            
+
         print("\n[!] Remediate by moving credentials to an external environment (.env) configuration.")
         print("[!] To bypass false positives, append '# nosec' or '# pragma: allowlist secret' to the offending line.")
         sys.exit(1)
-    
+
     print("[+] Secret hygiene validation passed successfully. No secrets exposed.")
     sys.exit(0)
 
