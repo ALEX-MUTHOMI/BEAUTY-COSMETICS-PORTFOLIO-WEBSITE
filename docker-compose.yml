@@ -1,5 +1,3 @@
-version: '3.8'
-
 networks:
   beauty_isolated_net:
     driver: bridge

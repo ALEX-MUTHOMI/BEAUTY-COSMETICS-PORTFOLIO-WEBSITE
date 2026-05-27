@@ -122,13 +122,15 @@ jobs:
 
       - name: Verify Service Health
         run: |
-          echo "[*] Waiting for services to be healthy..."
+          echo "[*] Waiting for PostgreSQL and Redis to report healthy..."
           for i in {1..12}; do
-            STATUS=$(docker compose ps --format json | jq -r '.[].Health')
-            if [[ ! "$STATUS" =~ "starting" ]] && [[ ! "$STATUS" =~ "unhealthy" ]]; then
-              echo "[+] Services are healthy!"
+            DB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_postgres_db 2>/dev/null || echo "starting")
+            REDIS_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_redis 2>/dev/null || echo "starting")
+            if [ "$DB_STATUS" = "healthy" ] && [ "$REDIS_STATUS" = "healthy" ]; then
+              echo "[+] All database and cache containers are healthy!"
               break
             fi
+            echo "[-] Database is $DB_STATUS, Redis is $REDIS_STATUS. Retrying in 5s..."
             sleep 5
           done
 
@@ -175,11 +177,15 @@ jobs:
 
       - name: Verify Service Health
         run: |
+          echo "[*] Waiting for PostgreSQL and Redis to report healthy..."
           for i in {1..12}; do
-            STATUS=$(docker compose ps --format json | jq -r '.[].Health')
-            if [[ ! "$STATUS" =~ "starting" ]] && [[ ! "$STATUS" =~ "unhealthy" ]]; then
+            DB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_postgres_db 2>/dev/null || echo "starting")
+            REDIS_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_redis 2>/dev/null || echo "starting")
+            if [ "$DB_STATUS" = "healthy" ] && [ "$REDIS_STATUS" = "healthy" ]; then
+              echo "[+] All database and cache containers are healthy!"
               break
             fi
+            echo "[-] Database is $DB_STATUS, Redis is $REDIS_STATUS. Retrying in 5s..."
             sleep 5
           done
 
@@ -225,11 +231,15 @@ jobs:
 
       - name: Verify Service Health
         run: |
+          echo "[*] Waiting for PostgreSQL and Redis to report healthy..."
           for i in {1..12}; do
-            STATUS=$(docker compose ps --format json | jq -r '.[].Health')
-            if [[ ! "$STATUS" =~ "starting" ]] && [[ ! "$STATUS" =~ "unhealthy" ]]; then
+            DB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_postgres_db 2>/dev/null || echo "starting")
+            REDIS_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_redis 2>/dev/null || echo "starting")
+            if [ "$DB_STATUS" = "healthy" ] && [ "$REDIS_STATUS" = "healthy" ]; then
+              echo "[+] All database and cache containers are healthy!"
               break
             fi
+            echo "[-] Database is $DB_STATUS, Redis is $REDIS_STATUS. Retrying in 5s..."
             sleep 5
           done
 
@@ -275,11 +285,15 @@ jobs:
 
       - name: Verify Service Health
         run: |
+          echo "[*] Waiting for PostgreSQL and Redis to report healthy..."
           for i in {1..12}; do
-            STATUS=$(docker compose ps --format json | jq -r '.[].Health')
-            if [[ ! "$STATUS" =~ "starting" ]] && [[ ! "$STATUS" =~ "unhealthy" ]]; then
+            DB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_postgres_db 2>/dev/null || echo "starting")
+            REDIS_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_redis 2>/dev/null || echo "starting")
+            if [ "$DB_STATUS" = "healthy" ] && [ "$REDIS_STATUS" = "healthy" ]; then
+              echo "[+] All database and cache containers are healthy!"
               break
             fi
+            echo "[-] Database is $DB_STATUS, Redis is $REDIS_STATUS. Retrying in 5s..."
             sleep 5
           done
 
@@ -325,11 +339,15 @@ jobs:
 
       - name: Verify Service Health
         run: |
+          echo "[*] Waiting for PostgreSQL and Redis to report healthy..."
           for i in {1..12}; do
-            STATUS=$(docker compose ps --format json | jq -r '.[].Health')
-            if [[ ! "$STATUS" =~ "starting" ]] && [[ ! "$STATUS" =~ "unhealthy" ]]; then
+            DB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_postgres_db 2>/dev/null || echo "starting")
+            REDIS_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_redis 2>/dev/null || echo "starting")
+            if [ "$DB_STATUS" = "healthy" ] && [ "$REDIS_STATUS" = "healthy" ]; then
+              echo "[+] All database and cache containers are healthy!"
               break
             fi
+            echo "[-] Database is $DB_STATUS, Redis is $REDIS_STATUS. Retrying in 5s..."
             sleep 5
           done
 
