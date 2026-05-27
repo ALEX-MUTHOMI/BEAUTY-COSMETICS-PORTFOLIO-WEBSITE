@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'users.apps.UsersConfig',
 ]
 
 MIDDLEWARE = [
@@ -129,3 +130,68 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# ==============================================================================
+# AUTHENTICATION & PASSWORD HASHING ENVIRONMENT CONFIGURATION
+# ==============================================================================
+AUTH_USER_MODEL = 'users.CustomUser'
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+]
+
+# ==============================================================================
+# BROWSER PERIMETER SECURITY (CORS, CSRF, AND SECURE SESSIONS)
+# ==============================================================================
+# Trusted origins allowing CORS request validation from Vue 3 decoupled frontend
+CSRF_TRUSTED_ORIGINS = [
+    host.strip() for host in os.environ.get(
+        'CSRF_TRUSTED_ORIGINS',
+        'http://localhost:5173,http://127.0.0.1:5173'
+    ).split(',') if host.strip()
+]
+
+# Strict Cross-Site Request Forgery cookie configuration parameters
+CSRF_COOKIE_SAMESITE = 'Strict'
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False  # Set to False so standard DRF CSRF-token fetching works
+
+if not DEBUG:
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+
+# ==============================================================================
+# REDIS CACHE & MESSAGING SERVER CONNECTION
+# ==============================================================================
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+
+# ==============================================================================
+# CELERY TASK ROUTING ARCHITECTURE
+# ==============================================================================
+CELERY_TASK_ROUTES = {
+    'users.tasks.send_express_otp_email': {'queue': 'express_auth'},
+}
+
+# ==============================================================================
+# BOT MITIGATION (CLOUDFLARE TURNSTILE) CONFIGURATION
+# ==============================================================================
+# In production, load the secret dynamically from secure environment injections
+TURNSTILE_SECRET_KEY = os.environ.get('TURNSTILE_SECRET_KEY', '1x0000000000000000000000000000000AA')
+
+# ==============================================================================
+# DJANGO REST FRAMEWORK CONFIGURATIONS
+# ==============================================================================
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day',
+        'otp_request': '5/hour',  # Strict email toll spam prevention limit
+    }
+}

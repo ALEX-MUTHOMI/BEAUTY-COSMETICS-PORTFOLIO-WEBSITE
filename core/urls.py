@@ -16,7 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from users.views import RequestOTPView, VerifyOTPView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/auth/request-otp/', RequestOTPView.as_view(), name='request-otp'),
+    path('api/auth/verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
 ]
