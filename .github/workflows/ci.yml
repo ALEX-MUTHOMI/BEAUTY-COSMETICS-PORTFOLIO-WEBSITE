@@ -136,7 +136,6 @@ jobs:
 
       - name: Execute Django Production Smoke Test
         run: |
-          docker compose exec -T web chmod +x scripts/ci/django_smoke.sh
           docker compose exec -T web bash scripts/ci/django_smoke.sh
 
       - name: Tear Down Services
