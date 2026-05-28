@@ -51,12 +51,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'users.apps.UsersConfig',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -87,12 +89,24 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if os.environ.get('POSTGRES_HOST'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('POSTGRES_DB', 'beauty_db'),
+            'USER': os.environ.get('POSTGRES_USER', 'beauty_user'),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'beauty_secure_password'),
+            'HOST': os.environ.get('POSTGRES_HOST', 'db'),
+            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -150,9 +164,19 @@ PASSWORD_HASHERS = [
 CSRF_TRUSTED_ORIGINS = [
     host.strip() for host in os.environ.get(
         'CSRF_TRUSTED_ORIGINS',
-        'http://localhost:5173,http://127.0.0.1:5173'
+        'http://frontend:3000,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173'
     ).split(',') if host.strip()
 ]
+
+# Decoupled frontend CORS origins configuration parameters
+CORS_ALLOWED_ORIGINS = [
+    host.strip() for host in os.environ.get(
+        'CORS_ALLOWED_ORIGINS',
+        'http://frontend:3000,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173'
+    ).split(',') if host.strip()
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 # Strict Cross-Site Request Forgery cookie configuration parameters
 CSRF_COOKIE_SAMESITE = 'Strict'
@@ -167,6 +191,10 @@ if not DEBUG:
 # REDIS CACHE & MESSAGING SERVER CONNECTION
 # ==============================================================================
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', REDIS_URL)
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', REDIS_URL)
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # ==============================================================================
 # CELERY TASK ROUTING ARCHITECTURE

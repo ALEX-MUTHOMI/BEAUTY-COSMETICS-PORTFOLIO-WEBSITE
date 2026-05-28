@@ -15,10 +15,16 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import path
 from users.views import RequestOTPView, VerifyOTPView
 
+
+def health_check(_request):
+    return JsonResponse({"status": "ok"})
+
 urlpatterns = [
+    path('health/', health_check, name='health-check'),
     path('admin/', admin.site.urls),
     path('api/auth/request-otp/', RequestOTPView.as_view(), name='request-otp'),
     path('api/auth/verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),

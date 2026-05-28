@@ -24,9 +24,9 @@ RUN pip install --no-cache-dir "poetry>=2.0.0"
 # Copy package requirements files
 COPY pyproject.toml poetry.lock ./
 
-# Build dependencies only (cached layer)
+# Build dependencies only (cached layer). Include dev for container-only verification gates.
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR \
-    poetry install --only main --no-root
+    poetry install --with dev --no-root
 
 # ==============================================================================
 # STAGE 2: Production Run-time Environment
@@ -35,6 +35,8 @@ FROM python:3.13-slim AS runner
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_NO_INTERACTION=1 \
     PORT=8000
 
 WORKDIR /app
@@ -67,7 +69,7 @@ EXPOSE 8000
 
 # Healthcheck for general container status
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8000/health/ || exit 1
+  CMD curl -f -H "X-Forwarded-Proto: https" http://localhost:8000/health/ || exit 1
 
 # Run the Django production application
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "core.wsgi:application"]

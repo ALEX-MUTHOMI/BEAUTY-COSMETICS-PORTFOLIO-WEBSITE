@@ -1,7 +1,6 @@
 import pytest
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
-from users.models import CustomUser
 
 User = get_user_model()
 
