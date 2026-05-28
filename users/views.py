@@ -1,12 +1,14 @@
 import logging
+
 from django.contrib.auth import get_user_model, login
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from users.serializers import OTPRequestSerializer, OTPVerifySerializer
-from users.throttles import OTPAnonRateThrottle
 from users.services import OTPService
 from users.tasks import send_express_otp_email
+from users.throttles import OTPAnonRateThrottle
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -19,6 +21,7 @@ class RequestOTPView(APIView):
     - Bot Mitigation: Mandates a validated Cloudflare Turnstile token.
     - Soft-Delete Protection: Blocks requests for deactivated/anonymized accounts.
     """
+
     throttle_classes = [OTPAnonRateThrottle]
 
     def post(self, request, *args, **kwargs):
@@ -34,7 +37,7 @@ class RequestOTPView(APIView):
         if not OTPService.verify_turnstile_token(turnstile_token, ip_addr):
             return Response(
                 {"error": "Bot challenge validation failed. Please try again."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # 2. Assert Soft-Deletion Boundary
@@ -43,7 +46,7 @@ class RequestOTPView(APIView):
             logger.warning(f"[-] Blocked OTP request attempt on soft-deleted account: {email}")
             return Response(
                 {"error": "This account has been permanently deactivated/anonymized."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # 3. Generate Cryptographic Code (Redis Express Lane)
@@ -54,7 +57,7 @@ class RequestOTPView(APIView):
 
         return Response(
             {"message": "Verification code dispatched successfully."},
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
 
@@ -64,6 +67,7 @@ class VerifyOTPView(APIView):
     - Replay Attack Mitigation: Instantly destroys the token in Redis on validation.
     - Friction-free Onboarding: Auto-registers new users on verification.
     """
+
     def post(self, request, *args, **kwargs):
         serializer = OTPVerifySerializer(data=request.data)
         if not serializer.is_valid():
@@ -76,14 +80,14 @@ class VerifyOTPView(APIView):
         if User.objects.all_with_deleted().filter(email=email, is_deleted=True).exists():
             return Response(
                 {"error": "This account has been permanently deactivated/anonymized."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # 2. Verify Cryptographic OTP against Redis
         if not OTPService.verify_otp(email, otp):
             return Response(
                 {"error": "Invalid or expired verification code."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # 3. Onboard / Retrieve authenticated user
@@ -99,7 +103,7 @@ class VerifyOTPView(APIView):
         # 4. Bind session authentication context
         user.is_otp_verified = True
         user.save()
-        
+
         login(request, user)
         logger.info(f"[+] Successful passwordless session login for: {email}")
 
@@ -107,7 +111,7 @@ class VerifyOTPView(APIView):
             {
                 "message": "Authentication successful.",
                 "email": user.email,
-                "is_new": is_new
+                "is_new": is_new,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )

@@ -1,7 +1,9 @@
 import uuid
+
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.validators import RegexValidator
 from django.db import models
+
 from core.models import AuditMixin
 from users.managers import CustomUserManager
 
@@ -9,8 +11,8 @@ from users.managers import CustomUserManager
 # Matches 07XXXXXXXX, 01XXXXXXXX, 2547XXXXXXXX, +2547XXXXXXXX, 2541XXXXXXXX, etc.
 # Crucial for routing M-Pesa STK push billing APIs cleanly.
 KENYAN_PHONE_REGEX = RegexValidator(
-    regex=r'^(?:254|\+254|0)?([71]\d{8})$',
-    message="Phone number must be a valid Kenyan format (e.g. +254712345678 or 0712345678)."
+    regex=r"^(?:254|\+254|0)?([71]\d{8})$",
+    message="Phone number must be a valid Kenyan format (e.g. +254712345678 or 0712345678).",
 )
 
 
@@ -22,51 +24,49 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, AuditMixin):
     - Validates Kenyan phone number patterns required for M-Pesa payments.
     - Implements GDPR anonymization compliance.
     """
+
     email = models.EmailField(
         unique=True,
         max_length=255,
-        help_text="Primary email credential utilized for authentication."
+        help_text="Primary email credential utilized for authentication.",
     )
     phone_number = models.CharField(
         max_length=15,
         validators=[KENYAN_PHONE_REGEX],
         null=True,
         blank=True,
-        help_text="Kenyan phone number required for routing M-Pesa STK billing pushes."
+        help_text="Kenyan phone number required for routing M-Pesa STK billing pushes.",
     )
     is_otp_verified = models.BooleanField(
         default=False,
-        help_text="Indicates if the user has validated their active OTP phone/email session."
+        help_text="Indicates if the user has validated their active OTP phone/email session.",
     )
     is_staff = models.BooleanField(
         default=False,
-        help_text="Designates whether the user can log into the Django administrative panel."
+        help_text="Designates whether the user can log into the Django administrative panel.",
     )
-    is_active = models.BooleanField(
-        default=True,
-        help_text="Designates whether this user account is active."
-    )
+    is_active = models.BooleanField(default=True, help_text="Designates whether this user account is active.")
     gdpr_consent_at = models.DateTimeField(
         null=True,
         blank=True,
-        help_text="Timestamp when the user consented to GDPR Article 7 data privacy terms."
+        help_text="Timestamp when the user consented to GDPR Article 7 data privacy terms.",
     )
     terms_accepted_at = models.DateTimeField(
         null=True,
         blank=True,
-        help_text="Timestamp when the user accepted platform Terms & Conditions."
+        help_text="Timestamp when the user accepted platform Terms & Conditions.",
     )
 
     # Register custom authentication manager
     objects = CustomUserManager()
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     class Meta:
-        verbose_name = 'user'
-        verbose_name_plural = 'users'
-        db_table = 'beauty_users'
+        verbose_name = "user"
+        verbose_name_plural = "users"
+        db_table = "beauty_users"
 
     def __str__(self):
         return self.email

@@ -1,11 +1,13 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from rest_framework.test import APIClient
 from rest_framework import status
-from users.services import OTPService
+from rest_framework.test import APIClient
+
 from core.celery import app as celery_app
+from users.services import OTPService
 
 User = get_user_model()
 
@@ -15,6 +17,7 @@ class MockRedis:
     In-memory Mock Redis implementation for offline unit testing velocity.
     Supports basic SET, GET, DELETE, EXISTS, and TTL operations.
     """
+
     def __init__(self):
         self.store = {}
         self.ttls = {}
@@ -41,6 +44,28 @@ class MockRedis:
 
     def ttl(self, key):
         return self.ttls.get(key, -1)
+
+    def eval(self, _script, _key_count, key, now, capacity, refill_rate, ttl):
+        bucket_key = f"bucket:{key}"
+        bucket = self.store.get(bucket_key)
+        now = float(now)
+        capacity = float(capacity)
+        refill_rate = float(refill_rate)
+        if bucket is None:
+            tokens = capacity
+            updated_at = now
+        else:
+            tokens, updated_at = bucket
+        tokens = min(capacity, tokens + max(0, now - updated_at) * refill_rate)
+        allowed = 1 if tokens >= 1 else 0
+        wait_seconds = 0
+        if allowed:
+            tokens -= 1
+        else:
+            wait_seconds = int((1 - tokens) / refill_rate) + 1
+        self.store[bucket_key] = (tokens, now)
+        self.ttls[bucket_key] = int(ttl)
+        return [allowed, tokens, wait_seconds]
 
 
 @pytest.fixture(autouse=True)
@@ -69,7 +94,9 @@ def eager_celery():
 
 @pytest.fixture
 def api_client():
-    return APIClient()
+    client = APIClient()
+    client.defaults["HTTP_X_FORWARDED_PROTO"] = "https"
+    return client
 
 
 @pytest.fixture
@@ -83,7 +110,7 @@ class TestPasswordlessAuthSuite:
     Exhaustive Test-Driven Development (TDD) Suite verifying
     cryptographic boundaries, replay protections, rate limits, and compliance gates.
     """
-    
+
     # --------------------------------------------------------------------------
     # 1. REDIS TTL EXPIRATION TEST
     # --------------------------------------------------------------------------
@@ -93,20 +120,20 @@ class TestPasswordlessAuthSuite:
         Simulates a 301-second delay by explicitly removing/expiring the Redis key.
         """
         email = "ttl_expiry_test@beauty.com"
-        
+
         # Generate OTP (cached in Redis with 300s TTL)
         otp = OTPService.generate_otp(email)
-        
+
         client = mock_redis_backend
         key = f"otp:{email}"
-        
+
         # Assert key initially exists with valid TTL
         assert client.exists(key) == 1
         assert 290 <= client.ttl(key) <= 300
-        
+
         # Simulate 301-second delay by manually deleting the key (equivalent to TTL expiry)
         client.delete(key)
-        
+
         # Attempt verification on expired token
         is_verified = OTPService.verify_otp(email, otp)
         assert is_verified is False
@@ -121,10 +148,10 @@ class TestPasswordlessAuthSuite:
         """
         email = "replay_attack_test@beauty.com"
         otp = OTPService.generate_otp(email)
-        
+
         # Attempt 1: Successful verification
         assert OTPService.verify_otp(email, otp) is True
-        
+
         # Attempt 2: Replay attack utilizing the same token must fail instantly
         assert OTPService.verify_otp(email, otp) is False
 
@@ -138,16 +165,16 @@ class TestPasswordlessAuthSuite:
         """
         email = "throttle_test@beauty.com"
         url = "/api/auth/request-otp/"
-        
+
         # Clean rate limit caches for test isolation
         cache.clear()
-        
+
         # Trigger 5 rapid requests (allowed within throttle boundaries)
         for _ in range(5):
             response = api_client.post(
                 url,
                 {"email": email, "turnstile_token": "CF_CLEARANCE_TEST_TOKEN"},
-                REMOTE_ADDR=client_ip
+                REMOTE_ADDR=client_ip,
             )
             assert response.status_code == status.HTTP_200_OK
 
@@ -155,7 +182,7 @@ class TestPasswordlessAuthSuite:
         throttled_response = api_client.post(
             url,
             {"email": email, "turnstile_token": "CF_CLEARANCE_TEST_TOKEN"},
-            REMOTE_ADDR=client_ip
+            REMOTE_ADDR=client_ip,
         )
         assert throttled_response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
         assert "detail" in throttled_response.data
@@ -170,15 +197,15 @@ class TestPasswordlessAuthSuite:
         """
         email = "soft_deleted_auth_test@beauty.com"
         user = User.objects.create_user(email=email)
-        
+
         # Execute GDPR Anonymization (soft-delete)
         user.anonymize()
-        
+
         # Attempt OTP Request
         request_url = "/api/auth/request-otp/"
         request_response = api_client.post(
             request_url,
-            {"email": user.email, "turnstile_token": "CF_CLEARANCE_TEST_TOKEN"}
+            {"email": user.email, "turnstile_token": "CF_CLEARANCE_TEST_TOKEN"},
         )
         assert request_response.status_code == status.HTTP_400_BAD_REQUEST
         assert "error" in request_response.data
@@ -186,10 +213,7 @@ class TestPasswordlessAuthSuite:
 
         # Attempt OTP Verification
         verify_url = "/api/auth/verify-otp/"
-        verify_response = api_client.post(
-            verify_url,
-            {"email": user.email, "otp": "123456"}
-        )
+        verify_response = api_client.post(verify_url, {"email": user.email, "otp": "123456"})
         assert verify_response.status_code == status.HTTP_400_BAD_REQUEST
         assert "error" in verify_response.data
         assert "anonymized" in verify_response.data["error"]
@@ -204,22 +228,25 @@ class TestPasswordlessAuthSuite:
         """
         # Test Case A: Missing Turnstile token in payload
         url = "/api/auth/request-otp/"
-        response_missing_token = api_client.post(
-            url,
-            {"email": "malformed_test@beauty.com"}
-        )
+        response_missing_token = api_client.post(url, {"email": "malformed_test@beauty.com"})
         assert response_missing_token.status_code == status.HTTP_400_BAD_REQUEST
         assert "turnstile_token" in response_missing_token.data
 
         # Test Case B: Turnstile token challenge rejected by service check
         with patch("users.services.requests.post") as mock_post:
             # Simulate a Cloudflare rejection response
-            mock_post.return_value.json.return_value = {"success": False, "error-codes": ["invalid-input-response"]}
+            mock_post.return_value.json.return_value = {
+                "success": False,
+                "error-codes": ["invalid-input-response"],
+            }
             mock_post.return_value.status_code = 200
 
             response_rejected_token = api_client.post(
                 url,
-                {"email": "turnstile_fail@beauty.com", "turnstile_token": "INVALID_TOKEN"}
+                {
+                    "email": "turnstile_fail@beauty.com",
+                    "turnstile_token": "INVALID_TOKEN",
+                },
             )
             assert response_rejected_token.status_code == status.HTTP_400_BAD_REQUEST
             assert "error" in response_rejected_token.data

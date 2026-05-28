@@ -6,6 +6,7 @@ class CustomUserQuerySet(models.QuerySet):
     """
     Custom QuerySet to support active filtering and soft-delete capabilities.
     """
+
     def alive(self):
         """Return only records that have not been soft-deleted."""
         return self.filter(is_deleted=False)
@@ -20,6 +21,7 @@ class CustomUserManager(BaseUserManager):
     Custom manager for CustomUser model where email is the unique identifier
     for authentication instead of usernames, and soft-deleted rows are filtered out by default.
     """
+
     def get_queryset(self):
         """
         By default, all queries (all(), filter(), etc.) filter out soft-deleted rows,
@@ -46,12 +48,12 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault("is_otp_verified", False)
 
         user = self.model(email=email, phone_number=phone_number, **extra_fields)
-        
+
         if password:
             user.set_password(password)
         else:
             user.set_unusable_password()
-            
+
         user.save(using=self._db)
         return user
 

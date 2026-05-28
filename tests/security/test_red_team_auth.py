@@ -1,10 +1,11 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from rest_framework.test import APIClient
 from rest_framework import status
-from users.services import OTPService
+from rest_framework.test import APIClient
+
 from core.celery import app as celery_app
+from users.services import OTPService
 
 User = get_user_model()
 
@@ -24,7 +25,9 @@ def eager_celery():
 
 @pytest.fixture
 def api_client():
-    return APIClient()
+    client = APIClient()
+    client.defaults["HTTP_X_FORWARDED_PROTO"] = "https"
+    return client
 
 
 @pytest.fixture
@@ -51,25 +54,25 @@ class TestRedTeamSecurityVerification:
         """
         email = "toll_fraud_victim@beauty.com"
         url = "/api/auth/request-otp/"
-        
+
         # Reset linter/throttle cache to ensure a clean state
         cache.clear()
-        
+
         # Trigger rapid fire requests
         success_count = 0
         blocked_count = 0
-        
+
         for _ in range(15):
             response = api_client.post(
                 url,
                 {"email": email, "turnstile_token": "CF_CLEARANCE_TEST_TOKEN"},
-                REMOTE_ADDR=client_ip
+                REMOTE_ADDR=client_ip,
             )
             if response.status_code == status.HTTP_200_OK:
                 success_count += 1
             elif response.status_code == status.HTTP_429_TOO_MANY_REQUESTS:
                 blocked_count += 1
-                
+
         # Assertions: first 5 are allowed (under 5/hour rate limit), next 10 are blocked
         assert success_count == 5
         assert blocked_count == 10
@@ -86,25 +89,19 @@ class TestRedTeamSecurityVerification:
         meaning the second attempt must return HTTP 400 Bad Request.
         """
         email = "replay_target@beauty.com"
-        
+
         # Generate a valid OTP through the secure service layer
         otp = OTPService.generate_otp(email)
-        
+
         url = "/api/auth/verify-otp/"
-        
+
         # Attempt 1: Valid authentication (must succeed)
-        response_1 = api_client.post(
-            url,
-            {"email": email, "otp": otp}
-        )
+        response_1 = api_client.post(url, {"email": email, "otp": otp})
         assert response_1.status_code == status.HTTP_200_OK
         assert response_1.data["email"] == email
-        
+
         # Attempt 2: Replay attack with same token (must be blocked instantly)
-        response_2 = api_client.post(
-            url,
-            {"email": email, "otp": otp}
-        )
+        response_2 = api_client.post(url, {"email": email, "otp": otp})
         assert response_2.status_code == status.HTTP_400_BAD_REQUEST
         assert "error" in response_2.data
         assert "Invalid or expired" in response_2.data["error"]
@@ -121,25 +118,25 @@ class TestRedTeamSecurityVerification:
         """
         original_email = "zombie_target@beauty.com"
         user = User.objects.create_user(email=original_email)
-        
+
         # Anonymize/Soft-Delete the user under GDPR rules
         user.anonymize()
         user.refresh_from_db()
-        
+
         # The scrambled email address currently registered on the deactivated record
         scrambled_email = user.email
-        
+
         # Assert the email is indeed scrambled and marked deleted
         assert "anonymized-" in scrambled_email
         assert user.is_deleted is True
-        
+
         # Attempt to request an OTP for the scrambled email address
         request_url = "/api/auth/request-otp/"
         response = api_client.post(
             request_url,
-            {"email": scrambled_email, "turnstile_token": "CF_CLEARANCE_TEST_TOKEN"}
+            {"email": scrambled_email, "turnstile_token": "CF_CLEARANCE_TEST_TOKEN"},
         )
-        
+
         # The system must reject the request with HTTP 400 Bad Request
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "error" in response.data

@@ -57,13 +57,14 @@ jobs:
           python-version: '3.13'
           cache: 'pip'
 
-      - name: Install Linter
-        run: pip install flake8
+      - name: Install Linters
+        run: pip install flake8 ruff
 
-      - name: Run Flake8 Code Style Linter
+      - name: Run Enterprise Python Lint Gates
         run: |
+          ruff check . --select E,F,B,SIM,UP,I --line-length 120
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --max-line-length=120 --statistics
+          flake8 . --count --max-line-length=120 --max-complexity=12 --statistics
 
   # ============================================================================
   # 3. SECURITY JOB: Parallel AST scanning
@@ -86,7 +87,7 @@ jobs:
         run: pip install bandit
 
       - name: Run Bandit AST Scanner
-        run: bandit -r core/ backend/ -ll -ii
+        run: bandit -r core/ users/ billing/ checkout/ bookings/ -ll -ii
 
   # ============================================================================
   # 4. DJANGO-SMOKE JOB: Infrastructure and migration sanity check
@@ -190,14 +191,210 @@ jobs:
 
       - name: Run Pytest Unit Tests
         run: |
-          docker compose exec -T web pytest -m "unit" || echo "[!] No unit tests found."
+          docker compose exec -T web poetry run pytest tests/unit/. billing/tests/. bookings/tests/.
 
       - name: Tear Down Services
         if: always()
         run: docker compose down --volumes --remove-orphans
 
   # ============================================================================
-  # 6. CELERY JOB: isolated pytest Celery tests
+  # 5A. BILLING UNIT JOB: Phase 2C-A immutable financial truth layer
+  # ============================================================================
+  billing-unit:
+    name: billing-unit
+    runs-on: ubuntu-latest
+    needs: django-smoke
+    env:
+      POSTGRES_DB: beauty_db_billing_unit
+      POSTGRES_USER: beauty_user_billing_unit
+      POSTGRES_PASSWORD: beauty_secure_password_billing_unit
+      REDIS_PASSWORD: beauty_redis_secure_password_billing_unit
+      SECRET_KEY: phase2ca-ci-billing-unit-key-32-chars
+      DEBUG: "True"
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Spin up Infrastructure Containers
+        run: docker compose up -d --build
+
+      - name: Run Billing Unit Tests
+        run: docker compose exec -T web poetry run pytest billing/tests/.
+
+      - name: Tear Down Services
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  # ============================================================================
+  # 5B. CHECKOUT UNIT JOB: Phase 2C-A customer payment orchestration
+  # ============================================================================
+  checkout-unit:
+    name: checkout-unit
+    runs-on: ubuntu-latest
+    needs: django-smoke
+    env:
+      POSTGRES_DB: beauty_db_checkout_unit
+      POSTGRES_USER: beauty_user_checkout_unit
+      POSTGRES_PASSWORD: beauty_secure_password_checkout_unit
+      REDIS_PASSWORD: beauty_redis_secure_password_checkout_unit
+      SECRET_KEY: phase2ca-ci-checkout-unit-key-32-chars
+      DEBUG: "True"
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Spin up Infrastructure Containers
+        run: docker compose up -d --build
+
+      - name: Run Checkout Unit Tests
+        run: docker compose exec -T web poetry run pytest checkout/tests/.
+
+      - name: Tear Down Services
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  # ============================================================================
+  # 5C. CHECKOUT-BILLING INTEGRATION JOB: Payment outcome contract
+  # ============================================================================
+  checkout-billing-integration:
+    name: checkout-billing-integration
+    runs-on: ubuntu-latest
+    needs: [billing-unit, checkout-unit]
+    env:
+      POSTGRES_DB: beauty_db_checkout_billing
+      POSTGRES_USER: beauty_user_checkout_billing
+      POSTGRES_PASSWORD: beauty_secure_password_checkout_billing
+      REDIS_PASSWORD: beauty_redis_secure_password_checkout_billing
+      SECRET_KEY: phase2ca-ci-checkout-billing-key-32-chars
+      DEBUG: "True"
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Spin up Infrastructure Containers
+        run: docker compose up -d --build
+
+      - name: Run Checkout to Billing Contract Tests
+        run: |
+          docker compose exec -T web poetry run pytest \
+            tests/integration/test_checkout_billing_contract.py \
+            tests/integration/test_checkout_success_creates_ledger.py \
+            tests/integration/test_checkout_failure_does_not_credit_ledger.py \
+            tests/integration/test_duplicate_callback_does_not_double_credit.py \
+            tests/integration/test_checkout_settlement_contract.py
+
+      - name: Tear Down Services
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  # ============================================================================
+  # 5D. FINANCIAL RED TEAM JOB: Ledger and checkout abuse cases
+  # ============================================================================
+  financial-red-team:
+    name: financial-red-team
+    runs-on: ubuntu-latest
+    needs: checkout-billing-integration
+    env:
+      POSTGRES_DB: beauty_db_financial_red_team
+      POSTGRES_USER: beauty_user_financial_red_team
+      POSTGRES_PASSWORD: beauty_secure_password_financial_red_team
+      REDIS_PASSWORD: beauty_redis_secure_password_financial_red_team
+      SECRET_KEY: phase2ca-ci-financial-red-team-key
+      DEBUG: "False"
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Spin up Infrastructure Containers
+        run: docker compose up -d --build
+
+      - name: Run Financial Red Team Tests
+        run: docker compose exec -T web poetry run pytest tests/security/test_billing_red_team.py tests/security/test_checkout_red_team.py tests/security/test_log_redaction.py
+
+      - name: Tear Down Services
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  # ============================================================================
+  # 5E. SYSTEM SECURITY JOB: Existing Auth and system-wide hostile-load tests
+  # ============================================================================
+  system-security:
+    name: system-security
+    runs-on: ubuntu-latest
+    needs: financial-red-team
+    env:
+      POSTGRES_DB: beauty_db_system_security
+      POSTGRES_USER: beauty_user_system_security
+      POSTGRES_PASSWORD: beauty_secure_password_system_security
+      REDIS_PASSWORD: beauty_redis_secure_password_system_security
+      SECRET_KEY: phase2ca-ci-system-security-key
+      DEBUG: "False"
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Spin up Infrastructure Containers
+        run: docker compose up -d --build
+
+      - name: Run System Security Tests
+        run: docker compose exec -T web poetry run pytest tests/security/test_red_team_auth.py tests/security/test_system_chaos.py
+
+      - name: Tear Down Services
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  # ============================================================================
+  # 6. CHAOS INTEGRATION JOB: Cross-domain concurrent attack simulations
+  # ============================================================================
+  chaos-integration:
+    name: chaos-integration
+    runs-on: ubuntu-latest
+    needs: unit
+    env:
+      POSTGRES_DB: beauty_db_chaos_integration
+      POSTGRES_USER: beauty_user_chaos_integration
+      POSTGRES_PASSWORD: beauty_secure_password_chaos_integration
+      REDIS_PASSWORD: beauty_redis_secure_password_chaos_integration
+      SECRET_KEY: phase2b-ci-chaos-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f
+      DEBUG: "False"
+      SECURE_SSL_REDIRECT: "True"
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Spin up Infrastructure Containers
+        run: docker compose up -d --build
+
+      - name: Run Migrations
+        run: docker compose exec -T web poetry run python manage.py migrate --noinput
+
+      - name: Run System-Wide Chaos Suite
+        run: docker compose exec -T web poetry run pytest tests/security/test_system_chaos.py tests/security/test_red_team_auth.py
+
+      - name: Tear Down Services
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  # ============================================================================
+  # 7. CELERY JOB: isolated pytest Celery tests
   # ============================================================================
   celery:
     name: celery
@@ -251,12 +448,12 @@ jobs:
         run: docker compose down --volumes --remove-orphans
 
   # ============================================================================
-  # 7. INTEGRATION JOB: Tests requiring real Postgres/Redis connections
+  # 8. INTEGRATION JOB: Tests requiring real Postgres/Redis connections
   # ============================================================================
   integration:
     name: integration
     runs-on: ubuntu-latest
-    needs: [unit, celery]
+    needs: [chaos-integration, celery]
     env:
       POSTGRES_DB: beauty_db_integration
       POSTGRES_USER: beauty_user_integration
@@ -298,14 +495,14 @@ jobs:
 
       - name: Run Pytest Integration Tests
         run: |
-          docker compose exec -T web pytest -m "integration" || echo "[!] No integration tests found."
+          docker compose exec -T web poetry run pytest tests/integration/.
 
       - name: Tear Down Services
         if: always()
         run: docker compose down --volumes --remove-orphans
 
   # ============================================================================
-  # 8. TOXIPROXY JOB: Chaos engineering and resilience simulations
+  # 9. TOXIPROXY JOB: Chaos engineering and resilience simulations
   # ============================================================================
   toxiproxy:
     name: toxiproxy
@@ -359,7 +556,7 @@ jobs:
         run: docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml down --volumes --remove-orphans
 
   # ============================================================================
-  # 9. DOCKER-BUILD JOB: Verification of production Dockerfile build
+  # 10. DOCKER-BUILD JOB: Verification of production Dockerfile build
   # ============================================================================
   docker-build:
     name: docker-build

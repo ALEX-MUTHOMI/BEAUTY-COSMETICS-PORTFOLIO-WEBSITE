@@ -1,6 +1,7 @@
 import logging
 import secrets
 import string
+
 import redis
 import requests
 from django.conf import settings
@@ -22,6 +23,7 @@ class OTPService:
     Enterprise-grade Service Layer orchestrating Passwordless OTP Lifecycle
     and Cloudflare Turnstile bot mitigation challenges.
     """
+
     @staticmethod
     def generate_otp(email: str) -> str:
         """
@@ -30,10 +32,10 @@ class OTPService:
         - Stores in Redis as 'otp:{email}' with a strict 300-second TTL.
         """
         otp = "".join(secrets.choice(string.digits) for _ in range(6))
-        
+
         client = get_redis_client()
         key = f"otp:{email}"
-        
+
         # Save OTP to Redis with strict 300-second expiration
         client.set(key, otp, ex=300)
         logger.info(f"[+] Secure OTP generated and cached for email: {email}")
@@ -48,18 +50,18 @@ class OTPService:
         """
         client = get_redis_client()
         key = f"otp:{email}"
-        
+
         cached_otp = client.get(key)
         if not cached_otp:
             logger.warning(f"[-] OTP verification failed: Token expired or not found for {email}")
             return False
-            
+
         if cached_otp == code:
             # Replay Protection: Instant key deletion
             client.delete(key)
             logger.info(f"[+] OTP verified successfully and key destroyed for {email}")
             return True
-            
+
         logger.warning(f"[-] OTP mismatch detected for {email}")
         return False
 
@@ -74,13 +76,10 @@ class OTPService:
             logger.info("[+] Test Turnstile token matched. Bypassing Turnstile challenge validation.")
             return True
 
-        turnstile_secret = getattr(settings, 'TURNSTILE_SECRET_KEY', '1x0000000000000000000000000000000AA')
+        turnstile_secret = getattr(settings, "TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA")
         url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
-        
-        payload = {
-            "secret": turnstile_secret,
-            "response": token
-        }
+
+        payload = {"secret": turnstile_secret, "response": token}
         if remote_ip:
             payload["remoteip"] = remote_ip
 

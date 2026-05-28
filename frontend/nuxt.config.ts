@@ -9,7 +9,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Keys exposed only on the server-side context
     turnstileSecretKey: process.env.NUXT_TURNSTILE_SECRET_KEY || '1x0000000000000000000000000000000AA',
-    
+
     // Keys exposed on both client and server contexts
     public: {
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',

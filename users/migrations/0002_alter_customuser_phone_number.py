@@ -7,13 +7,24 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0001_initial'),
+        ("users", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='customuser',
-            name='phone_number',
-            field=models.CharField(blank=True, help_text='Kenyan phone number required for routing M-Pesa STK billing pushes.', max_length=15, null=True, validators=[django.core.validators.RegexValidator(message='Phone number must be a valid Kenyan format (e.g. +254712345678 or 0712345678).', regex='^(?:254|\\+254|0)?([71]\\d{8})$')]),
+            model_name="customuser",
+            name="phone_number",
+            field=models.CharField(
+                blank=True,
+                help_text="Kenyan phone number required for routing M-Pesa STK billing pushes.",
+                max_length=15,
+                null=True,
+                validators=[
+                    django.core.validators.RegexValidator(
+                        message="Phone number must be a valid Kenyan format (e.g. +254712345678 or 0712345678).",
+                        regex="^(?:254|\\+254|0)?([71]\\d{8})$",
+                    )
+                ],
+            ),
         ),
     ]

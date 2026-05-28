@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 
+from kombu import Exchange, Queue
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,90 +23,95 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get(
-    'SECRET_KEY',
-    'django-insecure-%m$)l3#zgq)20cmf5!=nf48v0k3&%5p124l$mox#+qeu3ujog1'  # nosec
-)
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-%m$)l3#zgq)20cmf5!=nf48v0k3&%5p124l$mox#+qeu3ujog1")  # nosec
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
+DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1", "t")
 
-ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', '*').split(',') if host.strip()]
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get("ALLOWED_HOSTS", "*").split(",") if host.strip()]
 
 # Production security configuration gates
 if not DEBUG:
-    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1', 't')
+    SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "False").lower() in (
+        "true",
+        "1",
+        "t",
+    )
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'corsheaders',
-    'users.apps.UsersConfig',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "corsheaders",
+    "billing.apps.BillingConfig",
+    "checkout.apps.CheckoutConfig",
+    "bookings.apps.BookingsConfig",
+    "users.apps.UsersConfig",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "core.middleware.correlation_id.CorrelationIdMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'core.urls'
+ROOT_URLCONF = "core.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
+WSGI_APPLICATION = "core.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-if os.environ.get('POSTGRES_HOST'):
+if os.environ.get("POSTGRES_HOST"):
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('POSTGRES_DB', 'beauty_db'),
-            'USER': os.environ.get('POSTGRES_USER', 'beauty_user'),
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'beauty_secure_password'),
-            'HOST': os.environ.get('POSTGRES_HOST', 'db'),
-            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("POSTGRES_DB", "beauty_db"),
+            "USER": os.environ.get("POSTGRES_USER", "beauty_user"),
+            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "beauty_secure_password"),
+            "HOST": os.environ.get("POSTGRES_HOST", "db"),
+            "PORT": os.environ.get("POSTGRES_PORT", "5432"),
         }
     }
 else:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
         }
     }
 
@@ -114,16 +121,16 @@ else:
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -131,9 +138,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -143,18 +150,18 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
 
 # ==============================================================================
 # AUTHENTICATION & PASSWORD HASHING ENVIRONMENT CONFIGURATION
 # ==============================================================================
-AUTH_USER_MODEL = 'users.CustomUser'
+AUTH_USER_MODEL = "users.CustomUser"
 
 PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.Argon2PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
-    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
 ]
 
 # ==============================================================================
@@ -162,25 +169,29 @@ PASSWORD_HASHERS = [
 # ==============================================================================
 # Trusted origins allowing CORS request validation from Vue 3 decoupled frontend
 CSRF_TRUSTED_ORIGINS = [
-    host.strip() for host in os.environ.get(
-        'CSRF_TRUSTED_ORIGINS',
-        'http://frontend:3000,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173'
-    ).split(',') if host.strip()
+    host.strip()
+    for host in os.environ.get(
+        "CSRF_TRUSTED_ORIGINS",
+        "http://frontend:3000,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if host.strip()
 ]
 
 # Decoupled frontend CORS origins configuration parameters
 CORS_ALLOWED_ORIGINS = [
-    host.strip() for host in os.environ.get(
-        'CORS_ALLOWED_ORIGINS',
-        'http://frontend:3000,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173'
-    ).split(',') if host.strip()
+    host.strip()
+    for host in os.environ.get(
+        "CORS_ALLOWED_ORIGINS",
+        "http://frontend:3000,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if host.strip()
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
 # Strict Cross-Site Request Forgery cookie configuration parameters
-CSRF_COOKIE_SAMESITE = 'Strict'
-SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = "Strict"
+SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_HTTPONLY = False  # Set to False so standard DRF CSRF-token fetching works
 
 if not DEBUG:
@@ -190,36 +201,79 @@ if not DEBUG:
 # ==============================================================================
 # REDIS CACHE & MESSAGING SERVER CONNECTION
 # ==============================================================================
-REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', REDIS_URL)
-CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', REDIS_URL)
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", REDIS_URL)
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", REDIS_URL)
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # ==============================================================================
 # CELERY TASK ROUTING ARCHITECTURE
 # ==============================================================================
 CELERY_TASK_ROUTES = {
-    'users.tasks.send_express_otp_email': {'queue': 'express_auth'},
+    "users.tasks.send_express_otp_email": {"queue": "express_auth"},
+    "billing.tasks.process_mpesa_webhook": {"queue": "billing"},
+    "billing.tasks.dlq_billing": {"queue": "dlq_billing"},
 }
+CELERY_TASK_QUEUES = (
+    Queue("celery", Exchange("celery"), routing_key="celery"),
+    Queue("express_auth", Exchange("express_auth"), routing_key="express_auth"),
+    Queue("billing", Exchange("billing"), routing_key="billing"),
+    Queue("dlq_billing", Exchange("dlq_billing"), routing_key="dlq_billing"),
+)
 
 # ==============================================================================
 # BOT MITIGATION (CLOUDFLARE TURNSTILE) CONFIGURATION
 # ==============================================================================
 # In production, load the secret dynamically from secure environment injections
-TURNSTILE_SECRET_KEY = os.environ.get('TURNSTILE_SECRET_KEY', '1x0000000000000000000000000000000AA')
+TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA")
+
+SAFARICOM_ALLOWED_CIDRS = [
+    cidr.strip()
+    for cidr in os.environ.get("SAFARICOM_ALLOWED_CIDRS", "196.201.214.0/24,196.201.216.0/24,127.0.0.1/32").split(",")
+    if cidr.strip()
+]
+TRUSTED_PROXY_CIDRS = [cidr.strip() for cidr in os.environ.get("TRUSTED_PROXY_CIDRS", "").split(",") if cidr.strip()]
 
 # ==============================================================================
 # DJANGO REST FRAMEWORK CONFIGURATIONS
 # ==============================================================================
 REST_FRAMEWORK = {
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle'
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
     ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',
-        'user': '1000/day',
-        'otp_request': '5/hour',  # Strict email toll spam prevention limit
-    }
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/day",
+        "user": "1000/day",
+        "otp_request": "5/min",  # Strict email toll spam prevention limit
+        "stk_push": "3/min",
+        "checkout_stk_push": "3/min",
+    },
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "correlation_id": {
+            "()": "core.middleware.correlation_id.CorrelationIdFilter",
+        },
+    },
+    "formatters": {
+        "structured": {
+            "format": "%(asctime)s %(levelname)s [request_id=%(correlation_id)s] %(name)s %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "filters": ["correlation_id"],
+            "formatter": "structured",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": os.environ.get("LOG_LEVEL", "INFO"),
+    },
 }

@@ -54,22 +54,22 @@ import django
 try:
     print('[+] Initializing Django engine...')
     django.setup()
-    
+
     print('[+] Attempting to load URL Configurations...')
     from core.urls import urlpatterns
     print(f'[+] URL Configurations loaded successfully. Found {len(urlpatterns)} top-level paths.')
-    
+
     print('[+] Attempting to import Celery App instance...')
     from core.celery import app as celery_app
     print('[+] Celery App initialized and imported successfully.')
-    
+
     # --------------------------------------------------------------------------
     # CELERY DEAD LETTER QUEUE (DLQ) INTEGRATION GATE
     # --------------------------------------------------------------------------
     print('[+] Validating Celery Dead Letter Queue (DLQ) registry...')
     # Check if a DLQ is defined in CELERY_TASK_QUEUES or routing keys
     from django.conf import settings
-    
+
     # Check settings or defaults
     task_queues = getattr(settings, 'CELERY_TASK_QUEUES', None)
     if task_queues is None:
@@ -90,11 +90,11 @@ try:
     # Future-proof search for AuditMixin classes in the project
     # We simulate/inspect standard Auditing tracking properties to ensure compliance
     required_audit_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
-    
-    # Let's inspect active classes or define a mock checking mechanism to verify 
+
+    # Let's inspect active classes or define a mock checking mechanism to verify
     # that any model using AuditMixin inherits these four mandatory audit properties.
     print(f'[+] AuditMixin verification successful. Enforced fields: {required_audit_fields}')
-    
+
 except Exception as e:
     print(f'[-] Headless Smoke Test Import Failed: {e}', file=sys.stderr)
     sys.exit(1)

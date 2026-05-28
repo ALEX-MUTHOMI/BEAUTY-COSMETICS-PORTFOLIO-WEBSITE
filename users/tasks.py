@@ -1,18 +1,26 @@
 import logging
+
 from celery import shared_task
-from django.core.mail import send_mail
 from django.conf import settings
+from django.core.mail import send_mail
 
 logger = logging.getLogger(__name__)
+
+
+def _redact_email(email):
+    local, _, domain = str(email).partition("@")
+    if not domain:
+        return "redacted-email"
+    return f"{local[:2]}***@{domain}"
 
 
 @shared_task(
     name="users.tasks.send_express_otp_email",
     queue="express_auth",
     max_retries=3,
-    default_retry_delay=5
+    default_retry_delay=5,
 )
-def send_express_otp_email(email: str, otp: str) -> bool:
+def send_express_otp_email(email: str, otp: str, correlation_id: str = None) -> bool:
     """
     High-priority background Celery task to ship security verification codes.
     - Explicitly routed to the 'express_auth' queue to guarantee sub-10-second delivery boundaries.
@@ -28,20 +36,25 @@ def send_express_otp_email(email: str, otp: str) -> bool:
         f"Regards,\n"
         f"Beauty Portfolio & Booking Team"
     )
-    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'security@beautycosmetics.com')
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "security@beautycosmetics.com")
 
     try:
-        logger.info(f"[+] Dispatching OTP email task for: {email}...")
+        redacted_email = _redact_email(email)
+        logger.info(
+            "[+] Dispatching OTP email task for: %s correlation_id=%s...",
+            redacted_email,
+            correlation_id,
+        )
         send_mail(
             subject=subject,
             message=message,
             from_email=from_email,
             recipient_list=[email],
-            fail_silently=False
+            fail_silently=False,
         )
-        logger.info(f"[+] OTP email dispatched successfully to: {email}")
+        logger.info("[+] OTP email dispatched successfully to: %s", redacted_email)
         return True
     except Exception as exc:
-        logger.error(f"[-] Failed to dispatch OTP email to {email}: {exc}")
+        logger.error("[-] Failed to dispatch OTP email to %s", _redact_email(email))
         # Automatically retry the task in the background
-        raise send_express_otp_email.retry(exc=exc)
+        raise send_express_otp_email.retry(exc=exc) from exc

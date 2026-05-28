@@ -41,21 +41,13 @@ EXCLUDED_PATTERNS = [
 
 def should_exclude(file_path):
     """Check if the file path is explicitly excluded from scans."""
-    for pattern in EXCLUDED_PATTERNS:
-        if re.search(pattern, file_path):
-            return True
-    return False
+    return any(re.search(pattern, file_path) for pattern in EXCLUDED_PATTERNS)
 
 
 def get_git_tracked_files():
     """Retrieve all files tracked by Git to prevent checking heavy build directories."""
     try:
-        result = subprocess.run(
-            ["git", "ls-files"],
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        result = subprocess.run(["git", "ls-files"], capture_output=True, text=True, check=True)
         return [f.strip() for f in result.stdout.splitlines() if f.strip()]
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         print(f"[-] Git command failed or Git is not initialized: {e}")
@@ -76,7 +68,7 @@ def scan_file(file_path):
         return detections
 
     try:
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(file_path, encoding="utf-8", errors="ignore") as f:
             for line_num, line in enumerate(f, 1):
                 clean_line = line.strip()
 
@@ -88,21 +80,25 @@ def scan_file(file_path):
                     match = pattern.search(clean_line)
                     if match:
                         # Extra validation for Django SECRET_KEY rule to avoid false flagging env references
-                        if rule_name == "Generic API Key / Secret / Private Key":
+                        if rule_name == "Generic API Key / Secret / Private Key" and any(
+                            env_call in clean_line
+                            for env_call in [
+                                "environ",
+                                "env.",
+                                "config(",
+                                "os.getenv",
+                            ]
+                        ):
                             # Ignore env loader calls (e.g. os.environ, env.str, config('...'))
-                            if any(env_call in clean_line for env_call in ["environ", "env.", "config(", "os.getenv"]):
-                                continue
+                            continue
 
-                        if rule_name == "Django Hardcoded SECRET_KEY":
+                        if rule_name == "Django Hardcoded SECRET_KEY" and (
+                            "os.environ" in clean_line or "env(" in clean_line or "get_env" in clean_line
+                        ):
                             # Ignore if we are looking up from an env variable
-                            if "os.environ" in clean_line or "env(" in clean_line or "get_env" in clean_line:
-                                continue
+                            continue
 
-                        detections.append({
-                            "file": file_path,
-                            "line": line_num,
-                            "rule": rule_name
-                        })
+                        detections.append({"file": file_path, "line": line_num, "rule": rule_name})
     except Exception:
         # Gracefully handle file reading errors (e.g., binary files missed by git filtering)
         pass

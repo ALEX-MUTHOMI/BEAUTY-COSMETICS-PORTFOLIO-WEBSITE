@@ -78,8 +78,7 @@ services:
       dockerfile: Dockerfile
     image: beauty_web_app:latest
     container_name: beauty_web_app
-    # Overriding production run gunicorn with development auto-reload server if needed
-    command: python manage.py runserver 0.0.0.0:8000
+    command: gunicorn --bind 0.0.0.0:8000 --workers 3 core.wsgi:application
     volumes:
       - .:/app:rw
     ports:

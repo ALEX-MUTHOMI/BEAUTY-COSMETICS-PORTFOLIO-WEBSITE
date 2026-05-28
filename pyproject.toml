@@ -32,3 +32,12 @@ dev = [
 
 [tool.poetry]
 package-mode = false
+
+[tool.ruff]
+line-length = 120
+extend-exclude = [
+    "*/migrations/*",
+    "venv",
+    "venvvenv",
+    "frontend/node_modules",
+]

@@ -1,0 +1,115 @@
+import math
+import time
+
+from rest_framework.throttling import BaseThrottle
+
+from users import services
+
+TOKEN_BUCKET_LUA = """
+local key = KEYS[1]
+local now = tonumber(ARGV[1])
+local capacity = tonumber(ARGV[2])
+local refill_rate = tonumber(ARGV[3])
+local ttl = tonumber(ARGV[4])
+
+local bucket = redis.call('HMGET', key, 'tokens', 'updated_at')
+local tokens = tonumber(bucket[1])
+local updated_at = tonumber(bucket[2])
+
+if tokens == nil then
+  tokens = capacity
+  updated_at = now
+end
+
+local elapsed = math.max(0, now - updated_at)
+tokens = math.min(capacity, tokens + (elapsed * refill_rate))
+
+local allowed = 0
+local wait_seconds = 0
+if tokens >= 1 then
+  allowed = 1
+  tokens = tokens - 1
+else
+  wait_seconds = math.ceil((1 - tokens) / refill_rate)
+end
+
+redis.call('HSET', key, 'tokens', tokens, 'updated_at', now)
+redis.call('EXPIRE', key, ttl)
+return {allowed, tokens, wait_seconds}
+"""
+
+
+class RedisTokenBucketThrottle(BaseThrottle):
+    """
+    Redis-backed token bucket throttle. This avoids per-process memory drift and
+    keeps abuse controls consistent across horizontally scaled containers.
+    """
+
+    scope = None
+
+    def __init__(self):
+        self.wait_seconds = None
+
+    def get_ident(self, request):
+        return request.META.get("REMOTE_ADDR", "")
+
+    def get_cache_ident(self, request, view):
+        return self.get_ident(request)
+
+    def get_rate(self):
+        if not self.scope:
+            return None
+        return self.THROTTLE_RATES.get(self.scope)
+
+    @property
+    def THROTTLE_RATES(self):
+        from django.conf import settings
+
+        return settings.REST_FRAMEWORK.get("DEFAULT_THROTTLE_RATES", {})
+
+    def parse_rate(self, rate):
+        if not rate:
+            return None, None
+
+        num, period = rate.split("/")
+        duration = {
+            "s": 1,
+            "sec": 1,
+            "second": 1,
+            "m": 60,
+            "min": 60,
+            "minute": 60,
+            "h": 3600,
+            "hour": 3600,
+            "d": 86400,
+            "day": 86400,
+        }[period]
+        return int(num), duration
+
+    def allow_request(self, request, view):
+        rate = self.get_rate()
+        if rate is None:
+            return True
+
+        capacity, period = self.parse_rate(rate)
+        ident = self.get_cache_ident(request, view)
+        key = f"throttle:{self.scope}:{ident}"
+        now = time.time()
+        refill_rate = capacity / period
+        ttl = math.ceil(period * 2)
+
+        result = services.get_redis_client().eval(
+            TOKEN_BUCKET_LUA,
+            1,
+            key,
+            now,
+            capacity,
+            refill_rate,
+            ttl,
+        )
+        allowed = int(result[0]) == 1
+        self.wait_seconds = int(result[2])
+        return allowed
+
+    def wait(self):
+        return self.wait_seconds
