@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from checkout.permissions import IsSafaricomCheckoutIP
+from checkout.providers.base import ProviderError
 from checkout.selectors import get_customer_checkout_or_none
 from checkout.serializers import (
     CheckoutSessionCreateSerializer,
@@ -67,11 +68,17 @@ class CheckoutMpesaSTKView(APIView):
             raise Http404
         serializer = STKInitiationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        attempt = initiate_mpesa_stk(
-            session.id,
-            phone_number=serializer.validated_data["phone_number"],
-            idempotency_key=serializer.validated_data["idempotency_key"],
-        )
+        try:
+            attempt = initiate_mpesa_stk(
+                session.id,
+                phone_number=serializer.validated_data["phone_number"],
+                idempotency_key=serializer.validated_data["idempotency_key"],
+            )
+        except ProviderError:
+            return Response(
+                {"detail": "Payment provider temporarily unavailable."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
         return Response(
             {"attempt_id": str(attempt.id), "status": attempt.status},
             status=status.HTTP_202_ACCEPTED,

@@ -268,6 +268,15 @@ DARAJA_CALLBACK_URL = os.environ.get(
     "DARAJA_CALLBACK_URL",
     "https://api.beautycosmetics.com/api/checkout/mpesa/webhook/",
 )
+PAYMENT_STK_CLIENT_TIMEOUT_SECONDS = int(
+    os.environ.get("PAYMENT_STK_CLIENT_TIMEOUT_SECONDS", "45")
+)
+PAYMENT_STATUS_POLL_INTERVAL_SECONDS = int(
+    os.environ.get("PAYMENT_STATUS_POLL_INTERVAL_SECONDS", "5")
+)
+PAYMENT_STATUS_MAX_WAIT_SECONDS = int(
+    os.environ.get("PAYMENT_STATUS_MAX_WAIT_SECONDS", "300")
+)
 
 # ==============================================================================
 # DJANGO REST FRAMEWORK CONFIGURATIONS

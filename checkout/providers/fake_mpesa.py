@@ -1,3 +1,5 @@
+import time
+
 from checkout.providers.base import (
     BaseMpesaProvider,
     MpesaProviderResponse,
@@ -12,8 +14,9 @@ class FakeMpesaProvider(BaseMpesaProvider):
     It never performs network IO.
     """
 
-    def __init__(self, mode="success"):
+    def __init__(self, mode="success", delay_seconds=0):
         self.mode = mode
+        self.delay_seconds = delay_seconds
         self._responses = {}
 
     def initiate_stk_push(
@@ -25,6 +28,8 @@ class FakeMpesaProvider(BaseMpesaProvider):
         callback_url,
         idempotency_key,
     ):
+        if self.delay_seconds:
+            time.sleep(self.delay_seconds)
         if self.mode == "timeout":
             raise ProviderTimeout("Fake M-Pesa timeout")
         if self.mode == "outage":

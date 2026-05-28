@@ -19,6 +19,8 @@ def _fixture(name):
         ("stk_success_callback.json", 0),
         ("stk_failure_callback.json", 1032),
         ("stk_timeout_or_cancelled_callback.json", 1037),
+        ("stk_cancelled_callback.json", 1032),
+        ("stk_timeout_callback.json", 1037),
     ],
 )
 def test_daraja_real_shaped_callbacks_normalize_to_internal_contract(

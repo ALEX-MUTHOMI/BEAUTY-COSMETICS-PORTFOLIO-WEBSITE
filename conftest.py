@@ -17,6 +17,9 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.payment_load)
         if "/tests/security/" in path:
             item.add_marker(pytest.mark.payment_security)
+        if "/tests/latency/" in path:
+            item.add_marker(pytest.mark.latency)
+            item.add_marker(pytest.mark.network_resilience)
         if (
             "/tests/integration/" in path
             or "daraja" in path
