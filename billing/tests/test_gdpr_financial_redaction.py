@@ -11,7 +11,9 @@ User = get_user_model()
 
 @pytest.mark.django_db
 def test_gdpr_anonymization_preserves_accounting_integrity_without_raw_provider_ids():
-    customer = User.objects.create_user(email="gdpr-ledger@beauty.com", phone_number="+254712100006")
+    customer = User.objects.create_user(
+        email="gdpr-ledger@beauty.com", phone_number="+254712100006"
+    )
     ledger = create_pending_ledger_transaction(
         customer,
         Decimal("700.00"),

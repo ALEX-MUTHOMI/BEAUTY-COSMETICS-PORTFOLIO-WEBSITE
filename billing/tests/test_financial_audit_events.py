@@ -15,7 +15,9 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_audit_event_created_on_financial_transition_and_payload_is_redacted():
-    customer = User.objects.create_user(email="audit@beauty.com", phone_number="+254712100003")
+    customer = User.objects.create_user(
+        email="audit@beauty.com", phone_number="+254712100003"
+    )
     ledger = create_pending_ledger_transaction(
         customer,
         Decimal("1300.00"),
@@ -32,7 +34,9 @@ def test_audit_event_created_on_financial_transition_and_payload_is_redacted():
         correlation_id="audit-correlation-001",
     )
 
-    event = FinancialAuditEvent.objects.get(ledger_transaction=ledger, event_type="LEDGER_SUCCESS")
+    event = FinancialAuditEvent.objects.get(
+        ledger_transaction=ledger, event_type="LEDGER_SUCCESS"
+    )
     assert event.payload_hash
     assert event.correlation_id == "audit-correlation-001"
     assert "+254712100003" not in str(event.redacted_payload)
@@ -41,7 +45,9 @@ def test_audit_event_created_on_financial_transition_and_payload_is_redacted():
 
 @pytest.mark.django_db(transaction=True)
 def test_correction_workflow_creates_audit_event():
-    customer = User.objects.create_user(email="correction@beauty.com", phone_number="+254712100004")
+    customer = User.objects.create_user(
+        email="correction@beauty.com", phone_number="+254712100004"
+    )
     ledger = create_pending_ledger_transaction(
         customer,
         Decimal("1300.00"),

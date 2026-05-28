@@ -12,7 +12,9 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_red_team_ledger_mutation_and_negative_amount_attacks_are_blocked():
-    customer = User.objects.create_user(email="billing-redteam@beauty.com", phone_number="+254712400003")
+    customer = User.objects.create_user(
+        email="billing-redteam@beauty.com", phone_number="+254712400003"
+    )
     with pytest.raises(ValueError):
         create_pending_ledger_transaction(
             customer,
@@ -38,7 +40,9 @@ def test_red_team_ledger_mutation_and_negative_amount_attacks_are_blocked():
 
 @pytest.mark.django_db(transaction=True)
 def test_red_team_successful_provider_reference_mutation_is_blocked():
-    customer = User.objects.create_user(email="billing-redteam-ref@beauty.com", phone_number="+254712400004")
+    customer = User.objects.create_user(
+        email="billing-redteam-ref@beauty.com", phone_number="+254712400004"
+    )
     ledger = create_pending_ledger_transaction(
         customer,
         Decimal("600.00"),

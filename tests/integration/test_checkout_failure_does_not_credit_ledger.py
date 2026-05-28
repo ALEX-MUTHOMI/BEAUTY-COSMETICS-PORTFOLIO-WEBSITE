@@ -16,7 +16,9 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_failed_checkout_does_not_create_successful_ledger_credit():
-    customer = User.objects.create_user(email="failure-ledger@beauty.com", phone_number="+254712300003")
+    customer = User.objects.create_user(
+        email="failure-ledger@beauty.com", phone_number="+254712300003"
+    )
     session = create_checkout_session(
         customer,
         Decimal("1700.00"),

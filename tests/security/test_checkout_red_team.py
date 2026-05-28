@@ -19,7 +19,9 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_red_team_checkout_attack_vectors_are_blocked(settings):
-    customer = User.objects.create_user(email="checkout-redteam@beauty.com", phone_number="+254712400001")
+    customer = User.objects.create_user(
+        email="checkout-redteam@beauty.com", phone_number="+254712400001"
+    )
     session = create_checkout_session(
         customer,
         Decimal("1900.00"),
@@ -72,7 +74,9 @@ def test_red_team_checkout_attack_vectors_are_blocked(settings):
 
 @pytest.mark.django_db(transaction=True)
 def test_red_team_bruteforce_stk_push_attempts_are_throttled():
-    customer = User.objects.create_user(email="checkout-bruteforce@beauty.com", phone_number="+254712400002")
+    customer = User.objects.create_user(
+        email="checkout-bruteforce@beauty.com", phone_number="+254712400002"
+    )
     session = create_checkout_session(
         customer,
         Decimal("1900.00"),

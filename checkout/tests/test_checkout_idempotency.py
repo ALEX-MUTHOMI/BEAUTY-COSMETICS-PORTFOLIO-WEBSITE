@@ -11,7 +11,9 @@ User = get_user_model()
 
 @pytest.fixture
 def customer():
-    return User.objects.create_user(email="checkout-idem@beauty.com", phone_number="+254712200002")
+    return User.objects.create_user(
+        email="checkout-idem@beauty.com", phone_number="+254712200002"
+    )
 
 
 @pytest.mark.django_db(transaction=True)
@@ -30,7 +32,9 @@ def test_idempotency_key_returns_existing_checkout_session(customer):
     second = create_checkout_session(**kwargs)
 
     assert first.id == second.id
-    assert CheckoutSession.objects.filter(idempotency_key="checkout-idem-001").count() == 1
+    assert (
+        CheckoutSession.objects.filter(idempotency_key="checkout-idem-001").count() == 1
+    )
 
 
 @pytest.mark.django_db(transaction=True)
@@ -45,8 +49,12 @@ def test_duplicate_stk_initiation_does_not_create_duplicate_attempts(customer):
         "checkout-idem-stk-001",
     )
 
-    first = initiate_mpesa_stk(session.id, phone_number="+254712200002", idempotency_key="stk-idem-key-001")
-    second = initiate_mpesa_stk(session.id, phone_number="+254712200002", idempotency_key="stk-idem-key-001")
+    first = initiate_mpesa_stk(
+        session.id, phone_number="+254712200002", idempotency_key="stk-idem-key-001"
+    )
+    second = initiate_mpesa_stk(
+        session.id, phone_number="+254712200002", idempotency_key="stk-idem-key-001"
+    )
 
     assert first.id == second.id
     assert CheckoutAttempt.objects.filter(checkout_session=session).count() == 1

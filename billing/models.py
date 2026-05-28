@@ -33,14 +33,20 @@ class LedgerTransaction(AuditMixin):
     )
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     currency = models.CharField(max_length=3, default="KES")
-    direction = models.CharField(max_length=16, choices=Direction.choices, default=Direction.CREDIT)
-    provider = models.CharField(max_length=32, choices=Provider.choices, default=Provider.MPESA)
+    direction = models.CharField(
+        max_length=16, choices=Direction.choices, default=Direction.CREDIT
+    )
+    provider = models.CharField(
+        max_length=32, choices=Provider.choices, default=Provider.MPESA
+    )
     provider_reference_hash = models.CharField(max_length=128, blank=True)
     provider_receipt_hash = models.CharField(max_length=128, blank=True)
     external_correlation_id = models.CharField(max_length=128, null=True, blank=True)
     mpesa_receipt_number = models.CharField(max_length=64, null=True, blank=True)
     checkout_request_id = models.CharField(max_length=128, null=True, blank=True)
-    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(
+        max_length=16, choices=Status.choices, default=Status.PENDING
+    )
     raw_payload = models.JSONField(default=dict, blank=True)
     credited_at = models.DateTimeField(null=True, blank=True)
 
@@ -53,7 +59,9 @@ class LedgerTransaction(AuditMixin):
             ),
         ]
         indexes = [
-            models.Index(fields=["checkout_request_id"], name="billing_led_checkou_fa4706_idx"),
+            models.Index(
+                fields=["checkout_request_id"], name="billing_led_checkou_fa4706_idx"
+            ),
             models.Index(
                 fields=["provider_reference_hash"],
                 name="billing_led_provide_884b14_idx",
@@ -83,10 +91,17 @@ class LedgerTransaction(AuditMixin):
         )
         for field in immutable_fields:
             if getattr(previous, field) != getattr(self, field):
-                raise BillingInvariantError(f"{field} is immutable after ledger creation.")
+                raise BillingInvariantError(
+                    f"{field} is immutable after ledger creation."
+                )
 
-        if previous.status == self.Status.SUCCESS and previous.provider_receipt_hash != self.provider_receipt_hash:
-            raise BillingInvariantError("provider receipt hash is immutable after success.")
+        if (
+            previous.status == self.Status.SUCCESS
+            and previous.provider_receipt_hash != self.provider_receipt_hash
+        ):
+            raise BillingInvariantError(
+                "provider receipt hash is immutable after success."
+            )
 
         allowed = {
             self.Status.PENDING: {
@@ -104,7 +119,9 @@ class LedgerTransaction(AuditMixin):
             self.Status.REFUNDED: {self.Status.REFUNDED},
         }
         if self.status not in allowed[previous.status]:
-            raise BillingStateError(f"Illegal ledger transition {previous.status} -> {self.status}.")
+            raise BillingStateError(
+                f"Illegal ledger transition {previous.status} -> {self.status}."
+            )
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -131,7 +148,9 @@ class FinancialAuditEvent(AuditMixin):
         db_table = "billing_financial_audit_events"
         indexes = [
             models.Index(fields=["event_type"], name="billing_fin_event_t_79a315_idx"),
-            models.Index(fields=["correlation_id"], name="billing_fin_correla_651b38_idx"),
+            models.Index(
+                fields=["correlation_id"], name="billing_fin_correla_651b38_idx"
+            ),
         ]
 
 
@@ -149,11 +168,17 @@ class SettlementRecord(AuditMixin):
         related_name="settlement_record",
     )
     recipient_reference = models.CharField(max_length=128, null=True, blank=True)
-    settlement_status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    settlement_status = models.CharField(
+        max_length=16, choices=Status.choices, default=Status.PENDING
+    )
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     currency = models.CharField(max_length=3, default="KES")
     settled_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "billing_settlement_records"
-        indexes = [models.Index(fields=["settlement_status"], name="billing_set_settlem_ed3beb_idx")]
+        indexes = [
+            models.Index(
+                fields=["settlement_status"], name="billing_set_settlem_ed3beb_idx"
+            )
+        ]

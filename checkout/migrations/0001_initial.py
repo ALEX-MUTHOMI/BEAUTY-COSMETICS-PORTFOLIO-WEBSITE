@@ -125,7 +125,9 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "provider",
-                    models.CharField(choices=[("mpesa", "M-Pesa")], default="mpesa", max_length=32),
+                    models.CharField(
+                        choices=[("mpesa", "M-Pesa")], default="mpesa", max_length=32
+                    ),
                 ),
                 ("phone_number_hash", models.CharField(max_length=128)),
                 ("redacted_phone", models.CharField(max_length=32)),
@@ -230,15 +232,21 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="checkoutsession",
-            index=models.Index(fields=["customer", "status"], name="checkout_se_customer_b2a808_idx"),
+            index=models.Index(
+                fields=["customer", "status"], name="checkout_se_customer_b2a808_idx"
+            ),
         ),
         migrations.AddIndex(
             model_name="checkoutsession",
-            index=models.Index(fields=["expires_at"], name="checkout_se_expires_709e52_idx"),
+            index=models.Index(
+                fields=["expires_at"], name="checkout_se_expires_709e52_idx"
+            ),
         ),
         migrations.AddIndex(
             model_name="checkoutattempt",
-            index=models.Index(fields=["provider_request_id"], name="checkout_at_provide_5b9f73_idx"),
+            index=models.Index(
+                fields=["provider_request_id"], name="checkout_at_provide_5b9f73_idx"
+            ),
         ),
         migrations.AddIndex(
             model_name="checkoutattempt",
@@ -253,6 +261,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="mpesawebhookinbox",
-            index=models.Index(fields=["processing_status"], name="checkout_mp_process_f56310_idx"),
+            index=models.Index(
+                fields=["processing_status"], name="checkout_mp_process_f56310_idx"
+            ),
         ),
     ]

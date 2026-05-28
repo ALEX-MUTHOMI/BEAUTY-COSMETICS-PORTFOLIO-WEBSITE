@@ -11,6 +11,19 @@ def pytest_addoption(parser):
 
 
 def pytest_collection_modifyitems(config, items):
+    for item in items:
+        path = str(item.path).replace("\\", "/")
+        if "/tests/load/" in path:
+            item.add_marker(pytest.mark.payment_load)
+        if "/tests/security/" in path:
+            item.add_marker(pytest.mark.payment_security)
+        if (
+            "/tests/integration/" in path
+            or "daraja" in path
+            or "provider_adapter" in path
+        ):
+            item.add_marker(pytest.mark.payment_contract)
+
     if config.getoption("--run-external"):
         return
     skip_external = pytest.mark.skip(

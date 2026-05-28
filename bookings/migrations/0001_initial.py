@@ -95,7 +95,9 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="booking",
-            index=models.Index(fields=["service_date", "time_slot"], name="bookings_service_f1f4bf_idx"),
+            index=models.Index(
+                fields=["service_date", "time_slot"], name="bookings_service_f1f4bf_idx"
+            ),
         ),
         migrations.AddIndex(
             model_name="booking",

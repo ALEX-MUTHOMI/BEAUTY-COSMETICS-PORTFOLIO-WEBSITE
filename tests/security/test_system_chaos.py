@@ -46,13 +46,17 @@ def create_stk_checkout(customer, amount=Decimal("2400.00")):
         "chaos-purchasable-001",
         "chaos-session-idem-001",
     )
-    attempt = initiate_mpesa_stk(session.id, customer.phone_number, "chaos-stk-idem-001")
+    attempt = initiate_mpesa_stk(
+        session.id, customer.phone_number, "chaos-stk-idem-001"
+    )
     return session, attempt
 
 
 @pytest.mark.django_db(transaction=True)
 def test_parallel_mpesa_callbacks_credit_checkout_once():
-    customer = User.objects.create_user(email="chaos-callback@beauty.com", phone_number="+254712345679")
+    customer = User.objects.create_user(
+        email="chaos-callback@beauty.com", phone_number="+254712345679"
+    )
     session, attempt = create_stk_checkout(customer)
     payload = {
         "CheckoutRequestID": attempt.provider_request_id,
@@ -65,7 +69,9 @@ def test_parallel_mpesa_callbacks_credit_checkout_once():
     def callback():
         close_old_connections()
         try:
-            return process_mpesa_callback(payload, remote_addr="127.0.0.1").inbox.processing_status
+            return process_mpesa_callback(
+                payload, remote_addr="127.0.0.1"
+            ).inbox.processing_status
         finally:
             close_old_connections()
 
@@ -83,12 +89,19 @@ def test_parallel_mpesa_callbacks_credit_checkout_once():
         ).count()
         == 1
     )
-    assert SettlementRecord.objects.filter(ledger_transaction__external_correlation_id=str(session.id)).count() == 1
+    assert (
+        SettlementRecord.objects.filter(
+            ledger_transaction__external_correlation_id=str(session.id)
+        ).count()
+        == 1
+    )
 
 
 @pytest.mark.django_db(transaction=True)
 def test_auth_otp_and_checkout_callback_do_not_deadlock():
-    customer = User.objects.create_user(email="chaos-auth@beauty.com", phone_number="+254712345680")
+    customer = User.objects.create_user(
+        email="chaos-auth@beauty.com", phone_number="+254712345680"
+    )
     session, attempt = create_stk_checkout(customer, Decimal("750.00"))
     payload = {
         "CheckoutRequestID": attempt.provider_request_id,
@@ -101,7 +114,9 @@ def test_auth_otp_and_checkout_callback_do_not_deadlock():
     def checkout_path():
         close_old_connections()
         try:
-            return process_mpesa_callback(payload, remote_addr="127.0.0.1").session.status
+            return process_mpesa_callback(
+                payload, remote_addr="127.0.0.1"
+            ).session.status
         finally:
             close_old_connections()
 
@@ -139,7 +154,9 @@ def test_checkout_webhook_rejects_x_forwarded_for_spoofing(settings):
 
 @pytest.mark.django_db(transaction=True)
 def test_checkout_stk_token_bucket_blocks_fourth_burst_request():
-    customer = User.objects.create_user(email="chaos-throttle@beauty.com", phone_number="+254712345681")
+    customer = User.objects.create_user(
+        email="chaos-throttle@beauty.com", phone_number="+254712345681"
+    )
     session = create_checkout_session(
         customer,
         Decimal("1200.00"),

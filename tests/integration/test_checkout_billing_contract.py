@@ -16,7 +16,9 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_checkout_success_creates_single_ledger_audit_and_settlement():
-    customer = User.objects.create_user(email="contract-success@beauty.com", phone_number="+254712300001")
+    customer = User.objects.create_user(
+        email="contract-success@beauty.com", phone_number="+254712300001"
+    )
     session = create_checkout_session(
         customer,
         Decimal("2600.00"),
@@ -53,6 +55,13 @@ def test_checkout_success_creates_single_ledger_audit_and_settlement():
     ledger = LedgerTransaction.objects.get(external_correlation_id=str(session.id))
     assert session.status == CheckoutSession.Status.PAID
     assert ledger.status == LedgerTransaction.Status.SUCCESS
-    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 1
-    assert FinancialAuditEvent.objects.filter(ledger_transaction=ledger, event_type="LEDGER_SUCCESS").exists()
+    assert (
+        LedgerTransaction.objects.filter(
+            external_correlation_id=str(session.id)
+        ).count()
+        == 1
+    )
+    assert FinancialAuditEvent.objects.filter(
+        ledger_transaction=ledger, event_type="LEDGER_SUCCESS"
+    ).exists()
     assert SettlementRecord.objects.filter(ledger_transaction=ledger).exists()

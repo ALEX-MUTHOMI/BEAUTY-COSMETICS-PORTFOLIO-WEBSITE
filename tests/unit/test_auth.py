@@ -213,7 +213,9 @@ class TestPasswordlessAuthSuite:
 
         # Attempt OTP Verification
         verify_url = "/api/auth/verify-otp/"
-        verify_response = api_client.post(verify_url, {"email": user.email, "otp": "123456"})
+        verify_response = api_client.post(
+            verify_url, {"email": user.email, "otp": "123456"}
+        )
         assert verify_response.status_code == status.HTTP_400_BAD_REQUEST
         assert "error" in verify_response.data
         assert "anonymized" in verify_response.data["error"]
@@ -228,7 +230,9 @@ class TestPasswordlessAuthSuite:
         """
         # Test Case A: Missing Turnstile token in payload
         url = "/api/auth/request-otp/"
-        response_missing_token = api_client.post(url, {"email": "malformed_test@beauty.com"})
+        response_missing_token = api_client.post(
+            url, {"email": "malformed_test@beauty.com"}
+        )
         assert response_missing_token.status_code == status.HTTP_400_BAD_REQUEST
         assert "turnstile_token" in response_missing_token.data
 
@@ -250,4 +254,7 @@ class TestPasswordlessAuthSuite:
             )
             assert response_rejected_token.status_code == status.HTTP_400_BAD_REQUEST
             assert "error" in response_rejected_token.data
-            assert "Bot challenge validation failed" in response_rejected_token.data["error"]
+            assert (
+                "Bot challenge validation failed"
+                in response_rejected_token.data["error"]
+            )

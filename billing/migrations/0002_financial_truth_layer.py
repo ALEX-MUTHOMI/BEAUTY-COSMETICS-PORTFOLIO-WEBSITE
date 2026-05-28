@@ -210,14 +210,20 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="financialauditevent",
-            index=models.Index(fields=["event_type"], name="billing_fin_event_t_79a315_idx"),
+            index=models.Index(
+                fields=["event_type"], name="billing_fin_event_t_79a315_idx"
+            ),
         ),
         migrations.AddIndex(
             model_name="financialauditevent",
-            index=models.Index(fields=["correlation_id"], name="billing_fin_correla_651b38_idx"),
+            index=models.Index(
+                fields=["correlation_id"], name="billing_fin_correla_651b38_idx"
+            ),
         ),
         migrations.AddIndex(
             model_name="settlementrecord",
-            index=models.Index(fields=["settlement_status"], name="billing_set_settlem_ed3beb_idx"),
+            index=models.Index(
+                fields=["settlement_status"], name="billing_set_settlem_ed3beb_idx"
+            ),
         ),
     ]

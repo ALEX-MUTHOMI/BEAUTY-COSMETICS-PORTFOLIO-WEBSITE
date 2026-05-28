@@ -44,5 +44,7 @@ class OTPVerifySerializer(serializers.Serializer):
         Verify code consists exclusively of 6 numerical digits.
         """
         if not re.match(r"^\d{6}$", value):
-            raise serializers.ValidationError("OTP code must be a 6-digit numeric string.")
+            raise serializers.ValidationError(
+                "OTP code must be a 6-digit numeric string."
+            )
         return value

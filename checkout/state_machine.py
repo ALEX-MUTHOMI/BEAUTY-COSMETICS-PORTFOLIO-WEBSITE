@@ -30,7 +30,9 @@ ALLOWED_TRANSITIONS = {
 
 def transition_checkout(session, target_status):
     if target_status not in ALLOWED_TRANSITIONS[session.status]:
-        raise CheckoutStateError(f"Illegal checkout transition {session.status} -> {target_status}.")
+        raise CheckoutStateError(
+            f"Illegal checkout transition {session.status} -> {target_status}."
+        )
     session.status = target_status
     session.save(update_fields=["status", "updated_at"])
     return session

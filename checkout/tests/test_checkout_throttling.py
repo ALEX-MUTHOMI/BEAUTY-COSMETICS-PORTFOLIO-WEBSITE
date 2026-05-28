@@ -15,7 +15,9 @@ User = get_user_model()
 def test_stk_push_endpoint_throttles_burst_attempts():
     client = APIClient()
     client.defaults["HTTP_X_FORWARDED_PROTO"] = "https"
-    customer = User.objects.create_user(email="throttle-checkout@beauty.com", phone_number="+254712200010")
+    customer = User.objects.create_user(
+        email="throttle-checkout@beauty.com", phone_number="+254712200010"
+    )
     session = create_checkout_session(
         customer,
         Decimal("1000.00"),

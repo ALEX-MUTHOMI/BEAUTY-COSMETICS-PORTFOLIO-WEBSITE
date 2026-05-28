@@ -15,7 +15,9 @@ class IsSafaricomIP(BasePermission):
     def _client_ip(self, request):
         remote_addr = request.META.get("REMOTE_ADDR", "")
         trusted_proxies = [
-            ipaddress.ip_network(cidr.strip()) for cidr in getattr(settings, "TRUSTED_PROXY_CIDRS", []) if cidr.strip()
+            ipaddress.ip_network(cidr.strip())
+            for cidr in getattr(settings, "TRUSTED_PROXY_CIDRS", [])
+            if cidr.strip()
         ]
 
         try:
@@ -37,6 +39,8 @@ class IsSafaricomIP(BasePermission):
             return False
 
         allowed_networks = [
-            ipaddress.ip_network(cidr.strip()) for cidr in settings.SAFARICOM_ALLOWED_CIDRS if cidr.strip()
+            ipaddress.ip_network(cidr.strip())
+            for cidr in settings.SAFARICOM_ALLOWED_CIDRS
+            if cidr.strip()
         ]
         return any(client_ip in network for network in allowed_networks)

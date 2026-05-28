@@ -11,7 +11,9 @@ def test_create_user_requires_email():
     Enforce that a CustomUser cannot be created without a valid email address.
     """
     with pytest.raises(ValueError, match="The Email field must be set"):
-        User.objects.create_user(email="", phone_number="+254712345678", password="SecurePassword123!")
+        User.objects.create_user(
+            email="", phone_number="+254712345678", password="SecurePassword123!"
+        )
 
 
 @pytest.mark.django_db
@@ -21,7 +23,9 @@ def test_create_user_requires_valid_kenyan_phone():
     Valid formats include: 07XXXXXXXX, 01XXXXXXXX, +2547XXXXXXXX, etc.
     """
     # Test Case A: Create user with invalid phone number format
-    user = User(email="test_invalid_phone@beauty.com", phone_number="123456")  # Clearly invalid format
+    user = User(
+        email="test_invalid_phone@beauty.com", phone_number="123456"
+    )  # Clearly invalid format
     user.set_password("SecurePassword123!")
 
     # In Django, validators run during model clean verification
@@ -81,7 +85,9 @@ def test_gdpr_anonymization_destroys_pii():
     original_email = "gdpr_client@beauty.com"
     original_phone = "+254712345678"
 
-    user = User.objects.create_user(email=original_email, phone_number=original_phone, password="SecurePassword123!")
+    user = User.objects.create_user(
+        email=original_email, phone_number=original_phone, password="SecurePassword123!"
+    )
     user.gdpr_consent_at = pytest.datetime = "2026-05-27T00:00:00Z"
     user.save()
 

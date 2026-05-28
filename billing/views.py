@@ -12,7 +12,9 @@ class MpesaWebhookView(APIView):
 
     def post(self, request, *args, **kwargs):
         return Response(
-            {"detail": "Billing M-Pesa webhook is disabled. Use /api/checkout/mpesa/webhook/."},
+            {
+                "detail": "Billing M-Pesa webhook is disabled. Use /api/checkout/mpesa/webhook/."
+            },
             status=status.HTTP_410_GONE,
         )
 
@@ -22,6 +24,8 @@ class STKPushView(APIView):
 
     def post(self, request, *args, **kwargs):
         return Response(
-            {"detail": "Billing STK initiation is disabled. Use /api/checkout/sessions/{id}/mpesa/stk/."},
+            {
+                "detail": "Billing STK initiation is disabled. Use /api/checkout/sessions/{id}/mpesa/stk/."
+            },
             status=status.HTTP_410_GONE,
         )

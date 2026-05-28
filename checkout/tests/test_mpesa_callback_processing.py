@@ -17,7 +17,9 @@ User = get_user_model()
 
 @pytest.fixture
 def stk_session():
-    customer = User.objects.create_user(email="callback@beauty.com", phone_number="+254712200004")
+    customer = User.objects.create_user(
+        email="callback@beauty.com", phone_number="+254712200004"
+    )
     session = create_checkout_session(
         customer,
         Decimal("2100.00"),
@@ -27,7 +29,9 @@ def stk_session():
         "callback-001",
         "callback-idem-001",
     )
-    initiate_mpesa_stk(session.id, phone_number="+254712200004", idempotency_key="callback-stk-001")
+    initiate_mpesa_stk(
+        session.id, phone_number="+254712200004", idempotency_key="callback-stk-001"
+    )
     return session
 
 
@@ -49,7 +53,12 @@ def test_successful_webhook_marks_checkout_paid_once_and_creates_one_ledger(
 
     assert result.session.status == CheckoutSession.Status.PAID
     assert duplicate.inbox.processing_status == MpesaWebhookInbox.Status.DUPLICATE
-    assert LedgerTransaction.objects.filter(external_correlation_id=str(stk_session.id)).count() == 1
+    assert (
+        LedgerTransaction.objects.filter(
+            external_correlation_id=str(stk_session.id)
+        ).count()
+        == 1
+    )
 
 
 @pytest.mark.django_db(transaction=True)

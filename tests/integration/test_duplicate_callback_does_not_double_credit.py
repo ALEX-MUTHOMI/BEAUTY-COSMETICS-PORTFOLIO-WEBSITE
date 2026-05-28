@@ -18,7 +18,9 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_concurrent_duplicate_callbacks_do_not_double_credit():
-    customer = User.objects.create_user(email="parallel-callback@beauty.com", phone_number="+254712300004")
+    customer = User.objects.create_user(
+        email="parallel-callback@beauty.com", phone_number="+254712300004"
+    )
     session = create_checkout_session(
         customer,
         Decimal("3100.00"),
@@ -40,7 +42,9 @@ def test_concurrent_duplicate_callbacks_do_not_double_credit():
     def callback():
         close_old_connections()
         try:
-            return process_mpesa_callback(payload, remote_addr="127.0.0.1").inbox.processing_status
+            return process_mpesa_callback(
+                payload, remote_addr="127.0.0.1"
+            ).inbox.processing_status
         finally:
             close_old_connections()
 

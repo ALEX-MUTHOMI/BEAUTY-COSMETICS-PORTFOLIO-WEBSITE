@@ -42,8 +42,14 @@ class RequestOTPView(APIView):
 
         # 2. Assert Soft-Deletion Boundary
         # If an account is soft-deleted/anonymized, we block OTP request immediately
-        if User.objects.all_with_deleted().filter(email=email, is_deleted=True).exists():
-            logger.warning(f"[-] Blocked OTP request attempt on soft-deleted account: {email}")
+        if (
+            User.objects.all_with_deleted()
+            .filter(email=email, is_deleted=True)
+            .exists()
+        ):
+            logger.warning(
+                f"[-] Blocked OTP request attempt on soft-deleted account: {email}"
+            )
             return Response(
                 {"error": "This account has been permanently deactivated/anonymized."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -77,7 +83,11 @@ class VerifyOTPView(APIView):
         otp = serializer.validated_data["otp"]
 
         # 1. Assert Soft-Deletion Boundary
-        if User.objects.all_with_deleted().filter(email=email, is_deleted=True).exists():
+        if (
+            User.objects.all_with_deleted()
+            .filter(email=email, is_deleted=True)
+            .exists()
+        ):
             return Response(
                 {"error": "This account has been permanently deactivated/anonymized."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -98,7 +108,9 @@ class VerifyOTPView(APIView):
             # Friction-free Onboarding: Auto-create account since OTP is verified
             user = User.objects.create_user(email=email)
             is_new = True
-            logger.info(f"[+] Passwordless onboarding complete. Created new account: {email}")
+            logger.info(
+                f"[+] Passwordless onboarding complete. Created new account: {email}"
+            )
 
         # 4. Bind session authentication context
         user.is_otp_verified = True

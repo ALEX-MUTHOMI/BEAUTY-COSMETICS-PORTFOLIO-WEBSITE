@@ -11,7 +11,9 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_successful_credit_creates_pending_settlement_record():
-    customer = User.objects.create_user(email="settlement@beauty.com", phone_number="+254712100005")
+    customer = User.objects.create_user(
+        email="settlement@beauty.com", phone_number="+254712100005"
+    )
     ledger = create_pending_ledger_transaction(
         customer,
         Decimal("2200.00"),

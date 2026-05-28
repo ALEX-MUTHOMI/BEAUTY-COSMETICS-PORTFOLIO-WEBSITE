@@ -23,12 +23,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-%m$)l3#zgq)20cmf5!=nf48v0k3&%5p124l$mox#+qeu3ujog1")  # nosec
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY", "django-insecure-%m$)l3#zgq)20cmf5!=nf48v0k3&%5p124l$mox#+qeu3ujog1"
+)  # nosec
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1", "t")
 
-ALLOWED_HOSTS = [host.strip() for host in os.environ.get("ALLOWED_HOSTS", "*").split(",") if host.strip()]
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get("ALLOWED_HOSTS", "*").split(",")
+    if host.strip()
+]
 
 # Production security configuration gates
 if not DEBUG:
@@ -226,17 +232,42 @@ CELERY_TASK_QUEUES = (
 # BOT MITIGATION (CLOUDFLARE TURNSTILE) CONFIGURATION
 # ==============================================================================
 # In production, load the secret dynamically from secure environment injections
-TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA")
+TURNSTILE_SECRET_KEY = os.environ.get(
+    "TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA"
+)
 
 SAFARICOM_ALLOWED_CIDRS = [
     cidr.strip()
-    for cidr in os.environ.get("SAFARICOM_ALLOWED_CIDRS", "196.201.214.0/24,196.201.216.0/24,127.0.0.1/32").split(",")
+    for cidr in os.environ.get(
+        "SAFARICOM_ALLOWED_CIDRS", "196.201.214.0/24,196.201.216.0/24,127.0.0.1/32"
+    ).split(",")
     if cidr.strip()
 ]
-TRUSTED_PROXY_CIDRS = [cidr.strip() for cidr in os.environ.get("TRUSTED_PROXY_CIDRS", "").split(",") if cidr.strip()]
+TRUSTED_PROXY_CIDRS = [
+    cidr.strip()
+    for cidr in os.environ.get("TRUSTED_PROXY_CIDRS", "").split(",")
+    if cidr.strip()
+]
 CHECKOUT_MPESA_PROVIDER = os.environ.get("CHECKOUT_MPESA_PROVIDER", "fake")
-MPESA_CONNECT_TIMEOUT = float(os.environ.get("MPESA_CONNECT_TIMEOUT", "2"))
-MPESA_READ_TIMEOUT = float(os.environ.get("MPESA_READ_TIMEOUT", "5"))
+PAYMENT_PROVIDER_MODE = os.environ.get("PAYMENT_PROVIDER_MODE", CHECKOUT_MPESA_PROVIDER)
+MPESA_CONNECT_TIMEOUT = float(
+    os.environ.get(
+        "DARAJA_CONNECT_TIMEOUT_SECONDS", os.environ.get("MPESA_CONNECT_TIMEOUT", "2")
+    )
+)
+MPESA_READ_TIMEOUT = float(
+    os.environ.get(
+        "DARAJA_READ_TIMEOUT_SECONDS", os.environ.get("MPESA_READ_TIMEOUT", "5")
+    )
+)
+DARAJA_BASE_URL = os.environ.get("DARAJA_BASE_URL", "https://sandbox.safaricom.co.ke")
+DARAJA_TOKEN_CACHE_TTL_SECONDS = int(
+    os.environ.get("DARAJA_TOKEN_CACHE_TTL_SECONDS", "3300")
+)
+DARAJA_CALLBACK_URL = os.environ.get(
+    "DARAJA_CALLBACK_URL",
+    "https://api.beautycosmetics.com/api/checkout/mpesa/webhook/",
+)
 
 # ==============================================================================
 # DJANGO REST FRAMEWORK CONFIGURATIONS
