@@ -52,15 +52,11 @@ def create_pending_ledger_transaction(
         provider_reference_hash=hash_sensitive_value(provider_reference),
         external_correlation_id=external_correlation_id,
     )
-    _create_audit_event(
-        ledger, "LEDGER_CREATED", {"provider_reference": provider_reference}
-    )
+    _create_audit_event(ledger, "LEDGER_CREATED", {"provider_reference": provider_reference})
     return ledger
 
 
-def mark_ledger_success(
-    ledger_id, provider_receipt, raw_payload=None, correlation_id=None
-):
+def mark_ledger_success(ledger_id, provider_receipt, raw_payload=None, correlation_id=None):
     with transaction.atomic():
         ledger = LedgerTransaction.objects.select_for_update().get(pk=ledger_id)
         if ledger.status != LedgerTransaction.Status.PENDING:
@@ -98,14 +94,10 @@ def record_reversal(ledger_id, reason, correlation_id=None):
     with transaction.atomic():
         ledger = LedgerTransaction.objects.select_for_update().get(pk=ledger_id)
         if ledger.status != LedgerTransaction.Status.SUCCESS:
-            raise BillingStateError(
-                "Only successful ledger transactions can be reversed."
-            )
+            raise BillingStateError("Only successful ledger transactions can be reversed.")
         ledger.status = LedgerTransaction.Status.REVERSED
         ledger.save()
-        _create_audit_event(
-            ledger, "LEDGER_REVERSED", {"reason": reason}, correlation_id
-        )
+        _create_audit_event(ledger, "LEDGER_REVERSED", {"reason": reason}, correlation_id)
         return ledger
 
 
@@ -113,14 +105,10 @@ def record_refund(ledger_id, reason, correlation_id=None):
     with transaction.atomic():
         ledger = LedgerTransaction.objects.select_for_update().get(pk=ledger_id)
         if ledger.status != LedgerTransaction.Status.SUCCESS:
-            raise BillingStateError(
-                "Only successful ledger transactions can be refunded."
-            )
+            raise BillingStateError("Only successful ledger transactions can be refunded.")
         ledger.status = LedgerTransaction.Status.REFUNDED
         ledger.save()
-        _create_audit_event(
-            ledger, "LEDGER_REFUNDED", {"reason": reason}, correlation_id
-        )
+        _create_audit_event(ledger, "LEDGER_REFUNDED", {"reason": reason}, correlation_id)
         return ledger
 
 
@@ -152,7 +140,5 @@ def record_successful_checkout_payment(
                 provider_reference=provider_reference,
                 external_correlation_id=str(checkout_session_id),
             )
-        ledger = mark_ledger_success(
-            ledger.id, provider_receipt, raw_payload, correlation_id
-        )
+        ledger = mark_ledger_success(ledger.id, provider_receipt, raw_payload, correlation_id)
         return ledger, True

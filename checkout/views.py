@@ -84,7 +84,11 @@ class CheckoutMpesaWebhookView(APIView):
 
     def post(self, request):
         serializer = MpesaWebhookSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return Response(
+                {"detail": "Malformed provider callback."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         process_mpesa_callback(
             dict(serializer.validated_data),
             request.META.get("REMOTE_ADDR"),

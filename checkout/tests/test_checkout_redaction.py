@@ -6,7 +6,7 @@ from checkout.redaction import (
 
 
 def test_checkout_redaction_masks_payment_identifiers(settings):
-    settings.SECRET_KEY = "checkout-redaction-secret"
+    settings.SECRET_KEY = "checkout-redaction-secret"  # nosec
     payload = {
         "PhoneNumber": "+254712200006",
         "MpesaReceiptNumber": "QCHECKOUTRAW",

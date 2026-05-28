@@ -234,6 +234,9 @@ SAFARICOM_ALLOWED_CIDRS = [
     if cidr.strip()
 ]
 TRUSTED_PROXY_CIDRS = [cidr.strip() for cidr in os.environ.get("TRUSTED_PROXY_CIDRS", "").split(",") if cidr.strip()]
+CHECKOUT_MPESA_PROVIDER = os.environ.get("CHECKOUT_MPESA_PROVIDER", "fake")
+MPESA_CONNECT_TIMEOUT = float(os.environ.get("MPESA_CONNECT_TIMEOUT", "2"))
+MPESA_READ_TIMEOUT = float(os.environ.get("MPESA_READ_TIMEOUT", "5"))
 
 # ==============================================================================
 # DJANGO REST FRAMEWORK CONFIGURATIONS

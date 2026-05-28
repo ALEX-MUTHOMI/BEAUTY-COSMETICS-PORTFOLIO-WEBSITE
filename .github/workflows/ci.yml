@@ -297,12 +297,84 @@ jobs:
         run: docker compose down --volumes --remove-orphans
 
   # ============================================================================
-  # 5D. FINANCIAL RED TEAM JOB: Ledger and checkout abuse cases
+  # 5D. PAYMENT SECURITY JOB: Payment perimeter pressure tests
+  # ============================================================================
+  payment-security:
+    name: payment-security
+    runs-on: ubuntu-latest
+    needs: checkout-billing-integration
+    env:
+      POSTGRES_DB: beauty_db_payment_security
+      POSTGRES_USER: beauty_user_payment_security
+      POSTGRES_PASSWORD: beauty_secure_password_payment_security
+      REDIS_PASSWORD: beauty_redis_secure_password_payment_security
+      SECRET_KEY: phase2ca2-ci-payment-security-key
+      DEBUG: "False"
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Spin up Infrastructure Containers
+        run: docker compose up -d --build
+
+      - name: Run Payment Security Pressure Tests
+        run: |
+          docker compose exec -T web poetry run pytest \
+            tests/security/test_billing_red_team.py \
+            tests/security/test_billing_red_team_pressure.py \
+            tests/security/test_checkout_red_team.py \
+            tests/security/test_checkout_red_team_pressure.py \
+            tests/security/test_mpesa_webhook_red_team.py \
+            tests/security/test_forwarded_for_spoofing_payment.py \
+            tests/security/test_payment_log_redaction_under_load.py \
+            tests/security/test_log_redaction.py
+
+      - name: Tear Down Services
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  # ============================================================================
+  # 5E. PAYMENT LOAD RESILIENCE JOB: deterministic fake-provider storm tests
+  # ============================================================================
+  payment-load-resilience:
+    name: payment-load-resilience
+    runs-on: ubuntu-latest
+    needs: payment-security
+    env:
+      POSTGRES_DB: beauty_db_payment_load
+      POSTGRES_USER: beauty_user_payment_load
+      POSTGRES_PASSWORD: beauty_secure_password_payment_load
+      REDIS_PASSWORD: beauty_redis_secure_password_payment_load
+      SECRET_KEY: phase2ca2-ci-payment-load-key
+      DEBUG: "False"
+      CHECKOUT_MPESA_PROVIDER: "fake"
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Spin up Infrastructure Containers
+        run: docker compose up -d --build
+
+      - name: Run Payment Load and Resilience Tests
+        run: docker compose exec -T web poetry run pytest tests/load -m "load"
+
+      - name: Tear Down Services
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  # ============================================================================
+  # 5F. FINANCIAL RED TEAM JOB: Ledger and checkout abuse cases
   # ============================================================================
   financial-red-team:
     name: financial-red-team
     runs-on: ubuntu-latest
-    needs: checkout-billing-integration
+    needs: payment-load-resilience
     env:
       POSTGRES_DB: beauty_db_financial_red_team
       POSTGRES_USER: beauty_user_financial_red_team

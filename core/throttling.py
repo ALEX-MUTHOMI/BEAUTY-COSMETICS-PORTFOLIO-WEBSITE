@@ -1,9 +1,13 @@
+import logging
 import math
 import time
 
+from rest_framework.exceptions import APIException
 from rest_framework.throttling import BaseThrottle
 
 from users import services
+
+logger = logging.getLogger(__name__)
 
 TOKEN_BUCKET_LUA = """
 local key = KEYS[1]
@@ -98,18 +102,28 @@ class RedisTokenBucketThrottle(BaseThrottle):
         refill_rate = capacity / period
         ttl = math.ceil(period * 2)
 
-        result = services.get_redis_client().eval(
-            TOKEN_BUCKET_LUA,
-            1,
-            key,
-            now,
-            capacity,
-            refill_rate,
-            ttl,
-        )
+        try:
+            result = services.get_redis_client().eval(
+                TOKEN_BUCKET_LUA,
+                1,
+                key,
+                now,
+                capacity,
+                refill_rate,
+                ttl,
+            )
+        except Exception as exc:
+            logger.warning("Redis throttle unavailable for scope=%s; failing closed.", self.scope)
+            raise ThrottleInfrastructureUnavailable() from exc
         allowed = int(result[0]) == 1
         self.wait_seconds = int(result[2])
         return allowed
 
     def wait(self):
         return self.wait_seconds
+
+
+class ThrottleInfrastructureUnavailable(APIException):
+    status_code = 503
+    default_detail = "Admission control unavailable. Retry later."
+    default_code = "admission_control_unavailable"

@@ -37,14 +37,10 @@ def _redact_scalar(key, value):
     if "phone" in normalized_key:
         return redact_phone(value)
     sensitive_tokens = ("receipt", "checkout", "merchant", "token")
-    if normalized_key in SENSITIVE_KEYS or any(
-        token in normalized_key for token in sensitive_tokens
-    ):
+    if normalized_key in SENSITIVE_KEYS or any(token in normalized_key for token in sensitive_tokens):
         return f"redacted:{hash_sensitive_value(value)[:16]}"
     if isinstance(value, str):
-        value = re.sub(
-            r"\+?254[71]\d{8}", lambda match: redact_phone(match.group(0)), value
-        )
+        value = re.sub(r"\+?254[71]\d{8}", lambda match: redact_phone(match.group(0)), value)
     return value
 
 

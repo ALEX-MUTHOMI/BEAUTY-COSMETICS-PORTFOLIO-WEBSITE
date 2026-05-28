@@ -16,9 +16,7 @@ def normalize_mpesa_phone(phone_number):
     return compact
 
 
-def build_stk_push_payload(
-    phone_number, amount, account_reference, description, callback_url
-):
+def build_stk_push_payload(phone_number, amount, account_reference, description, callback_url):
     normalized_amount = Decimal(str(amount)).quantize(Decimal("0.01"))
     if normalized_amount <= Decimal("0.00"):
         raise CheckoutValidationError("STK amount must be positive.")

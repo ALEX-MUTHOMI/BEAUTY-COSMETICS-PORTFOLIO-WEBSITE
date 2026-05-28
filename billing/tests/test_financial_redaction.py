@@ -6,7 +6,7 @@ from billing.redaction import (
 
 
 def test_financial_redaction_masks_phone_receipt_and_provider_ids(settings):
-    settings.SECRET_KEY = "redaction-test-secret"
+    settings.SECRET_KEY = "redaction-test-secret"  # nosec
     payload = {
         "PhoneNumber": "+254712345678",
         "MpesaReceiptNumber": "QRAWRECEIPT123",

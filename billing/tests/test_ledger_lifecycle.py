@@ -18,9 +18,7 @@ User = get_user_model()
 
 @pytest.fixture
 def customer():
-    return User.objects.create_user(
-        email="ledger-lifecycle@beauty.com", phone_number="+254712100001"
-    )
+    return User.objects.create_user(email="ledger-lifecycle@beauty.com", phone_number="+254712100001")
 
 
 def pending_ledger(customer, provider_reference):
@@ -58,22 +56,16 @@ def test_pending_to_success_and_pending_to_failed_allowed(customer):
     failed_ledger = pending_ledger(customer, "ref-failed")
 
     assert (
-        mark_ledger_success(success_ledger.id, provider_receipt="QREDACT001").status
-        == LedgerTransaction.Status.SUCCESS
+        mark_ledger_success(success_ledger.id, provider_receipt="QREDACT001").status == LedgerTransaction.Status.SUCCESS
     )
-    assert (
-        mark_ledger_failed(failed_ledger.id, reason="provider rejected").status
-        == LedgerTransaction.Status.FAILED
-    )
+    assert mark_ledger_failed(failed_ledger.id, reason="provider rejected").status == LedgerTransaction.Status.FAILED
 
 
 @pytest.mark.django_db(transaction=True)
 def test_invalid_success_failed_transitions_rejected(customer):
     success_ledger = pending_ledger(customer, "ref-sf")
     failed_ledger = pending_ledger(customer, "ref-fs")
-    success_ledger = mark_ledger_success(
-        success_ledger.id, provider_receipt="QREDACT002"
-    )
+    success_ledger = mark_ledger_success(success_ledger.id, provider_receipt="QREDACT002")
     failed_ledger = mark_ledger_failed(failed_ledger.id, reason="provider rejected")
 
     with pytest.raises(BillingStateError):
@@ -87,18 +79,8 @@ def test_invalid_success_failed_transitions_rejected(customer):
 def test_success_reversal_and_refund_require_audited_services(customer):
     reversed_ledger = pending_ledger(customer, "ref-rev")
     refunded_ledger = pending_ledger(customer, "ref-refund")
-    reversed_ledger = mark_ledger_success(
-        reversed_ledger.id, provider_receipt="QREV001"
-    )
-    refunded_ledger = mark_ledger_success(
-        refunded_ledger.id, provider_receipt="QREF001"
-    )
+    reversed_ledger = mark_ledger_success(reversed_ledger.id, provider_receipt="QREV001")
+    refunded_ledger = mark_ledger_success(refunded_ledger.id, provider_receipt="QREF001")
 
-    assert (
-        record_reversal(reversed_ledger.id, reason="chargeback").status
-        == LedgerTransaction.Status.REVERSED
-    )
-    assert (
-        record_refund(refunded_ledger.id, reason="customer refund").status
-        == LedgerTransaction.Status.REFUNDED
-    )
+    assert record_reversal(reversed_ledger.id, reason="chargeback").status == LedgerTransaction.Status.REVERSED
+    assert record_refund(refunded_ledger.id, reason="customer refund").status == LedgerTransaction.Status.REFUNDED

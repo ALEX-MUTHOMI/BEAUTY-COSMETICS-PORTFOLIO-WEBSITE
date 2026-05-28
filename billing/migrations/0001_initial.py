@@ -88,9 +88,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="ledgertransaction",
-            index=models.Index(
-                fields=["checkout_request_id"], name="billing_led_checkou_fa4706_idx"
-            ),
+            index=models.Index(fields=["checkout_request_id"], name="billing_led_checkou_fa4706_idx"),
         ),
         migrations.AddIndex(
             model_name="ledgertransaction",
@@ -98,8 +96,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="ledgertransaction",
-            constraint=models.UniqueConstraint(
-                fields=("checkout_request_id",), name="uniq_ledger_checkout_request_id"
-            ),
+            constraint=models.UniqueConstraint(fields=("checkout_request_id",), name="uniq_ledger_checkout_request_id"),
         ),
     ]
