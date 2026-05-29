@@ -236,6 +236,7 @@ SAFARICOM_ALLOWED_CIDRS = [
 TRUSTED_PROXY_CIDRS = [cidr.strip() for cidr in os.environ.get("TRUSTED_PROXY_CIDRS", "").split(",") if cidr.strip()]
 CHECKOUT_MPESA_PROVIDER = os.environ.get("CHECKOUT_MPESA_PROVIDER", "fake")
 PAYMENT_PROVIDER_MODE = os.environ.get("PAYMENT_PROVIDER_MODE", CHECKOUT_MPESA_PROVIDER)
+DARAJA_ENV = os.environ.get("DARAJA_ENV", "")
 MPESA_CONNECT_TIMEOUT = float(
     os.environ.get("DARAJA_CONNECT_TIMEOUT_SECONDS", os.environ.get("MPESA_CONNECT_TIMEOUT", "2"))
 )
@@ -246,6 +247,14 @@ DARAJA_CALLBACK_URL = os.environ.get(
     "DARAJA_CALLBACK_URL",
     "https://api.beautycosmetics.com/api/checkout/mpesa/webhook/",
 )
+DARAJA_SANDBOX_CALLBACK_TUNNEL_DOMAINS = [
+    domain.strip().lower()
+    for domain in os.environ.get(
+        "DARAJA_SANDBOX_CALLBACK_TUNNEL_DOMAINS",
+        "trycloudflare.com,ngrok-free.app,ngrok.io",
+    ).split(",")
+    if domain.strip()
+]
 PAYMENT_STK_CLIENT_TIMEOUT_SECONDS = int(os.environ.get("PAYMENT_STK_CLIENT_TIMEOUT_SECONDS", "45"))
 PAYMENT_STATUS_POLL_INTERVAL_SECONDS = int(os.environ.get("PAYMENT_STATUS_POLL_INTERVAL_SECONDS", "5"))
 PAYMENT_STATUS_MAX_WAIT_SECONDS = int(os.environ.get("PAYMENT_STATUS_MAX_WAIT_SECONDS", "300"))
