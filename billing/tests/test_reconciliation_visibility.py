@@ -11,9 +11,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_reconciliation_report_includes_ledger_and_audit_counts(capsys):
-    customer = User.objects.create_user(
-        email="recon-ledger@beauty.com", phone_number="+254712750002"
-    )
+    customer = User.objects.create_user(email="recon-ledger@beauty.com", phone_number="+254712750002")
     record_successful_checkout_payment(
         customer=customer,
         checkout_session_id="recon-ledger-session",

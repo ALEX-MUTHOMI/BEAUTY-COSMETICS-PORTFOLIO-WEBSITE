@@ -16,9 +16,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_red_team_amount_mismatch_cannot_force_success_credit():
-    customer = User.objects.create_user(
-        email="checkout-pressure@beauty.com", phone_number="+254712630002"
-    )
+    customer = User.objects.create_user(email="checkout-pressure@beauty.com", phone_number="+254712630002")
     session = create_checkout_session(
         customer,
         Decimal("100.00"),
@@ -28,9 +26,7 @@ def test_red_team_amount_mismatch_cannot_force_success_credit():
         "checkout-pressure",
         "checkout-pressure-idem",
     )
-    attempt = initiate_mpesa_stk(
-        session.id, customer.phone_number, "checkout-pressure-stk"
-    )
+    attempt = initiate_mpesa_stk(session.id, customer.phone_number, "checkout-pressure-stk")
 
     with pytest.raises(CheckoutValidationError):
         process_mpesa_callback(

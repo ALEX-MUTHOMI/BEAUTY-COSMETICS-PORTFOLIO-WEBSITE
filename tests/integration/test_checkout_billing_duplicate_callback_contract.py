@@ -16,9 +16,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_duplicate_callback_contract_creates_single_ledger_and_settlement():
-    customer = User.objects.create_user(
-        email="dup-contract@beauty.com", phone_number="+254712640003"
-    )
+    customer = User.objects.create_user(email="dup-contract@beauty.com", phone_number="+254712640003")
     session = create_checkout_session(
         customer,
         Decimal("100.00"),

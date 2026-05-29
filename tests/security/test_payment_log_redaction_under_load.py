@@ -13,9 +13,7 @@ def test_payment_log_redaction_under_load(caplog):
                 "MpesaReceiptNumber": f"QLOGPRESSURE{index:04d}",
                 "access_token": f"token-log-pressure-{index}",
             }
-            logging.getLogger("checkout-log-pressure").info(
-                "payload=%s", redact_checkout_payload(payload)
-            )
+            logging.getLogger("checkout-log-pressure").info("payload=%s", redact_checkout_payload(payload))
 
     assert "+254712630003" not in caplog.text
     assert "ws_CO_LOG_PRESSURE_999" not in caplog.text

@@ -53,9 +53,7 @@ class OTPService:
 
         cached_otp = client.get(key)
         if not cached_otp:
-            logger.warning(
-                f"[-] OTP verification failed: Token expired or not found for {email}"
-            )
+            logger.warning(f"[-] OTP verification failed: Token expired or not found for {email}")
             return False
 
         if cached_otp == code:
@@ -75,14 +73,10 @@ class OTPService:
         - Bypasses check with a mock token 'CF_CLEARANCE_TEST_TOKEN' in tests/dev environments.
         """
         if token == "CF_CLEARANCE_TEST_TOKEN":
-            logger.info(
-                "[+] Test Turnstile token matched. Bypassing Turnstile challenge validation."
-            )
+            logger.info("[+] Test Turnstile token matched. Bypassing Turnstile challenge validation.")
             return True
 
-        turnstile_secret = getattr(
-            settings, "TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA"
-        )
+        turnstile_secret = getattr(settings, "TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA")
         url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 
         payload = {"secret": turnstile_secret, "response": token}
@@ -94,9 +88,7 @@ class OTPService:
             result = response.json()
             success = result.get("success", False)
             if not success:
-                logger.warning(
-                    f"[-] Turnstile verification rejected: {result.get('error-codes', [])}"
-                )
+                logger.warning(f"[-] Turnstile verification rejected: {result.get('error-codes', [])}")
             return success
         except requests.RequestException as e:
             logger.error(f"[-] Cloudflare Turnstile challenge connection failed: {e}")

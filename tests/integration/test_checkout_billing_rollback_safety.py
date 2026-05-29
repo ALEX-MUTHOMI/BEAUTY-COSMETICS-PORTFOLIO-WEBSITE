@@ -18,9 +18,7 @@ User = get_user_model()
 def test_checkout_billing_rollback_does_not_leave_paid_checkout_without_ledger(
     monkeypatch,
 ):
-    customer = User.objects.create_user(
-        email="rollback-pressure@beauty.com", phone_number="+254712640002"
-    )
+    customer = User.objects.create_user(email="rollback-pressure@beauty.com", phone_number="+254712640002")
     session = create_checkout_session(
         customer,
         Decimal("100.00"),
@@ -30,9 +28,7 @@ def test_checkout_billing_rollback_does_not_leave_paid_checkout_without_ledger(
         "rollback-pressure",
         "rollback-pressure-idem",
     )
-    attempt = initiate_mpesa_stk(
-        session.id, customer.phone_number, "rollback-pressure-stk"
-    )
+    attempt = initiate_mpesa_stk(session.id, customer.phone_number, "rollback-pressure-stk")
 
     def explode(*args, **kwargs):
         raise RuntimeError("ledger unavailable")
@@ -55,7 +51,4 @@ def test_checkout_billing_rollback_does_not_leave_paid_checkout_without_ledger(
     session.refresh_from_db()
     assert session.status == CheckoutSession.Status.STK_SENT
     assert LedgerTransaction.objects.count() == 0
-    assert (
-        MpesaWebhookInbox.objects.get().processing_status
-        == MpesaWebhookInbox.Status.FAILED
-    )
+    assert MpesaWebhookInbox.objects.get().processing_status == MpesaWebhookInbox.Status.FAILED

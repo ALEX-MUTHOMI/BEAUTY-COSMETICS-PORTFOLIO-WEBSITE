@@ -21,9 +21,7 @@ def test_payment_reconciliation_report_redacts_webhook_payload(capsys):
         correlation_id="recon-correlation",
     )
 
-    call_command(
-        "payment_reconciliation_report", "--status", MpesaWebhookInbox.Status.RECEIVED
-    )
+    call_command("payment_reconciliation_report", "--status", MpesaWebhookInbox.Status.RECEIVED)
     output = capsys.readouterr().out
     report = json.loads(output)
 

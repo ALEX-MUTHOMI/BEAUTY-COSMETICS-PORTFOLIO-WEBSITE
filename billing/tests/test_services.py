@@ -11,9 +11,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_record_successful_checkout_payment_creates_accounting_artifacts_without_raw_provider_ids():
-    customer = User.objects.create_user(
-        email="billing-service@beauty.com", phone_number="+254712500001"
-    )
+    customer = User.objects.create_user(email="billing-service@beauty.com", phone_number="+254712500001")
 
     ledger, created = record_successful_checkout_payment(
         customer=customer,

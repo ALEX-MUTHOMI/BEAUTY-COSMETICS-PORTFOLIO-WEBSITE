@@ -4,9 +4,7 @@ from rest_framework import serializers
 
 
 class CheckoutSessionCreateSerializer(serializers.Serializer):
-    amount = serializers.DecimalField(
-        max_digits=12, decimal_places=2, min_value=Decimal("0.01")
-    )
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0.01"))
     currency = serializers.CharField(max_length=3, default="KES")
     description = serializers.CharField(max_length=255)
     purchasable_type = serializers.CharField(max_length=64)
@@ -24,6 +22,4 @@ class MpesaWebhookSerializer(serializers.Serializer):
     MerchantRequestID = serializers.CharField(max_length=128, required=False)
     ResultCode = serializers.IntegerField()
     Amount = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
-    MpesaReceiptNumber = serializers.CharField(
-        max_length=64, required=False, allow_blank=True
-    )
+    MpesaReceiptNumber = serializers.CharField(max_length=64, required=False, allow_blank=True)

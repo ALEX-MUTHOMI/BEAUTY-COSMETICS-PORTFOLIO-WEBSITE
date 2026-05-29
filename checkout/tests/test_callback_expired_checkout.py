@@ -16,9 +16,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_expired_checkout_cannot_be_paid_by_callback():
-    customer = User.objects.create_user(
-        email="expired-a2@beauty.com", phone_number="+254712600006"
-    )
+    customer = User.objects.create_user(email="expired-a2@beauty.com", phone_number="+254712600006")
     session = create_checkout_session(
         customer,
         Decimal("1000.00"),
@@ -29,9 +27,7 @@ def test_expired_checkout_cannot_be_paid_by_callback():
         "expired-a2-idem",
     )
     attempt = initiate_mpesa_stk(session.id, customer.phone_number, "expired-a2-stk")
-    CheckoutSession.objects.filter(pk=session.pk).update(
-        status=CheckoutSession.Status.EXPIRED
-    )
+    CheckoutSession.objects.filter(pk=session.pk).update(status=CheckoutSession.Status.EXPIRED)
 
     with pytest.raises(CheckoutStateError):
         process_mpesa_callback(

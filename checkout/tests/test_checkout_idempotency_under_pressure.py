@@ -13,9 +13,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_checkout_session_idempotency_survives_concurrent_reuse():
-    customer = User.objects.create_user(
-        email="idem-pressure@beauty.com", phone_number="+254712600010"
-    )
+    customer = User.objects.create_user(email="idem-pressure@beauty.com", phone_number="+254712600010")
 
     def create_once():
         close_old_connections()
@@ -37,6 +35,4 @@ def test_checkout_session_idempotency_survives_concurrent_reuse():
         ids = [future.result(timeout=15) for future in as_completed(futures)]
 
     assert len(set(ids)) == 1
-    assert (
-        CheckoutSession.objects.filter(idempotency_key="idem-pressure-key").count() == 1
-    )
+    assert CheckoutSession.objects.filter(idempotency_key="idem-pressure-key").count() == 1

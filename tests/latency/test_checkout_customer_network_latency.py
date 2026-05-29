@@ -12,9 +12,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_customer_network_retry_with_same_key_is_resumable_and_idempotent():
-    customer = User.objects.create_user(
-        email="customer-network@beauty.com", phone_number="+254712760001"
-    )
+    customer = User.objects.create_user(email="customer-network@beauty.com", phone_number="+254712760001")
     session = create_checkout_session(
         customer,
         Decimal("210.00"),

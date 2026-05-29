@@ -17,9 +17,7 @@ User = get_user_model()
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.load
 def test_one_thousand_duplicate_callbacks_for_one_checkout_credit_once():
-    customer = User.objects.create_user(
-        email="webhook-storm@beauty.com", phone_number="+254712620002"
-    )
+    customer = User.objects.create_user(email="webhook-storm@beauty.com", phone_number="+254712620002")
     session = create_checkout_session(
         customer,
         Decimal("100.00"),
@@ -38,17 +36,9 @@ def test_one_thousand_duplicate_callbacks_for_one_checkout_credit_once():
         "MpesaReceiptNumber": "QWEBHOOKSTORM",
     }
 
-    statuses = [
-        process_mpesa_callback(payload, remote_addr="127.0.0.1").inbox.processing_status
-        for _ in range(1000)
-    ]
+    statuses = [process_mpesa_callback(payload, remote_addr="127.0.0.1").inbox.processing_status for _ in range(1000)]
 
     session.refresh_from_db()
     assert session.status == CheckoutSession.Status.PAID
     assert statuses.count(MpesaWebhookInbox.Status.PROCESSED) == 1
-    assert (
-        LedgerTransaction.objects.filter(
-            external_correlation_id=str(session.id)
-        ).count()
-        == 1
-    )
+    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 1

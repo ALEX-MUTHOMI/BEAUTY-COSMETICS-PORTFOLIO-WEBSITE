@@ -86,6 +86,7 @@ services:
     environment:
       - DEBUG=${DEBUG:-False}
       - POETRY_VIRTUALENVS_CREATE=false
+      - PATH=/app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
       - SECRET_KEY=${SECRET_KEY:-phase1-phase2-prod-verification-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f}
       - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-True}
       - POSTGRES_DB=${POSTGRES_DB:-beauty_db}
@@ -145,6 +146,24 @@ services:
           memory: 512M
     restart: unless-stopped
 
+  frontend-test:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: builder
+    image: beauty_nuxt_frontend_test:latest
+    container_name: beauty_nuxt_frontend_test
+    command: tail -f /dev/null
+    environment:
+      - NODE_ENV=test
+      - NUXT_PUBLIC_API_BASE_URL=http://web:8000
+    networks:
+      - beauty_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    profiles:
+      - test
+
   # ============================================================================
   # 5. CELERY WORKER FOR BACKGROUND TASKS & SCHEDULES
   # ============================================================================
@@ -157,6 +176,7 @@ services:
     environment:
       - DEBUG=${DEBUG:-False}
       - POETRY_VIRTUALENVS_CREATE=false
+      - PATH=/app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
       - SECRET_KEY=${SECRET_KEY:-phase1-phase2-prod-verification-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f}
       - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-True}
       - POSTGRES_DB=${POSTGRES_DB:-beauty_db}

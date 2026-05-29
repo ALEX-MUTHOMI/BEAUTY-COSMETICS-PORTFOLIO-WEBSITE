@@ -20,9 +20,7 @@ def clear_throttle_keys():
 
 @pytest.mark.django_db(transaction=True)
 def test_checkout_stk_throttling_under_burst_pressure():
-    customer = User.objects.create_user(
-        email="pressure-throttle@beauty.com", phone_number="+254712600009"
-    )
+    customer = User.objects.create_user(email="pressure-throttle@beauty.com", phone_number="+254712600009")
     session = create_checkout_session(
         customer,
         Decimal("1000.00"),

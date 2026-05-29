@@ -17,9 +17,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_callback_amount_mismatch_is_rejected_without_ledger_success():
-    customer = User.objects.create_user(
-        email="mismatch-a2@beauty.com", phone_number="+254712600005"
-    )
+    customer = User.objects.create_user(email="mismatch-a2@beauty.com", phone_number="+254712600005")
     session = create_checkout_session(
         customer,
         Decimal("1000.00"),
@@ -43,15 +41,5 @@ def test_callback_amount_mismatch_is_rejected_without_ledger_success():
             remote_addr="127.0.0.1",
         )
 
-    assert (
-        LedgerTransaction.objects.filter(
-            external_correlation_id=str(session.id)
-        ).count()
-        == 0
-    )
-    assert (
-        MpesaWebhookInbox.objects.filter(
-            processing_status=MpesaWebhookInbox.Status.REJECTED
-        ).count()
-        == 1
-    )
+    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 0
+    assert MpesaWebhookInbox.objects.filter(processing_status=MpesaWebhookInbox.Status.REJECTED).count() == 1

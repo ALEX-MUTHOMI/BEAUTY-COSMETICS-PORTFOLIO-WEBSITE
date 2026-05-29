@@ -16,9 +16,7 @@ User = get_user_model()
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.load
 def test_callback_processing_exception_persists_failed_inbox_state(monkeypatch):
-    customer = User.objects.create_user(
-        email="callback-failure@beauty.com", phone_number="+254712620006"
-    )
+    customer = User.objects.create_user(email="callback-failure@beauty.com", phone_number="+254712620006")
     session = create_checkout_session(
         customer,
         Decimal("100.00"),
@@ -28,9 +26,7 @@ def test_callback_processing_exception_persists_failed_inbox_state(monkeypatch):
         "callback-failure",
         "callback-failure-idem",
     )
-    attempt = initiate_mpesa_stk(
-        session.id, customer.phone_number, "callback-failure-stk"
-    )
+    attempt = initiate_mpesa_stk(session.id, customer.phone_number, "callback-failure-stk")
     payload = {
         "CheckoutRequestID": attempt.provider_request_id,
         "MerchantRequestID": attempt.merchant_request_id,

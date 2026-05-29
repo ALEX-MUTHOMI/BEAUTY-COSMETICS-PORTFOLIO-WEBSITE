@@ -17,9 +17,7 @@ def test_billing_redaction_under_load_never_logs_raw_payment_identifiers(caplog)
 
     with caplog.at_level(logging.INFO):
         for payload in payloads:
-            logging.getLogger("billing-redaction-pressure").info(
-                "payload=%s", redact_financial_payload(payload)
-            )
+            logging.getLogger("billing-redaction-pressure").info("payload=%s", redact_financial_payload(payload))
 
     output = caplog.text
     assert "ws_CO_REDACTION_999" not in output

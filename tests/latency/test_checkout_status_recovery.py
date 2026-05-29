@@ -12,9 +12,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_mobile_reload_can_recover_checkout_status_after_stk_sent():
-    customer = User.objects.create_user(
-        email="status-recovery@beauty.com", phone_number="+254712730003"
-    )
+    customer = User.objects.create_user(email="status-recovery@beauty.com", phone_number="+254712730003")
     session = create_checkout_session(
         customer,
         Decimal("140.00"),

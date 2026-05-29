@@ -18,9 +18,7 @@ class BrokenRedis:
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.load
 def test_redis_throttle_failure_returns_controlled_rejection(monkeypatch):
-    customer = User.objects.create_user(
-        email="redis-failure@beauty.com", phone_number="+254712620005"
-    )
+    customer = User.objects.create_user(email="redis-failure@beauty.com", phone_number="+254712620005")
     session = create_checkout_session(
         customer,
         Decimal("100.00"),

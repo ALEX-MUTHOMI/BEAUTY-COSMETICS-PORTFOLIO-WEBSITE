@@ -26,9 +26,7 @@ class MpesaProvider(BaseMpesaProvider):
     """
 
     def __init__(self, connect_timeout=None, read_timeout=None):
-        self.connect_timeout = connect_timeout or getattr(
-            settings, "MPESA_CONNECT_TIMEOUT", 2
-        )
+        self.connect_timeout = connect_timeout or getattr(settings, "MPESA_CONNECT_TIMEOUT", 2)
         self.read_timeout = read_timeout or getattr(settings, "MPESA_READ_TIMEOUT", 5)
         self.base_url = os.environ.get("DARAJA_BASE_URL", settings.DARAJA_BASE_URL)
         self.stk_endpoint = os.environ.get(
@@ -58,18 +56,14 @@ class MpesaProvider(BaseMpesaProvider):
         self._require_https(self.oauth_endpoint)
         consumer_key = self._required_env("DARAJA_CONSUMER_KEY")
         consumer_secret = self._required_env("DARAJA_CONSUMER_SECRET")
-        credentials = base64.b64encode(
-            f"{consumer_key}:{consumer_secret}".encode()
-        ).decode()
+        credentials = base64.b64encode(f"{consumer_key}:{consumer_secret}".encode()).decode()
         request = urllib.request.Request(
             self.oauth_endpoint,
             headers={"Authorization": f"Basic {credentials}"},
             method="GET",
         )
         try:
-            with urllib.request.urlopen(
-                request, timeout=self.timeout_budget
-            ) as response:  # nosec B310
+            with urllib.request.urlopen(request, timeout=self.timeout_budget) as response:  # nosec B310
                 payload = json.loads(response.read().decode())
         except TimeoutError as exc:
             raise ProviderUnavailable("Daraja OAuth request timed out safely.") from exc
@@ -92,9 +86,7 @@ class MpesaProvider(BaseMpesaProvider):
         shortcode = self._required_env("DARAJA_SHORTCODE")
         passkey = self._required_env("DARAJA_PASSKEY")
         timestamp = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
-        password = base64.b64encode(
-            f"{shortcode}{passkey}{timestamp}".encode()
-        ).decode()
+        password = base64.b64encode(f"{shortcode}{passkey}{timestamp}".encode()).decode()
         normalized_phone = normalize_mpesa_phone(phone_number)
         return {
             "BusinessShortCode": shortcode,
@@ -139,9 +131,7 @@ class MpesaProvider(BaseMpesaProvider):
             method="POST",
         )
         try:
-            with urllib.request.urlopen(
-                request, timeout=self.timeout_budget
-            ) as response:  # nosec B310
+            with urllib.request.urlopen(request, timeout=self.timeout_budget) as response:  # nosec B310
                 response_payload = json.loads(response.read().decode())
         except TimeoutError as exc:
             raise ProviderTimeout("M-Pesa STK request timed out.") from exc
@@ -151,9 +141,7 @@ class MpesaProvider(BaseMpesaProvider):
         checkout_request_id = response_payload.get("CheckoutRequestID")
         merchant_request_id = response_payload.get("MerchantRequestID")
         if not checkout_request_id or not merchant_request_id:
-            raise ProviderError(
-                "M-Pesa STK response did not include request identifiers."
-            )
+            raise ProviderError("M-Pesa STK response did not include request identifiers.")
         return MpesaProviderResponse(
             checkout_request_id=checkout_request_id,
             merchant_request_id=merchant_request_id,

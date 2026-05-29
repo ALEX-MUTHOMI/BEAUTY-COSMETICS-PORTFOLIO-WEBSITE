@@ -12,9 +12,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_red_team_cannot_mutate_success_receipt_under_pressure():
-    customer = User.objects.create_user(
-        email="billing-pressure@beauty.com", phone_number="+254712630001"
-    )
+    customer = User.objects.create_user(email="billing-pressure@beauty.com", phone_number="+254712630001")
     ledger = create_pending_ledger_transaction(
         customer=customer,
         amount=Decimal("100.00"),

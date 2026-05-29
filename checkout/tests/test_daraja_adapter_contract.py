@@ -33,12 +33,7 @@ def test_real_daraja_adapter_builds_official_stk_payload(monkeypatch, caplog):
     )
 
     assert payload["BusinessShortCode"] == "174379"
-    assert (
-        payload["Password"]
-        == base64.b64encode(
-            f"174379passkey-test{payload['Timestamp']}".encode()
-        ).decode()
-    )
+    assert payload["Password"] == base64.b64encode(f"174379passkey-test{payload['Timestamp']}".encode()).decode()
     assert payload["Timestamp"].isdigit()
     assert payload["TransactionType"] == "CustomerPayBillOnline"
     assert payload["Amount"] == 10
@@ -64,9 +59,7 @@ def test_oauth_token_retrieval_uses_basic_auth_and_redacts_token(monkeypatch, ca
             return False
 
         def read(self):
-            return json.dumps(
-                {"access_token": "sandbox-token-secret", "expires_in": "3599"}
-            ).encode()
+            return json.dumps({"access_token": "sandbox-token-secret", "expires_in": "3599"}).encode()
 
     def fake_urlopen(request, timeout):
         captured["url"] = request.full_url

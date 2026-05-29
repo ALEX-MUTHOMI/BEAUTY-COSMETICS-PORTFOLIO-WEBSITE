@@ -82,9 +82,7 @@ def initiate_mpesa_stk(session_id, phone_number, idempotency_key, provider=None)
             CheckoutSession.Status.CANCELLED,
         }:
             raise CheckoutStateError("Cannot initiate STK for a terminal checkout.")
-        existing = CheckoutAttempt.objects.filter(
-            idempotency_key=idempotency_key
-        ).first()
+        existing = CheckoutAttempt.objects.filter(idempotency_key=idempotency_key).first()
         if existing:
             return existing
         if session.status == CheckoutSession.Status.CREATED:
@@ -124,9 +122,7 @@ def _event_hash(payload):
 
 
 def _checkout_request_id(payload):
-    return str(
-        payload.get("CheckoutRequestID") or payload.get("checkout_request_id") or ""
-    )
+    return str(payload.get("CheckoutRequestID") or payload.get("checkout_request_id") or "")
 
 
 def record_mpesa_webhook_event(payload, correlation_id=None):
@@ -135,9 +131,7 @@ def record_mpesa_webhook_event(payload, correlation_id=None):
     event, created = MpesaWebhookInbox.objects.get_or_create(
         event_hash=event_hash,
         defaults={
-            "checkout_request_id_hash": (
-                hash_sensitive_value(checkout_request_id) if checkout_request_id else ""
-            ),
+            "checkout_request_id_hash": (hash_sensitive_value(checkout_request_id) if checkout_request_id else ""),
             "redacted_payload": redact_checkout_payload(payload),
             "correlation_id": correlation_id,
         },
@@ -194,9 +188,7 @@ def process_mpesa_callback(payload, remote_addr=None, correlation_id=None):
     try:
         with transaction.atomic():
             inbox = MpesaWebhookInbox.objects.select_for_update().get(pk=inbox.pk)
-            return _process_locked_callback(
-                payload, checkout_request_id, inbox, correlation_id
-            )
+            return _process_locked_callback(payload, checkout_request_id, inbox, correlation_id)
     except (CheckoutValidationError, CheckoutStateError):
         mark_webhook_event_status(inbox.id, MpesaWebhookInbox.Status.REJECTED)
         raise
@@ -215,9 +207,7 @@ def _process_locked_callback(payload, checkout_request_id, inbox, correlation_id
     if attempt is None:
         raise CheckoutValidationError("Provider callback could not be processed.")
 
-    session = CheckoutSession.objects.select_for_update().get(
-        pk=attempt.checkout_session_id
-    )
+    session = CheckoutSession.objects.select_for_update().get(pk=attempt.checkout_session_id)
     if session.status in {
         CheckoutSession.Status.EXPIRED,
         CheckoutSession.Status.CANCELLED,
@@ -225,11 +215,11 @@ def _process_locked_callback(payload, checkout_request_id, inbox, correlation_id
         raise CheckoutStateError("Terminal checkout cannot be paid.")
 
     result_code = int(payload.get("ResultCode", payload.get("result_code", 1)))
-    amount = Decimal(
-        str(payload.get("Amount", payload.get("amount", "0.00")))
-    ).quantize(Decimal("0.01"))
-    if amount != session.amount_snapshot:
-        raise CheckoutValidationError("Provider callback amount mismatch.")
+    raw_amount = payload.get("Amount", payload.get("amount"))
+    if result_code == 0:
+        amount = Decimal(str(raw_amount or "0.00")).quantize(Decimal("0.01"))
+        if amount != session.amount_snapshot:
+            raise CheckoutValidationError("Provider callback amount mismatch.")
 
     attempt.status = CheckoutAttempt.Status.CALLBACK_RECEIVED
     attempt.save(update_fields=["status", "updated_at"])

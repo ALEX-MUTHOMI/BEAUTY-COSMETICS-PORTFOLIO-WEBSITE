@@ -12,9 +12,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_slow_provider_and_repeated_pay_clicks_create_one_attempt():
-    customer = User.objects.create_user(
-        email="latency-clicks@beauty.com", phone_number="+254712730001"
-    )
+    customer = User.objects.create_user(email="latency-clicks@beauty.com", phone_number="+254712730001")
     session = create_checkout_session(
         customer,
         Decimal("120.00"),

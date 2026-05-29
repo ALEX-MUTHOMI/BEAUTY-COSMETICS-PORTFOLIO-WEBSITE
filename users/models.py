@@ -45,9 +45,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, AuditMixin):
         default=False,
         help_text="Designates whether the user can log into the Django administrative panel.",
     )
-    is_active = models.BooleanField(
-        default=True, help_text="Designates whether this user account is active."
-    )
+    is_active = models.BooleanField(default=True, help_text="Designates whether this user account is active.")
     gdpr_consent_at = models.DateTimeField(
         null=True,
         blank=True,

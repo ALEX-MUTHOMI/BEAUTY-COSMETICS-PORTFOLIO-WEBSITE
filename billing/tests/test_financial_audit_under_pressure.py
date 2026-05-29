@@ -12,9 +12,7 @@ User = get_user_model()
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.load
 def test_duplicate_success_outcomes_create_single_success_audit_event():
-    customer = User.objects.create_user(
-        email="audit-storm@beauty.com", phone_number="+254712610004"
-    )
+    customer = User.objects.create_user(email="audit-storm@beauty.com", phone_number="+254712610004")
 
     for index in range(1000):
         record_successful_checkout_payment(

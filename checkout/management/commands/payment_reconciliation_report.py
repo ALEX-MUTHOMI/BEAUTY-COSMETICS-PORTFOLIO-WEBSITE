@@ -27,26 +27,18 @@ class Command(BaseCommand):
             events = events.filter(processing_status=options["status"])
 
         counts = {
-            status.value: MpesaWebhookInbox.objects.filter(
-                processing_status=status.value
-            ).count()
+            status.value: MpesaWebhookInbox.objects.filter(processing_status=status.value).count()
             for status in MpesaWebhookInbox.Status
         }
         report = {
             "counts": counts,
             "checkout_statuses": {
-                status.value: CheckoutSession.objects.filter(
-                    status=status.value
-                ).count()
+                status.value: CheckoutSession.objects.filter(status=status.value).count()
                 for status in CheckoutSession.Status
             },
             "ledger": {
-                "successful_ledgers": LedgerTransaction.objects.filter(
-                    status=LedgerTransaction.Status.SUCCESS
-                ).count(),
-                "failed_ledgers": LedgerTransaction.objects.filter(
-                    status=LedgerTransaction.Status.FAILED
-                ).count(),
+                "successful_ledgers": LedgerTransaction.objects.filter(status=LedgerTransaction.Status.SUCCESS).count(),
+                "failed_ledgers": LedgerTransaction.objects.filter(status=LedgerTransaction.Status.FAILED).count(),
                 "audit_events": FinancialAuditEvent.objects.count(),
                 "settlements": SettlementRecord.objects.count(),
             },
@@ -54,8 +46,7 @@ class Command(BaseCommand):
                 "failed_events_visible": counts.get(MpesaWebhookInbox.Status.FAILED, 0),
                 "automatic_retry_supported": False,
                 "reason": (
-                    "raw provider payloads are not stored; request provider replay "
-                    "or re-ingest a verified callback."
+                    "raw provider payloads are not stored; request provider replay " "or re-ingest a verified callback."
                 ),
             },
         }

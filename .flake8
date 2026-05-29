@@ -1,10 +1,13 @@
 [flake8]
-max-line-length = 119
 exclude =
     .git,
+    .local,
+    .pytest_cache,
     __pycache__,
     */migrations/*,
-    .venv/,
-    venv/,
-    env/,
-    manage.py
+    venv,
+    venvvenv,
+    frontend/.nuxt,
+    frontend/.output,
+    frontend/node_modules
+max-line-length = 120

@@ -14,9 +14,7 @@ import sys
 SECRET_RULES = {
     "Stripe/M-Pesa API Key": re.compile(r"(?:sk_live|rk_live)_[a-zA-Z0-9]{24,}"),
     "AWS Access Key ID": re.compile(r"([^A-Z0-9]|^)(AKIA[A-Z0-9]{16})([^A-Z0-9]|$)"),
-    "AWS Secret Access Key": re.compile(
-        r"(?i)aws_secret_access_key\s*=\s*['\"]([a-zA-Z0-9/+=]{40})['\"]"
-    ),
+    "AWS Secret Access Key": re.compile(r"(?i)aws_secret_access_key\s*=\s*['\"]([a-zA-Z0-9/+=]{40})['\"]"),
     "Generic API Key / Secret / Private Key": re.compile(
         r"(?i)(?:api_key|api_token|secret_key|private_key|auth_token)\s*=\s*['\"]([a-zA-Z0-9_\-\.\:\/\@]{16,})['\"]"
     ),
@@ -49,9 +47,7 @@ def should_exclude(file_path):
 def get_git_tracked_files():
     """Retrieve all files tracked by Git to prevent checking heavy build directories."""
     try:
-        result = subprocess.run(
-            ["git", "ls-files"], capture_output=True, text=True, check=True
-        )
+        result = subprocess.run(["git", "ls-files"], capture_output=True, text=True, check=True)
         return [f.strip() for f in result.stdout.splitlines() if f.strip()]
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         print(f"[-] Git command failed or Git is not initialized: {e}")
@@ -84,32 +80,25 @@ def scan_file(file_path):
                     match = pattern.search(clean_line)
                     if match:
                         # Extra validation for Django SECRET_KEY rule to avoid false flagging env references
-                        if (
-                            rule_name == "Generic API Key / Secret / Private Key"
-                            and any(
-                                env_call in clean_line
-                                for env_call in [
-                                    "environ",
-                                    "env.",
-                                    "config(",
-                                    "os.getenv",
-                                ]
-                            )
+                        if rule_name == "Generic API Key / Secret / Private Key" and any(
+                            env_call in clean_line
+                            for env_call in [
+                                "environ",
+                                "env.",
+                                "config(",
+                                "os.getenv",
+                            ]
                         ):
                             # Ignore env loader calls (e.g. os.environ, env.str, config('...'))
                             continue
 
                         if rule_name == "Django Hardcoded SECRET_KEY" and (
-                            "os.environ" in clean_line
-                            or "env(" in clean_line
-                            or "get_env" in clean_line
+                            "os.environ" in clean_line or "env(" in clean_line or "get_env" in clean_line
                         ):
                             # Ignore if we are looking up from an env variable
                             continue
 
-                        detections.append(
-                            {"file": file_path, "line": line_num, "rule": rule_name}
-                        )
+                        detections.append({"file": file_path, "line": line_num, "rule": rule_name})
     except Exception:
         # Gracefully handle file reading errors (e.g., binary files missed by git filtering)
         pass
@@ -144,12 +133,8 @@ def main():
             print(f"  Line: {det['line']}")
             print("-" * 80)
 
-        print(
-            "\n[!] Remediate by moving credentials to an external environment (.env) configuration."
-        )
-        print(
-            "[!] To bypass false positives, append '# nosec' or '# pragma: allowlist secret' to the offending line."
-        )
+        print("\n[!] Remediate by moving credentials to an external environment (.env) configuration.")
+        print("[!] To bypass false positives, append '# nosec' or '# pragma: allowlist secret' to the offending line.")
         sys.exit(1)
 
     print("[+] Secret hygiene validation passed successfully. No secrets exposed.")

@@ -12,9 +12,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_successful_callback_cannot_mutate_amount_after_ledger_success():
-    customer = User.objects.create_user(
-        email="immutability-pressure@beauty.com", phone_number="+254712610001"
-    )
+    customer = User.objects.create_user(email="immutability-pressure@beauty.com", phone_number="+254712610001")
     ledger = create_pending_ledger_transaction(
         customer=customer,
         amount=Decimal("1000.00"),

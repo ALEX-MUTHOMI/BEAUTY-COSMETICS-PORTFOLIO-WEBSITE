@@ -53,9 +53,7 @@ class FakeMpesaProvider(BaseMpesaProvider):
     ):
         return {
             "CheckoutRequestID": checkout_request_id,
-            "MerchantRequestID": checkout_request_id.replace(
-                "fake_ws_CO_", "fake_merchant_"
-            ),
+            "MerchantRequestID": checkout_request_id.replace("fake_ws_CO_", "fake_merchant_"),
             "ResultCode": 0 if success else 1032,
             "Amount": str(amount),
             "MpesaReceiptNumber": receipt if success else "",

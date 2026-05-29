@@ -30,9 +30,7 @@ class TimeoutOnceProvider(FakeMpesaProvider):
 
 @pytest.mark.django_db(transaction=True)
 def test_retry_after_provider_timeout_does_not_double_credit():
-    customer = User.objects.create_user(
-        email="timeout-replay@beauty.com", phone_number="+254712740003"
-    )
+    customer = User.objects.create_user(email="timeout-replay@beauty.com", phone_number="+254712740003")
     session = create_checkout_session(
         customer,
         Decimal("170.00"),
@@ -51,20 +49,11 @@ def test_retry_after_provider_timeout_does_not_double_credit():
             "timeout-replay-stk",
             provider=provider,
         )
-    attempt = initiate_mpesa_stk(
-        session.id, customer.phone_number, "timeout-replay-stk", provider=provider
-    )
+    attempt = initiate_mpesa_stk(session.id, customer.phone_number, "timeout-replay-stk", provider=provider)
 
-    payload = provider.simulate_callback(
-        attempt.provider_request_id, amount="170.00", receipt="QTIMEOUTREPLAY"
-    )
+    payload = provider.simulate_callback(attempt.provider_request_id, amount="170.00", receipt="QTIMEOUTREPLAY")
     for _ in range(10):
         process_mpesa_callback(payload, remote_addr="127.0.0.1")
 
     assert CheckoutAttempt.objects.filter(checkout_session=session).count() == 1
-    assert (
-        LedgerTransaction.objects.filter(
-            external_correlation_id=str(session.id)
-        ).count()
-        == 1
-    )
+    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 1

@@ -18,9 +18,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_future_provider_timestamp_cannot_bypass_cancelled_checkout_state():
-    customer = User.objects.create_user(
-        email="tz-abuse@beauty.com", phone_number="+254712720001"
-    )
+    customer = User.objects.create_user(email="tz-abuse@beauty.com", phone_number="+254712720001")
     session = create_checkout_session(
         customer,
         Decimal("80.00"),
@@ -49,9 +47,4 @@ def test_future_provider_timestamp_cannot_bypass_cancelled_checkout_state():
             remote_addr="127.0.0.1",
         )
 
-    assert (
-        LedgerTransaction.objects.filter(
-            external_correlation_id=str(session.id)
-        ).count()
-        == 0
-    )
+    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 0

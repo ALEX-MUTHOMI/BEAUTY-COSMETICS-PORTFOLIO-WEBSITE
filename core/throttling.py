@@ -113,9 +113,7 @@ class RedisTokenBucketThrottle(BaseThrottle):
                 ttl,
             )
         except Exception as exc:
-            logger.warning(
-                "Redis throttle unavailable for scope=%s; failing closed.", self.scope
-            )
+            logger.warning("Redis throttle unavailable for scope=%s; failing closed.", self.scope)
             raise ThrottleInfrastructureUnavailable() from exc
         allowed = int(result[0]) == 1
         self.wait_seconds = int(result[2])

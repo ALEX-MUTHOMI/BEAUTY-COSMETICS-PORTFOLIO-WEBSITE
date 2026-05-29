@@ -16,9 +16,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_failed_callback_contract_does_not_credit_billing():
-    customer = User.objects.create_user(
-        email="failed-contract@beauty.com", phone_number="+254712640004"
-    )
+    customer = User.objects.create_user(email="failed-contract@beauty.com", phone_number="+254712640004")
     session = create_checkout_session(
         customer,
         Decimal("100.00"),
@@ -28,9 +26,7 @@ def test_failed_callback_contract_does_not_credit_billing():
         "failed-contract",
         "failed-contract-idem",
     )
-    attempt = initiate_mpesa_stk(
-        session.id, customer.phone_number, "failed-contract-stk"
-    )
+    attempt = initiate_mpesa_stk(session.id, customer.phone_number, "failed-contract-stk")
 
     process_mpesa_callback(
         {

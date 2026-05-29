@@ -18,9 +18,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_delayed_callback_marks_paid_if_checkout_not_expired():
-    customer = User.objects.create_user(
-        email="delayed-paid@beauty.com", phone_number="+254712730004"
-    )
+    customer = User.objects.create_user(email="delayed-paid@beauty.com", phone_number="+254712730004")
     session = create_checkout_session(
         customer,
         Decimal("150.00"),
@@ -46,19 +44,12 @@ def test_delayed_callback_marks_paid_if_checkout_not_expired():
 
     session.refresh_from_db()
     assert session.status == CheckoutSession.Status.PAID
-    assert (
-        LedgerTransaction.objects.filter(
-            external_correlation_id=str(session.id)
-        ).count()
-        == 1
-    )
+    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 1
 
 
 @pytest.mark.django_db(transaction=True)
 def test_delayed_callback_after_expiry_cannot_mark_paid():
-    customer = User.objects.create_user(
-        email="delayed-expired@beauty.com", phone_number="+254712730005"
-    )
+    customer = User.objects.create_user(email="delayed-expired@beauty.com", phone_number="+254712730005")
     session = create_checkout_session(
         customer,
         Decimal("150.00"),
@@ -68,9 +59,7 @@ def test_delayed_callback_after_expiry_cannot_mark_paid():
         "delayed-expired",
         "delayed-expired-session",
     )
-    attempt = initiate_mpesa_stk(
-        session.id, customer.phone_number, "delayed-expired-stk"
-    )
+    attempt = initiate_mpesa_stk(session.id, customer.phone_number, "delayed-expired-stk")
     CheckoutSession.objects.filter(pk=session.pk).update(
         status=CheckoutSession.Status.EXPIRED,
         expires_at=timezone.now() - timezone.timedelta(minutes=1),
@@ -89,9 +78,4 @@ def test_delayed_callback_after_expiry_cannot_mark_paid():
             remote_addr="127.0.0.1",
         )
 
-    assert (
-        LedgerTransaction.objects.filter(
-            external_correlation_id=str(session.id)
-        ).count()
-        == 0
-    )
+    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 0

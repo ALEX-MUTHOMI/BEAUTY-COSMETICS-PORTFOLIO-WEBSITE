@@ -18,9 +18,7 @@ User = get_user_model()
 
 @pytest.fixture
 def customer():
-    return User.objects.create_user(
-        email="checkout-lifecycle@beauty.com", phone_number="+254712200001"
-    )
+    return User.objects.create_user(email="checkout-lifecycle@beauty.com", phone_number="+254712200001")
 
 
 @pytest.mark.django_db
@@ -113,6 +111,4 @@ def test_checkout_can_expire_or_cancel_before_terminal_payment(customer):
     )
 
     assert expire_checkout_session(expires.id).status == CheckoutSession.Status.EXPIRED
-    assert (
-        cancel_checkout_session(cancels.id).status == CheckoutSession.Status.CANCELLED
-    )
+    assert cancel_checkout_session(cancels.id).status == CheckoutSession.Status.CANCELLED

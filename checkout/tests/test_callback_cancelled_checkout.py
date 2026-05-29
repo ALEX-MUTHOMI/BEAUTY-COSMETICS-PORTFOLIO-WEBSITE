@@ -16,9 +16,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_cancelled_checkout_cannot_be_paid_by_callback():
-    customer = User.objects.create_user(
-        email="cancelled-a2@beauty.com", phone_number="+254712600007"
-    )
+    customer = User.objects.create_user(email="cancelled-a2@beauty.com", phone_number="+254712600007")
     session = create_checkout_session(
         customer,
         Decimal("1000.00"),

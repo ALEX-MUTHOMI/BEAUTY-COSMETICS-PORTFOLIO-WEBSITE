@@ -15,9 +15,7 @@ def test_daraja_sensitive_values_are_redacted_from_logs(caplog):
     }
 
     with caplog.at_level(logging.INFO):
-        logging.getLogger("checkout.daraja").info(
-            "daraja=%s", redact_checkout_payload(payload)
-        )
+        logging.getLogger("checkout.daraja").info("daraja=%s", redact_checkout_payload(payload))
 
     assert "254712345678" not in caplog.text
     assert "ws_CO_SECRET_123" not in caplog.text

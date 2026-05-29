@@ -6,6 +6,4 @@ class STKPushRateThrottle(RedisTokenBucketThrottle):
 
     def get_cache_ident(self, request, view):
         email = request.data.get("email", "").strip().lower()
-        return (
-            f"{self.get_ident(request)}:{email}" if email else self.get_ident(request)
-        )
+        return f"{self.get_ident(request)}:{email}" if email else self.get_ident(request)

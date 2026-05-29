@@ -23,9 +23,7 @@ def _fixture(name):
         ("stk_timeout_callback.json", 1037),
     ],
 )
-def test_daraja_real_shaped_callbacks_normalize_to_internal_contract(
-    fixture_name, expected_code
-):
+def test_daraja_real_shaped_callbacks_normalize_to_internal_contract(fixture_name, expected_code):
     event = MpesaProvider().normalize_callback(_fixture(fixture_name))
 
     assert event["CheckoutRequestID"] == "ws_CO_SANITIZED_12345"
@@ -40,9 +38,7 @@ def test_malformed_daraja_callback_rejected_safely():
 
 
 def test_amount_mismatch_fixture_retains_provider_amount_for_state_machine_rejection():
-    event = MpesaProvider().normalize_callback(
-        _fixture("amount_mismatch_callback.json")
-    )
+    event = MpesaProvider().normalize_callback(_fixture("amount_mismatch_callback.json"))
 
     assert event["CheckoutRequestID"] == "ws_CO_SANITIZED_12345"
     assert event["Amount"] == "9999.00"

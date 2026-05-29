@@ -19,9 +19,7 @@ class TimeoutProvider:
 
 @pytest.mark.django_db(transaction=True)
 def test_provider_timeout_returns_controlled_response_without_credit(monkeypatch):
-    customer = User.objects.create_user(
-        email="provider-timeout@beauty.com", phone_number="+254712730002"
-    )
+    customer = User.objects.create_user(email="provider-timeout@beauty.com", phone_number="+254712730002")
     session = create_checkout_session(
         customer,
         Decimal("130.00"),
@@ -31,9 +29,7 @@ def test_provider_timeout_returns_controlled_response_without_credit(monkeypatch
         "provider-timeout",
         "provider-timeout-session",
     )
-    monkeypatch.setattr(
-        "checkout.services.get_mpesa_provider", lambda: TimeoutProvider()
-    )
+    monkeypatch.setattr("checkout.services.get_mpesa_provider", lambda: TimeoutProvider())
 
     client = APIClient()
     client.defaults["HTTP_X_FORWARDED_PROTO"] = "https"
@@ -50,9 +46,4 @@ def test_provider_timeout_returns_controlled_response_without_credit(monkeypatch
 
     assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
     assert response.data == {"detail": "Payment provider temporarily unavailable."}
-    assert (
-        LedgerTransaction.objects.filter(
-            external_correlation_id=str(session.id)
-        ).count()
-        == 0
-    )
+    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 0

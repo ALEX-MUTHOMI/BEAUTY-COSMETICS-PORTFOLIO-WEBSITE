@@ -16,9 +16,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_duplicate_success_callback_is_idempotent_after_checkout_paid():
-    customer = User.objects.create_user(
-        email="duplicate-success-a2@beauty.com", phone_number="+254712600008"
-    )
+    customer = User.objects.create_user(email="duplicate-success-a2@beauty.com", phone_number="+254712600008")
     session = create_checkout_session(
         customer,
         Decimal("1000.00"),
@@ -42,9 +40,4 @@ def test_duplicate_success_callback_is_idempotent_after_checkout_paid():
 
     assert first.inbox.processing_status == MpesaWebhookInbox.Status.PROCESSED
     assert duplicate.inbox.processing_status == MpesaWebhookInbox.Status.DUPLICATE
-    assert (
-        LedgerTransaction.objects.filter(
-            external_correlation_id=str(session.id)
-        ).count()
-        == 1
-    )
+    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 1

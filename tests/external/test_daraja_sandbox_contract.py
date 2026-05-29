@@ -26,9 +26,7 @@ REQUIRED_ENV = [
 
 
 def _sandbox_configured():
-    return os.environ.get("DARAJA_ENV") == "sandbox" and all(
-        os.environ.get(key) for key in REQUIRED_ENV
-    )
+    return os.environ.get("DARAJA_ENV") == "sandbox" and all(os.environ.get(key) for key in REQUIRED_ENV)
 
 
 pytestmark = [
@@ -87,12 +85,10 @@ def test_daraja_sandbox_stk_payload_contract(daraja_env, caplog):
 
 
 @pytest.mark.django_db(transaction=True)
-def test_single_daraja_sandbox_stk_initiation_does_not_credit_before_callback(
-    daraja_env, django_user_model, caplog
-):
+def test_single_daraja_sandbox_stk_initiation_does_not_credit_before_callback(daraja_env, django_user_model, caplog):
     customer = django_user_model.objects.create_user(
         email="daraja-sandbox-contract@example.test",
-        phone_number="+254712345678",
+        phone_number=daraja_env["DARAJA_TEST_MSISDN"],
     )
     session = create_checkout_session(
         customer,
@@ -114,23 +110,16 @@ def test_single_daraja_sandbox_stk_initiation_does_not_credit_before_callback(
 
     assert attempt.provider_request_id
     assert session.status == CheckoutSession.Status.STK_SENT
-    assert (
-        LedgerTransaction.objects.filter(
-            external_correlation_id=str(session.id)
-        ).count()
-        == 0
-    )
+    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 0
     assert daraja_env["DARAJA_TEST_MSISDN"] not in caplog.text
     assert attempt.provider_request_id not in caplog.text
 
 
 @pytest.mark.django_db(transaction=True)
-def test_sandbox_shaped_duplicate_callback_replay_is_idempotent(
-    daraja_env, django_user_model
-):
+def test_sandbox_shaped_duplicate_callback_replay_is_idempotent(daraja_env, django_user_model):
     customer = django_user_model.objects.create_user(
         email="daraja-callback-contract@example.test",
-        phone_number="+254712345678",
+        phone_number=daraja_env["DARAJA_TEST_MSISDN"],
     )
     session = create_checkout_session(
         customer,
@@ -143,7 +132,7 @@ def test_sandbox_shaped_duplicate_callback_replay_is_idempotent(
     )
     attempt = initiate_mpesa_stk(
         session.id,
-        phone_number="+254712345678",
+        phone_number=daraja_env["DARAJA_TEST_MSISDN"],
         idempotency_key="daraja-callback-stk-idem",
     )
     payload = {
@@ -157,9 +146,4 @@ def test_sandbox_shaped_duplicate_callback_replay_is_idempotent(
     for _ in range(10):
         process_mpesa_callback(payload, remote_addr="127.0.0.1")
 
-    assert (
-        LedgerTransaction.objects.filter(
-            external_correlation_id=str(session.id)
-        ).count()
-        == 1
-    )
+    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 1

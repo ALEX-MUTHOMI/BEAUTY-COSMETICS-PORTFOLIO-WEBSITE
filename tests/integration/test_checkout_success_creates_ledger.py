@@ -15,9 +15,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_paid_checkout_creates_exactly_one_successful_ledger_transaction():
-    customer = User.objects.create_user(
-        email="success-ledger@beauty.com", phone_number="+254712300002"
-    )
+    customer = User.objects.create_user(email="success-ledger@beauty.com", phone_number="+254712300002")
     session = create_checkout_session(
         customer,
         Decimal("1700.00"),

@@ -18,9 +18,7 @@ User = get_user_model()
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.load
 def test_checkout_billing_contract_under_many_valid_callbacks():
-    customer = User.objects.create_user(
-        email="contract-pressure@beauty.com", phone_number="+254712640001"
-    )
+    customer = User.objects.create_user(email="contract-pressure@beauty.com", phone_number="+254712640001")
     payloads = []
     for index in range(100):
         session = create_checkout_session(
@@ -32,9 +30,7 @@ def test_checkout_billing_contract_under_many_valid_callbacks():
             f"contract-pressure-{index}",
             f"contract-pressure-idem-{index}",
         )
-        attempt = initiate_mpesa_stk(
-            session.id, customer.phone_number, f"contract-pressure-stk-{index}"
-        )
+        attempt = initiate_mpesa_stk(session.id, customer.phone_number, f"contract-pressure-stk-{index}")
         payloads.append(
             {
                 "CheckoutRequestID": attempt.provider_request_id,
@@ -48,9 +44,7 @@ def test_checkout_billing_contract_under_many_valid_callbacks():
     def callback(payload):
         close_old_connections()
         try:
-            return process_mpesa_callback(
-                payload, remote_addr="127.0.0.1"
-            ).session.status
+            return process_mpesa_callback(payload, remote_addr="127.0.0.1").session.status
         finally:
             close_old_connections()
 
@@ -59,10 +53,5 @@ def test_checkout_billing_contract_under_many_valid_callbacks():
         statuses = [future.result(timeout=30) for future in as_completed(futures)]
 
     assert statuses.count("paid") == 100
-    assert (
-        LedgerTransaction.objects.filter(
-            status=LedgerTransaction.Status.SUCCESS
-        ).count()
-        == 100
-    )
+    assert LedgerTransaction.objects.filter(status=LedgerTransaction.Status.SUCCESS).count() == 100
     assert SettlementRecord.objects.count() == 100
