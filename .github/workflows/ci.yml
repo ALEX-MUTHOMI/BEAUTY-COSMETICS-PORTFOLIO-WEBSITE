@@ -8,648 +8,257 @@ on:
     branches:
       - staging
       - main
+  workflow_dispatch:
+    inputs:
+      run_daraja_sandbox:
+        description: "Run opt-in Daraja sandbox contract tests"
+        required: false
+        default: "false"
+
+env:
+  POSTGRES_DB: beauty_ci
+  POSTGRES_USER: beauty_ci
+  POSTGRES_PASSWORD: beauty_ci_password
+  REDIS_PASSWORD: beauty_ci_redis_password
+  SECRET_KEY: django-insecure-ci-placeholder-key-32-chars
+  DEBUG: "False"
+  SECURE_SSL_REDIRECT: "False"
+  CHECKOUT_MPESA_PROVIDER: fake
+  PAYMENT_PROVIDER_MODE: fake
+  DARAJA_ENV: sandbox
+  DARAJA_CONSUMER_KEY: ""
+  DARAJA_CONSUMER_SECRET: ""
+  DARAJA_SHORTCODE: ""
+  DARAJA_PASSKEY: ""
+  DARAJA_CALLBACK_URL: ""
+  DARAJA_ACCOUNT_REFERENCE: ""
+  DARAJA_TRANSACTION_DESC: ""
+  DARAJA_TEST_MSISDN: ""
 
 jobs:
-  # ============================================================================
-  # 1. VALIDATE JOB: Environment sanity & Poetry lock validation
-  # ============================================================================
   validate:
     name: validate
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python Runtime
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Install Poetry
         run: pip install poetry
 
-      - name: Cache Poetry Cache Directory
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pypoetry
-          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-
-
-      - name: Verify Poetry Lockfile Integrity
+      - name: Validate Poetry files
         run: |
-          poetry check
+          poetry check --lock
 
-  # ============================================================================
-  # 2. LINT JOB: Parallel style audit
-  # ============================================================================
-  lint:
-    name: lint
+  lint-security:
+    name: lint-security
     runs-on: ubuntu-latest
     needs: validate
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python Runtime
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
-          cache: 'pip'
+          python-version: "3.13"
 
-      - name: Install Linters
-        run: pip install flake8 ruff
+      - name: Install Poetry
+        run: pip install poetry
 
-      - name: Run Enterprise Python Lint Gates
+      - name: Install project dev dependencies
+        run: poetry install --with dev --no-root
+
+      - name: Run Poetry lint and security gates
         run: |
-          ruff check . --select E,F,B,SIM,UP,I --line-length 120
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --max-line-length=120 --max-complexity=12 --statistics
+          poetry run black --check .
+          poetry run isort --check-only .
+          poetry run ruff check .
+          poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          poetry run bandit -r . -x tests -ll -ii
+          poetry run python scripts/ci/secret_hygiene.py
 
-  # ============================================================================
-  # 3. SECURITY JOB: Parallel AST scanning
-  # ============================================================================
-  security:
-    name: security
-    runs-on: ubuntu-latest
-    needs: validate
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up Python Runtime
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-          cache: 'pip'
-
-      - name: Install Bandit Security Scanner
-        run: pip install bandit
-
-      - name: Run Bandit AST Scanner
-        run: bandit -r core/ users/ billing/ checkout/ bookings/ -ll -ii
-
-  # ============================================================================
-  # 4. DJANGO-SMOKE JOB: Infrastructure and migration sanity check
-  # ============================================================================
   django-smoke:
     name: django-smoke
     runs-on: ubuntu-latest
-    needs: [lint, security]
-    env:
-      POSTGRES_DB: beauty_db_smoke
-      POSTGRES_USER: beauty_user_smoke
-      POSTGRES_PASSWORD: beauty_secure_password_smoke
-      REDIS_PASSWORD: beauty_redis_secure_password_smoke
-      SECRET_KEY: django-insecure-ci-smoke-key-32-chars-long
-      DEBUG: "True"
+    needs: lint-security
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Cache Docker Layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      - name: Spin up Infrastructure Containers
+      - name: Start Docker services
         run: docker compose up -d --build
 
-      - name: Verify Service Health
+      - name: Wait for Docker health
         run: |
-          echo "[*] Waiting for PostgreSQL and Redis to report healthy..."
-          for i in {1..12}; do
-            DB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_postgres_db 2>/dev/null || echo "starting")
-            REDIS_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_redis 2>/dev/null || echo "starting")
-            if [ "$DB_STATUS" = "healthy" ] && [ "$REDIS_STATUS" = "healthy" ]; then
-              echo "[+] All database and cache containers are healthy!"
-              break
+          for i in {1..30}; do
+            WEB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_web_app 2>/dev/null || echo starting)
+            DB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_postgres_db 2>/dev/null || echo starting)
+            REDIS_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_redis 2>/dev/null || echo starting)
+            if [ "$WEB_STATUS" = healthy ] && [ "$DB_STATUS" = healthy ] && [ "$REDIS_STATUS" = healthy ]; then
+              exit 0
             fi
-            echo "[-] Database is $DB_STATUS, Redis is $REDIS_STATUS. Retrying in 5s..."
             sleep 5
           done
+          docker compose ps
+          exit 1
 
-      - name: Execute Django Production Smoke Test
+      - name: Django checks
         run: |
-          docker compose exec -T web bash scripts/ci/django_smoke.sh
+          docker compose exec -T web poetry run python manage.py makemigrations --check --dry-run
+          docker compose exec -T web poetry run python manage.py check
 
-      - name: Tear Down Services
+      - name: Docker logs on failure
+        if: failure()
+        run: docker compose logs --tail=300 web worker db redis frontend || true
+
+      - name: Stop Docker services
         if: always()
         run: docker compose down --volumes --remove-orphans
 
-  # ============================================================================
-  # 5. UNIT JOB: Pytest unit tests
-  # ============================================================================
-  unit:
-    name: unit
-    runs-on: ubuntu-latest
-    needs: django-smoke
-    env:
-      POSTGRES_DB: beauty_db_unit
-      POSTGRES_USER: beauty_user_unit
-      POSTGRES_PASSWORD: beauty_secure_password_unit
-      REDIS_PASSWORD: beauty_redis_secure_password_unit
-      SECRET_KEY: django-insecure-ci-unit-key-32-chars-long
-      DEBUG: "True"
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Cache Docker Layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      - name: Spin up Infrastructure Containers
-        run: docker compose up -d --build
-
-      - name: Verify Service Health
-        run: |
-          echo "[*] Waiting for PostgreSQL and Redis to report healthy..."
-          for i in {1..12}; do
-            DB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_postgres_db 2>/dev/null || echo "starting")
-            REDIS_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_redis 2>/dev/null || echo "starting")
-            if [ "$DB_STATUS" = "healthy" ] && [ "$REDIS_STATUS" = "healthy" ]; then
-              echo "[+] All database and cache containers are healthy!"
-              break
-            fi
-            echo "[-] Database is $DB_STATUS, Redis is $REDIS_STATUS. Retrying in 5s..."
-            sleep 5
-          done
-
-      - name: Run Pytest Unit Tests
-        run: |
-          docker compose exec -T web poetry run pytest tests/unit/. billing/tests/. bookings/tests/.
-
-      - name: Tear Down Services
-        if: always()
-        run: docker compose down --volumes --remove-orphans
-
-  # ============================================================================
-  # 5A. BILLING UNIT JOB: Phase 2C-A immutable financial truth layer
-  # ============================================================================
   billing-unit:
     name: billing-unit
     runs-on: ubuntu-latest
     needs: django-smoke
-    env:
-      POSTGRES_DB: beauty_db_billing_unit
-      POSTGRES_USER: beauty_user_billing_unit
-      POSTGRES_PASSWORD: beauty_secure_password_billing_unit
-      REDIS_PASSWORD: beauty_redis_secure_password_billing_unit
-      SECRET_KEY: phase2ca-ci-billing-unit-key-32-chars
-      DEBUG: "True"
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Spin up Infrastructure Containers
-        run: docker compose up -d --build
-
-      - name: Run Billing Unit Tests
-        run: docker compose exec -T web poetry run pytest billing/tests/.
-
-      - name: Tear Down Services
-        if: always()
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build
+      - run: docker compose exec -T web poetry run pytest billing/tests
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
         run: docker compose down --volumes --remove-orphans
 
-  # ============================================================================
-  # 5B. CHECKOUT UNIT JOB: Phase 2C-A customer payment orchestration
-  # ============================================================================
   checkout-unit:
     name: checkout-unit
     runs-on: ubuntu-latest
     needs: django-smoke
-    env:
-      POSTGRES_DB: beauty_db_checkout_unit
-      POSTGRES_USER: beauty_user_checkout_unit
-      POSTGRES_PASSWORD: beauty_secure_password_checkout_unit
-      REDIS_PASSWORD: beauty_redis_secure_password_checkout_unit
-      SECRET_KEY: phase2ca-ci-checkout-unit-key-32-chars
-      DEBUG: "True"
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Spin up Infrastructure Containers
-        run: docker compose up -d --build
-
-      - name: Run Checkout Unit Tests
-        run: docker compose exec -T web poetry run pytest checkout/tests/.
-
-      - name: Tear Down Services
-        if: always()
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build
+      - run: docker compose exec -T web poetry run pytest checkout/tests
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
         run: docker compose down --volumes --remove-orphans
 
-  # ============================================================================
-  # 5C. CHECKOUT-BILLING INTEGRATION JOB: Payment outcome contract
-  # ============================================================================
   checkout-billing-integration:
     name: checkout-billing-integration
     runs-on: ubuntu-latest
-    needs: [billing-unit, checkout-unit]
-    env:
-      POSTGRES_DB: beauty_db_checkout_billing
-      POSTGRES_USER: beauty_user_checkout_billing
-      POSTGRES_PASSWORD: beauty_secure_password_checkout_billing
-      REDIS_PASSWORD: beauty_redis_secure_password_checkout_billing
-      SECRET_KEY: phase2ca-ci-checkout-billing-key-32-chars
-      DEBUG: "True"
+    needs:
+      - billing-unit
+      - checkout-unit
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Spin up Infrastructure Containers
-        run: docker compose up -d --build
-
-      - name: Run Checkout to Billing Contract Tests
-        run: |
-          docker compose exec -T web poetry run pytest \
-            tests/integration/test_checkout_billing_contract.py \
-            tests/integration/test_checkout_success_creates_ledger.py \
-            tests/integration/test_checkout_failure_does_not_credit_ledger.py \
-            tests/integration/test_duplicate_callback_does_not_double_credit.py \
-            tests/integration/test_checkout_settlement_contract.py
-
-      - name: Tear Down Services
-        if: always()
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build
+      - run: docker compose exec -T web poetry run pytest tests/integration
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
         run: docker compose down --volumes --remove-orphans
 
-  # ============================================================================
-  # 5D. PAYMENT SECURITY JOB: Payment perimeter pressure tests
-  # ============================================================================
   payment-security:
     name: payment-security
     runs-on: ubuntu-latest
     needs: checkout-billing-integration
-    env:
-      POSTGRES_DB: beauty_db_payment_security
-      POSTGRES_USER: beauty_user_payment_security
-      POSTGRES_PASSWORD: beauty_secure_password_payment_security
-      REDIS_PASSWORD: beauty_redis_secure_password_payment_security
-      SECRET_KEY: phase2ca2-ci-payment-security-key
-      DEBUG: "False"
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Spin up Infrastructure Containers
-        run: docker compose up -d --build
-
-      - name: Run Payment Security Pressure Tests
-        run: |
-          docker compose exec -T web poetry run pytest \
-            tests/security/test_billing_red_team.py \
-            tests/security/test_billing_red_team_pressure.py \
-            tests/security/test_checkout_red_team.py \
-            tests/security/test_checkout_red_team_pressure.py \
-            tests/security/test_mpesa_webhook_red_team.py \
-            tests/security/test_forwarded_for_spoofing_payment.py \
-            tests/security/test_payment_log_redaction_under_load.py \
-            tests/security/test_log_redaction.py
-
-      - name: Tear Down Services
-        if: always()
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build
+      - run: docker compose exec -T web poetry run pytest tests/security
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
         run: docker compose down --volumes --remove-orphans
 
-  # ============================================================================
-  # 5E. PAYMENT LOAD RESILIENCE JOB: deterministic fake-provider storm tests
-  # ============================================================================
   payment-load-resilience:
     name: payment-load-resilience
     runs-on: ubuntu-latest
     needs: payment-security
-    env:
-      POSTGRES_DB: beauty_db_payment_load
-      POSTGRES_USER: beauty_user_payment_load
-      POSTGRES_PASSWORD: beauty_secure_password_payment_load
-      REDIS_PASSWORD: beauty_redis_secure_password_payment_load
-      SECRET_KEY: phase2ca2-ci-payment-load-key
-      DEBUG: "False"
-      CHECKOUT_MPESA_PROVIDER: "fake"
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Spin up Infrastructure Containers
-        run: docker compose up -d --build
-
-      - name: Run Payment Load and Resilience Tests
-        run: docker compose exec -T web poetry run pytest tests/load -m "load"
-
-      - name: Tear Down Services
-        if: always()
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build
+      - run: docker compose exec -T web poetry run pytest tests/load -m "payment_load" -vv
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
         run: docker compose down --volumes --remove-orphans
 
-  # ============================================================================
-  # 5F. FINANCIAL RED TEAM JOB: Ledger and checkout abuse cases
-  # ============================================================================
-  financial-red-team:
-    name: financial-red-team
+  latency:
+    name: latency
     runs-on: ubuntu-latest
-    needs: payment-load-resilience
-    env:
-      POSTGRES_DB: beauty_db_financial_red_team
-      POSTGRES_USER: beauty_user_financial_red_team
-      POSTGRES_PASSWORD: beauty_secure_password_financial_red_team
-      REDIS_PASSWORD: beauty_redis_secure_password_financial_red_team
-      SECRET_KEY: phase2ca-ci-financial-red-team-key
-      DEBUG: "False"
+    needs: payment-security
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Spin up Infrastructure Containers
-        run: docker compose up -d --build
-
-      - name: Run Financial Red Team Tests
-        run: docker compose exec -T web poetry run pytest tests/security/test_billing_red_team.py tests/security/test_checkout_red_team.py tests/security/test_log_redaction.py
-
-      - name: Tear Down Services
-        if: always()
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build
+      - run: docker compose exec -T web poetry run pytest tests/latency -m "latency" -vv
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
         run: docker compose down --volumes --remove-orphans
 
-  # ============================================================================
-  # 5E. SYSTEM SECURITY JOB: Existing Auth and system-wide hostile-load tests
-  # ============================================================================
-  system-security:
-    name: system-security
-    runs-on: ubuntu-latest
-    needs: financial-red-team
-    env:
-      POSTGRES_DB: beauty_db_system_security
-      POSTGRES_USER: beauty_user_system_security
-      POSTGRES_PASSWORD: beauty_secure_password_system_security
-      REDIS_PASSWORD: beauty_redis_secure_password_system_security
-      SECRET_KEY: phase2ca-ci-system-security-key
-      DEBUG: "False"
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Spin up Infrastructure Containers
-        run: docker compose up -d --build
-
-      - name: Run System Security Tests
-        run: docker compose exec -T web poetry run pytest tests/security/test_red_team_auth.py tests/security/test_system_chaos.py
-
-      - name: Tear Down Services
-        if: always()
-        run: docker compose down --volumes --remove-orphans
-
-  # ============================================================================
-  # 6. CHAOS INTEGRATION JOB: Cross-domain concurrent attack simulations
-  # ============================================================================
-  chaos-integration:
-    name: chaos-integration
-    runs-on: ubuntu-latest
-    needs: unit
-    env:
-      POSTGRES_DB: beauty_db_chaos_integration
-      POSTGRES_USER: beauty_user_chaos_integration
-      POSTGRES_PASSWORD: beauty_secure_password_chaos_integration
-      REDIS_PASSWORD: beauty_redis_secure_password_chaos_integration
-      SECRET_KEY: phase2b-ci-chaos-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f
-      DEBUG: "False"
-      SECURE_SSL_REDIRECT: "True"
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Spin up Infrastructure Containers
-        run: docker compose up -d --build
-
-      - name: Run Migrations
-        run: docker compose exec -T web poetry run python manage.py migrate --noinput
-
-      - name: Run System-Wide Chaos Suite
-        run: docker compose exec -T web poetry run pytest tests/security/test_system_chaos.py tests/security/test_red_team_auth.py
-
-      - name: Tear Down Services
-        if: always()
-        run: docker compose down --volumes --remove-orphans
-
-  # ============================================================================
-  # 7. CELERY JOB: isolated pytest Celery tests
-  # ============================================================================
-  celery:
-    name: celery
+  frontend-test:
+    name: frontend-test
     runs-on: ubuntu-latest
     needs: django-smoke
-    env:
-      POSTGRES_DB: beauty_db_celery
-      POSTGRES_USER: beauty_user_celery
-      POSTGRES_PASSWORD: beauty_secure_password_celery
-      REDIS_PASSWORD: beauty_redis_secure_password_celery
-      SECRET_KEY: django-insecure-ci-celery-key-32-chars-long
-      DEBUG: "True"
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - run: docker compose --profile test up -d --build frontend-test
+      - run: docker compose exec -T frontend-test npm run test
+      - run: docker compose exec -T frontend-test npm run type-check
+      - run: docker compose exec -T frontend-test npm run build
+      - if: failure()
+        run: docker compose logs --tail=300 frontend-test || true
+      - if: always()
+        run: docker compose --profile test down --volumes --remove-orphans
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Cache Docker Layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      - name: Spin up Infrastructure Containers
-        run: docker compose up -d --build
-
-      - name: Verify Service Health
-        run: |
-          echo "[*] Waiting for PostgreSQL and Redis to report healthy..."
-          for i in {1..12}; do
-            DB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_postgres_db 2>/dev/null || echo "starting")
-            REDIS_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_redis 2>/dev/null || echo "starting")
-            if [ "$DB_STATUS" = "healthy" ] && [ "$REDIS_STATUS" = "healthy" ]; then
-              echo "[+] All database and cache containers are healthy!"
-              break
-            fi
-            echo "[-] Database is $DB_STATUS, Redis is $REDIS_STATUS. Retrying in 5s..."
-            sleep 5
-          done
-
-      - name: Run Pytest Celery Tests
-        run: |
-          docker compose exec -T web pytest -m "celery" || echo "[!] No celery tests found."
-
-      - name: Tear Down Services
-        if: always()
+  chaos:
+    name: chaos
+    runs-on: ubuntu-latest
+    needs:
+      - payment-load-resilience
+      - latency
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build
+      - name: Run deterministic fake-provider chaos suites
+        run: docker compose exec -T web poetry run pytest tests/security tests/load tests/latency -vv
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
         run: docker compose down --volumes --remove-orphans
 
-  # ============================================================================
-  # 8. INTEGRATION JOB: Tests requiring real Postgres/Redis connections
-  # ============================================================================
-  integration:
-    name: integration
-    runs-on: ubuntu-latest
-    needs: [chaos-integration, celery]
-    env:
-      POSTGRES_DB: beauty_db_integration
-      POSTGRES_USER: beauty_user_integration
-      POSTGRES_PASSWORD: beauty_secure_password_integration
-      REDIS_PASSWORD: beauty_redis_secure_password_integration
-      SECRET_KEY: django-insecure-ci-integration-key-32-chars-long
-      DEBUG: "True"
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Cache Docker Layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      - name: Spin up Infrastructure Containers
-        run: docker compose up -d --build
-
-      - name: Verify Service Health
-        run: |
-          echo "[*] Waiting for PostgreSQL and Redis to report healthy..."
-          for i in {1..12}; do
-            DB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_postgres_db 2>/dev/null || echo "starting")
-            REDIS_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_redis 2>/dev/null || echo "starting")
-            if [ "$DB_STATUS" = "healthy" ] && [ "$REDIS_STATUS" = "healthy" ]; then
-              echo "[+] All database and cache containers are healthy!"
-              break
-            fi
-            echo "[-] Database is $DB_STATUS, Redis is $REDIS_STATUS. Retrying in 5s..."
-            sleep 5
-          done
-
-      - name: Run Pytest Integration Tests
-        run: |
-          docker compose exec -T web poetry run pytest tests/integration/.
-
-      - name: Tear Down Services
-        if: always()
-        run: docker compose down --volumes --remove-orphans
-
-  # ============================================================================
-  # 9. TOXIPROXY JOB: Chaos engineering and resilience simulations
-  # ============================================================================
-  toxiproxy:
-    name: toxiproxy
-    runs-on: ubuntu-latest
-    needs: integration
-    env:
-      POSTGRES_DB: beauty_db_chaos
-      POSTGRES_USER: beauty_user_chaos
-      POSTGRES_PASSWORD: beauty_secure_password_chaos
-      REDIS_PASSWORD: beauty_redis_secure_password_chaos
-      SECRET_KEY: django-insecure-ci-chaos-key-32-chars-long
-      DEBUG: "True"
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Cache Docker Layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      - name: Spin up Infrastructure Containers with Toxiproxy
-        run: docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml up -d --build
-
-      - name: Verify Service Health
-        run: |
-          echo "[*] Waiting for PostgreSQL and Redis to report healthy..."
-          for i in {1..12}; do
-            DB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_postgres_db 2>/dev/null || echo "starting")
-            REDIS_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_redis 2>/dev/null || echo "starting")
-            if [ "$DB_STATUS" = "healthy" ] && [ "$REDIS_STATUS" = "healthy" ]; then
-              echo "[+] All database and cache containers are healthy!"
-              break
-            fi
-            echo "[-] Database is $DB_STATUS, Redis is $REDIS_STATUS. Retrying in 5s..."
-            sleep 5
-          done
-
-      - name: Run Resilience & Chaos Tests
-        run: |
-          docker compose exec -T web pytest -m "resilience" || echo "[!] No resilience tests found."
-
-      - name: Tear Down Services
-        if: always()
-        run: docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml down --volumes --remove-orphans
-
-  # ============================================================================
-  # 10. DOCKER-BUILD JOB: Verification of production Dockerfile build
-  # ============================================================================
   docker-build:
     name: docker-build
     runs-on: ubuntu-latest
-    needs: toxiproxy
+    needs:
+      - chaos
+      - frontend-test
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - run: docker build -t beauty-portfolio-prod:latest .
+      - run: docker compose config -q
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Cache Docker Layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      - name: Verify Build Status
-        run: |
-          docker build -t beauty-portfolio-prod:latest .
-          echo "[+] Production Docker build verified successfully."
+  daraja-sandbox-contract:
+    name: daraja-sandbox-contract
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.run_daraja_sandbox == 'true'
+    needs: docker-build
+    env:
+      DARAJA_ENV: sandbox
+      DARAJA_CONSUMER_KEY: ${{ secrets.DARAJA_CONSUMER_KEY }}
+      DARAJA_CONSUMER_SECRET: ${{ secrets.DARAJA_CONSUMER_SECRET }}
+      DARAJA_SHORTCODE: ${{ secrets.DARAJA_SHORTCODE }}
+      DARAJA_PASSKEY: ${{ secrets.DARAJA_PASSKEY }}
+      DARAJA_CALLBACK_URL: ${{ secrets.DARAJA_CALLBACK_URL }}
+      DARAJA_ACCOUNT_REFERENCE: ${{ secrets.DARAJA_ACCOUNT_REFERENCE }}
+      DARAJA_TRANSACTION_DESC: ${{ secrets.DARAJA_TRANSACTION_DESC }}
+      DARAJA_TEST_MSISDN: ${{ secrets.DARAJA_TEST_MSISDN }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build web worker db redis
+      - name: Run opt-in Daraja sandbox contract
+        run: docker compose exec -T web poetry run pytest tests/external -m "daraja_sandbox" --run-external -vv
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: docker compose down --volumes --remove-orphans

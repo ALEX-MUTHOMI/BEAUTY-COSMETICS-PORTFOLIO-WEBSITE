@@ -4,8 +4,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from checkout.exceptions import CheckoutValidationError
 from checkout.permissions import IsSafaricomCheckoutIP
 from checkout.providers.base import ProviderError
+from checkout.providers.mpesa import MpesaProvider
 from checkout.selectors import get_customer_checkout_or_none
 from checkout.serializers import (
     CheckoutSessionCreateSerializer,
@@ -90,7 +92,18 @@ class CheckoutMpesaWebhookView(APIView):
     permission_classes = [IsSafaricomCheckoutIP]
 
     def post(self, request):
-        serializer = MpesaWebhookSerializer(data=request.data)
+        try:
+            payload = (
+                MpesaProvider().normalize_callback(request.data)
+                if isinstance(request.data, dict) and "Body" in request.data
+                else request.data
+            )
+        except CheckoutValidationError:
+            return Response(
+                {"detail": "Malformed provider callback."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = MpesaWebhookSerializer(data=payload)
         if not serializer.is_valid():
             return Response(
                 {"detail": "Malformed provider callback."},

@@ -50,6 +50,13 @@ class MpesaProvider(BaseMpesaProvider):
         value = os.environ.get(key)
         if not value:
             raise ProviderUnavailable(f"{key} is not configured.")
+        return self._clean_env_like_value(key, value)
+
+    def _clean_env_like_value(self, key, value):
+        value = str(value).strip().strip("\"'")
+        prefix = f"{key}="
+        if value.startswith(prefix):
+            value = value[len(prefix) :].strip().strip("\"'")
         return value
 
     def retrieve_oauth_token(self):
@@ -97,7 +104,7 @@ class MpesaProvider(BaseMpesaProvider):
             "PartyA": normalized_phone,
             "PartyB": shortcode,
             "PhoneNumber": normalized_phone,
-            "CallBackURL": callback_url,
+            "CallBackURL": self._clean_env_like_value("DARAJA_CALLBACK_URL", callback_url),
             "AccountReference": str(account_reference)[:12],
             "TransactionDesc": str(description)[:100],
         }

@@ -1,6 +1,7 @@
 import copy
 import hmac
 import re
+from decimal import Decimal
 from hashlib import sha256
 
 from django.conf import settings
@@ -45,6 +46,8 @@ def _redact_scalar(key, value):
         return f"redacted:{hash_sensitive_value(value)[:16]}"
     if isinstance(value, str):
         value = re.sub(r"\+?254[71]\d{8}", lambda match: redact_phone(match.group(0)), value)
+    if isinstance(value, Decimal):
+        return str(value)
     return value
 
 

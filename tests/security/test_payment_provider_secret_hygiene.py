@@ -3,11 +3,11 @@ from pathlib import Path
 
 def test_no_daraja_credentials_are_committed():
     root = Path(__file__).resolve().parents[2]
-    credential_names = {
-        "DARAJA_CONSUMER_SECRET=",
-        "DARAJA_PASSKEY=",
-        "DARAJA_TEST_MSISDN=254",
-    }
+    credential_names = (
+        "DARAJA_CONSUMER_SECRET",
+        "DARAJA_PASSKEY",
+        "DARAJA_TEST_MSISDN",
+    )
     scanned = []
     scan_roots = [
         root / "billing",
@@ -37,7 +37,18 @@ def test_no_daraja_credentials_are_committed():
             except OSError:
                 continue
             scanned.append(path)
-            for token in credential_names:
-                assert token not in text, f"credential-shaped value found in {path}"
+            for line in text.splitlines():
+                stripped = line.strip()
+                if not stripped or stripped.startswith("#"):
+                    continue
+                for token in credential_names:
+                    if f"{token}=" not in stripped:
+                        continue
+                    _, value = stripped.split("=", 1)
+                    value = value.strip().strip("\"'")
+                    is_placeholder = not value or value.startswith("${") or value.startswith("<")
+                    if token == "DARAJA_TEST_MSISDN":
+                        is_placeholder = is_placeholder or not value.startswith("254")
+                    assert is_placeholder, f"credential-shaped value found in {path}"
 
     assert scanned

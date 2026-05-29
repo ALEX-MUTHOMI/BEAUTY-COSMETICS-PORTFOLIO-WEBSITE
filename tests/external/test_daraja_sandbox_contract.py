@@ -1,16 +1,24 @@
 import os
+import time
 from decimal import Decimal
 
 import pytest
 
-from billing.models import LedgerTransaction
+from billing.models import FinancialAuditEvent, LedgerTransaction, SettlementRecord
 from checkout.models import CheckoutSession
+from checkout.providers import FakeMpesaProvider
 from checkout.providers.mpesa import MpesaProvider
 from checkout.services import (
     create_checkout_session,
     initiate_mpesa_stk,
     process_mpesa_callback,
 )
+
+
+class RedactedDarajaEnv(dict):
+    def __repr__(self):
+        return repr({key: bool(value) for key, value in self.items()})
+
 
 REQUIRED_ENV = [
     "DARAJA_ENV",
@@ -39,7 +47,7 @@ pytestmark = [
 def daraja_env():
     if not _sandbox_configured():
         pytest.skip("Daraja sandbox credentials are not configured.")
-    return {key: os.environ[key] for key in REQUIRED_ENV}
+    return RedactedDarajaEnv({key: os.environ[key] for key in REQUIRED_ENV})
 
 
 def test_daraja_sandbox_environment_guard_does_not_print_values():
@@ -50,7 +58,10 @@ def test_daraja_sandbox_environment_guard_does_not_print_values():
 
 
 def test_daraja_sandbox_oauth_token_retrieval(daraja_env, caplog):
-    token = MpesaProvider().retrieve_oauth_token()
+    try:
+        token = MpesaProvider().retrieve_oauth_token()
+    except Exception as exc:
+        pytest.fail(f"Daraja OAuth request failed safely: {exc}", pytrace=False)
 
     assert token
     assert token not in caplog.text
@@ -100,12 +111,16 @@ def test_single_daraja_sandbox_stk_initiation_does_not_credit_before_callback(da
         "daraja-sandbox-session-idem",
     )
 
-    attempt = initiate_mpesa_stk(
-        session.id,
-        phone_number=daraja_env["DARAJA_TEST_MSISDN"],
-        idempotency_key="daraja-sandbox-stk-idem",
-        provider=MpesaProvider(),
-    )
+    try:
+        attempt = initiate_mpesa_stk(
+            session.id,
+            phone_number=daraja_env["DARAJA_TEST_MSISDN"],
+            idempotency_key="daraja-sandbox-stk-idem",
+            provider=MpesaProvider(),
+        )
+    except Exception as exc:
+        assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 0
+        pytest.fail(f"Daraja STK request failed safely: {exc}", pytrace=False)
     session.refresh_from_db()
 
     assert attempt.provider_request_id
@@ -113,6 +128,33 @@ def test_single_daraja_sandbox_stk_initiation_does_not_credit_before_callback(da
     assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 0
     assert daraja_env["DARAJA_TEST_MSISDN"] not in caplog.text
     assert attempt.provider_request_id not in caplog.text
+
+    wait_seconds = int(os.environ.get("DARAJA_CALLBACK_WAIT_SECONDS", "0") or "0")
+    if wait_seconds <= 0:
+        return
+
+    deadline = time.monotonic() + wait_seconds
+    while time.monotonic() < deadline:
+        session.refresh_from_db()
+        if session.status in {
+            CheckoutSession.Status.PAID,
+            CheckoutSession.Status.FAILED,
+            CheckoutSession.Status.EXPIRED,
+            CheckoutSession.Status.CANCELLED,
+        }:
+            break
+        time.sleep(2)
+
+    session.refresh_from_db()
+    if session.status != CheckoutSession.Status.PAID:
+        if os.environ.get("DARAJA_REQUIRE_CALLBACK") == "true":
+            pytest.fail("Daraja sandbox callback was not received and processed as a successful payment.")
+        pytest.skip("Daraja sandbox callback was not received as a successful payment within bounded wait.")
+
+    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 1
+    ledger = LedgerTransaction.objects.get(external_correlation_id=str(session.id))
+    assert FinancialAuditEvent.objects.filter(ledger_transaction=ledger).exists()
+    assert SettlementRecord.objects.filter(ledger_transaction=ledger).count() == 1
 
 
 @pytest.mark.django_db(transaction=True)
@@ -134,6 +176,7 @@ def test_sandbox_shaped_duplicate_callback_replay_is_idempotent(daraja_env, djan
         session.id,
         phone_number=daraja_env["DARAJA_TEST_MSISDN"],
         idempotency_key="daraja-callback-stk-idem",
+        provider=FakeMpesaProvider(),
     )
     payload = {
         "CheckoutRequestID": attempt.provider_request_id,
