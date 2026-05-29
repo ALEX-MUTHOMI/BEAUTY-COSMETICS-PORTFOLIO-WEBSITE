@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from checkout.exceptions import CheckoutValidationError
+from checkout.exceptions import CheckoutStateError, CheckoutValidationError
 from checkout.permissions import IsSafaricomCheckoutIP
 from checkout.providers.base import ProviderError
 from checkout.providers.mpesa import MpesaProvider
@@ -109,9 +109,12 @@ class CheckoutMpesaWebhookView(APIView):
                 {"detail": "Malformed provider callback."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        process_mpesa_callback(
-            dict(serializer.validated_data),
-            request.META.get("REMOTE_ADDR"),
-            get_correlation_id(),
-        )
+        try:
+            process_mpesa_callback(
+                dict(serializer.validated_data),
+                request.META.get("REMOTE_ADDR"),
+                get_correlation_id(),
+            )
+        except (CheckoutValidationError, CheckoutStateError):
+            return Response({"status": "accepted"}, status=status.HTTP_202_ACCEPTED)
         return Response({"status": "accepted"}, status=status.HTTP_202_ACCEPTED)

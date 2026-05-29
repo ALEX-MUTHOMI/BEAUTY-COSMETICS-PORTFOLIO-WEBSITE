@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
@@ -28,9 +29,11 @@ def health_check(_request):
 
 urlpatterns = [
     path("health/", health_check, name="health-check"),
-    path("admin/", admin.site.urls),
     path("api/auth/request-otp/", RequestOTPView.as_view(), name="request-otp"),
     path("api/auth/verify-otp/", VerifyOTPView.as_view(), name="verify-otp"),
     path("api/billing/", include("billing.urls")),
     path("api/checkout/", include("checkout.urls")),
 ]
+
+if not settings.DISABLE_DJANGO_ADMIN:
+    urlpatterns.append(path("admin/", admin.site.urls))

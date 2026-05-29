@@ -10,6 +10,7 @@ from django.core.management.base import BaseCommand, CommandError
 from billing.models import FinancialAuditEvent, LedgerTransaction, SettlementRecord
 from billing.redaction import hash_sensitive_value
 from checkout.models import CheckoutSession, MpesaWebhookInbox
+from checkout.providers.base import ProviderError
 from checkout.providers.mpesa import MpesaProvider
 from checkout.services import create_checkout_session, initiate_mpesa_stk, process_mpesa_callback
 
@@ -75,12 +76,15 @@ class Command(BaseCommand):
         self.stdout.write("callback_is_https=True")
         self.stdout.write("ledger_success_before_callback=0")
 
-        attempt = initiate_mpesa_stk(
-            session.id,
-            phone_number=os.environ["DARAJA_TEST_MSISDN"],
-            idempotency_key=f"daraja-sandbox-stk-{run_id}",
-            provider=MpesaProvider(),
-        )
+        try:
+            attempt = initiate_mpesa_stk(
+                session.id,
+                phone_number=os.environ["DARAJA_TEST_MSISDN"],
+                idempotency_key=f"daraja-sandbox-stk-{run_id}",
+                provider=MpesaProvider(),
+            )
+        except ProviderError as exc:
+            raise CommandError(f"Daraja STK request failed safely: {exc}") from exc
         session.refresh_from_db()
         self.stdout.write("oauth_and_stk_request_sent=True")
         self.stdout.write("phone_prompt_initiated=True")

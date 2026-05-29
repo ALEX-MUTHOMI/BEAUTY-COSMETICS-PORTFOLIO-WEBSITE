@@ -21,6 +21,22 @@ def _fixture(name):
     return json.loads((FIXTURE_DIR / name).read_text())
 
 
+def _daraja_callback(checkout_request_id, result_code, amount=None):
+    items = []
+    if amount is not None:
+        items.append({"Name": "Amount", "Value": float(amount)})
+        items.append({"Name": "MpesaReceiptNumber", "Value": "QREDACTED001"})
+    callback = {
+        "MerchantRequestID": "merchant-redacted",
+        "CheckoutRequestID": checkout_request_id,
+        "ResultCode": result_code,
+        "ResultDesc": "Provider result redacted",
+    }
+    if items:
+        callback["CallbackMetadata"] = {"Item": items}
+    return {"Body": {"stkCallback": callback}}
+
+
 def _session_with_real_shape_attempt(status=CheckoutSession.Status.STK_SENT):
     customer = User.objects.create_user(email="real-shape-checkout@beauty.com", phone_number="+254712770001")
     session = create_checkout_session(
@@ -96,3 +112,55 @@ def test_webhook_endpoint_accepts_nested_daraja_callback_shape():
     assert response.status_code == 202
     assert session.status == CheckoutSession.Status.PAID
     assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 1
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize(
+    ("payload", "expected_status"),
+    [
+        (_daraja_callback("ws_CO_UNKNOWN_SUCCESS", 0, "100.00"), 202),
+        (_daraja_callback("ws_CO_UNKNOWN_CANCELLED", 1032), 202),
+        (_daraja_callback("ws_CO_UNKNOWN_TIMEOUT", 1037), 202),
+        (_daraja_callback("ws_CO_UNKNOWN_FAILED", 1), 202),
+        ({"Body": {"stkCallback": {"CheckoutRequestID": "malformed-redacted"}}}, 400),
+    ],
+)
+def test_webhook_endpoint_unknown_and_malformed_callbacks_fail_closed_without_ledger(payload, expected_status, caplog):
+    client = APIClient()
+
+    response = client.post(
+        reverse("checkout-mpesa-webhook"),
+        data=payload,
+        format="json",
+        REMOTE_ADDR="127.0.0.1",
+        secure=True,
+    )
+
+    assert response.status_code == expected_status
+    assert response.status_code < 500
+    assert LedgerTransaction.objects.filter(status=LedgerTransaction.Status.SUCCESS).count() == 0
+    assert CheckoutSession.objects.filter(status=CheckoutSession.Status.PAID).count() == 0
+    assert "ws_CO_UNKNOWN" not in caplog.text
+    assert "QREDACTED001" not in caplog.text
+
+
+@pytest.mark.django_db(transaction=True)
+def test_webhook_endpoint_amount_mismatch_callback_fails_closed_without_payment(caplog):
+    session, event = _session_with_real_shape_attempt()
+    payload = _daraja_callback(event["CheckoutRequestID"], 0, "999.00")
+    client = APIClient()
+
+    response = client.post(
+        reverse("checkout-mpesa-webhook"),
+        data=payload,
+        format="json",
+        REMOTE_ADDR="127.0.0.1",
+        secure=True,
+    )
+    session.refresh_from_db()
+
+    assert response.status_code == 202
+    assert session.status == CheckoutSession.Status.STK_SENT
+    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 0
+    assert event["CheckoutRequestID"] not in caplog.text
+    assert "QREDACTED001" not in caplog.text

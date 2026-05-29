@@ -29,6 +29,11 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-%m$)l3#zgq)20cmf5!=nf
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1", "t")
 
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get("ALLOWED_HOSTS", "*").split(",") if host.strip()]
+DISABLE_DJANGO_ADMIN = os.environ.get("DISABLE_DJANGO_ADMIN", "False").lower() in (
+    "true",
+    "1",
+    "t",
+)
 
 # Production security configuration gates
 if not DEBUG:
@@ -275,6 +280,11 @@ REST_FRAMEWORK = {
         "checkout_stk_push": "3/min",
     },
 }
+
+if os.environ.get("DRF_DISABLE_BROWSABLE_API", "False").lower() in ("true", "1", "t"):
+    REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
+        "rest_framework.renderers.JSONRenderer",
+    ]
 
 LOGGING = {
     "version": 1,

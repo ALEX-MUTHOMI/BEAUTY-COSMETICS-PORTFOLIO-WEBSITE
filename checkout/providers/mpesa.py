@@ -1,10 +1,12 @@
 import base64
 import json
 import os
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import UTC, datetime
+from decimal import Decimal
 
 from django.conf import settings
 
@@ -17,6 +19,7 @@ from checkout.providers.base import (
     ProviderTimeout,
     ProviderUnavailable,
 )
+from checkout.redaction import redact_checkout_payload
 
 
 class MpesaProvider(BaseMpesaProvider):
@@ -59,6 +62,89 @@ class MpesaProvider(BaseMpesaProvider):
             value = value[len(prefix) :].strip().strip("\"'")
         return value
 
+    def _validated_shortcode(self):
+        shortcode = self._required_env("DARAJA_SHORTCODE")
+        if not shortcode.isdigit():
+            raise ProviderUnavailable("DARAJA_SHORTCODE must be numeric.")
+        return shortcode
+
+    def _validated_passkey(self):
+        passkey = self._required_env("DARAJA_PASSKEY")
+        if len(passkey) < 8:
+            raise ProviderUnavailable("DARAJA_PASSKEY is invalid.")
+        return passkey
+
+    def _validated_callback_url(self, callback_url):
+        callback_url = self._clean_env_like_value("DARAJA_CALLBACK_URL", callback_url)
+        parsed = urllib.parse.urlparse(callback_url)
+        if parsed.scheme != "https" or not parsed.hostname:
+            raise ProviderUnavailable("Daraja callback URL must be a valid HTTPS URL.")
+
+        env_callback_url = self._clean_env_like_value("DARAJA_CALLBACK_URL", self._required_env("DARAJA_CALLBACK_URL"))
+        env_host = urllib.parse.urlparse(env_callback_url).hostname
+        if parsed.hostname != env_host:
+            raise ProviderUnavailable("Daraja callback URL host does not match configured callback host.")
+        return callback_url
+
+    def _validated_amount(self, amount):
+        try:
+            normalized_amount = Decimal(str(amount)).quantize(Decimal("0.01"))
+        except Exception as exc:
+            raise ProviderUnavailable("Daraja STK amount is invalid.") from exc
+        if normalized_amount <= Decimal("0.00"):
+            raise ProviderUnavailable("Daraja STK amount must be positive.")
+        return int(normalized_amount)
+
+    def _safe_error_diagnostic(self, exc):
+        status_code = getattr(exc, "code", "unknown")
+        body = ""
+        try:
+            body = exc.read().decode("utf-8", errors="replace")
+        except Exception:
+            body = ""
+        try:
+            parsed_body = json.loads(body) if body else {}
+        except json.JSONDecodeError:
+            parsed_body = {"provider_error": body[:200]}
+        redacted_body = redact_checkout_payload(parsed_body)
+        redacted_body = self._redact_known_provider_secrets(redacted_body)
+        safe_fields = {
+            key: redacted_body.get(key)
+            for key in (
+                "errorCode",
+                "errorMessage",
+                "ResponseCode",
+                "ResponseDescription",
+                "CustomerMessage",
+            )
+            if key in redacted_body
+        }
+        return {"status_code": status_code, "body": safe_fields or {"provider_error": "redacted"}}
+
+    def _redact_known_provider_secrets(self, value):
+        secret_values = [
+            os.environ.get(key, "")
+            for key in (
+                "DARAJA_CONSUMER_KEY",
+                "DARAJA_CONSUMER_SECRET",
+                "DARAJA_PASSKEY",
+            )
+            if os.environ.get(key)
+        ]
+
+        def redact(value):
+            if isinstance(value, dict):
+                return {key: redact(item) for key, item in value.items()}
+            if isinstance(value, list):
+                return [redact(item) for item in value]
+            if not isinstance(value, str):
+                return value
+            for secret in secret_values:
+                value = value.replace(secret, "redacted")
+            return re.sub(r"password\s+[A-Za-z0-9+/=]{16,}", "password redacted", value, flags=re.IGNORECASE)
+
+        return redact(value)
+
     def retrieve_oauth_token(self):
         self._require_https(self.oauth_endpoint)
         consumer_key = self._required_env("DARAJA_CONSUMER_KEY")
@@ -90,21 +176,23 @@ class MpesaProvider(BaseMpesaProvider):
         description,
         callback_url,
     ):
-        shortcode = self._required_env("DARAJA_SHORTCODE")
-        passkey = self._required_env("DARAJA_PASSKEY")
+        shortcode = self._validated_shortcode()
+        passkey = self._validated_passkey()
         timestamp = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
         password = base64.b64encode(f"{shortcode}{passkey}{timestamp}".encode()).decode()
         normalized_phone = normalize_mpesa_phone(phone_number)
+        callback_url = self._validated_callback_url(callback_url)
+        amount = self._validated_amount(amount)
         return {
             "BusinessShortCode": shortcode,
             "Password": password,
             "Timestamp": timestamp,
             "TransactionType": "CustomerPayBillOnline",
-            "Amount": int(amount),
+            "Amount": amount,
             "PartyA": normalized_phone,
             "PartyB": shortcode,
             "PhoneNumber": normalized_phone,
-            "CallBackURL": self._clean_env_like_value("DARAJA_CALLBACK_URL", callback_url),
+            "CallBackURL": callback_url,
             "AccountReference": str(account_reference)[:12],
             "TransactionDesc": str(description)[:100],
         }
@@ -142,6 +230,9 @@ class MpesaProvider(BaseMpesaProvider):
                 response_payload = json.loads(response.read().decode())
         except TimeoutError as exc:
             raise ProviderTimeout("M-Pesa STK request timed out.") from exc
+        except urllib.error.HTTPError as exc:
+            diagnostic = self._safe_error_diagnostic(exc)
+            raise ProviderUnavailable(f"M-Pesa STK request failed safely: {diagnostic}") from exc
         except (urllib.error.URLError, json.JSONDecodeError) as exc:
             raise ProviderUnavailable("M-Pesa STK request failed safely.") from exc
 
