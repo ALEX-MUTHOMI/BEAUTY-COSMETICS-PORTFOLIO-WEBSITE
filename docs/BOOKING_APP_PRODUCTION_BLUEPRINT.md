@@ -111,9 +111,23 @@ Implemented in B1:
 - Redis circuit-breaker skeleton.
 - Booking unit/security tests.
 
+Implemented in B2:
+
+- Service-layer availability engine.
+- Africa/Nairobi business-day slot generation.
+- 07:00-19:00 default Monday-Saturday windows.
+- Sunday closed for normal availability.
+- Service duration and buffer-aware candidate windows.
+- Interval merging and free-window subtraction.
+- Blocking booking, active hold, and blackout exclusion.
+- Expired/cancelled/payment-failed booking non-blocking behavior.
+- Per-resource daily capacity foundation.
+- Bounded date range validation.
+- Redis availability request counter with TTL.
+- PII-safe, public-ID-only response shape.
+
 ## Deferred Phases
 
-- B2 Availability Engine.
 - B3 Atomic Holds and Concurrency.
 - B4 Checkout/Billing Integration.
 - B5 Reminder Worker and Reschedule Portal.
