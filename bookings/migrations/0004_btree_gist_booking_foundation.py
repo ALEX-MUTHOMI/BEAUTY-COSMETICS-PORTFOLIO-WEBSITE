@@ -20,6 +20,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # Required before PostgreSQL can compare FK equality and timestamp
+        # range overlap in one exclusion constraint.
         BtreeGistExtension(),
         migrations.DeleteModel(name="Booking"),
         migrations.CreateModel(
@@ -238,6 +240,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="booking",
+            # Uses [starts_at, ends_at) so adjacent appointments are valid while
+            # overlapping blocking-status bookings are rejected by the database.
             constraint=ExclusionConstraint(
                 name="exclude_booking_resource_overlap",
                 expressions=[

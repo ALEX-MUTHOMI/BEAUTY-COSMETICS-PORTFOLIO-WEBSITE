@@ -34,6 +34,8 @@ BOOKING_BLOCKING_STATUSES = [
     "late",
     "in_progress",
 ]
+# Only these lifecycle states reserve resource capacity in PostgreSQL. Terminal
+# and non-reserving states stay outside the overlap constraint.
 
 
 class Service(AuditMixin):
@@ -174,6 +176,8 @@ class BookingPolicy(AuditMixin):
 
 
 class CustomerProfile(AuditMixin):
+    # Operational PII is split three ways: encrypted for reminders, HMAC for
+    # lookup, and redacted for logs/dashboard. Raw values must never be stored.
     full_name_encrypted = models.TextField(blank=True)
     full_name_display = models.CharField(max_length=80)
     email_encrypted = models.TextField(blank=True)
@@ -245,6 +249,8 @@ class CustomerProfile(AuditMixin):
 
 class Booking(AuditMixin):
     class Status(models.TextChoices):
+        # Status changes must go through bookings.services.state_machine. The
+        # overlap constraint only blocks capacity for BOOKING_BLOCKING_STATUSES.
         REQUESTED = "requested", "Requested"
         HELD = "held", "Held"
         PAYMENT_PENDING = "payment_pending", "Payment Pending"
@@ -267,10 +273,14 @@ class Booking(AuditMixin):
         URGENT = "urgent", "Urgent"
         SUNDAY_URGENT = "sunday_urgent", "Sunday Urgent"
 
+    # public_id is the only customer-facing identifier; internal UUIDs must not
+    # be exposed in public lookup/status flows.
     public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     customer_profile = models.ForeignKey(CustomerProfile, on_delete=models.PROTECT, related_name="bookings")
     service = models.ForeignKey(Service, on_delete=models.PROTECT, related_name="bookings")
     resource = models.ForeignKey(BookableResource, on_delete=models.PROTECT, related_name="bookings")
+    # Persist UTC-aware datetimes only. Africa/Nairobi conversion belongs in
+    # policy/presentation code before save.
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField()
     status = models.CharField(max_length=32, choices=Status.choices, default=Status.REQUESTED)
@@ -292,6 +302,9 @@ class Booking(AuditMixin):
     class Meta:
         db_table = "bookings"
         constraints = [
+            # Range semantics are [starts_at, ends_at): adjacent bookings are
+            # valid, but overlapping blocking-state bookings for one resource
+            # are rejected by PostgreSQL under concurrency.
             ExclusionConstraint(
                 name="exclude_booking_resource_overlap",
                 expressions=[
@@ -346,6 +359,8 @@ class Booking(AuditMixin):
 
 
 class BookingPriceSnapshot(AuditMixin):
+    # Booking snapshots are operational display history only. Billing remains
+    # the financial source of truth.
     booking = models.OneToOneField(Booking, on_delete=models.PROTECT, related_name="price_snapshot")
     base_service_price = models.DecimalField(max_digits=12, decimal_places=2)
     urgent_fee = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
@@ -358,6 +373,8 @@ class BookingPriceSnapshot(AuditMixin):
 
 
 class BookingFinancialHistory(AuditMixin):
+    # This model stores booking-visible financial milestones, not ledger truth.
+    # Corrections/refunds/reversals belong in billing/.
     class EventType(models.TextChoices):
         CHECKOUT_LINKED = "checkout_linked", "Checkout Linked"
         PAYMENT_CONFIRMED = "payment_confirmed", "Payment Confirmed"
@@ -378,6 +395,8 @@ class BookingFinancialHistory(AuditMixin):
 
 
 class BookingRescheduleRequest(AuditMixin):
+    # The old slot must not be released until a replacement slot is safely held.
+    # Additional-fee reschedules later go through checkout, not ledger mutation.
     class Status(models.TextChoices):
         REQUESTED = "requested", "Requested"
         HELD = "held", "Held"
@@ -408,6 +427,8 @@ class BookingRescheduleRequest(AuditMixin):
 
 
 class BookingReminder(AuditMixin):
+    # Durable transactional outbox. Celery/Redis delivery is a consumer of this
+    # table, not the source of truth for reminder intent.
     class Channel(models.TextChoices):
         EMAIL = "email", "Email"
         SMS = "sms", "SMS"
@@ -453,6 +474,8 @@ class BookingAuditEvent(AuditMixin):
 
 
 class StaffActionAuditEvent(AuditMixin):
+    # Contact reveal and staff overrides are high-risk privacy events. Store
+    # redacted metadata only and require RBAC in service-layer callers.
     class Action(models.TextChoices):
         CONTACT_REVEAL = "contact_reveal", "Contact Reveal"
         STATUS_OVERRIDE = "status_override", "Status Override"

@@ -1,0 +1,122 @@
+# Booking App Production Blueprint
+
+## Purpose
+
+The `bookings/` app owns appointment scheduling foundations for services, resources, holds, operational booking state, reminders, rescheduling policy, urgent handling, and staff workflow. It does not own payment orchestration or financial truth.
+
+## Domain Boundaries
+
+- `bookings/` owns scheduling, capacity protection, booking lifecycle, reminders, reschedule requests, urgent policy flags, and staff workflow audit.
+- `checkout/` owns customer-facing payment orchestration, M-Pesa provider interaction, callbacks, idempotency, and payment outcome events.
+- `billing/` owns immutable financial truth, ledger transactions, audit events, settlement records, reconciliation, and financial corrections.
+- Booking may store `checkout_session_id`, `billing_ledger_id`, or provider reference hashes for operational visibility only.
+
+## Core Product Rules
+
+- A booking must not become confirmed without a valid payment success signal from Checkout in a later integration phase.
+- Two active bookings must not overlap for the same resource.
+- Customers do not get a self-service refund portal in this phase; the operational remedy is policy-controlled rescheduling.
+- Sunday is closed by default. Urgent Sunday handling requires surcharge and manual review in later phases.
+- Urgent booking means paid priority handling, not guaranteed automatic confirmation.
+
+## Booking State Machine
+
+The lifecycle is service-controlled. Direct state mutation is not a sanctioned path.
+
+Allowed foundation transitions include:
+
+- `requested -> held`
+- `held -> payment_pending`
+- `held -> expired`
+- `payment_pending -> confirmed`
+- `payment_pending -> payment_failed`
+- `confirmed -> reschedule_requested`
+- `confirmed -> checked_in`
+- `confirmed -> late`
+- `confirmed -> no_show`
+- `confirmed -> cancelled_by_client`
+- `confirmed -> cancelled_by_business`
+- `late -> checked_in`
+- `late -> no_show`
+- `checked_in -> in_progress`
+- `in_progress -> completed`
+
+Terminal and failed payment states require future audited correction flows before any promotion.
+
+## PostgreSQL Overlap Protection
+
+Booking capacity is protected with PostgreSQL, not only application checks. `btree_gist` enables an exclusion constraint combining `resource` equality with timestamp range overlap. The range is `[starts_at, ends_at)`, so a booking ending at 10:00 and another starting at 10:00 are adjacent and allowed.
+
+Only blocking statuses reserve capacity:
+
+- `held`
+- `payment_pending`
+- `confirmed`
+- `reschedule_held`
+- `checked_in`
+- `late`
+- `in_progress`
+
+## Timezone Policy
+
+The database stores timezone-aware UTC datetimes. Africa/Nairobi is used for business-hour boundaries, customer-facing interpretation, and presentation. Naive datetimes are rejected. Frontend ISO input with `+03:00` must be converted before persistence.
+
+## PII, HMAC, And Redaction
+
+Booking customer contact data is split by purpose:
+
+- Encrypted fields support operational reminders and staff workflows.
+- HMAC lookup hashes support deterministic search without exposing low-entropy phone or email values.
+- Redacted display fields support logs and dashboards.
+
+Plain SHA256 is forbidden for phone and email lookup because those inputs are enumerable. Raw phone numbers, email addresses, names, OTPs, payment references, and encryption material must not appear in logs or docs.
+
+## Reminder Outbox
+
+`BookingReminder` is a durable outbox. Creating the row is the source of truth for reminder intent. Celery or another worker may later dispatch reminders, but worker failure must not erase the reminder. Send-time checks must revalidate booking status, consent, and erasure.
+
+## Redis Circuit Breaker
+
+Redis counters provide cheap rolling-window abuse signals for hold exhaustion. Every `INCR` must set or refresh `EXPIRE` to avoid permanent lockout. Modes are `NORMAL`, `ELEVATED`, `ABUSE`, and `LOCKDOWN`. PostgreSQL aggregate scans are avoided during attack traffic.
+
+## Reschedule And No-Refund Policy
+
+The customer remedy is rescheduling, not self-service refunds. The old slot must not be released until a new slot is safely held. Free reschedules link to the original billing ledger for traceability. Additional-fee reschedules must create a new Checkout session in a later phase, not mutate Billing ledger truth.
+
+## Staff And Beautician Security
+
+Staff views must default to redacted customer contact data. Any reveal of operational contact fields must be permission checked and written to `StaffActionAuditEvent`. Bulk export and dashboard filtering need explicit authorization and redaction in later phases.
+
+## Enumeration Protection
+
+Public lookup uses `public_id` plus customer proof such as phone HMAC. Internal primary keys must not be exposed. Unknown records should return generic responses.
+
+## Observability Requirements
+
+Booking state transitions, contact reveals, reminder outcomes, reschedule decisions, and circuit-breaker mode changes need correlation IDs and redacted structured logs. Observability must not include raw PII.
+
+## B1 Implementation Status
+
+Implemented in B1:
+
+- Booking foundation models.
+- PostgreSQL `btree_gist` and overlap exclusion constraint.
+- UTC-aware datetime enforcement.
+- PII encryption, HMAC lookup, and redacted display utilities.
+- State-machine service.
+- Reminder outbox skeleton.
+- Reschedule request foundation.
+- No-refund financial history policy foundation.
+- Staff action audit foundation.
+- Redis circuit-breaker skeleton.
+- Booking unit/security tests.
+
+## Deferred Phases
+
+- B2 Availability Engine.
+- B3 Atomic Holds and Concurrency.
+- B4 Checkout/Billing Integration.
+- B5 Reminder Worker and Reschedule Portal.
+- B6 Urgent Booking.
+- B7 Staff Dashboard.
+- B8 Red-Team, Load, and Observability.

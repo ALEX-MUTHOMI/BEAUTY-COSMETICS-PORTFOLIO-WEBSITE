@@ -50,11 +50,13 @@ def _hmac(value, pepper):
 
 
 def hmac_phone_hash(phone):
+    """Hash low-entropy phone numbers with keyed HMAC, never plain SHA256."""
     pepper = _required_secret("PII_HASH_PEPPER", getattr(settings, "PII_HASH_PEPPER", ""))
     return _hmac(normalize_phone(phone), pepper)
 
 
 def hmac_email_hash(email):
+    """Hash email lookup values with the same keyed-HMAC privacy boundary."""
     pepper = _required_secret("PII_HASH_PEPPER", getattr(settings, "PII_HASH_PEPPER", ""))
     return _hmac(normalize_email(email), pepper)
 
@@ -69,6 +71,7 @@ def _keystream(key, nonce, length):
 
 
 def encrypt_value(value):
+    """Encrypt operational contact data needed later for reminders."""
     key = _required_secret("PII_ENCRYPTION_KEY", getattr(settings, "PII_ENCRYPTION_KEY", ""))
     nonce = os.urandom(16)
     data = value.encode()
@@ -90,6 +93,7 @@ def decrypt_value(value):
 
 
 def safe_display_name(full_name):
+    """Return dashboard-safe display text without exposing full raw PII."""
     parts = [part for part in (full_name or "").strip().split() if part]
     if not parts:
         return "Customer"

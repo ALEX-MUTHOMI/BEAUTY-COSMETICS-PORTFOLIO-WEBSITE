@@ -1,4 +1,6 @@
 class BookingCircuitBreaker:
+    """Redis-backed rolling-window abuse signal for booking hold exhaustion."""
+
     class Mode:
         NORMAL = "normal"
         ELEVATED = "elevated"
@@ -10,11 +12,15 @@ class BookingCircuitBreaker:
         self.window_seconds = window_seconds
 
     def incr(self, key):
+        # Every increment refreshes expiry so attack counters cannot become
+        # permanent locks after traffic normalizes.
         value = self.redis.incr(key)
         self.redis.expire(key, self.window_seconds)
         return value
 
     def mode_for_context(self):
+        # PostgreSQL aggregate scans are intentionally avoided on this path;
+        # the booking perimeter needs a cheap fail-safe signal during attack.
         try:
             if not hasattr(self.redis, "values"):
                 self.redis.incr("booking:circuit_breaker:healthcheck")

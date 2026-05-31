@@ -29,12 +29,17 @@ VALID_TRANSITIONS = {
     Booking.Status.CHECKED_IN: {Booking.Status.IN_PROGRESS},
     Booking.Status.IN_PROGRESS: {Booking.Status.COMPLETED},
 }
+# This table is the only sanctioned booking lifecycle path. Terminal payment
+# and cancellation states cannot be promoted without a future audited correction
+# workflow.
 
 
 def _validate_transition(booking, new_status):
     allowed = VALID_TRANSITIONS.get(booking.status, set())
     if new_status not in allowed:
         raise BookingStateError(f"Illegal booking transition {booking.status} -> {new_status}.")
+    # No-show is a staff action with customer impact, so the grace window is
+    # enforced in the transition service instead of a view.
     if new_status == Booking.Status.NO_SHOW and timezone.now() < booking.starts_at + timedelta(minutes=30):
         raise BookingStateError("No-show cannot be recorded before the grace period ends.")
 

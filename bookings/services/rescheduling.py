@@ -15,6 +15,8 @@ def create_reschedule_request(
     additional_fee_amount="0.00",
     new_checkout_session_id="",
 ):
+    # This records intent only. The future acceptance path must hold the new
+    # slot before releasing the old one, and extra fees must go through checkout.
     return BookingRescheduleRequest.objects.create(
         booking=booking,
         requested_starts_at=requested_starts_at,
