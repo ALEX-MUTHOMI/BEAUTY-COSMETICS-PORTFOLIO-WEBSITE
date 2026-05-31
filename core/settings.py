@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "django.contrib.postgres",
     "django.contrib.staticfiles",
     "corsheaders",
     "billing.apps.BillingConfig",
@@ -252,6 +253,8 @@ DARAJA_CALLBACK_URL = os.environ.get(
     "DARAJA_CALLBACK_URL",
     "https://api.beautycosmetics.com/api/checkout/mpesa/webhook/",
 )
+PII_HASH_PEPPER = os.environ.get("PII_HASH_PEPPER", "")
+PII_ENCRYPTION_KEY = os.environ.get("PII_ENCRYPTION_KEY", "")
 DARAJA_SANDBOX_CALLBACK_TUNNEL_DOMAINS = [
     domain.strip().lower()
     for domain in os.environ.get(

@@ -118,6 +118,8 @@ services:
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
       POETRY_VIRTUALENVS_CREATE: "false"
+      PII_HASH_PEPPER: ${PII_HASH_PEPPER}
+      PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY}
       PATH: /app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
     expose:
       - "8000"
@@ -159,6 +161,8 @@ services:
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
       POETRY_VIRTUALENVS_CREATE: "false"
+      PII_HASH_PEPPER: ${PII_HASH_PEPPER}
+      PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY}
       PATH: /app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
     depends_on:
       web:

@@ -111,6 +111,8 @@ services:
       - DISABLE_DJANGO_ADMIN=${DISABLE_DJANGO_ADMIN:-False}
       - DRF_DISABLE_BROWSABLE_API=${DRF_DISABLE_BROWSABLE_API:-False}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PII_HASH_PEPPER=${PII_HASH_PEPPER:-local-test-pii-hash-pepper-change-me}
+      - PII_ENCRYPTION_KEY=${PII_ENCRYPTION_KEY:-local-test-pii-encryption-key-change-me}
 
       # ------------------------------------------------------------------------
       # Database
@@ -269,6 +271,8 @@ services:
       - DISABLE_DJANGO_ADMIN=${DISABLE_DJANGO_ADMIN:-False}
       - DRF_DISABLE_BROWSABLE_API=${DRF_DISABLE_BROWSABLE_API:-False}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PII_HASH_PEPPER=${PII_HASH_PEPPER:-local-test-pii-hash-pepper-change-me}
+      - PII_ENCRYPTION_KEY=${PII_ENCRYPTION_KEY:-local-test-pii-encryption-key-change-me}
 
       # ------------------------------------------------------------------------
       # Database
