@@ -139,9 +139,22 @@ Implemented in B3:
 - Generic unavailable/conflict errors that do not reveal customer, booking, phone, or email details.
 - XSS/PII-safe hold response shape with no price, raw notes, raw phone, or raw email.
 
+Implemented in B4:
+
+- Booking-to-Checkout contract service for HELD booking checkout creation.
+- Server-side Booking price snapshots used for Checkout amount creation.
+- Booking `HELD -> PAYMENT_PENDING` transition on checkout creation/payment initiation.
+- Checkout session linkage with `purchasable_type="booking"` and internal booking correlation.
+- Booking confirmation only after Checkout success and Billing ledger success evidence.
+- Duplicate Checkout and duplicate success callback idempotency.
+- Payment failure/cancel/timeout handling that does not confirm Booking.
+- Expired-hold late payment reconciliation history without silent booking confirmation.
+- Operational BookingFinancialHistory entries for checkout, pending, success, confirmation, failure, and manual review.
+- Redis checkout-attempt counters with TTL and Redis-outage-safe behavior.
+- PII-safe, public-ID-only payment contract responses.
+
 ## Deferred Phases
 
-- B4 Checkout/Billing Integration.
 - B5 Reminder Worker and Reschedule Portal.
 - B6 Urgent Booking.
 - B7 Staff Dashboard.

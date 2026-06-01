@@ -6,6 +6,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
+from billing.models import LedgerTransaction
 from billing.redaction import hash_sensitive_value, redact_phone
 from billing.services import record_successful_checkout_payment
 from checkout.exceptions import CheckoutStateError, CheckoutValidationError
@@ -208,13 +209,18 @@ def _process_locked_callback(payload, checkout_request_id, inbox, correlation_id
         raise CheckoutValidationError("Provider callback could not be processed.")
 
     session = CheckoutSession.objects.select_for_update().get(pk=attempt.checkout_session_id)
+    result_code = int(payload.get("ResultCode", payload.get("result_code", 1)))
+    if session.status == CheckoutSession.Status.PAID and result_code != 0:
+        inbox.processing_status = MpesaWebhookInbox.Status.DUPLICATE
+        inbox.processed_at = timezone.now()
+        inbox.save(update_fields=["processing_status", "processed_at", "updated_at"])
+        return CallbackResult(session=session, inbox=inbox)
     if session.status in {
         CheckoutSession.Status.EXPIRED,
         CheckoutSession.Status.CANCELLED,
     }:
         raise CheckoutStateError("Terminal checkout cannot be paid.")
 
-    result_code = int(payload.get("ResultCode", payload.get("result_code", 1)))
     raw_amount = payload.get("Amount", payload.get("amount"))
     if result_code == 0:
         amount = Decimal(str(raw_amount or "0.00")).quantize(Decimal("0.01"))
@@ -238,10 +244,27 @@ def _process_locked_callback(payload, checkout_request_id, inbox, correlation_id
             raw_payload=payload,
             correlation_id=correlation_id,
         )
+        if session.purchasable_type == "booking":
+            from bookings.services.checkout_contract import BookingCheckoutContractService
+
+            ledger = LedgerTransaction.objects.get(external_correlation_id=str(session.id))
+            BookingCheckoutContractService.confirm_booking_after_billing_success(
+                checkout_session=session,
+                billing_ledger=ledger,
+                request_context={"request_id": correlation_id},
+            )
     else:
         transition_checkout(session, CheckoutSession.Status.FAILED)
         attempt.status = CheckoutAttempt.Status.FAILED
         attempt.save(update_fields=["status", "updated_at"])
+        if session.purchasable_type == "booking":
+            from bookings.services.checkout_contract import BookingCheckoutContractService
+
+            BookingCheckoutContractService.fail_booking_after_payment_failure(
+                checkout_session=session,
+                failure_reason=str(result_code),
+                request_context={"request_id": correlation_id},
+            )
 
     inbox.processing_status = MpesaWebhookInbox.Status.PROCESSED
     inbox.processed_at = timezone.now()
