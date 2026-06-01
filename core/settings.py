@@ -267,6 +267,15 @@ PAYMENT_STK_CLIENT_TIMEOUT_SECONDS = int(os.environ.get("PAYMENT_STK_CLIENT_TIME
 PAYMENT_STATUS_POLL_INTERVAL_SECONDS = int(os.environ.get("PAYMENT_STATUS_POLL_INTERVAL_SECONDS", "5"))
 PAYMENT_STATUS_MAX_WAIT_SECONDS = int(os.environ.get("PAYMENT_STATUS_MAX_WAIT_SECONDS", "300"))
 
+EMAIL_PROVIDER = os.environ.get("EMAIL_PROVIDER", "fake")
+EMAIL_FROM_ADDRESS = os.environ.get("EMAIL_FROM_ADDRESS", "Beauty SaaS <no-reply@example.test>")
+EMAIL_REPLY_TO_ADDRESS = os.environ.get("EMAIL_REPLY_TO_ADDRESS", "support@example.test")
+EMAIL_PROVIDER_API_KEY = os.environ.get("EMAIL_PROVIDER_API_KEY", "")
+EMAIL_PROVIDER_BASE_URL = os.environ.get("EMAIL_PROVIDER_BASE_URL", "")
+EMAIL_SEND_TIMEOUT_SECONDS = float(os.environ.get("EMAIL_SEND_TIMEOUT_SECONDS", "5"))
+EMAIL_EXTERNAL_TEST_RECIPIENT = os.environ.get("EMAIL_EXTERNAL_TEST_RECIPIENT", "")
+RUN_EXTERNAL_EMAIL_TESTS = os.environ.get("RUN_EXTERNAL_EMAIL_TESTS", "false").lower() in ("true", "1", "t")
+
 # ==============================================================================
 # DJANGO REST FRAMEWORK CONFIGURATIONS
 # ==============================================================================

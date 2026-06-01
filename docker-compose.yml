@@ -178,6 +178,19 @@ services:
       - DARAJA_TOKEN_CACHE_TTL_SECONDS=${DARAJA_TOKEN_CACHE_TTL_SECONDS:-3300}
       - DARAJA_ALLOWED_SANDBOX_IPS=${DARAJA_ALLOWED_SANDBOX_IPS:-}
 
+      # ------------------------------------------------------------------------
+      # Transactional email / receipt delivery
+      # Default remains fake. Real provider tests are opt-in only.
+      # ------------------------------------------------------------------------
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-fake}
+      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS:-Beauty SaaS <no-reply@example.test>}
+      - EMAIL_REPLY_TO_ADDRESS=${EMAIL_REPLY_TO_ADDRESS:-support@example.test}
+      - EMAIL_PROVIDER_API_KEY=${EMAIL_PROVIDER_API_KEY:-}
+      - EMAIL_PROVIDER_BASE_URL=${EMAIL_PROVIDER_BASE_URL:-}
+      - EMAIL_SEND_TIMEOUT_SECONDS=${EMAIL_SEND_TIMEOUT_SECONDS:-5}
+      - EMAIL_EXTERNAL_TEST_RECIPIENT=${EMAIL_EXTERNAL_TEST_RECIPIENT:-}
+      - RUN_EXTERNAL_EMAIL_TESTS=${RUN_EXTERNAL_EMAIL_TESTS:-false}
+
     depends_on:
       db:
         condition: service_healthy
@@ -334,6 +347,18 @@ services:
       - DARAJA_READ_TIMEOUT_SECONDS=${DARAJA_READ_TIMEOUT_SECONDS:-5}
       - DARAJA_TOKEN_CACHE_TTL_SECONDS=${DARAJA_TOKEN_CACHE_TTL_SECONDS:-3300}
       - DARAJA_ALLOWED_SANDBOX_IPS=${DARAJA_ALLOWED_SANDBOX_IPS:-}
+
+      # ------------------------------------------------------------------------
+      # Transactional email / receipt delivery
+      # ------------------------------------------------------------------------
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-fake}
+      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS:-Beauty SaaS <no-reply@example.test>}
+      - EMAIL_REPLY_TO_ADDRESS=${EMAIL_REPLY_TO_ADDRESS:-support@example.test}
+      - EMAIL_PROVIDER_API_KEY=${EMAIL_PROVIDER_API_KEY:-}
+      - EMAIL_PROVIDER_BASE_URL=${EMAIL_PROVIDER_BASE_URL:-}
+      - EMAIL_SEND_TIMEOUT_SECONDS=${EMAIL_SEND_TIMEOUT_SECONDS:-5}
+      - EMAIL_EXTERNAL_TEST_RECIPIENT=${EMAIL_EXTERNAL_TEST_RECIPIENT:-}
+      - RUN_EXTERNAL_EMAIL_TESTS=${RUN_EXTERNAL_EMAIL_TESTS:-false}
 
     depends_on:
       db:

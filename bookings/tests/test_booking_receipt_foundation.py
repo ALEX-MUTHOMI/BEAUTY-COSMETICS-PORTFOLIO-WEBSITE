@@ -33,7 +33,10 @@ def test_receipt_and_email_outbox_created_only_after_confirmed_paid_booking():
     from bookings.models import BookingNotification, BookingReceipt
 
     receipt = BookingReceipt.objects.get(booking=booking)
-    notification = BookingNotification.objects.get(booking=booking)
+    notifications = {
+        notification.notification_type: notification
+        for notification in BookingNotification.objects.filter(booking=booking)
+    }
     assert receipt.checkout_session_id == str(session.id)
     assert receipt.billing_ledger_id == str(ledger.id)
     assert receipt.amount == session.amount_snapshot
@@ -45,8 +48,9 @@ def test_receipt_and_email_outbox_created_only_after_confirmed_paid_booking():
     assert "receipt-" not in str(receipt.receipt_snapshot_json_redacted)
     assert "+254712345678" not in str(receipt.receipt_snapshot_json_redacted)
     assert "***" in receipt.receipt_snapshot_json_redacted["redacted_phone"]
-    assert notification.notification_type == "booking_confirmed"
-    assert notification.status == "pending"
+    assert set(notifications) == {"booking_confirmed", "payment_receipt"}
+    assert notifications["booking_confirmed"].status == "pending"
+    assert notifications["payment_receipt"].status == "pending"
 
 
 @pytest.mark.django_db(transaction=True)
@@ -58,6 +62,7 @@ def test_duplicate_confirmation_creates_one_receipt_and_one_email_outbox():
 
     assert BookingReceipt.objects.filter(booking=booking).count() == 1
     assert BookingNotification.objects.filter(booking=booking, notification_type="booking_confirmed").count() == 1
+    assert BookingNotification.objects.filter(booking=booking, notification_type="payment_receipt").count() == 1
 
 
 @pytest.mark.django_db(transaction=True)

@@ -71,18 +71,19 @@ def ensure_confirmation_trust_artifacts_locked(*, booking, checkout_session, bil
     if created:
         receipt.issue_download_token()
 
-    BookingNotification.objects.get_or_create(
-        booking=booking,
-        notification_type="booking_confirmed",
-        channel=BookingNotification.Channel.EMAIL,
-        defaults={
-            "receipt": receipt,
-            "recipient_email_hash": booking.customer_profile.email_hash_hmac,
-            "recipient_email_redacted": booking.customer_profile.email_redacted,
-            "status": BookingNotification.Status.PENDING,
-            "scheduled_for": timezone.now(),
-        },
-    )
+    for notification_type in ("booking_confirmed", "payment_receipt"):
+        BookingNotification.objects.get_or_create(
+            booking=booking,
+            notification_type=notification_type,
+            channel=BookingNotification.Channel.EMAIL,
+            defaults={
+                "receipt": receipt,
+                "recipient_email_hash": booking.customer_profile.email_hash_hmac,
+                "recipient_email_redacted": booking.customer_profile.email_redacted,
+                "status": BookingNotification.Status.PENDING,
+                "scheduled_for": timezone.now(),
+            },
+        )
     return receipt
 
 
@@ -112,3 +113,10 @@ def get_receipt_for_download_token(token):
             metadata_redacted={"receipt_number": locked.receipt_number},
         )
         return locked
+
+
+def download_receipt_pdf_for_token(token):
+    from bookings.services.receipt_pdf import ReceiptPDFService
+
+    receipt = get_receipt_for_download_token(token)
+    return ReceiptPDFService.generate_pdf(receipt)

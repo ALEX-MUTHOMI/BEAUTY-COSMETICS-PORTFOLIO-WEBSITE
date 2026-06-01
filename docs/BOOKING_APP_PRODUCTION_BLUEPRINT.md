@@ -165,6 +165,15 @@ Implemented in B4A:
 - Receipt download foundation with high-entropy hashed expiring tokens, generic errors, and `receipt_downloaded` audit events.
 - Receipt and notification snapshots contain redacted customer contact data only and never raw provider callback payloads or Billing ledger truth.
 
+Implemented in B4B:
+
+- Secure `Booking Payment Receipt` PDF generation from receipt snapshots without introducing a tax-invoice workflow.
+- Two transactional email outbox types after confirmed paid booking: `booking_confirmed` and `payment_receipt`.
+- Fake email provider default for local/CI tests plus Resend/Mailgun-compatible provider interfaces for opt-in external tests.
+- Bounded notification delivery service with provider-message hashing, redacted failure storage, retry support, erased-customer skip, and unconfirmed-booking skip.
+- Secure receipt PDF download through hashed expiring tokens and audited download events.
+- Email/PDF delivery cost and deliverability guidance in `docs/BOOKING_EMAIL_RECEIPT_DELIVERY.md`.
+
 ## Deferred Phases
 
 - B5 Reminder Worker and Reschedule Portal.
