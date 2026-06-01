@@ -126,9 +126,21 @@ Implemented in B2:
 - Redis availability request counter with TTL.
 - PII-safe, public-ID-only response shape.
 
+Implemented in B3:
+
+- Atomic hold creation service with server-side service duration and UTC persistence.
+- PostgreSQL exclusion-constraint enforcement for overlapping active holds under concurrency.
+- Idempotency-key retry handling for slow mobile networks and repeated Pay/hold attempts.
+- HMAC-backed idempotency request fingerprints stored only in redacted audit metadata.
+- Redis rolling hold-attempt and hold-created counters with TTL.
+- Abuse-mode hold TTL shortening through the booking circuit-breaker signal.
+- Hold expiry cleanup service that transitions stale `held` bookings to `expired`.
+- Audit events for hold creation and expiry.
+- Generic unavailable/conflict errors that do not reveal customer, booking, phone, or email details.
+- XSS/PII-safe hold response shape with no price, raw notes, raw phone, or raw email.
+
 ## Deferred Phases
 
-- B3 Atomic Holds and Concurrency.
 - B4 Checkout/Billing Integration.
 - B5 Reminder Worker and Reschedule Portal.
 - B6 Urgent Booking.
