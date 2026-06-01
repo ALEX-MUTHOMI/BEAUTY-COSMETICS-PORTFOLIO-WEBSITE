@@ -153,6 +153,18 @@ Implemented in B4:
 - Redis checkout-attempt counters with TTL and Redis-outage-safe behavior.
 - PII-safe, public-ID-only payment contract responses.
 
+Implemented in B4A:
+
+- Booking confirmation hardening with explicit Billing ledger `SUCCESS` verification, checkout correlation, amount/currency checks, and booking purchasable linkage validation.
+- Transactional confirmation rollback proof: Booking confirmation, audit, financial history, receipt, and notification outbox creation commit all-or-nothing.
+- Duplicate callback protection for one confirmation audit event, one payment success history event, one booking confirmed history event, one receipt, and one email notification outbox row.
+- Failure-after-success safety: later failed/cancelled/timeout provider events cannot de-confirm a confirmed booking and do not create a refund path.
+- Success-after-failure policy: valid late success after a failed provider event is routed to manual review instead of automatic confirmation.
+- Expired-hold late payment reconciliation remains manual review; it does not silently confirm or double-book a released slot.
+- Customer trust-layer foundation: `BookingReceipt` and `BookingNotification` outbox are generated only after confirmed paid bookings.
+- Receipt download foundation with high-entropy hashed expiring tokens, generic errors, and `receipt_downloaded` audit events.
+- Receipt and notification snapshots contain redacted customer contact data only and never raw provider callback payloads or Billing ledger truth.
+
 ## Deferred Phases
 
 - B5 Reminder Worker and Reschedule Portal.

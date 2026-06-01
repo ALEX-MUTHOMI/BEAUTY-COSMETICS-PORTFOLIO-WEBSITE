@@ -4,6 +4,7 @@ from zoneinfo import ZoneInfo
 import pytest
 from django.core.exceptions import ValidationError
 
+from billing.services import record_successful_checkout_payment
 from bookings.models import Booking, BookingFinancialHistory
 from bookings.tests.test_booking_checkout_contract import _contract_service, _held_booking
 from checkout.models import CheckoutSession
@@ -56,14 +57,17 @@ def test_duplicate_confirmation_history_is_not_created_by_replay():
         idempotency_key="history-idempotent-checkout",
     )
     session = CheckoutSession.objects.get(id=checkout["checkout_public_id"])
-    fake_ledger = type(
-        "LedgerEvidence",
-        (),
-        {"id": "ledger-redacted", "status": "success", "amount": session.amount_snapshot, "currency": session.currency},
-    )()
+    ledger, _created = record_successful_checkout_payment(
+        customer=session.customer,
+        checkout_session_id=session.id,
+        amount=session.amount_snapshot,
+        currency=session.currency,
+        provider_reference="history-idempotent-provider",
+        provider_receipt="history-idempotent-receipt",
+    )
 
-    _contract_service().confirm_booking_after_billing_success(checkout_session=session, billing_ledger=fake_ledger)
-    _contract_service().confirm_booking_after_billing_success(checkout_session=session, billing_ledger=fake_ledger)
+    _contract_service().confirm_booking_after_billing_success(checkout_session=session, billing_ledger=ledger)
+    _contract_service().confirm_booking_after_billing_success(checkout_session=session, billing_ledger=ledger)
 
     booking.refresh_from_db()
     assert booking.status == Booking.Status.CONFIRMED

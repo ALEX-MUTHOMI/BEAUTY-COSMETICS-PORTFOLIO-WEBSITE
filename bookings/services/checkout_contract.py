@@ -229,16 +229,26 @@ class BookingCheckoutContractService:
         request_context = request_context or {}
         with transaction.atomic():
             session = CheckoutSession.objects.select_for_update().get(pk=checkout_session.pk)
-            booking = Booking.objects.select_for_update().get(pk=session.purchasable_id)
-            ledger_status = getattr(billing_ledger, "status", "")
-            if ledger_status != LedgerTransaction.Status.SUCCESS:
+            if session.purchasable_type != "booking":
                 raise ValidationError("Payment status could not be verified.")
+            try:
+                booking = Booking.objects.select_for_update().get(pk=session.purchasable_id)
+            except (Booking.DoesNotExist, ValueError) as exc:
+                raise ValidationError("Payment status could not be verified.") from exc
             snapshot = _price_snapshot(booking)
-            if billing_ledger.amount != snapshot.total_amount or billing_ledger.currency != snapshot.currency:
-                raise ValidationError("Payment status could not be verified.")
+            billing_ledger = cls._validated_success_ledger(session, booking, billing_ledger, snapshot)
             if booking.status == Booking.Status.EXPIRED:
-                return cls._record_late_payment_locked(booking, session, billing_ledger)
+                return cls._record_manual_review_locked(
+                    booking, session, billing_ledger, "payment_received_after_expiry"
+                )
             if booking.status == Booking.Status.CONFIRMED:
+                from bookings.services.receipts import ensure_confirmation_trust_artifacts_locked
+
+                ensure_confirmation_trust_artifacts_locked(
+                    booking=booking,
+                    checkout_session=session,
+                    billing_ledger=billing_ledger,
+                )
                 logger.info(
                     "booking.confirmation.duplicate_ignored",
                     extra={
@@ -247,6 +257,15 @@ class BookingCheckoutContractService:
                     },
                 )
                 return booking
+            if booking.status == Booking.Status.PAYMENT_FAILED:
+                # A late success after a failed provider event is reconciled by
+                # staff; auto-confirming could double-book a released slot.
+                return cls._record_manual_review_locked(
+                    booking,
+                    session,
+                    billing_ledger,
+                    "payment_received_after_failure",
+                )
             if booking.status != Booking.Status.PAYMENT_PENDING:
                 raise ValidationError("Payment status could not be verified.")
 
@@ -267,6 +286,13 @@ class BookingCheckoutContractService:
             _create_history(
                 booking, "booking_confirmed", session.amount_snapshot, session.currency, session.id, billing_ledger.id
             )
+            from bookings.services.receipts import ensure_confirmation_trust_artifacts_locked
+
+            ensure_confirmation_trust_artifacts_locked(
+                booking=booking,
+                checkout_session=session,
+                billing_ledger=billing_ledger,
+            )
             logger.info(
                 "booking.confirmed",
                 extra={
@@ -276,6 +302,27 @@ class BookingCheckoutContractService:
                 },
             )
             return booking
+
+    @staticmethod
+    def _validated_success_ledger(session, booking, billing_ledger, snapshot):
+        try:
+            ledger = LedgerTransaction.objects.select_for_update().get(pk=billing_ledger.pk)
+        except (AttributeError, LedgerTransaction.DoesNotExist, ValueError) as exc:
+            raise ValidationError("Payment status could not be verified.") from exc
+
+        if ledger.status != LedgerTransaction.Status.SUCCESS:
+            raise ValidationError("Payment status could not be verified.")
+        if str(ledger.external_correlation_id) != str(session.id):
+            raise ValidationError("Payment status could not be verified.")
+        if booking.checkout_session_id != str(session.id):
+            raise ValidationError("Payment status could not be verified.")
+        if session.purchasable_type != "booking" or session.purchasable_id != str(booking.id):
+            raise ValidationError("Payment status could not be verified.")
+        if session.amount_snapshot != snapshot.total_amount or session.currency != snapshot.currency:
+            raise ValidationError("Payment status could not be verified.")
+        if ledger.amount != snapshot.total_amount or ledger.currency != snapshot.currency:
+            raise ValidationError("Payment status could not be verified.")
+        return ledger
 
     @classmethod
     def fail_booking_after_payment_failure(cls, *, checkout_session, failure_reason, request_context=None):
@@ -310,13 +357,17 @@ class BookingCheckoutContractService:
         with transaction.atomic():
             session = CheckoutSession.objects.select_for_update().get(pk=checkout_session.pk)
             booking = Booking.objects.select_for_update().get(pk=session.purchasable_id)
-            return cls._record_late_payment_locked(booking, session, billing_ledger)
+            snapshot = _price_snapshot(booking)
+            billing_ledger = cls._validated_success_ledger(session, booking, billing_ledger, snapshot)
+            return cls._record_manual_review_locked(booking, session, billing_ledger, "payment_received_after_expiry")
 
     @staticmethod
-    def _record_late_payment_locked(booking, session, billing_ledger):
+    def _record_manual_review_locked(booking, session, billing_ledger, reason):
+        # Booking financial history is operational evidence only; Billing
+        # remains the immutable ledger truth.
         _create_history(
             booking,
-            "payment_received_after_expiry",
+            reason,
             session.amount_snapshot,
             session.currency,
             session.id,
@@ -330,14 +381,17 @@ class BookingCheckoutContractService:
             session.id,
             billing_ledger.id,
         )
-        if not BookingAuditEvent.objects.filter(booking=booking, reason="payment_received_after_expiry").exists():
+        if not BookingAuditEvent.objects.filter(booking=booking, reason=reason).exists():
             BookingAuditEvent.objects.create(
                 booking=booking,
                 old_status=booking.status,
                 new_status=booking.status,
-                reason="payment_received_after_expiry",
+                reason=reason,
                 actor_type="system",
                 metadata_redacted={"checkout_session_id": str(session.id), "manual_review_required": True},
             )
-        logger.info("booking.payment.late_after_expiry", extra={"booking_public_id": str(booking.public_id)})
+        logger.info(
+            "booking.payment.manual_review_required",
+            extra={"booking_public_id": str(booking.public_id), "reason": reason},
+        )
         return booking

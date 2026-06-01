@@ -1,4 +1,6 @@
+import secrets
 import uuid
+from datetime import timedelta
 from datetime import timezone as dt_timezone
 from decimal import Decimal
 
@@ -392,6 +394,88 @@ class BookingFinancialHistory(AuditMixin):
 
     class Meta:
         db_table = "booking_financial_history"
+
+
+class BookingReceipt(AuditMixin):
+    class PdfStatus(models.TextChoices):
+        PENDING = "pending", "Pending"
+        GENERATED = "generated", "Generated"
+        FAILED = "failed", "Failed"
+
+    booking = models.OneToOneField(Booking, on_delete=models.PROTECT, related_name="receipt")
+    receipt_number = models.CharField(max_length=48, unique=True)
+    checkout_session_id = models.CharField(max_length=128, unique=True)
+    billing_ledger_id = models.CharField(max_length=128, unique=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=3, default="KES")
+    payment_method = models.CharField(max_length=32, default="M-Pesa")
+    payment_status = models.CharField(max_length=32, default="paid")
+    booking_status = models.CharField(max_length=32, default=Booking.Status.CONFIRMED)
+    issued_at = models.DateTimeField(default=timezone.now)
+    receipt_snapshot_json_redacted = models.JSONField(default=dict, blank=True)
+    pdf_status = models.CharField(max_length=16, choices=PdfStatus.choices, default=PdfStatus.PENDING)
+    pdf_storage_key = models.CharField(max_length=255, null=True, blank=True)
+    download_token_hash = models.CharField(max_length=128, null=True, blank=True)
+    download_token_expires_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "booking_receipts"
+        indexes = [
+            models.Index(fields=["receipt_number"], name="booking_receipt_number_idx"),
+            models.Index(fields=["download_token_hash"], name="booking_receipt_token_idx"),
+        ]
+
+    def issue_download_token(self, *, ttl_minutes=30):
+        from billing.redaction import hash_sensitive_value
+
+        token = secrets.token_urlsafe(32)
+        self.download_token_hash = hash_sensitive_value(token)
+        self.download_token_expires_at = timezone.now() + timedelta(minutes=ttl_minutes)
+        self.save(update_fields=["download_token_hash", "download_token_expires_at", "updated_at"])
+        return token
+
+
+class BookingNotification(AuditMixin):
+    class Channel(models.TextChoices):
+        EMAIL = "email", "Email"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        SENT = "sent", "Sent"
+        FAILED = "failed", "Failed"
+        CANCELLED = "cancelled", "Cancelled"
+
+    booking = models.ForeignKey(Booking, on_delete=models.PROTECT, related_name="notifications")
+    receipt = models.ForeignKey(
+        BookingReceipt,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="notifications",
+    )
+    notification_type = models.CharField(max_length=64)
+    channel = models.CharField(max_length=16, choices=Channel.choices, default=Channel.EMAIL)
+    recipient_email_hash = models.CharField(max_length=128, blank=True)
+    recipient_email_redacted = models.CharField(max_length=128, blank=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    scheduled_for = models.DateTimeField(default=timezone.now)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    last_error_redacted = models.CharField(max_length=255, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "booking_notifications"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["booking", "notification_type", "channel"],
+                name="uniq_booking_notification_type_channel",
+            ),
+        ]
+        indexes = [models.Index(fields=["status", "scheduled_for"], name="booking_notif_due_idx")]
+
+    def clean(self):
+        _require_aware_utc(self.scheduled_for, "scheduled_for")
+        _require_aware_utc(self.sent_at, "sent_at")
 
 
 class BookingRescheduleRequest(AuditMixin):
