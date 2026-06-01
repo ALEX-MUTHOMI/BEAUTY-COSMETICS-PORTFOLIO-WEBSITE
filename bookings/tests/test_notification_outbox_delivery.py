@@ -33,8 +33,8 @@ def test_fake_provider_sends_pending_notifications_once(settings):
     from bookings.services.notification_delivery import BookingNotificationDeliveryService
 
     result = BookingNotificationDeliveryService.send_pending(limit=10)
-    assert result.sent == 2
-    assert BookingNotification.objects.filter(booking=booking, status=BookingNotification.Status.SENT).count() == 2
+    assert result.sent == 1
+    assert BookingNotification.objects.filter(booking=booking, status=BookingNotification.Status.SENT).count() == 1
     assert BookingNotificationDeliveryService.send_pending(limit=10).sent == 0
 
 
@@ -53,13 +53,16 @@ def test_provider_failure_records_redacted_error_and_retry_can_succeed(settings,
     monkeypatch.setattr(notification_delivery, "get_email_provider", lambda: FailingProvider())
     result = notification_delivery.BookingNotificationDeliveryService.send_pending(limit=1)
     assert result.failed == 1
-    failed = BookingNotification.objects.filter(booking=booking, status=BookingNotification.Status.FAILED).first()
+    failed = BookingNotification.objects.filter(
+        booking=booking, status=BookingNotification.Status.RETRY_SCHEDULED
+    ).first()
     assert failed.attempts == 1
     assert "secret-token" not in failed.last_error_redacted
     assert "user@example.com" not in failed.last_error_redacted
 
     failed.status = BookingNotification.Status.PENDING
-    failed.save(update_fields=["status", "updated_at"])
+    failed.scheduled_for = booking.created_at
+    failed.save(update_fields=["status", "scheduled_for", "updated_at"])
     monkeypatch.undo()
     assert notification_delivery.BookingNotificationDeliveryService.send_pending(limit=10).sent >= 1
 

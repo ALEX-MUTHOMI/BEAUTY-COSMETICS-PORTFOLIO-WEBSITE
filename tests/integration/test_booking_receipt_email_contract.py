@@ -29,7 +29,7 @@ def test_booking_checkout_billing_receipt_email_contract(settings):
     from bookings.services.receipts import download_receipt_pdf_for_token
 
     assert BookingReceipt.objects.filter(booking=booking).count() == 1
-    assert BookingNotification.objects.filter(booking=booking).count() == 2
-    assert BookingNotificationDeliveryService.send_pending(limit=10).sent == 2
+    assert BookingNotification.objects.filter(booking=booking).count() == 1
+    assert BookingNotificationDeliveryService.send_pending(limit=10).sent == 1
     token = booking.receipt.issue_download_token()
     assert download_receipt_pdf_for_token(token).startswith(b"%PDF-")

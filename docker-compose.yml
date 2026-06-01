@@ -190,6 +190,18 @@ services:
       - EMAIL_SEND_TIMEOUT_SECONDS=${EMAIL_SEND_TIMEOUT_SECONDS:-5}
       - EMAIL_EXTERNAL_TEST_RECIPIENT=${EMAIL_EXTERNAL_TEST_RECIPIENT:-}
       - RUN_EXTERNAL_EMAIL_TESTS=${RUN_EXTERNAL_EMAIL_TESTS:-false}
+      - RECEIPT_PDF_TIMEOUT_SECONDS=${RECEIPT_PDF_TIMEOUT_SECONDS:-5}
+      - RECEIPT_PDF_MAX_BYTES=${RECEIPT_PDF_MAX_BYTES:-250000}
+      - RECEIPT_PDF_STORAGE_DIR=${RECEIPT_PDF_STORAGE_DIR:-/app/.local/receipt_artifacts}
+      - EMAIL_NOTIFICATION_MAX_ATTEMPTS=${EMAIL_NOTIFICATION_MAX_ATTEMPTS:-3}
+      - EMAIL_DAILY_SOFT_LIMIT=${EMAIL_DAILY_SOFT_LIMIT:-80}
+      - EMAIL_DAILY_HARD_LIMIT=${EMAIL_DAILY_HARD_LIMIT:-100}
+      - EMAIL_MONTHLY_SOFT_LIMIT=${EMAIL_MONTHLY_SOFT_LIMIT:-2500}
+      - EMAIL_MONTHLY_HARD_LIMIT=${EMAIL_MONTHLY_HARD_LIMIT:-3000}
+      - EMAIL_BACKUP_PROVIDER_ENABLED=${EMAIL_BACKUP_PROVIDER_ENABLED:-false}
+      - EMAIL_BACKUP_PROVIDER=${EMAIL_BACKUP_PROVIDER:-mailgun}
+      - EMAIL_QUOTA_MODE=${EMAIL_QUOTA_MODE:-queue_only}
+      - EMAIL_BACKLOG_HIGH_WATERMARK=${EMAIL_BACKLOG_HIGH_WATERMARK:-100}
 
     depends_on:
       db:
@@ -268,7 +280,7 @@ services:
   worker:
     image: beauty_web_app:latest
     container_name: beauty_celery_worker
-    command: celery -A core worker --loglevel=info
+    command: celery -A core worker --loglevel=info -Q celery,express_auth,billing,dlq_billing
     volumes:
       - .:/app:rw
     environment:
@@ -359,6 +371,18 @@ services:
       - EMAIL_SEND_TIMEOUT_SECONDS=${EMAIL_SEND_TIMEOUT_SECONDS:-5}
       - EMAIL_EXTERNAL_TEST_RECIPIENT=${EMAIL_EXTERNAL_TEST_RECIPIENT:-}
       - RUN_EXTERNAL_EMAIL_TESTS=${RUN_EXTERNAL_EMAIL_TESTS:-false}
+      - RECEIPT_PDF_TIMEOUT_SECONDS=${RECEIPT_PDF_TIMEOUT_SECONDS:-5}
+      - RECEIPT_PDF_MAX_BYTES=${RECEIPT_PDF_MAX_BYTES:-250000}
+      - RECEIPT_PDF_STORAGE_DIR=${RECEIPT_PDF_STORAGE_DIR:-/app/.local/receipt_artifacts}
+      - EMAIL_NOTIFICATION_MAX_ATTEMPTS=${EMAIL_NOTIFICATION_MAX_ATTEMPTS:-3}
+      - EMAIL_DAILY_SOFT_LIMIT=${EMAIL_DAILY_SOFT_LIMIT:-80}
+      - EMAIL_DAILY_HARD_LIMIT=${EMAIL_DAILY_HARD_LIMIT:-100}
+      - EMAIL_MONTHLY_SOFT_LIMIT=${EMAIL_MONTHLY_SOFT_LIMIT:-2500}
+      - EMAIL_MONTHLY_HARD_LIMIT=${EMAIL_MONTHLY_HARD_LIMIT:-3000}
+      - EMAIL_BACKUP_PROVIDER_ENABLED=${EMAIL_BACKUP_PROVIDER_ENABLED:-false}
+      - EMAIL_BACKUP_PROVIDER=${EMAIL_BACKUP_PROVIDER:-mailgun}
+      - EMAIL_QUOTA_MODE=${EMAIL_QUOTA_MODE:-queue_only}
+      - EMAIL_BACKLOG_HIGH_WATERMARK=${EMAIL_BACKLOG_HIGH_WATERMARK:-100}
 
     depends_on:
       db:
@@ -385,3 +409,57 @@ services:
           cpus: "1.00"
           memory: 512M
     restart: unless-stopped
+
+  notification-worker:
+    image: beauty_web_app:latest
+    container_name: beauty_receipt_notification_worker
+    command: celery -A core worker --loglevel=info -Q receipts --concurrency=${RECEIPT_WORKER_CONCURRENCY:-2}
+    volumes:
+      - .:/app:rw
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - POETRY_VIRTUALENVS_CREATE=false
+      - PATH=/app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+      - SECRET_KEY=${SECRET_KEY:-phase1-phase2-prod-verification-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PII_HASH_PEPPER=${PII_HASH_PEPPER:-local-test-pii-hash-pepper-change-me}
+      - PII_ENCRYPTION_KEY=${PII_ENCRYPTION_KEY:-local-test-pii-encryption-key-change-me}
+      - POSTGRES_DB=${POSTGRES_DB:-beauty_db}
+      - POSTGRES_USER=${POSTGRES_USER:-beauty_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-beauty_secure_password}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-fake}
+      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS:-Beauty SaaS <no-reply@example.test>}
+      - EMAIL_REPLY_TO_ADDRESS=${EMAIL_REPLY_TO_ADDRESS:-support@example.test}
+      - EMAIL_PROVIDER_API_KEY=${EMAIL_PROVIDER_API_KEY:-}
+      - EMAIL_PROVIDER_BASE_URL=${EMAIL_PROVIDER_BASE_URL:-}
+      - EMAIL_SEND_TIMEOUT_SECONDS=${EMAIL_SEND_TIMEOUT_SECONDS:-5}
+      - EMAIL_EXTERNAL_TEST_RECIPIENT=${EMAIL_EXTERNAL_TEST_RECIPIENT:-}
+      - RUN_EXTERNAL_EMAIL_TESTS=${RUN_EXTERNAL_EMAIL_TESTS:-false}
+      - RECEIPT_PDF_TIMEOUT_SECONDS=${RECEIPT_PDF_TIMEOUT_SECONDS:-5}
+      - RECEIPT_PDF_MAX_BYTES=${RECEIPT_PDF_MAX_BYTES:-250000}
+      - RECEIPT_PDF_STORAGE_DIR=${RECEIPT_PDF_STORAGE_DIR:-/app/.local/receipt_artifacts}
+      - EMAIL_NOTIFICATION_MAX_ATTEMPTS=${EMAIL_NOTIFICATION_MAX_ATTEMPTS:-3}
+      - EMAIL_DAILY_SOFT_LIMIT=${EMAIL_DAILY_SOFT_LIMIT:-80}
+      - EMAIL_DAILY_HARD_LIMIT=${EMAIL_DAILY_HARD_LIMIT:-100}
+      - EMAIL_MONTHLY_SOFT_LIMIT=${EMAIL_MONTHLY_SOFT_LIMIT:-2500}
+      - EMAIL_MONTHLY_HARD_LIMIT=${EMAIL_MONTHLY_HARD_LIMIT:-3000}
+      - EMAIL_BACKUP_PROVIDER_ENABLED=${EMAIL_BACKUP_PROVIDER_ENABLED:-false}
+      - EMAIL_BACKUP_PROVIDER=${EMAIL_BACKUP_PROVIDER:-mailgun}
+      - EMAIL_QUOTA_MODE=${EMAIL_QUOTA_MODE:-queue_only}
+      - EMAIL_BACKLOG_HIGH_WATERMARK=${EMAIL_BACKLOG_HIGH_WATERMARK:-100}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - beauty_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    profiles:
+      - receipts

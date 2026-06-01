@@ -57,7 +57,7 @@ def test_email_pdf_and_download_surfaces_do_not_reflect_xss_or_provider_payload(
     from bookings.services.receipt_pdf import ReceiptPDFService
     from bookings.services.receipts import download_receipt_pdf_for_token
 
-    notification = BookingNotification.objects.get(booking=booking, notification_type="payment_receipt")
+    notification = BookingNotification.objects.get(booking=booking, notification_type="booking_confirmed_with_receipt")
     email = build_notification_email(notification)
     pdf = ReceiptPDFService.generate_pdf(booking.receipt)
     token = booking.receipt.issue_download_token()

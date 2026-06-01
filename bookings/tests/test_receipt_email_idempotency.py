@@ -7,7 +7,7 @@ from checkout.models import CheckoutSession
 
 
 @pytest.mark.django_db(transaction=True)
-def test_duplicate_confirmation_creates_one_receipt_and_two_distinct_email_outbox_rows():
+def test_duplicate_confirmation_creates_one_receipt_and_one_combined_email_outbox_row():
     booking = _held_booking(key="receipt-email-idem")
     checkout = _contract_service().create_checkout_for_held_booking(
         booking_public_id=booking.public_id,
@@ -27,5 +27,10 @@ def test_duplicate_confirmation_creates_one_receipt_and_two_distinct_email_outbo
         _contract_service().confirm_booking_after_billing_success(checkout_session=session, billing_ledger=ledger)
 
     assert BookingReceipt.objects.filter(booking=booking).count() == 1
-    assert BookingNotification.objects.filter(booking=booking, notification_type="booking_confirmed").count() == 1
-    assert BookingNotification.objects.filter(booking=booking, notification_type="payment_receipt").count() == 1
+    assert (
+        BookingNotification.objects.filter(
+            booking=booking,
+            notification_type="booking_confirmed_with_receipt",
+        ).count()
+        == 1
+    )

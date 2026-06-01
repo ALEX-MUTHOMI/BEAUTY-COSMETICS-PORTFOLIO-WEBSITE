@@ -36,6 +36,12 @@ def test_email_provider_timeout_does_not_deconfirm_booking(settings, monkeypatch
     result = notification_delivery.BookingNotificationDeliveryService.send_pending(limit=10)
 
     booking.refresh_from_db()
-    assert result.failed == 2
+    assert result.failed == 1
     assert booking.status == Booking.Status.CONFIRMED
-    assert BookingNotification.objects.filter(booking=booking, status=BookingNotification.Status.FAILED).count() == 2
+    assert (
+        BookingNotification.objects.filter(
+            booking=booking,
+            status=BookingNotification.Status.RETRY_SCHEDULED,
+        ).count()
+        == 1
+    )

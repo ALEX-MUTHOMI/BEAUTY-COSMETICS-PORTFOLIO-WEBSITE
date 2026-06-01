@@ -435,14 +435,41 @@ class BookingReceipt(AuditMixin):
         return token
 
 
+class ReceiptPDFArtifact(AuditMixin):
+    class Status(models.TextChoices):
+        READY = "ready", "Ready"
+        FAILED = "failed", "Failed"
+        CORRUPTED = "corrupted", "Corrupted"
+        ADMIN_REVIEW_REQUIRED = "admin_review_required", "Admin Review Required"
+
+    receipt = models.OneToOneField(BookingReceipt, on_delete=models.PROTECT, related_name="pdf_artifact")
+    storage_key = models.CharField(max_length=255, unique=True)
+    sha256_hash = models.CharField(max_length=64, blank=True)
+    size_bytes = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.READY)
+    generated_at = models.DateTimeField(null=True, blank=True)
+    regeneratable = models.BooleanField(default=False)
+    failure_reason_redacted = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        db_table = "booking_receipt_pdf_artifacts"
+        indexes = [
+            models.Index(fields=["status", "generated_at"], name="receipt_pdf_status_idx"),
+        ]
+
+
 class BookingNotification(AuditMixin):
     class Channel(models.TextChoices):
         EMAIL = "email", "Email"
 
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
+        RETRY_SCHEDULED = "retry_scheduled", "Retry Scheduled"
+        QUOTA_BLOCKED = "quota_blocked", "Quota Blocked"
         SENT = "sent", "Sent"
         FAILED = "failed", "Failed"
+        FAILED_FINAL = "failed_final", "Failed Final"
+        ADMIN_REVIEW_REQUIRED = "admin_review_required", "Admin Review Required"
         CANCELLED = "cancelled", "Cancelled"
 
     booking = models.ForeignKey(Booking, on_delete=models.PROTECT, related_name="notifications")
@@ -457,7 +484,7 @@ class BookingNotification(AuditMixin):
     channel = models.CharField(max_length=16, choices=Channel.choices, default=Channel.EMAIL)
     recipient_email_hash = models.CharField(max_length=128, blank=True)
     recipient_email_redacted = models.CharField(max_length=128, blank=True)
-    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.PENDING)
     scheduled_for = models.DateTimeField(default=timezone.now)
     attempts = models.PositiveSmallIntegerField(default=0)
     last_error_redacted = models.CharField(max_length=255, blank=True)

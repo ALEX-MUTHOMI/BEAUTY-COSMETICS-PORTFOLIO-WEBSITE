@@ -35,7 +35,13 @@ def test_checkout_billing_booking_hardening_contract_confirms_and_creates_receip
     assert ledger.status == LedgerTransaction.Status.SUCCESS
     assert BookingFinancialHistory.objects.filter(booking=booking, event_type="booking_confirmed").count() == 1
     assert BookingReceipt.objects.filter(booking=booking, billing_ledger_id=str(ledger.id)).count() == 1
-    assert BookingNotification.objects.filter(booking=booking, notification_type="booking_confirmed").count() == 1
+    assert (
+        BookingNotification.objects.filter(
+            booking=booking,
+            notification_type="booking_confirmed_with_receipt",
+        ).count()
+        == 1
+    )
 
 
 @pytest.mark.django_db(transaction=True)

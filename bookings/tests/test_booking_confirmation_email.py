@@ -30,7 +30,7 @@ def test_booking_confirmation_email_outbox_created_once_after_confirmed_paid_boo
     booking = _confirm("booking-email")
     _confirmations = BookingNotification.objects.filter(
         booking=booking,
-        notification_type="booking_confirmed",
+        notification_type="booking_confirmed_with_receipt",
         channel=BookingNotification.Channel.EMAIL,
         status=BookingNotification.Status.PENDING,
     )
@@ -41,13 +41,13 @@ def test_booking_confirmation_email_outbox_created_once_after_confirmed_paid_boo
 @pytest.mark.django_db(transaction=True)
 def test_booking_confirmation_email_body_is_safe_and_transactional():
     booking = _confirm("booking-email-body")
-    notification = BookingNotification.objects.get(booking=booking, notification_type="booking_confirmed")
+    notification = BookingNotification.objects.get(booking=booking, notification_type="booking_confirmed_with_receipt")
 
     from bookings.services.notification_delivery import build_notification_email
 
     email = build_notification_email(notification)
     surface = f"{email.subject} {email.html} {email.text}"
-    assert "Booking confirmed" in email.subject
+    assert "Booking confirmed and payment received" in email.subject
     assert str(booking.public_id) in surface
     assert "Confirmed" in surface
     assert "Paid" in surface

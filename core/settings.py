@@ -220,12 +220,15 @@ CELERY_TASK_ROUTES = {
     "users.tasks.send_express_otp_email": {"queue": "express_auth"},
     "billing.tasks.process_mpesa_webhook": {"queue": "billing"},
     "billing.tasks.dlq_billing": {"queue": "dlq_billing"},
+    "bookings.tasks.process_booking_notification": {"queue": "receipts"},
+    "bookings.tasks.sweep_booking_notifications": {"queue": "receipts"},
 }
 CELERY_TASK_QUEUES = (
     Queue("celery", Exchange("celery"), routing_key="celery"),
     Queue("express_auth", Exchange("express_auth"), routing_key="express_auth"),
     Queue("billing", Exchange("billing"), routing_key="billing"),
     Queue("dlq_billing", Exchange("dlq_billing"), routing_key="dlq_billing"),
+    Queue("receipts", Exchange("receipts"), routing_key="receipts"),
 )
 
 # ==============================================================================
@@ -275,6 +278,22 @@ EMAIL_PROVIDER_BASE_URL = os.environ.get("EMAIL_PROVIDER_BASE_URL", "")
 EMAIL_SEND_TIMEOUT_SECONDS = float(os.environ.get("EMAIL_SEND_TIMEOUT_SECONDS", "5"))
 EMAIL_EXTERNAL_TEST_RECIPIENT = os.environ.get("EMAIL_EXTERNAL_TEST_RECIPIENT", "")
 RUN_EXTERNAL_EMAIL_TESTS = os.environ.get("RUN_EXTERNAL_EMAIL_TESTS", "false").lower() in ("true", "1", "t")
+RECEIPT_PDF_TIMEOUT_SECONDS = float(os.environ.get("RECEIPT_PDF_TIMEOUT_SECONDS", "5"))
+RECEIPT_PDF_MAX_BYTES = int(os.environ.get("RECEIPT_PDF_MAX_BYTES", "250000"))
+RECEIPT_PDF_STORAGE_DIR = os.environ.get(
+    "RECEIPT_PDF_STORAGE_DIR",
+    str(BASE_DIR / ".local" / "receipt_artifacts"),
+)
+EMAIL_NOTIFICATION_MAX_ATTEMPTS = int(os.environ.get("EMAIL_NOTIFICATION_MAX_ATTEMPTS", "3"))
+EMAIL_DAILY_SOFT_LIMIT = int(os.environ.get("EMAIL_DAILY_SOFT_LIMIT", "80"))
+EMAIL_DAILY_HARD_LIMIT = int(os.environ.get("EMAIL_DAILY_HARD_LIMIT", "100"))
+EMAIL_MONTHLY_SOFT_LIMIT = int(os.environ.get("EMAIL_MONTHLY_SOFT_LIMIT", "2500"))
+EMAIL_MONTHLY_HARD_LIMIT = int(os.environ.get("EMAIL_MONTHLY_HARD_LIMIT", "3000"))
+EMAIL_QUOTA_ALERT_RECIPIENTS = os.environ.get("EMAIL_QUOTA_ALERT_RECIPIENTS", "")
+EMAIL_BACKUP_PROVIDER_ENABLED = os.environ.get("EMAIL_BACKUP_PROVIDER_ENABLED", "false").lower() in ("true", "1", "t")
+EMAIL_BACKUP_PROVIDER = os.environ.get("EMAIL_BACKUP_PROVIDER", "mailgun")
+EMAIL_QUOTA_MODE = os.environ.get("EMAIL_QUOTA_MODE", "queue_only")
+EMAIL_BACKLOG_HIGH_WATERMARK = int(os.environ.get("EMAIL_BACKLOG_HIGH_WATERMARK", "100"))
 
 # ==============================================================================
 # DJANGO REST FRAMEWORK CONFIGURATIONS

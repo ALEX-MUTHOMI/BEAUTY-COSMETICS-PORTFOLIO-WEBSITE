@@ -30,7 +30,7 @@ def test_payment_receipt_email_outbox_created_once_after_confirmed_paid_booking(
     booking = _confirm("payment-email")
     receipts = BookingNotification.objects.filter(
         booking=booking,
-        notification_type="payment_receipt",
+        notification_type="booking_confirmed_with_receipt",
         channel=BookingNotification.Channel.EMAIL,
         status=BookingNotification.Status.PENDING,
     )
@@ -41,17 +41,17 @@ def test_payment_receipt_email_outbox_created_once_after_confirmed_paid_booking(
 @pytest.mark.django_db(transaction=True)
 def test_payment_receipt_email_contains_secure_receipt_link_and_no_raw_provider_ids():
     booking = _confirm("payment-email-body")
-    notification = BookingNotification.objects.get(booking=booking, notification_type="payment_receipt")
+    notification = BookingNotification.objects.get(booking=booking, notification_type="booking_confirmed_with_receipt")
 
     from bookings.services.notification_delivery import build_notification_email
 
     email = build_notification_email(notification)
     surface = f"{email.subject} {email.html} {email.text}"
-    assert "Payment receipt" in email.subject
+    assert "Booking confirmed and payment received" in email.subject
     assert booking.receipt.receipt_number in surface
     assert "2500.00" in surface
     assert "M-Pesa" in surface
-    assert "download" in surface.lower()
+    assert "attached" in surface.lower()
     assert "grace@example.com" not in surface
     assert "+254712345678" not in surface
     assert notification.receipt.checkout_session_id not in surface

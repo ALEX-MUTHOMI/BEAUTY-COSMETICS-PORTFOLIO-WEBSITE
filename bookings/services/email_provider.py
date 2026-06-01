@@ -45,6 +45,23 @@ def _validated_https_url(raw_url):
     return urllib.parse.urlunparse(parsed)
 
 
+def _format_resend_attachments(attachments):
+    formatted = []
+    for attachment in attachments or []:
+        filename = _sanitize_header(attachment.get("filename", "receipt.pdf")).replace("/", "-").replace("\\", "-")
+        content = attachment.get("content", b"")
+        if isinstance(content, str):
+            content = content.encode()
+        formatted.append(
+            {
+                "filename": filename[:120],
+                "content": base64.b64encode(content).decode(),
+                "content_type": attachment.get("content_type", "application/pdf"),
+            }
+        )
+    return formatted
+
+
 class FakeEmailProvider:
     provider = "fake"
 
@@ -75,6 +92,9 @@ class ResendEmailProvider:
             "html": html,
             "text": text,
         }
+        formatted_attachments = _format_resend_attachments(attachments)
+        if formatted_attachments:
+            payload["attachments"] = formatted_attachments
         request = urllib.request.Request(
             url,
             data=json.dumps(payload).encode(),

@@ -1,3 +1,5 @@
+import logging
+import os
 import re
 import uuid
 from zoneinfo import ZoneInfo
@@ -12,6 +14,15 @@ from bookings.models import Booking, BookingAuditEvent, BookingNotification, Boo
 
 NAIROBI = ZoneInfo("Africa/Nairobi")
 GENERIC_RECEIPT_ERROR = "Receipt unavailable."
+logger = logging.getLogger("bookings.receipts")
+
+
+def enqueue_receipt_notification_task(notification_id):
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return
+    from bookings.tasks import process_booking_notification
+
+    process_booking_notification.delay(str(notification_id))
 
 
 def _safe_text(value, max_length=120):
@@ -71,20 +82,31 @@ def ensure_confirmation_trust_artifacts_locked(*, booking, checkout_session, bil
     if created:
         receipt.issue_download_token()
 
-    for notification_type in ("booking_confirmed", "payment_receipt"):
-        BookingNotification.objects.get_or_create(
-            booking=booking,
-            notification_type=notification_type,
-            channel=BookingNotification.Channel.EMAIL,
-            defaults={
-                "receipt": receipt,
-                "recipient_email_hash": booking.customer_profile.email_hash_hmac,
-                "recipient_email_redacted": booking.customer_profile.email_redacted,
-                "status": BookingNotification.Status.PENDING,
-                "scheduled_for": timezone.now(),
-            },
+    notification, notification_created = BookingNotification.objects.get_or_create(
+        booking=booking,
+        notification_type="booking_confirmed_with_receipt",
+        channel=BookingNotification.Channel.EMAIL,
+        defaults={
+            "receipt": receipt,
+            "recipient_email_hash": booking.customer_profile.email_hash_hmac,
+            "recipient_email_redacted": booking.customer_profile.email_redacted,
+            "status": BookingNotification.Status.PENDING,
+            "scheduled_for": timezone.now(),
+        },
+    )
+    if notification_created:
+        transaction.on_commit(
+            lambda notification_id=str(notification.id): _safe_enqueue_receipt_notification_task(notification_id),
+            robust=True,
         )
     return receipt
+
+
+def _safe_enqueue_receipt_notification_task(notification_id):
+    try:
+        enqueue_receipt_notification_task(notification_id)
+    except Exception:
+        logger.warning("booking.receipt_notification.enqueue_failed", extra={"notification_id": str(notification_id)})
 
 
 def render_receipt_payload(receipt):

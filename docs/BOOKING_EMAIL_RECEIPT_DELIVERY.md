@@ -14,6 +14,18 @@ Default local and CI behavior uses `EMAIL_PROVIDER=fake`. The production-ready p
 - `EMAIL_SEND_TIMEOUT_SECONDS=5`
 - `EMAIL_EXTERNAL_TEST_RECIPIENT`
 - `RUN_EXTERNAL_EMAIL_TESTS=false`
+- `RECEIPT_PDF_TIMEOUT_SECONDS=5`
+- `RECEIPT_PDF_MAX_BYTES=250000`
+- `RECEIPT_PDF_STORAGE_DIR=/app/.local/receipt_artifacts`
+- `EMAIL_NOTIFICATION_MAX_ATTEMPTS=3`
+- `EMAIL_DAILY_SOFT_LIMIT=80`
+- `EMAIL_DAILY_HARD_LIMIT=100`
+- `EMAIL_MONTHLY_SOFT_LIMIT=2500`
+- `EMAIL_MONTHLY_HARD_LIMIT=3000`
+- `EMAIL_QUOTA_MODE=queue_only|backup_provider|admin_hold`
+- `EMAIL_BACKUP_PROVIDER_ENABLED=false`
+- `EMAIL_BACKUP_PROVIDER=mailgun`
+- `EMAIL_BACKLOG_HIGH_WATERMARK=100`
 
 Do not expose these through frontend or `NUXT_PUBLIC_*` variables.
 
@@ -44,14 +56,32 @@ Production must add webhook handling for bounces, complaints, suppressions, and 
 Minimum transactional email volume:
 
 ```text
-monthly confirmed bookings x 2 emails = minimum monthly transactional emails
+confirmed bookings x 1 combined email = minimum transactional emails
 ```
 
-Provider pricing changes. Verify current Resend/Mailgun pricing before production. Track attachment bandwidth separately if PDFs are attached.
+Provider pricing changes. Verify current Resend/Mailgun pricing before production. Free-tier daily/monthly limits are acceptable only for early low-volume testing. If daily bookings can exceed the free daily limit, use a paid Resend plan or a verified backup provider before production. A viral 300-booking day must be treated as a paid-plan/backlog scenario, not an application failure.
 
 ## PDF Attachment Versus Secure Link
 
-Recommended production approach: send a secure receipt download link by default. Attach PDF receipts only if deliverability remains good and provider cost/bandwidth is acceptable. Links reduce email size and improve retry behavior on slow mobile networks.
+Default production design: send one combined "Booking confirmed and payment received" email with a low-byte PDF receipt attached. Do not use a public receipt download link as the production default. A future customer portal may support OTP/session-protected re-download.
+
+The receipt PDF target size is 50 KB to 150 KB, with a hard default limit of 250 KB. The PDF is generated once per `BookingReceipt`, stored as a `ReceiptPDFArtifact`, and reused on provider retries. Regeneration is allowed only when the artifact is missing, corrupted, or explicitly marked regeneratable by admin/system policy.
+
+## Queue Isolation And Failure Policy
+
+Receipt PDF generation and email delivery use the `receipts` Celery queue through `bookings.tasks.process_booking_notification` and `bookings.tasks.sweep_booking_notifications`. Payment callbacks remain on the `billing` queue. This prevents receipt rendering/provider latency from starving Daraja/checkout callback processing.
+
+After `EMAIL_NOTIFICATION_MAX_ATTEMPTS`, notifications move to `failed_final` for future admin dashboard review. Provider quota exhaustion moves notifications to `quota_blocked` with a future retry time. Old failed notifications do not block new notifications because the outbox worker processes bounded batches.
+
+## Quota And Backlog Runbook
+
+Soft-limit event: `email.quota.soft_limit_reached`. Continue sending while the provider accepts mail and alert operators.
+
+Hard-limit event: `email.quota.hard_limit_reached`. Stop sending through the provider for that window, keep notifications queued/blocked, and retry after reset. If no verified backup provider exists, stay in `queue_only`.
+
+Backlog event: `email.notification.backlog_high`. Operators should review pending, retry-scheduled, quota-blocked, and failed-final counts. Customer-safe wording: "Your booking is confirmed. Receipt email is queued and will be sent shortly."
+
+Provider setup checklist before production: domain verification, SPF, DKIM, DMARC, bounce handling, complaint handling, from-address policy, paid-plan quota, and opt-in external delivery test.
 
 ## Security Policy
 

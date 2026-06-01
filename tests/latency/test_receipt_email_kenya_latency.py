@@ -31,5 +31,4 @@ def test_receipt_pdf_and_email_payloads_are_bounded_and_retry_safe(settings):
     assert all(len(email.html.encode()) < 20_000 for email in emails)
     assert len(ReceiptPDFService.generate_pdf(booking.receipt)) < 120_000
     assert BookingNotificationDeliveryService.send_pending(limit=1).sent == 1
-    assert BookingNotificationDeliveryService.send_pending(limit=10).sent == 1
     assert BookingNotificationDeliveryService.send_pending(limit=10).sent == 0

@@ -29,5 +29,5 @@ def test_duplicate_receipt_email_pressure_is_bounded(settings):
     from bookings.services.notification_delivery import BookingNotificationDeliveryService
 
     assert BookingReceipt.objects.filter(booking=booking).count() == 1
-    assert BookingNotification.objects.filter(booking=booking).count() == 2
-    assert BookingNotificationDeliveryService.send_pending(limit=100).sent == 2
+    assert BookingNotification.objects.filter(booking=booking).count() == 1
+    assert BookingNotificationDeliveryService.send_pending(limit=100).sent == 1
