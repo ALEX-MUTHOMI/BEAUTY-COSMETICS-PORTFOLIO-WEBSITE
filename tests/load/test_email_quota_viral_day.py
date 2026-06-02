@@ -19,4 +19,4 @@ def test_quota_blocked_viral_day_backlog_is_retained_without_duplicate_pdf(setti
     assert result.sent == 0
     assert notification_backlog_summary()["quota_blocked"] == 20
     assert BookingNotification.objects.filter(status=BookingNotification.Status.QUOTA_BLOCKED).count() == 20
-    assert ReceiptPDFArtifact.objects.count() == 0
+    assert ReceiptPDFArtifact.objects.filter(status=ReceiptPDFArtifact.Status.READY).count() == 20

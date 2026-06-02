@@ -487,6 +487,7 @@ class BookingNotification(AuditMixin):
     status = models.CharField(max_length=32, choices=Status.choices, default=Status.PENDING)
     scheduled_for = models.DateTimeField(default=timezone.now)
     attempts = models.PositiveSmallIntegerField(default=0)
+    failure_code = models.CharField(max_length=64, blank=True)
     last_error_redacted = models.CharField(max_length=255, blank=True)
     provider_message_id_hash = models.CharField(max_length=128, blank=True)
     sent_at = models.DateTimeField(null=True, blank=True)

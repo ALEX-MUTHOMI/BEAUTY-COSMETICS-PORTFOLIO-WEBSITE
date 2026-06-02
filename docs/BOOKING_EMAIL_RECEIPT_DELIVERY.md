@@ -31,7 +31,7 @@ Do not expose these through frontend or `NUXT_PUBLIC_*` variables.
 
 ## Local Fake Provider
 
-The fake provider normalizes successful sends and returns a deterministic provider message identifier. It does not perform network calls and is the only provider used by default tests.
+The fake provider normalizes successful sends and returns a deterministic provider message identifier. It does not perform network calls and is the only provider used by default tests. B4D adds a redacted fake outbox contract so CI can prove that exactly one combined confirmation/receipt email was accepted with exactly one PDF attachment, without exposing raw recipient email, phone, provider references, receipt tokens, or API keys.
 
 ## External Provider Test
 
@@ -61,6 +61,8 @@ confirmed bookings x 1 combined email = minimum transactional emails
 
 Provider pricing changes. Verify current Resend/Mailgun pricing before production. Free-tier daily/monthly limits are acceptable only for early low-volume testing. If daily bookings can exceed the free daily limit, use a paid Resend plan or a verified backup provider before production. A viral 300-booking day must be treated as a paid-plan/backlog scenario, not an application failure.
 
+Do not hardcode provider limits as permanent truth. Verify provider limits before production and before any launch campaign.
+
 ## PDF Attachment Versus Secure Link
 
 Default production design: send one combined "Booking confirmed and payment received" email with a low-byte PDF receipt attached. Do not use a public receipt download link as the production default. A future customer portal may support OTP/session-protected re-download.
@@ -73,6 +75,8 @@ Receipt PDF generation and email delivery use the `receipts` Celery queue throug
 
 After `EMAIL_NOTIFICATION_MAX_ATTEMPTS`, notifications move to `failed_final` for future admin dashboard review. Provider quota exhaustion moves notifications to `quota_blocked` with a future retry time. Old failed notifications do not block new notifications because the outbox worker processes bounded batches.
 
+B4D CI parity status: local Docker and CI must run fake-provider delivery through the same container path. `ReceiptPDFArtifact` storage must be writable in the container, and fake-provider tests must assert the PDF attachment exists instead of only asserting that an outbox row exists. Safe diagnostics are limited to `failure_code`, `last_error_redacted`, notification status, receipt status, PDF artifact status, provider name, and provider mode.
+
 ## Quota And Backlog Runbook
 
 Soft-limit event: `email.quota.soft_limit_reached`. Continue sending while the provider accepts mail and alert operators.
@@ -82,6 +86,52 @@ Hard-limit event: `email.quota.hard_limit_reached`. Stop sending through the pro
 Backlog event: `email.notification.backlog_high`. Operators should review pending, retry-scheduled, quota-blocked, and failed-final counts. Customer-safe wording: "Your booking is confirmed. Receipt email is queued and will be sent shortly."
 
 Provider setup checklist before production: domain verification, SPF, DKIM, DMARC, bounce handling, complaint handling, from-address policy, paid-plan quota, and opt-in external delivery test.
+
+Viral-day policy: 300 confirmed bookings/day requires either a paid provider plan, verified backup provider, or queue-only delay. In queue-only mode, bookings remain confirmed, receipts remain durable, and the customer status endpoint must show delayed/queued receipt email state without exposing provider quota details.
+
+1000-notification backlog policy: process bounded batches, do not tight-loop quota-blocked rows, do not regenerate PDFs on every retry, and do not let notification backlog block booking confirmation or payment callback processing.
+
+## Customer Status Fallback
+
+After checkout/payment, the frontend should redirect to:
+
+```text
+/booking/status/<booking_public_id>/
+```
+
+The backend status API is:
+
+```text
+GET /api/bookings/status/<booking_public_id>/
+```
+
+The response is data-minimized and customer-safe. It may show booking, payment, receipt, email, schedule, service, and next-action status. It must not expose raw phone, raw email, customer full name, internal database IDs, checkout IDs, ledger IDs, receipt download tokens, provider references, quota error codes, or stack traces.
+
+Customer-safe fallback messages:
+
+- "Your booking is confirmed."
+- "Your receipt email is being prepared."
+- "Your receipt email is queued and will be sent shortly."
+- "Your payment is being verified. Keep this booking reference."
+
+Do not show provider internals such as "Resend quota exceeded", "provider 429", "ledger mismatch", or "email provider failed".
+
+## Production Checklist
+
+Before production email sending, verify:
+
+- Sending domain is verified.
+- SPF is configured.
+- DKIM is configured.
+- DMARC is configured.
+- Provider API key is stored only in backend secret storage.
+- Real opt-in external send test passes.
+- Bounce and complaint handling exists.
+- Notification worker is deployed.
+- `receipts` queue is deployed and monitored.
+- Backlog and quota alerts are wired to operators.
+- Customer status endpoint is monitored.
+- Provider limits are checked before launch.
 
 ## Security Policy
 

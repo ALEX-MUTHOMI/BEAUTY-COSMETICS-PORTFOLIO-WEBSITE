@@ -32,6 +32,7 @@ urlpatterns = [
     path("api/auth/request-otp/", RequestOTPView.as_view(), name="request-otp"),
     path("api/auth/verify-otp/", VerifyOTPView.as_view(), name="verify-otp"),
     path("api/billing/", include("billing.urls")),
+    path("api/bookings/", include("bookings.urls")),
     path("api/checkout/", include("checkout.urls")),
 ]
 

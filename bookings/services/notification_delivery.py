@@ -132,6 +132,15 @@ def _is_rate_limit_error(error):
     return "429" in surface or "quota" in surface or "rate" in surface
 
 
+def _failure_code_for_exception(error):
+    surface = str(error).lower()
+    if "pdf" in surface or "receipt" in surface or "artifact" in surface:
+        return "pdf_artifact_unavailable"
+    if _is_rate_limit_error(error):
+        return "email_provider_rate_limited"
+    return "email_provider_failure"
+
+
 def get_backup_email_provider():
     return None
 
@@ -198,12 +207,10 @@ class BookingNotificationDeliveryService:
                     continue
             if not cls._can_send(notification):
                 notification.status = BookingNotification.Status.CANCELLED
+                notification.failure_code = "notification_not_sendable"
                 notification.last_error_redacted = "delivery skipped"
-                notification.save(update_fields=["status", "last_error_redacted", "updated_at"])
+                notification.save(update_fields=["status", "failure_code", "last_error_redacted", "updated_at"])
                 skipped += 1
-                continue
-            if cls._quota_blocks_send(notification, provider_name):
-                failed += 1
                 continue
             try:
                 ReceiptPDFService.ensure_artifact(notification.receipt)
@@ -212,6 +219,9 @@ class BookingNotificationDeliveryService:
                     raise EmailProviderError("receipt PDF artifact unavailable")
             except Exception as exc:
                 cls._mark_retry_or_final(notification, exc)
+                failed += 1
+                continue
+            if cls._quota_blocks_send(notification, provider_name):
                 failed += 1
                 continue
             try:
@@ -233,9 +243,21 @@ class BookingNotificationDeliveryService:
                 continue
             notification.attempts += 1
             notification.status = BookingNotification.Status.SENT
+            notification.failure_code = ""
+            notification.last_error_redacted = ""
             notification.sent_at = timezone.now()
             notification.provider_message_id_hash = hash_sensitive_value(result.provider_message_id)
-            notification.save(update_fields=["attempts", "status", "sent_at", "provider_message_id_hash", "updated_at"])
+            notification.save(
+                update_fields=[
+                    "attempts",
+                    "status",
+                    "failure_code",
+                    "last_error_redacted",
+                    "sent_at",
+                    "provider_message_id_hash",
+                    "updated_at",
+                ]
+            )
             day_count, month_count = _increment_counter("sent", provider_name)
             if day_count >= int(getattr(settings, "EMAIL_DAILY_SOFT_LIMIT", 80)):
                 _emit_quota_alert("email.quota.soft_limit_reached", provider_name, day_count=day_count)
@@ -262,9 +284,12 @@ class BookingNotificationDeliveryService:
         if sent_count < hard_limit:
             return False
         notification.status = BookingNotification.Status.QUOTA_BLOCKED
+        notification.failure_code = "email_quota_hard_limit"
         notification.last_error_redacted = "provider quota window reached"
         notification.scheduled_for = timezone.now() + timezone.timedelta(hours=24)
-        notification.save(update_fields=["status", "last_error_redacted", "scheduled_for", "updated_at"])
+        notification.save(
+            update_fields=["status", "failure_code", "last_error_redacted", "scheduled_for", "updated_at"]
+        )
         _increment_counter("failed", provider_name)
         _emit_quota_alert("email.quota.hard_limit_reached", provider_name, day_count=sent_count)
         if getattr(settings, "EMAIL_BACKUP_PROVIDER_ENABLED", False):
@@ -276,6 +301,7 @@ class BookingNotificationDeliveryService:
     @staticmethod
     def _mark_retry_or_final(notification, exc):
         notification.attempts += 1
+        notification.failure_code = _failure_code_for_exception(exc)
         notification.last_error_redacted = redact_email_error(exc)
         if notification.attempts >= _max_attempts():
             notification.status = BookingNotification.Status.FAILED_FINAL
@@ -285,7 +311,16 @@ class BookingNotificationDeliveryService:
             notification.scheduled_for = timezone.now() + timezone.timedelta(
                 seconds=_retry_delay_seconds(notification.attempts)
             )
-        notification.save(update_fields=["attempts", "status", "scheduled_for", "last_error_redacted", "updated_at"])
+        notification.save(
+            update_fields=[
+                "attempts",
+                "status",
+                "scheduled_for",
+                "failure_code",
+                "last_error_redacted",
+                "updated_at",
+            ]
+        )
 
     @staticmethod
     def _can_send(notification):

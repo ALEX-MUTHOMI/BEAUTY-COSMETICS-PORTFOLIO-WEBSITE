@@ -25,6 +25,16 @@ env:
   SECURE_SSL_REDIRECT: "False"
   CHECKOUT_MPESA_PROVIDER: fake
   PAYMENT_PROVIDER_MODE: fake
+  EMAIL_PROVIDER: fake
+  RECEIPT_PDF_STORAGE_DIR: /app/.local/receipt_artifacts
+  RECEIPT_PDF_TIMEOUT_SECONDS: "5"
+  RECEIPT_PDF_MAX_BYTES: "250000"
+  EMAIL_NOTIFICATION_MAX_ATTEMPTS: "3"
+  EMAIL_DAILY_SOFT_LIMIT: "80"
+  EMAIL_DAILY_HARD_LIMIT: "100"
+  EMAIL_QUOTA_MODE: queue_only
+  EMAIL_BACKUP_PROVIDER_ENABLED: "false"
+  EMAIL_BACKLOG_HIGH_WATERMARK: "100"
   DARAJA_ENV: sandbox
   DARAJA_CONSUMER_KEY: ""
   DARAJA_CONSUMER_SECRET: ""
@@ -157,10 +167,34 @@ jobs:
       - if: always()
         run: docker compose down --volumes --remove-orphans
 
+  receipt-pipeline:
+    name: receipt-pipeline
+    runs-on: ubuntu-latest
+    needs: checkout-billing-integration
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build
+      - name: Run deterministic booking/billing/receipt pipeline
+        run: |
+          docker compose exec -T web poetry run pytest \
+            tests/integration/test_booking_receipt_email_contract.py \
+            tests/integration/test_booking_checkout_billing_receipt_pipeline.py \
+            bookings/tests/test_notification_delivery_ci_parity.py \
+            bookings/tests/test_receipt_artifact_ci_storage.py \
+            bookings/tests/test_fake_provider_pdf_attachment_contract.py \
+            bookings/tests/test_booking_status_endpoint.py \
+            bookings/tests/test_booking_status_endpoint_security.py \
+            bookings/tests/test_email_quota_fallback.py \
+            -vv
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: docker compose down --volumes --remove-orphans
+
   payment-security:
     name: payment-security
     runs-on: ubuntu-latest
-    needs: checkout-billing-integration
+    needs: receipt-pipeline
     steps:
       - uses: actions/checkout@v4
       - run: docker compose up -d --build

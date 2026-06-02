@@ -99,6 +99,8 @@ def _create_history(booking, event_type, amount, currency, checkout_session_id="
 def _safe_response(booking, checkout_session, next_action="initiate_payment"):
     return {
         "booking_public_id": str(booking.public_id),
+        "status_url": f"/booking/status/{booking.public_id}/",
+        "status_api_url": f"/api/bookings/status/{booking.public_id}/",
         "checkout_public_id": str(checkout_session.id),
         "booking_status": booking.status,
         "payment_status": checkout_session.status,

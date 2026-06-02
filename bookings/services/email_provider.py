@@ -12,6 +12,7 @@ from django.conf import settings
 from billing.redaction import hash_sensitive_value
 
 logger = logging.getLogger("bookings.email_provider")
+FAKE_EMAIL_OUTBOX = []
 
 
 class EmailProviderError(Exception):
@@ -31,6 +32,7 @@ def _sanitize_header(value):
 
 def redact_email_error(value):
     value = re.sub(r"[\w.+-]+@[\w.-]+", "redacted-email", str(value or ""))
+    value = re.sub(r"\+?254\d{9}\b", "redacted-phone", value)
     value = re.sub(r"(token|key|secret|bearer)[=: ]+[A-Za-z0-9_.:-]+", r"\1=redacted", value, flags=re.I)
     value = re.sub(r"\b[A-Za-z0-9_.]*-(token|key|secret)\b", "redacted-secret", value, flags=re.I)
     return value[:255]
@@ -68,8 +70,39 @@ class FakeEmailProvider:
     def send_email(self, *, to_hash, to_redacted, subject, html, text, attachments=None, metadata=None):
         subject = _sanitize_header(subject)
         message_id = hash_sensitive_value(f"{to_hash}:{subject}:{metadata or {}}")[:32]
+        safe_attachments = []
+        for attachment in attachments or []:
+            content = attachment.get("content", b"")
+            if isinstance(content, str):
+                content = content.encode()
+            safe_attachments.append(
+                {
+                    "filename": _sanitize_header(attachment.get("filename", "receipt.pdf")),
+                    "content_type": attachment.get("content_type", "application/pdf"),
+                    "size_bytes": len(content),
+                    "sha256": attachment.get("sha256") or hash_sensitive_value(content),
+                }
+            )
+        FAKE_EMAIL_OUTBOX.append(
+            {
+                "provider": self.provider,
+                "recipient": to_redacted,
+                "subject": subject,
+                "attachments": safe_attachments,
+                "metadata": {
+                    key: str(value)
+                    for key, value in (metadata or {}).items()
+                    if key in {"booking_reference", "notification_type"}
+                },
+                "message_hash": message_id,
+            }
+        )
         logger.info("booking.email.fake_sent", extra={"recipient": to_redacted, "message_hash": message_id})
         return EmailSendResult(True, self.provider, f"fake-{message_id}")
+
+
+def reset_fake_email_outbox():
+    FAKE_EMAIL_OUTBOX.clear()
 
 
 class ConsoleEmailProvider(FakeEmailProvider):
