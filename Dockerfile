@@ -60,7 +60,10 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --chown=django-user:django-group . .
 
 # Set strict permissions - root directory read-only for django-user
-RUN chmod -R 755 /app
+RUN chmod -R 755 /app && \
+    mkdir -p /app/var/receipt-artifacts /app/var/pytest-cache && \
+    chown -R django-user:django-group /app/var && \
+    chmod -R 750 /app/var
 
 # Switch to the non-root execution context
 USER django-user

@@ -11,7 +11,7 @@ def test_receipt_pipeline_red_team_pdf_email_failures_do_not_corrupt_payment(set
     from bookings.services.notification_delivery import BookingNotificationDeliveryService
 
     settings.EMAIL_PROVIDER = "fake"
-    settings.RECEIPT_PDF_STORAGE_DIR = str(tmp_path)
+    settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
     booking, _session, _ledger = _confirm_paid_booking("receipt-pipeline-red-team")
 
     class FailingProvider:

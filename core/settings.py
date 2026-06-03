@@ -280,10 +280,12 @@ EMAIL_EXTERNAL_TEST_RECIPIENT = os.environ.get("EMAIL_EXTERNAL_TEST_RECIPIENT", 
 RUN_EXTERNAL_EMAIL_TESTS = os.environ.get("RUN_EXTERNAL_EMAIL_TESTS", "false").lower() in ("true", "1", "t")
 RECEIPT_PDF_TIMEOUT_SECONDS = float(os.environ.get("RECEIPT_PDF_TIMEOUT_SECONDS", "5"))
 RECEIPT_PDF_MAX_BYTES = int(os.environ.get("RECEIPT_PDF_MAX_BYTES", "250000"))
-RECEIPT_PDF_STORAGE_DIR = os.environ.get(
-    "RECEIPT_PDF_STORAGE_DIR",
-    str(BASE_DIR / ".local" / "receipt_artifacts"),
+RECEIPT_PDF_ARTIFACT_DIR = os.environ.get(
+    "RECEIPT_PDF_ARTIFACT_DIR",
+    os.environ.get("RECEIPT_PDF_STORAGE_DIR", str(BASE_DIR / "var" / "receipt-artifacts")),
 )
+# Backward-compatible alias only. New deployments must use RECEIPT_PDF_ARTIFACT_DIR.
+RECEIPT_PDF_STORAGE_DIR = RECEIPT_PDF_ARTIFACT_DIR
 EMAIL_NOTIFICATION_MAX_ATTEMPTS = int(os.environ.get("EMAIL_NOTIFICATION_MAX_ATTEMPTS", "3"))
 EMAIL_DAILY_SOFT_LIMIT = int(os.environ.get("EMAIL_DAILY_SOFT_LIMIT", "80"))
 EMAIL_DAILY_HARD_LIMIT = int(os.environ.get("EMAIL_DAILY_HARD_LIMIT", "100"))

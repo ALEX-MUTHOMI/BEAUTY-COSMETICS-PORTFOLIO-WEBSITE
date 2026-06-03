@@ -9,6 +9,10 @@ volumes:
     driver: local
   staging_caddy_config:
     driver: local
+  staging_receipt_artifacts:
+    driver: local
+  staging_pytest_cache:
+    driver: local
 
 services:
   reverse-proxy:
@@ -121,6 +125,9 @@ services:
       PII_HASH_PEPPER: ${PII_HASH_PEPPER}
       PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY}
       PATH: /app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+    volumes:
+      - staging_receipt_artifacts:/app/var/receipt-artifacts:rw
+      - staging_pytest_cache:/app/var/pytest-cache:rw
     expose:
       - "8000"
     depends_on:
@@ -164,6 +171,9 @@ services:
       PII_HASH_PEPPER: ${PII_HASH_PEPPER}
       PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY}
       PATH: /app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+    volumes:
+      - staging_receipt_artifacts:/app/var/receipt-artifacts:rw
+      - staging_pytest_cache:/app/var/pytest-cache:rw
     depends_on:
       web:
         condition: service_healthy

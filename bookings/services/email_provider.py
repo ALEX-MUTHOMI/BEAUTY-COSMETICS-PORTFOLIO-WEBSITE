@@ -33,6 +33,7 @@ def _sanitize_header(value):
 def redact_email_error(value):
     value = re.sub(r"[\w.+-]+@[\w.-]+", "redacted-email", str(value or ""))
     value = re.sub(r"\+?254\d{9}\b", "redacted-phone", value)
+    value = re.sub(r"(?i)(/[A-Za-z0-9._/-]+|[A-Za-z]:\\[^\s'\"<>]+)", "redacted-path", value)
     value = re.sub(r"(token|key|secret|bearer)[=: ]+[A-Za-z0-9_.:-]+", r"\1=redacted", value, flags=re.I)
     value = re.sub(r"\b[A-Za-z0-9_.]*-(token|key|secret)\b", "redacted-secret", value, flags=re.I)
     return value[:255]

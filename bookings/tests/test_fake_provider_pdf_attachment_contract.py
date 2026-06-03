@@ -9,7 +9,7 @@ def test_fake_provider_records_one_redacted_pdf_attachment(settings, tmp_path):
     from bookings.services.notification_delivery import BookingNotificationDeliveryService
 
     settings.EMAIL_PROVIDER = "fake"
-    settings.RECEIPT_PDF_STORAGE_DIR = str(tmp_path)
+    settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
     reset_fake_email_outbox()
     _confirm_paid_booking("fake-provider-attachment")
 

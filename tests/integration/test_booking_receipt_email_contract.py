@@ -11,7 +11,7 @@ from checkout.models import CheckoutSession
 @pytest.mark.django_db(transaction=True)
 def test_booking_checkout_billing_receipt_email_contract(settings, tmp_path):
     settings.EMAIL_PROVIDER = "fake"
-    settings.RECEIPT_PDF_STORAGE_DIR = str(tmp_path)
+    settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
     reset_fake_email_outbox()
     booking = _held_booking(key="receipt-email-contract")
     checkout = _contract_service().create_checkout_for_held_booking(

@@ -7,6 +7,10 @@ networks:
 volumes:
   postgres_data:
     driver: local
+  receipt_artifacts:
+    driver: local
+  pytest_cache:
+    driver: local
 
 services:
   # ============================================================================
@@ -96,6 +100,8 @@ services:
     command: gunicorn --bind 0.0.0.0:8000 --workers 3 core.wsgi:application
     volumes:
       - .:/app:rw
+      - receipt_artifacts:/app/var/receipt-artifacts:rw
+      - pytest_cache:/app/var/pytest-cache:rw
     ports:
       - "8000:8000"
     environment:
@@ -192,7 +198,7 @@ services:
       - RUN_EXTERNAL_EMAIL_TESTS=${RUN_EXTERNAL_EMAIL_TESTS:-false}
       - RECEIPT_PDF_TIMEOUT_SECONDS=${RECEIPT_PDF_TIMEOUT_SECONDS:-5}
       - RECEIPT_PDF_MAX_BYTES=${RECEIPT_PDF_MAX_BYTES:-250000}
-      - RECEIPT_PDF_STORAGE_DIR=${RECEIPT_PDF_STORAGE_DIR:-/app/.local/receipt_artifacts}
+      - RECEIPT_PDF_ARTIFACT_DIR=${RECEIPT_PDF_ARTIFACT_DIR:-/app/var/receipt-artifacts}
       - EMAIL_NOTIFICATION_MAX_ATTEMPTS=${EMAIL_NOTIFICATION_MAX_ATTEMPTS:-3}
       - EMAIL_DAILY_SOFT_LIMIT=${EMAIL_DAILY_SOFT_LIMIT:-80}
       - EMAIL_DAILY_HARD_LIMIT=${EMAIL_DAILY_HARD_LIMIT:-100}
@@ -283,6 +289,8 @@ services:
     command: celery -A core worker --loglevel=info -Q celery,express_auth,billing,dlq_billing
     volumes:
       - .:/app:rw
+      - receipt_artifacts:/app/var/receipt-artifacts:rw
+      - pytest_cache:/app/var/pytest-cache:rw
     environment:
       # ------------------------------------------------------------------------
       # Runtime
@@ -373,7 +381,7 @@ services:
       - RUN_EXTERNAL_EMAIL_TESTS=${RUN_EXTERNAL_EMAIL_TESTS:-false}
       - RECEIPT_PDF_TIMEOUT_SECONDS=${RECEIPT_PDF_TIMEOUT_SECONDS:-5}
       - RECEIPT_PDF_MAX_BYTES=${RECEIPT_PDF_MAX_BYTES:-250000}
-      - RECEIPT_PDF_STORAGE_DIR=${RECEIPT_PDF_STORAGE_DIR:-/app/.local/receipt_artifacts}
+      - RECEIPT_PDF_ARTIFACT_DIR=${RECEIPT_PDF_ARTIFACT_DIR:-/app/var/receipt-artifacts}
       - EMAIL_NOTIFICATION_MAX_ATTEMPTS=${EMAIL_NOTIFICATION_MAX_ATTEMPTS:-3}
       - EMAIL_DAILY_SOFT_LIMIT=${EMAIL_DAILY_SOFT_LIMIT:-80}
       - EMAIL_DAILY_HARD_LIMIT=${EMAIL_DAILY_HARD_LIMIT:-100}
@@ -416,6 +424,8 @@ services:
     command: celery -A core worker --loglevel=info -Q receipts --concurrency=${RECEIPT_WORKER_CONCURRENCY:-2}
     volumes:
       - .:/app:rw
+      - receipt_artifacts:/app/var/receipt-artifacts:rw
+      - pytest_cache:/app/var/pytest-cache:rw
     environment:
       - DEBUG=${DEBUG:-False}
       - POETRY_VIRTUALENVS_CREATE=false
@@ -442,7 +452,7 @@ services:
       - RUN_EXTERNAL_EMAIL_TESTS=${RUN_EXTERNAL_EMAIL_TESTS:-false}
       - RECEIPT_PDF_TIMEOUT_SECONDS=${RECEIPT_PDF_TIMEOUT_SECONDS:-5}
       - RECEIPT_PDF_MAX_BYTES=${RECEIPT_PDF_MAX_BYTES:-250000}
-      - RECEIPT_PDF_STORAGE_DIR=${RECEIPT_PDF_STORAGE_DIR:-/app/.local/receipt_artifacts}
+      - RECEIPT_PDF_ARTIFACT_DIR=${RECEIPT_PDF_ARTIFACT_DIR:-/app/var/receipt-artifacts}
       - EMAIL_NOTIFICATION_MAX_ATTEMPTS=${EMAIL_NOTIFICATION_MAX_ATTEMPTS:-3}
       - EMAIL_DAILY_SOFT_LIMIT=${EMAIL_DAILY_SOFT_LIMIT:-80}
       - EMAIL_DAILY_HARD_LIMIT=${EMAIL_DAILY_HARD_LIMIT:-100}

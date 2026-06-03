@@ -4,6 +4,7 @@
 !.env.example
 .pytest_cache
 .cache
+var
 __pycache__
 *.pyc
 db.sqlite3

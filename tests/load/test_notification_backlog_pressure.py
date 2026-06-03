@@ -10,7 +10,7 @@ def test_one_thousand_notification_backlog_is_batch_bounded_and_artifact_reuse_s
     from bookings.services.notification_delivery import BookingNotificationDeliveryService
 
     settings.EMAIL_PROVIDER = "fake"
-    settings.RECEIPT_PDF_STORAGE_DIR = str(tmp_path)
+    settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
     settings.EMAIL_DAILY_HARD_LIMIT = 0
 
     for index in range(1000):

@@ -6,7 +6,7 @@ from bookings.tests.test_booking_receipt_foundation import _confirm_paid_booking
 
 @pytest.mark.django_db(transaction=True)
 def test_status_endpoint_red_team_blocks_enumeration_pii_and_provider_leaks(settings, tmp_path):
-    settings.RECEIPT_PDF_STORAGE_DIR = str(tmp_path)
+    settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
     booking, _session, ledger = _confirm_paid_booking("status-red-team")
     client = Client()
 

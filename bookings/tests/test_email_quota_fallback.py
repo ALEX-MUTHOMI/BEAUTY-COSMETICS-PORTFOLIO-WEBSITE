@@ -10,7 +10,7 @@ def test_quota_hard_limit_keeps_booking_confirmed_and_status_customer_safe(setti
     from bookings.services.notification_delivery import BookingNotificationDeliveryService
 
     settings.EMAIL_PROVIDER = "fake"
-    settings.RECEIPT_PDF_STORAGE_DIR = str(tmp_path)
+    settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
     settings.EMAIL_DAILY_HARD_LIMIT = 0
     booking, _session, _ledger = _confirm_paid_booking("quota-status-safe")
 

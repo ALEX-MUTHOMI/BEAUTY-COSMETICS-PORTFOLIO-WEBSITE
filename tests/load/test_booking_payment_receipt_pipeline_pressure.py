@@ -8,7 +8,7 @@ from bookings.tests.test_booking_receipt_foundation import _confirm_paid_booking
 @pytest.mark.payment_load
 def test_one_hundred_payment_receipt_pipelines_do_not_wait_on_email_provider(settings, tmp_path):
     settings.EMAIL_PROVIDER = "fake"
-    settings.RECEIPT_PDF_STORAGE_DIR = str(tmp_path)
+    settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
 
     for index in range(100):
         _confirm_paid_booking(f"b4d-pressure-{index}")

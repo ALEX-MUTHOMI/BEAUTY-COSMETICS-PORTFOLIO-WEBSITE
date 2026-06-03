@@ -58,6 +58,8 @@ def _build_pdf_bytes(lines):
 
 
 class ReceiptPDFService:
+    STORAGE_UNWRITABLE_MESSAGE = "Receipt artifact storage is not writable."
+
     @staticmethod
     def generate_pdf(receipt):
         return ReceiptPDFService.ensure_artifact(receipt)
@@ -116,12 +118,19 @@ class ReceiptPDFService:
 
     @staticmethod
     def _artifact_dir():
-        path = getattr(
-            settings,
-            "RECEIPT_PDF_STORAGE_DIR",
-            str(settings.BASE_DIR / ".local" / "receipt_artifacts"),
+        path = (
+            getattr(settings, "RECEIPT_PDF_ARTIFACT_DIR", "")
+            or getattr(settings, "RECEIPT_PDF_STORAGE_DIR", "")
+            or str(settings.BASE_DIR / "var" / "receipt-artifacts")
         )
-        os.makedirs(path, exist_ok=True)
+        try:
+            os.makedirs(path, mode=0o750, exist_ok=True)
+            probe_path = os.path.join(path, ".write-check")
+            with open(probe_path, "ab"):
+                pass
+            os.remove(probe_path)
+        except OSError as exc:
+            raise ValidationError(ReceiptPDFService.STORAGE_UNWRITABLE_MESSAGE) from exc
         return path
 
     @staticmethod
@@ -129,8 +138,11 @@ class ReceiptPDFService:
         digest = hashlib.sha256(pdf).hexdigest()
         storage_key = f"receipt-{receipt.receipt_number}-{digest[:16]}.pdf"
         path = os.path.join(ReceiptPDFService._artifact_dir(), storage_key)
-        with open(path, "wb") as handle:
-            handle.write(pdf)
+        try:
+            with open(path, "wb") as handle:
+                handle.write(pdf)
+        except OSError as exc:
+            raise ValidationError(ReceiptPDFService.STORAGE_UNWRITABLE_MESSAGE) from exc
         artifact, _created = ReceiptPDFArtifact.objects.update_or_create(
             receipt=receipt,
             defaults={

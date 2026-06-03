@@ -10,7 +10,7 @@ def test_confirmed_booking_status_endpoint_is_small_safe_and_customer_friendly(s
     from bookings.services.notification_delivery import BookingNotificationDeliveryService
 
     settings.EMAIL_PROVIDER = "fake"
-    settings.RECEIPT_PDF_STORAGE_DIR = str(tmp_path)
+    settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
     booking, _session, _ledger = _confirm_paid_booking("status-confirmed")
     BookingNotificationDeliveryService.send_pending(limit=10)
 
@@ -36,7 +36,7 @@ def test_confirmed_booking_status_endpoint_is_small_safe_and_customer_friendly(s
 @pytest.mark.django_db(transaction=True)
 def test_pending_and_quota_blocked_statuses_are_customer_safe(settings, tmp_path):
     settings.EMAIL_PROVIDER = "fake"
-    settings.RECEIPT_PDF_STORAGE_DIR = str(tmp_path)
+    settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
     booking, _session, _ledger = _confirm_paid_booking("status-delayed")
     notification = BookingNotification.objects.get(booking=booking)
     notification.status = BookingNotification.Status.QUOTA_BLOCKED

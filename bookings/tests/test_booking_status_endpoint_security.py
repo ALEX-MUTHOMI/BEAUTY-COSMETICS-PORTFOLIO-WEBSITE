@@ -6,7 +6,7 @@ from bookings.tests.test_booking_receipt_foundation import _confirm_paid_booking
 
 @pytest.mark.django_db(transaction=True)
 def test_booking_status_endpoint_does_not_reflect_xss_or_internal_identifiers(settings, tmp_path):
-    settings.RECEIPT_PDF_STORAGE_DIR = str(tmp_path)
+    settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
     booking, _session, _ledger = _confirm_paid_booking("status-xss")
     booking.service.name = "<script>alert(1)</script> Bridal http://evil.test/a.css"
     booking.service.save(update_fields=["name", "updated_at"])

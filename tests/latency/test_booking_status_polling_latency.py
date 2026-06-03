@@ -7,7 +7,7 @@ from bookings.tests.test_booking_receipt_foundation import _confirm_paid_booking
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.latency
 def test_booking_status_polling_100_times_is_stable_and_small(settings, tmp_path):
-    settings.RECEIPT_PDF_STORAGE_DIR = str(tmp_path)
+    settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
     booking, _session, _ledger = _confirm_paid_booking("status-latency")
     client = Client()
 

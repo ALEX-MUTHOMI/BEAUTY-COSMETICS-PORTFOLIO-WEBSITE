@@ -12,7 +12,7 @@ def test_full_booking_billing_receipt_email_pipeline_is_ci_deterministic(setting
     from bookings.services.notification_delivery import BookingNotificationDeliveryService
 
     settings.EMAIL_PROVIDER = "fake"
-    settings.RECEIPT_PDF_STORAGE_DIR = str(tmp_path)
+    settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
     reset_fake_email_outbox()
 
     booking = _held_booking(key="b4d-full-pipeline")

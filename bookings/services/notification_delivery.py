@@ -134,6 +134,14 @@ def _is_rate_limit_error(error):
 
 def _failure_code_for_exception(error):
     surface = str(error).lower()
+    if (
+        isinstance(error, PermissionError)
+        or "permission denied" in surface
+        or "storage is not writable" in surface
+        or "storage_unwritable" in surface
+        or "errno 13" in surface
+    ):
+        return "storage_unwritable"
     if "pdf" in surface or "receipt" in surface or "artifact" in surface:
         return "pdf_artifact_unavailable"
     if _is_rate_limit_error(error):

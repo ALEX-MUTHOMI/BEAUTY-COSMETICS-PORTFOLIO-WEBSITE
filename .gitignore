@@ -8,4 +8,5 @@ venvvenv/
 .cache/
 .pytest_cache/
 .ruff_cache/
+var/
 node_modules/

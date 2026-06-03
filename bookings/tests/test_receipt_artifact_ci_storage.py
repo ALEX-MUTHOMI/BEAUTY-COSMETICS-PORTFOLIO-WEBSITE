@@ -5,12 +5,21 @@ import pytest
 from bookings.tests.test_booking_receipt_foundation import _confirm_paid_booking
 
 
+def test_receipt_pdf_artifact_default_storage_is_writable_runtime_path(settings):
+    path = getattr(settings, "RECEIPT_PDF_ARTIFACT_DIR", "")
+    normalized = str(path).replace("\\", "/")
+
+    assert normalized
+    assert normalized == "/app/var/receipt-artifacts"
+    assert "/app/.local" not in normalized
+
+
 @pytest.mark.django_db(transaction=True)
 def test_receipt_pdf_artifact_uses_ci_writable_configured_storage(settings, tmp_path):
     from bookings.models import ReceiptPDFArtifact
     from bookings.services.receipt_pdf import ReceiptPDFService
 
-    settings.RECEIPT_PDF_STORAGE_DIR = str(tmp_path)
+    settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
     booking, _session, _ledger = _confirm_paid_booking("ci-storage")
 
     pdf = ReceiptPDFService.ensure_artifact(booking.receipt)
