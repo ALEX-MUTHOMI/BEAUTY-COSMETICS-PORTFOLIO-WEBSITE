@@ -211,7 +211,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker compose up -d --build
-      - run: docker compose exec -T web poetry run pytest tests/load -m "payment_load" -vv
+      - name: Run bounded fake-provider payment load tests
+        run: |
+          docker compose exec -T web poetry run pytest tests/load \
+            -m "payment_load" \
+            --ignore=tests/load/test_notification_backlog_pressure.py \
+            -vv --durations=25
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  notification-backlog-load:
+    name: notification-backlog-load
+    runs-on: ubuntu-latest
+    needs: payment-security
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build
+      - name: Run isolated 1000-notification backlog proof
+        run: docker compose exec -T web poetry run pytest tests/load/test_notification_backlog_pressure.py -vv --durations=25
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
@@ -250,12 +269,16 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - payment-load-resilience
+      - notification-backlog-load
       - latency
     steps:
       - uses: actions/checkout@v4
       - run: docker compose up -d --build
       - name: Run deterministic fake-provider chaos suites
-        run: docker compose exec -T web poetry run pytest tests/security tests/load tests/latency -vv
+        run: |
+          docker compose exec -T web poetry run pytest tests/security tests/load tests/latency \
+            --ignore=tests/load/test_notification_backlog_pressure.py \
+            -vv --durations=25
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()

@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
-from django.db import close_old_connections
+from django.db import close_old_connections, connections
 from django.utils import timezone
 
 from bookings.models import CustomerOTPChallenge
@@ -34,6 +34,7 @@ def test_concurrent_reschedules_do_not_double_book_or_double_increment():
             return "rejected"
         finally:
             close_old_connections()
+            connections.close_all()
 
     results = list(ThreadPoolExecutor(max_workers=5).map(lambda _i: attempt(), range(5)))
     booking.refresh_from_db()

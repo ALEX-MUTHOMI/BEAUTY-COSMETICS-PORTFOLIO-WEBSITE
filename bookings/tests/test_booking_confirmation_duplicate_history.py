@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
+from django.db import close_old_connections, connections
 
 from billing.services import record_successful_checkout_payment
 from bookings.models import Booking, BookingAuditEvent, BookingFinancialHistory
@@ -46,7 +47,17 @@ def test_concurrent_duplicate_success_is_bounded():
     booking, session, ledger = _confirmed_booking("duplicate-history-concurrent")
 
     def confirm_once():
-        _contract_service().confirm_booking_after_billing_success(checkout_session=session, billing_ledger=ledger)
+        close_old_connections()
+        try:
+            fresh_session = CheckoutSession.objects.get(pk=session.pk)
+            fresh_ledger = ledger.__class__.objects.get(pk=ledger.pk)
+            _contract_service().confirm_booking_after_billing_success(
+                checkout_session=fresh_session,
+                billing_ledger=fresh_ledger,
+            )
+        finally:
+            close_old_connections()
+            connections.close_all()
 
     with ThreadPoolExecutor(max_workers=2) as pool:
         list(pool.map(lambda _index: confirm_once(), range(2)))

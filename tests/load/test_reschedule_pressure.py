@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
-from django.db import close_old_connections
+from django.db import close_old_connections, connections
 from django.utils import timezone
 
 from bookings.models import CustomerOTPChallenge
@@ -33,6 +33,7 @@ def test_reschedule_pressure_does_not_double_apply_one_authorization():
             return "rejected"
         finally:
             close_old_connections()
+            connections.close_all()
 
     results = list(ThreadPoolExecutor(max_workers=10).map(lambda _i: attempt(), range(10)))
     booking.refresh_from_db()
