@@ -27,6 +27,7 @@ env:
   PAYMENT_PROVIDER_MODE: fake
   EMAIL_PROVIDER: fake
   RECEIPT_PDF_ARTIFACT_DIR: /app/var/receipt-artifacts
+  PYTEST_CACHE_DIR: /app/var/pytest-cache
   RECEIPT_PDF_TIMEOUT_SECONDS: "5"
   RECEIPT_PDF_MAX_BYTES: "250000"
   EMAIL_NOTIFICATION_MAX_ATTEMPTS: "3"
@@ -96,8 +97,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Build Docker services with plain output
+        run: docker compose --progress plain build web frontend
+
       - name: Start Docker services
-        run: docker compose up -d --build
+        run: docker compose up -d
 
       - name: Wait for Docker health
         run: |

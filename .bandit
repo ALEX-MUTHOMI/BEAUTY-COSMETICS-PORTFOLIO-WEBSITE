@@ -1,2 +1,2 @@
 [bandit]
-exclude_dirs = .local,venv,venvvenv,frontend/.nuxt,frontend/.output,frontend/node_modules
+exclude_dirs = .cache,.git,.local,.pytest_cache,.ruff_cache,var,venv,venvvenv,frontend/.nuxt,frontend/.output,frontend/node_modules

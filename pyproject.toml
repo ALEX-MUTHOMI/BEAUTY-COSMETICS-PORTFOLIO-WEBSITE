@@ -42,7 +42,12 @@ package-mode = false
 [tool.ruff]
 line-length = 120
 extend-exclude = [
+    ".cache",
+    ".git",
+    ".pytest_cache",
+    ".ruff_cache",
     ".local",
+    "var",
     "*/migrations/*",
     "venv",
     "venvvenv",
@@ -56,7 +61,11 @@ line-length = 120
 extend-exclude = '''
 (
   ^/\.local/
+  | ^/\.cache/
+  | ^/\.git/
   | ^/\.pytest_cache/
+  | ^/\.ruff_cache/
+  | ^/var/
   | ^/venv/
   | ^/venvvenv/
   | /migrations/
@@ -70,7 +79,12 @@ extend-exclude = '''
 profile = "black"
 line_length = 120
 skip_glob = [
+    ".cache/*",
+    ".git/*",
     ".local/*",
+    ".pytest_cache/*",
+    ".ruff_cache/*",
+    "var/*",
     "*/migrations/*",
     "venv/*",
     "venvvenv/*",
