@@ -19,7 +19,46 @@ def _contract_service():
         from bookings.services.checkout_contract import BookingCheckoutContractService
     except ImportError as exc:
         pytest.fail(f"BookingCheckoutContractService missing: {exc}")
-    return BookingCheckoutContractService
+    return _AcceptedPolicyContractProxy(BookingCheckoutContractService)
+
+
+def accepted_policy_context(**overrides):
+    from bookings.services.legal import POLICY_ACCEPTANCE_TEXT, ensure_default_legal_documents
+
+    ensure_default_legal_documents()
+    context = {
+        "request_id": "req-redacted",
+        "ip": "203.0.113.5",
+        "user_agent": "pytest",
+        "policy_acceptance": {
+            "accepted": True,
+            "checkbox_text": POLICY_ACCEPTANCE_TEXT,
+            "locale": "en-KE",
+            "timezone_name": "Africa/Nairobi",
+            "country_hint": "KE",
+        },
+    }
+    context.update(overrides)
+    return context
+
+
+class _AcceptedPolicyContractProxy:
+    def __init__(self, service):
+        self._service = service
+
+    def __getattr__(self, name):
+        return getattr(self._service, name)
+
+    def create_checkout_for_held_booking(self, *, booking_public_id, idempotency_key, request_context=None):
+        merged = accepted_policy_context()
+        merged.update(request_context or {})
+        if "policy_acceptance" not in merged:
+            merged["policy_acceptance"] = accepted_policy_context()["policy_acceptance"]
+        return self._service.create_checkout_for_held_booking(
+            booking_public_id=booking_public_id,
+            idempotency_key=idempotency_key,
+            request_context=merged,
+        )
 
 
 def _payload():
@@ -52,7 +91,7 @@ def test_held_booking_creates_checkout_with_server_calculated_amount_and_payment
     result = _contract_service().create_checkout_for_held_booking(
         booking_public_id=booking.public_id,
         idempotency_key="booking-checkout-1",
-        request_context={"request_id": "req-redacted", "client_amount": "0.00"},
+        request_context=accepted_policy_context(client_amount="0.00"),
     )
 
     booking.refresh_from_db()

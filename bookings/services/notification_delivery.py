@@ -10,6 +10,7 @@ from django.utils import timezone
 from billing.redaction import hash_sensitive_value
 from bookings.models import Booking, BookingNotification
 from bookings.services.email_provider import EmailProviderError, get_email_provider, redact_email_error
+from bookings.services.legal import NO_REFUND_NOTICE
 from bookings.services.receipt_pdf import ReceiptPDFService
 
 logger = logging.getLogger("bookings.notification_delivery")
@@ -66,7 +67,7 @@ def build_notification_email(notification):
     snapshot = receipt.receipt_snapshot_json_redacted if receipt else {}
     service_name = _safe_text(snapshot.get("service_name") or booking.service.name)
     booking_ref = str(booking.public_id)
-    policy = "No-refund policy applies; contact support for rescheduling."
+    policy = NO_REFUND_NOTICE
 
     subject = "Booking confirmed and payment received"
     lines = [

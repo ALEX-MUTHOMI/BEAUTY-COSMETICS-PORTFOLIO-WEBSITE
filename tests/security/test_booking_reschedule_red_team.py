@@ -1,22 +1,22 @@
 import pytest
 from django.core.exceptions import ValidationError
-from django.utils import timezone
 
 from bookings.models import CustomerOTPChallenge
 from bookings.services.customer_otp import CustomerOTPService
 from bookings.services.rescheduling import BookingRescheduleService
 from bookings.tests.factories import create_booking
+from bookings.tests.time_helpers import make_utc_from_eat, valid_business_start_utc
 
 
 @pytest.mark.django_db(transaction=True)
 def test_reschedule_red_team_requires_scope_rejects_overlap_xss_and_no_refund():
-    victim = create_booking(status="confirmed", starts_at=timezone.now() + timezone.timedelta(days=5))
+    victim = create_booking(status="confirmed", starts_at=valid_business_start_utc())
     other = create_booking(
         status="confirmed",
         resource=victim.resource,
         service=victim.service,
-        starts_at=victim.starts_at + timezone.timedelta(days=1),
-        ends_at=victim.ends_at + timezone.timedelta(days=1),
+        starts_at=make_utc_from_eat(2030, 6, 5, 10, 0),
+        ends_at=make_utc_from_eat(2030, 6, 5, 11, 0),
         idempotency_key="reschedule-overlap-target",
     )
     challenge = CustomerOTPService.request_challenge(
@@ -31,7 +31,7 @@ def test_reschedule_red_team_requires_scope_rejects_overlap_xss_and_no_refund():
         BookingRescheduleService.reschedule(
             booking_public_id=other.public_id,
             action_token=action.token,
-            requested_starts_at=victim.starts_at + timezone.timedelta(days=2),
+            requested_starts_at=make_utc_from_eat(2030, 6, 6, 10, 0),
         )
     with pytest.raises(ValidationError):
         BookingRescheduleService.reschedule(

@@ -2,17 +2,17 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from django.db import close_old_connections, connections
-from django.utils import timezone
 
 from bookings.models import CustomerOTPChallenge
 from bookings.services.customer_otp import CustomerOTPService
 from bookings.services.rescheduling import BookingRescheduleService
 from bookings.tests.factories import create_booking
+from bookings.tests.time_helpers import valid_business_start_utc, valid_reschedule_start_utc
 
 
 @pytest.mark.django_db(transaction=True)
 def test_reschedule_pressure_does_not_double_apply_one_authorization():
-    booking = create_booking(status="confirmed", starts_at=timezone.now() + timezone.timedelta(days=5))
+    booking = create_booking(status="confirmed", starts_at=valid_business_start_utc())
     challenge = CustomerOTPService.request_challenge(
         booking_public_id=booking.public_id,
         email="grace@example.com",
@@ -26,7 +26,7 @@ def test_reschedule_pressure_does_not_double_apply_one_authorization():
             BookingRescheduleService.reschedule(
                 booking_public_id=booking.public_id,
                 action_token=action.token,
-                requested_starts_at=booking.starts_at + timezone.timedelta(days=1),
+                requested_starts_at=valid_reschedule_start_utc(),
             )
             return "ok"
         except Exception:

@@ -15,6 +15,7 @@ from bookings.models import (
     BookingReminder,
     ReceiptPDFArtifact,
 )
+from bookings.services.legal import NO_REFUND_NOTICE
 
 NAIROBI = ZoneInfo("Africa/Nairobi")
 GENERIC_STATUS_UNAVAILABLE = {"detail": "Booking status is unavailable."}
@@ -126,7 +127,7 @@ def _reschedule_payload(booking):
         "eligible": bool(eligible),
         "requires_otp": True,
         "deadline_eat": deadline.astimezone(NAIROBI).strftime("%Y-%m-%d %H:%M"),
-        "policy": "Paid bookings are final sale. Rescheduling is available according to policy.",
+        "policy": NO_REFUND_NOTICE,
     }
 
 
@@ -154,6 +155,7 @@ def _status_payload(booking):
         "schedule": {
             "date": starts_at.date().isoformat(),
             "start_time_eat": starts_at.strftime("%I:%M %p"),
+            "timezone": "Africa/Nairobi",
             "duration_minutes": booking.service.duration_minutes,
         },
         "service": {"name": _safe_text(booking.service.name)},

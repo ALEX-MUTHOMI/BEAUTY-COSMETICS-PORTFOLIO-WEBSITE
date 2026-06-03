@@ -7,6 +7,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from billing.models import LedgerTransaction
+from billing.redaction import hash_sensitive_value
 from bookings.models import (
     Booking,
     BookingAuditEvent,
@@ -14,6 +15,11 @@ from bookings.models import (
     BookingPriceSnapshot,
 )
 from bookings.privacy import decrypt_value
+from bookings.services.legal import (
+    assert_checkout_policy_accepted,
+    has_policy_acceptance,
+    record_booking_policy_acceptance,
+)
 from bookings.services.state_machine import BookingStateError, transition_booking
 from checkout.models import CheckoutSession
 from checkout.services import create_checkout_session
@@ -143,11 +149,21 @@ class BookingCheckoutContractService:
                     if booking.status not in {Booking.Status.HELD, Booking.Status.PAYMENT_PENDING}:
                         _safe_counter(redis_client, "booking:checkout:rejected:10m")
                         raise ValidationError(GENERIC_CHECKOUT_UNAVAILABLE)
+                    if not has_policy_acceptance(booking=booking, checkout_session=existing):
+                        documents = assert_checkout_policy_accepted(request_context.get("policy_acceptance"))
+                        record_booking_policy_acceptance(
+                            booking=booking,
+                            checkout_session=existing,
+                            documents=documents,
+                            policy_acceptance=request_context.get("policy_acceptance"),
+                            request_context=request_context,
+                        )
                     cls._mark_payment_pending_if_needed(booking, existing, request_context)
                     _safe_counter(redis_client, "booking:checkout:replayed:10m")
                     return _safe_response(booking, existing)
 
                 cls._validate_checkout_eligible(booking)
+                documents = assert_checkout_policy_accepted(request_context.get("policy_acceptance"))
                 customer = _checkout_customer(booking)
                 try:
                     session = create_checkout_session(
@@ -164,6 +180,13 @@ class BookingCheckoutContractService:
                     if not _is_matching_checkout(session, booking, snapshot):
                         raise ValidationError(GENERIC_PAYMENT_ERROR)
 
+                record_booking_policy_acceptance(
+                    booking=booking,
+                    checkout_session=session,
+                    documents=documents,
+                    policy_acceptance=request_context.get("policy_acceptance"),
+                    request_context=request_context,
+                )
                 cls._mark_payment_pending_if_needed(booking, session, request_context)
                 _safe_counter(redis_client, "booking:checkout:created:10m")
                 _safe_counter(redis_client, f"booking:checkout:booking:{booking.public_id}:10m")
@@ -171,7 +194,7 @@ class BookingCheckoutContractService:
                     "booking.checkout.created",
                     extra={
                         "booking_public_id": str(booking.public_id),
-                        "checkout_public_id": str(session.id),
+                        "checkout_public_hash": hash_sensitive_value(str(session.id))[:16],
                         "request_id": request_context.get("request_id"),
                     },
                 )
@@ -299,7 +322,7 @@ class BookingCheckoutContractService:
                 "booking.confirmed",
                 extra={
                     "booking_public_id": str(booking.public_id),
-                    "checkout_public_id": str(session.id),
+                    "checkout_public_hash": hash_sensitive_value(str(session.id))[:16],
                     "request_id": request_context.get("request_id"),
                 },
             )

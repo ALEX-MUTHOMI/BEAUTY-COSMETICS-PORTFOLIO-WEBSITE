@@ -4,6 +4,7 @@ from django.utils import timezone
 
 from bookings.models import BookingReminder
 from bookings.tests.test_booking_receipt_foundation import _confirm_paid_booking
+from bookings.tests.time_helpers import valid_business_start_utc
 
 
 @pytest.mark.django_db(transaction=True)
@@ -14,7 +15,7 @@ def test_status_portal_exposes_reminder_and_reschedule_contract_without_otp(sett
     settings.EMAIL_PROVIDER = "fake"
     settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
     booking, _session, _ledger = _confirm_paid_booking("status-portal-b5")
-    booking.starts_at = timezone.now() + timezone.timedelta(days=5)
+    booking.starts_at = valid_business_start_utc()
     booking.ends_at = booking.starts_at + timezone.timedelta(minutes=booking.service.duration_minutes)
     booking.save(update_fields=["starts_at", "ends_at", "updated_at"])
     schedule_booking_reminders(booking)

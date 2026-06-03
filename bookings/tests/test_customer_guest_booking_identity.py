@@ -1,16 +1,16 @@
 import pytest
 from django.contrib.auth import get_user_model
-from django.utils import timezone
 
 from bookings.privacy import hmac_email_hash, hmac_phone_hash
 from bookings.services.holds import BookingHoldService
 from bookings.tests.factories import create_service_resource_customer
+from bookings.tests.time_helpers import valid_business_start_utc
 
 
 @pytest.mark.django_db(transaction=True)
 def test_guest_hold_creates_encrypted_hmac_redacted_customer_without_account():
     service, resource, _customer = create_service_resource_customer()
-    starts_at = timezone.now().replace(minute=0, second=0, microsecond=0) + timezone.timedelta(days=6)
+    starts_at = valid_business_start_utc()
 
     response = BookingHoldService.create_hold(
         service_public_id=service.id,

@@ -1,3 +1,4 @@
+import hashlib
 import secrets
 import uuid
 from datetime import timedelta
@@ -175,6 +176,56 @@ class BookingPolicy(AuditMixin):
 
     class Meta:
         db_table = "booking_policies"
+
+
+class LegalDocument(AuditMixin):
+    class DocumentType(models.TextChoices):
+        TERMS = "terms_of_service", "Terms of Service"
+        PRIVACY = "privacy_policy", "Privacy Policy"
+        BOOKING_POLICY = "booking_policy", "Booking Policy"
+        COOKIE_NOTICE = "cookie_notice", "Cookie Notice"
+        DATA_RETENTION = "data_retention_policy", "Data Retention Policy"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    document_type = models.CharField(max_length=40, choices=DocumentType.choices)
+    version = models.CharField(max_length=32)
+    title = models.CharField(max_length=160)
+    effective_at = models.DateTimeField(default=timezone.now)
+    content_markdown = models.TextField()
+    content_hash = models.CharField(max_length=64, blank=True)
+    is_active = models.BooleanField(default=True)
+    requires_acceptance = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "booking_legal_documents"
+        constraints = [
+            models.UniqueConstraint(fields=["document_type", "version"], name="uniq_legal_doc_type_version"),
+            models.UniqueConstraint(
+                fields=["document_type"],
+                condition=Q(is_active=True),
+                name="uniq_active_legal_doc_type",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["document_type", "is_active"], name="legal_doc_active_type_idx"),
+            models.Index(fields=["effective_at"], name="legal_doc_effective_idx"),
+        ]
+
+    def _computed_hash(self):
+        material = "\n".join([self.document_type, self.version, self.title, self.content_markdown])
+        return hashlib.sha256(material.encode()).hexdigest()
+
+    def clean(self):
+        _require_aware_utc(self.effective_at, "effective_at")
+        if not self.content_markdown.strip():
+            raise ValidationError({"content_markdown": "Legal document content is required."})
+
+    def save(self, *args, **kwargs):
+        if self.effective_at and timezone.is_aware(self.effective_at):
+            self.effective_at = self.effective_at.astimezone(dt_timezone.utc)
+        self.content_hash = self._computed_hash()
+        self.full_clean(validate_constraints=False)
+        super().save(*args, **kwargs)
 
 
 class CustomerProfile(AuditMixin):
@@ -356,6 +407,55 @@ class Booking(AuditMixin):
             value = getattr(self, field)
             if value is not None and timezone.is_aware(value):
                 setattr(self, field, value.astimezone(dt_timezone.utc))
+        self.full_clean(validate_constraints=False)
+        super().save(*args, **kwargs)
+
+
+class BookingPolicyAcceptance(AuditMixin):
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    booking = models.ForeignKey(Booking, on_delete=models.PROTECT, related_name="policy_acceptances")
+    checkout_session = models.ForeignKey(
+        "checkout.CheckoutSession",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="booking_policy_acceptances",
+    )
+    customer_profile = models.ForeignKey(
+        CustomerProfile,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="policy_acceptances",
+    )
+    terms_version = models.CharField(max_length=32)
+    privacy_version = models.CharField(max_length=32)
+    booking_policy_version = models.CharField(max_length=32)
+    cookie_notice_version = models.CharField(max_length=32, blank=True)
+    accepted_at = models.DateTimeField(default=timezone.now)
+    ip_hash_hmac = models.CharField(max_length=128, blank=True)
+    user_agent_hash_hmac = models.CharField(max_length=128, blank=True)
+    locale = models.CharField(max_length=16, blank=True)
+    timezone_name = models.CharField(max_length=64, blank=True)
+    country_hint = models.CharField(max_length=8, blank=True)
+    acceptance_text_hash = models.CharField(max_length=128)
+
+    class Meta:
+        db_table = "booking_policy_acceptances"
+        constraints = [
+            models.UniqueConstraint(fields=["booking", "checkout_session"], name="uniq_booking_checkout_acceptance"),
+        ]
+        indexes = [
+            models.Index(fields=["booking", "accepted_at"], name="policy_accept_booking_idx"),
+            models.Index(fields=["accepted_at"], name="policy_accept_time_idx"),
+        ]
+
+    def clean(self):
+        _require_aware_utc(self.accepted_at, "accepted_at")
+
+    def save(self, *args, **kwargs):
+        if self.accepted_at and timezone.is_aware(self.accepted_at):
+            self.accepted_at = self.accepted_at.astimezone(dt_timezone.utc)
         self.full_clean(validate_constraints=False)
         super().save(*args, **kwargs)
 

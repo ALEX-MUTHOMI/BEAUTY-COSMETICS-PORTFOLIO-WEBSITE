@@ -11,6 +11,7 @@ from django.utils import timezone
 from billing.models import LedgerTransaction
 from billing.redaction import hash_sensitive_value
 from bookings.models import Booking, BookingAuditEvent, BookingNotification, BookingReceipt
+from bookings.services.legal import NO_REFUND_NOTICE
 
 NAIROBI = ZoneInfo("Africa/Nairobi")
 GENERIC_RECEIPT_ERROR = "Receipt unavailable."
@@ -53,7 +54,7 @@ def _receipt_snapshot(booking, session, ledger):
         "client_display_name": _safe_text(booking.customer_profile.full_name_display, 64),
         "redacted_phone": booking.customer_profile.phone_redacted,
         "redacted_email": booking.customer_profile.email_redacted,
-        "policy_notice": "Payment Receipt. No-refund policy applies; contact support for rescheduling.",
+        "policy_notice": NO_REFUND_NOTICE,
         "support_contact": "support",
     }
 

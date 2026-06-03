@@ -7,6 +7,7 @@ from bookings.services.customer_otp import CustomerOTPService
 from bookings.services.reminders import BookingReminderDeliveryService, schedule_booking_reminders
 from bookings.services.rescheduling import BookingRescheduleService
 from bookings.tests.test_booking_receipt_foundation import _confirm_paid_booking
+from bookings.tests.time_helpers import valid_business_start_utc, valid_reschedule_start_utc
 
 
 @pytest.mark.django_db(transaction=True)
@@ -14,7 +15,7 @@ def test_guest_confirmed_booking_status_reminder_otp_reschedule_lifecycle(settin
     settings.EMAIL_PROVIDER = "fake"
     settings.RECEIPT_PDF_ARTIFACT_DIR = str(tmp_path)
     booking, _session, _ledger = _confirm_paid_booking("customer-lifecycle-b5")
-    booking.starts_at = timezone.now() + timezone.timedelta(days=5)
+    booking.starts_at = valid_business_start_utc()
     booking.ends_at = booking.starts_at + timezone.timedelta(minutes=booking.service.duration_minutes)
     booking.save(update_fields=["starts_at", "ends_at", "updated_at"])
 
@@ -34,7 +35,7 @@ def test_guest_confirmed_booking_status_reminder_otp_reschedule_lifecycle(settin
         request_meta={"ip": "203.0.113.40", "user_agent": "pytest"},
     )
     action = CustomerOTPService.verify_challenge(challenge.public_id, CustomerOTPService._last_test_code)
-    new_start = (booking.starts_at + timezone.timedelta(days=2)).replace(second=0, microsecond=0)
+    new_start = valid_reschedule_start_utc()
     updated = BookingRescheduleService.reschedule(
         booking_public_id=booking.public_id,
         action_token=action.token,
