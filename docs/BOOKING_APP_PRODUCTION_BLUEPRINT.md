@@ -95,6 +95,20 @@ Public lookup uses `public_id` plus customer proof such as phone HMAC. Internal 
 
 Booking state transitions, contact reveals, reminder outcomes, reschedule decisions, and circuit-breaker mode changes need correlation IDs and redacted structured logs. Observability must not include raw PII.
 
+## B5 Customer Status, OTP, Reminder, And Reschedule Policy
+
+B5 preserves guest booking. Customers are not forced into accounts, usernames, or passwords. The booking form remains the transactional source of customer truth for a single booking: full name, email, phone, selected service, and selected slot are stored through encrypted values, HMAC lookup hashes, and redacted display fields. Raw email and phone are not primary keys.
+
+The minimal status API at `/api/bookings/status/<public_booking_id>/` does not require OTP. It is designed for post-payment polling and only returns bounded, customer-safe state: booking/payment/receipt/email/reminder/reschedule status, schedule presentation in Africa/Nairobi, service name, and next action. It must not expose raw PII, encrypted fields, internal UUIDs, checkout IDs, ledger IDs, provider references, receipt tokens, exact provider quota details, or stack traces. Malformed and unknown public IDs return the same generic 404 schema.
+
+OTP is required only for sensitive follow-up actions such as rescheduling, later receipt access, contact update, or future private booking access. OTP is not required to create a booking, pay, or view the minimal status page. OTP challenges store only HMAC/hash values, expire quickly, are single-use, enforce max attempts, and are rate-limited by recipient hash, booking public ID, IP hash, and user-agent hash. Responses are anti-enumeration by design.
+
+Rescheduling requires a short-lived, server-side, scoped customer action session produced by OTP verification. The session is scoped to booking and purpose, expires quickly, and is consumed after use. Free rescheduling does not create fake Billing ledger rows. Booking remains the scheduling owner; Checkout remains payment orchestration; Billing remains immutable financial truth.
+
+Reschedule policy is no-refund by design. The allowed customer remedy is policy-controlled rescheduling. Cutoff hours, max reschedule count, Monday-Saturday 07:00-19:00 Africa/Nairobi business hours, Sunday rejection, and PostgreSQL overlap constraints are enforced. Failed reschedules keep the original confirmed booking intact. Successful reschedules cancel old pending reminders and create new reminder rows for the new appointment time.
+
+Reminder delivery uses `BookingReminder` as a durable outbox and `BookingReminderDeliveryService.send_due(now=None, limit=100)` as the bounded worker service. Reminder rows are created only for confirmed, non-erased bookings with consent. Delivery uses the fake provider in default tests, rechecks booking/customer state before send, retries provider failures with backoff, caps attempts, and moves exhausted failures to admin review. Reminder failures must not corrupt Booking, Checkout, Billing, receipts, or payment state.
+
 ## B1 Implementation Status
 
 Implemented in B1:

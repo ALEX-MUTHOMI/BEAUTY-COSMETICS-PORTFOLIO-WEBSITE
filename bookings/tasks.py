@@ -23,3 +23,15 @@ def sweep_booking_notifications(limit=100, correlation_id=None):
     from bookings.services.notification_delivery import BookingNotificationDeliveryService
 
     BookingNotificationDeliveryService.send_pending(limit=limit)
+
+
+@shared_task(
+    name="bookings.tasks.sweep_booking_reminders",
+    queue="receipts",
+    rate_limit="60/m",
+    ignore_result=True,
+)
+def sweep_booking_reminders(limit=100, correlation_id=None):
+    from bookings.services.reminders import BookingReminderDeliveryService
+
+    BookingReminderDeliveryService.send_due(limit=limit)

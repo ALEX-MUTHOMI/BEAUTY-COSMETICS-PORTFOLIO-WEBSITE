@@ -116,6 +116,16 @@ Customer-safe fallback messages:
 
 Do not show provider internals such as "Resend quota exceeded", "provider 429", "ledger mismatch", or "email provider failed".
 
+## B5 Reminder And OTP Notification Policy
+
+Booking reminders and customer OTP messages use outbox/worker semantics. They must not be sent synchronously during booking creation, payment callback processing, receipt generation, or status polling. Default local and CI execution uses the fake provider only.
+
+Reminder rows are created after confirmed bookings and are idempotent per booking, reminder type, and scheduled time. Delivery is bounded by worker `limit`, revalidates booking status, customer erasure, and reminder consent, then sends safe appointment content. Provider errors are redacted and retried with backoff until the configured attempt cap, after which the row moves to admin review. One failed reminder must not block newer reminder or receipt notifications.
+
+Customer OTP messages are for sensitive actions only. OTP is never required for booking creation, payment, or the minimal status page. OTP notifications are queued through the existing notification outbox with recipient HMAC/redacted metadata; raw OTP codes are never stored in the database or logs. OTP request and verify responses remain generic to prevent booking or email enumeration.
+
+No-refund messaging must remain customer-safe and must not expose any refund action or Billing reversal pathway. Customer communications should direct paid customers to policy-controlled rescheduling or support review, not self-service refunds.
+
 ## Production Checklist
 
 Before production email sending, verify:

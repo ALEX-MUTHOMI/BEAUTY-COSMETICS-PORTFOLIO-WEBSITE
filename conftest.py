@@ -1,6 +1,14 @@
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def _clear_test_cache():
+    from django.core.cache import cache
+
+    cache.clear()
+    yield
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--run-external",

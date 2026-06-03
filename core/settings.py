@@ -222,6 +222,7 @@ CELERY_TASK_ROUTES = {
     "billing.tasks.dlq_billing": {"queue": "dlq_billing"},
     "bookings.tasks.process_booking_notification": {"queue": "receipts"},
     "bookings.tasks.sweep_booking_notifications": {"queue": "receipts"},
+    "bookings.tasks.sweep_booking_reminders": {"queue": "receipts"},
 }
 CELERY_TASK_QUEUES = (
     Queue("celery", Exchange("celery"), routing_key="celery"),
@@ -296,6 +297,12 @@ EMAIL_BACKUP_PROVIDER_ENABLED = os.environ.get("EMAIL_BACKUP_PROVIDER_ENABLED", 
 EMAIL_BACKUP_PROVIDER = os.environ.get("EMAIL_BACKUP_PROVIDER", "mailgun")
 EMAIL_QUOTA_MODE = os.environ.get("EMAIL_QUOTA_MODE", "queue_only")
 EMAIL_BACKLOG_HIGH_WATERMARK = int(os.environ.get("EMAIL_BACKLOG_HIGH_WATERMARK", "100"))
+CUSTOMER_OTP_TTL_MINUTES = int(os.environ.get("CUSTOMER_OTP_TTL_MINUTES", "10"))
+CUSTOMER_OTP_MAX_ATTEMPTS = int(os.environ.get("CUSTOMER_OTP_MAX_ATTEMPTS", "3"))
+CUSTOMER_OTP_REQUEST_LIMIT = int(os.environ.get("CUSTOMER_OTP_REQUEST_LIMIT", "5"))
+CUSTOMER_ACTION_SESSION_TTL_MINUTES = int(os.environ.get("CUSTOMER_ACTION_SESSION_TTL_MINUTES", "15"))
+BOOKING_REMINDER_2H_ENABLED = os.environ.get("BOOKING_REMINDER_2H_ENABLED", "false")
+BOOKING_REMINDER_MAX_ATTEMPTS = int(os.environ.get("BOOKING_REMINDER_MAX_ATTEMPTS", "3"))
 
 # ==============================================================================
 # DJANGO REST FRAMEWORK CONFIGURATIONS

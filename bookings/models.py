@@ -549,27 +549,107 @@ class BookingReminder(AuditMixin):
 
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
+        SENDING = "sending", "Sending"
         SENT = "sent", "Sent"
         FAILED = "failed", "Failed"
         CANCELLED = "cancelled", "Cancelled"
         SKIPPED = "skipped", "Skipped"
+        ADMIN_REVIEW_REQUIRED = "admin_review_required", "Admin Review Required"
+
+    class ReminderType(models.TextChoices):
+        APPOINTMENT_24H = "appointment_24h", "Appointment 24h"
+        APPOINTMENT_2H = "appointment_2h", "Appointment 2h"
 
     booking = models.ForeignKey(Booking, on_delete=models.PROTECT, related_name="reminders")
+    reminder_type = models.CharField(
+        max_length=32,
+        choices=ReminderType.choices,
+        default=ReminderType.APPOINTMENT_24H,
+    )
     channel = models.CharField(max_length=16, choices=Channel.choices)
     scheduled_for = models.DateTimeField()
-    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.PENDING)
     attempts = models.PositiveSmallIntegerField(default=0)
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
     sent_at = models.DateTimeField(null=True, blank=True)
     failure_reason_redacted = models.CharField(max_length=255, blank=True)
     provider_message_id_hash = models.CharField(max_length=128, blank=True)
 
     class Meta:
         db_table = "booking_reminders"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["booking", "reminder_type", "scheduled_for"],
+                name="uniq_booking_reminder_schedule",
+            ),
+        ]
         indexes = [models.Index(fields=["status", "scheduled_for"], name="booking_reminder_due_idx")]
 
     def clean(self):
         _require_aware_utc(self.scheduled_for, "scheduled_for")
+        _require_aware_utc(self.next_attempt_at, "next_attempt_at")
         _require_aware_utc(self.sent_at, "sent_at")
+
+
+class CustomerOTPChallenge(AuditMixin):
+    class Purpose(models.TextChoices):
+        RESCHEDULE = "reschedule", "Reschedule"
+        RECEIPT_ACCESS = "receipt_access", "Receipt Access"
+        CONTACT_UPDATE = "contact_update", "Contact Update"
+        PRIVATE_BOOKING_ACCESS = "private_booking_access", "Private Booking Access"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        VERIFIED = "verified", "Verified"
+        EXPIRED = "expired", "Expired"
+        LOCKED = "locked", "Locked"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    purpose = models.CharField(max_length=32, choices=Purpose.choices)
+    booking = models.ForeignKey(Booking, on_delete=models.PROTECT, null=True, blank=True, related_name="otp_challenges")
+    recipient_type = models.CharField(max_length=16, default="email")
+    recipient_hash_hmac = models.CharField(max_length=128, db_index=True)
+    otp_hash_hmac = models.CharField(max_length=128)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    max_attempts = models.PositiveSmallIntegerField(default=3)
+    request_ip_hash = models.CharField(max_length=128, blank=True)
+    user_agent_hash = models.CharField(max_length=128, blank=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+
+    class Meta:
+        db_table = "booking_customer_otp_challenges"
+        indexes = [
+            models.Index(fields=["recipient_hash_hmac", "purpose", "created_at"], name="booking_otp_recipient_idx"),
+            models.Index(fields=["booking", "purpose", "created_at"], name="booking_otp_booking_idx"),
+        ]
+
+    def clean(self):
+        _require_aware_utc(self.expires_at, "expires_at")
+        _require_aware_utc(self.used_at, "used_at")
+
+
+class CustomerActionSession(AuditMixin):
+    class Purpose(models.TextChoices):
+        RESCHEDULE = "reschedule", "Reschedule"
+        RECEIPT_ACCESS = "receipt_access", "Receipt Access"
+        CONTACT_UPDATE = "contact_update", "Contact Update"
+        PRIVATE_BOOKING_ACCESS = "private_booking_access", "Private Booking Access"
+
+    token_hash = models.CharField(max_length=128, unique=True)
+    purpose = models.CharField(max_length=32, choices=Purpose.choices)
+    booking = models.ForeignKey(Booking, on_delete=models.PROTECT, related_name="customer_action_sessions")
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "booking_customer_action_sessions"
+        indexes = [models.Index(fields=["booking", "purpose", "expires_at"], name="booking_action_session_idx")]
+
+    def clean(self):
+        _require_aware_utc(self.expires_at, "expires_at")
+        _require_aware_utc(self.used_at, "used_at")
 
 
 class BookingAuditEvent(AuditMixin):

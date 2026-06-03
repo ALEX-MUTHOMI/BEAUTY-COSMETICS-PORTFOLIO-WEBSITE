@@ -2,10 +2,19 @@ import re
 import uuid
 from zoneinfo import ZoneInfo
 
+from django.db.models import Exists, OuterRef, Subquery
 from django.http import JsonResponse
+from django.utils import timezone
 from django.views.decorators.http import require_GET
 
-from bookings.models import Booking, BookingNotification, BookingReceipt, ReceiptPDFArtifact
+from bookings.models import (
+    Booking,
+    BookingNotification,
+    BookingPolicy,
+    BookingReceipt,
+    BookingReminder,
+    ReceiptPDFArtifact,
+)
 
 NAIROBI = ZoneInfo("Africa/Nairobi")
 GENERIC_STATUS_UNAVAILABLE = {"detail": "Booking status is unavailable."}
@@ -49,11 +58,14 @@ def _receipt_status(receipt):
 
 
 def _email_status(notification):
-    if notification is None:
+    notification_status = notification
+    if hasattr(notification, "status"):
+        notification_status = notification.status
+    if notification_status is None:
         return "receipt_email_queued"
-    if notification.status == BookingNotification.Status.SENT:
+    if notification_status == BookingNotification.Status.SENT:
         return "receipt_email_sent"
-    if notification.status in {
+    if notification_status in {
         BookingNotification.Status.QUOTA_BLOCKED,
         BookingNotification.Status.RETRY_SCHEDULED,
         BookingNotification.Status.FAILED_FINAL,
@@ -64,9 +76,10 @@ def _email_status(notification):
 
 
 def _next_action(booking, notification):
-    if booking.status == Booking.Status.CONFIRMED and (
-        notification is None or notification.status != BookingNotification.Status.SENT
-    ):
+    notification_status = notification
+    if hasattr(notification, "status"):
+        notification_status = notification.status
+    if booking.status == Booking.Status.CONFIRMED and notification_status != BookingNotification.Status.SENT:
         return "receipt_email_pending"
     if booking.status == Booking.Status.CONFIRMED:
         return "none"
@@ -77,38 +90,67 @@ def _next_action(booking, notification):
     return "manual_review_required"
 
 
-@require_GET
-def booking_status(request, public_booking_id):
-    try:
-        public_id = uuid.UUID(str(public_booking_id))
-    except (TypeError, ValueError):
-        return _generic_404()
+def _reminder_status(booking):
+    if hasattr(booking, "_has_pending_reminder"):
+        if booking._has_pending_reminder:
+            return "scheduled"
+        if booking._has_sent_reminder:
+            return "sent"
+        if booking._has_failed_reminder:
+            return "delayed"
+        return "not_scheduled"
+    reminders = list(booking.reminders.all())
+    if not reminders:
+        return "not_scheduled"
+    if any(reminder.status == BookingReminder.Status.PENDING for reminder in reminders):
+        return "scheduled"
+    if any(reminder.status == BookingReminder.Status.SENT for reminder in reminders):
+        return "sent"
+    if any(
+        reminder.status in {BookingReminder.Status.FAILED, BookingReminder.Status.ADMIN_REVIEW_REQUIRED}
+        for reminder in reminders
+    ):
+        return "delayed"
+    return "not_scheduled"
 
-    booking = (
-        Booking.objects.select_related("service", "receipt", "receipt__pdf_artifact")
-        .prefetch_related("notifications")
-        .filter(public_id=public_id)
-        .first()
+
+def _reschedule_payload(booking):
+    policy = BookingPolicy.objects.order_by("-created_at").first() or BookingPolicy()
+    deadline = booking.starts_at - timezone.timedelta(hours=policy.reschedule_cutoff_hours)
+    eligible = (
+        booking.status == Booking.Status.CONFIRMED
+        and booking.reschedule_count < policy.max_reschedules_per_booking
+        and timezone.now() < deadline
     )
-    if booking is None:
-        return _generic_404()
+    return {
+        "eligible": bool(eligible),
+        "requires_otp": True,
+        "deadline_eat": deadline.astimezone(NAIROBI).strftime("%Y-%m-%d %H:%M"),
+        "policy": "Paid bookings are final sale. Rescheduling is available according to policy.",
+    }
 
+
+def _status_payload(booking):
     receipt = getattr(booking, "receipt", None)
-    notification = next(
-        (
-            candidate
-            for candidate in booking.notifications.all()
-            if candidate.notification_type == "booking_confirmed_with_receipt"
-        ),
-        None,
-    )
+    notification = getattr(booking, "_receipt_notification_status", None)
+    if notification is None and hasattr(booking, "notifications"):
+        notification = next(
+            (
+                candidate
+                for candidate in booking.notifications.all()
+                if candidate.notification_type == "booking_confirmed_with_receipt"
+            ),
+            None,
+        )
     starts_at = booking.starts_at.astimezone(NAIROBI)
-    payload = {
+    return {
         "booking_reference": str(booking.public_id),
         "booking_status": booking.status,
         "payment_status": _payment_status(booking),
         "receipt_status": _receipt_status(receipt),
         "email_status": _email_status(notification),
+        "reminder_status": _reminder_status(booking),
+        "reschedule": _reschedule_payload(booking),
         "schedule": {
             "date": starts_at.date().isoformat(),
             "start_time_eat": starts_at.strftime("%I:%M %p"),
@@ -117,7 +159,42 @@ def booking_status(request, public_booking_id):
         "service": {"name": _safe_text(booking.service.name)},
         "next_action": _next_action(booking, notification),
     }
-    response = JsonResponse(payload)
+
+
+@require_GET
+def booking_status(request, public_booking_id):
+    try:
+        public_id = uuid.UUID(str(public_booking_id))
+    except (TypeError, ValueError):
+        return _generic_404()
+
+    receipt_notification = BookingNotification.objects.filter(
+        booking=OuterRef("pk"),
+        notification_type="booking_confirmed_with_receipt",
+    ).order_by("-created_at")
+    reminder_qs = BookingReminder.objects.filter(booking=OuterRef("pk"))
+    booking = (
+        Booking.objects.select_related("service", "receipt", "receipt__pdf_artifact")
+        .annotate(
+            _receipt_notification_status=Subquery(receipt_notification.values("status")[:1]),
+            _has_pending_reminder=Exists(reminder_qs.filter(status=BookingReminder.Status.PENDING)),
+            _has_sent_reminder=Exists(reminder_qs.filter(status=BookingReminder.Status.SENT)),
+            _has_failed_reminder=Exists(
+                reminder_qs.filter(
+                    status__in=[
+                        BookingReminder.Status.FAILED,
+                        BookingReminder.Status.ADMIN_REVIEW_REQUIRED,
+                    ]
+                )
+            ),
+        )
+        .filter(public_id=public_id)
+        .first()
+    )
+    if booking is None:
+        return _generic_404()
+
+    response = JsonResponse(_status_payload(booking))
     response["Cache-Control"] = "no-store"
     response["X-Content-Type-Options"] = "nosniff"
     return response
