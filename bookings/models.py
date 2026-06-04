@@ -186,15 +186,38 @@ class LegalDocument(AuditMixin):
         COOKIE_NOTICE = "cookie_notice", "Cookie Notice"
         DATA_RETENTION = "data_retention_policy", "Data Retention Policy"
 
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        BUSINESS_APPROVED = "business_approved", "Business Approved"
+        ACTIVE = "active", "Active"
+        ARCHIVED = "archived", "Archived"
+
+    class LegalReviewStatus(models.TextChoices):
+        PENDING = "pending", "Pending"
+        REVIEWED = "reviewed", "Reviewed"
+        NOT_REQUIRED = "not_required", "Not Required"
+
     public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     document_type = models.CharField(max_length=40, choices=DocumentType.choices)
     version = models.CharField(max_length=32)
     title = models.CharField(max_length=160)
+    slug = models.SlugField(max_length=180, blank=True)
     effective_at = models.DateTimeField(default=timezone.now)
+    published_at = models.DateTimeField(null=True, blank=True)
+    archived_at = models.DateTimeField(null=True, blank=True)
     content_markdown = models.TextField()
     content_hash = models.CharField(max_length=64, blank=True)
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.ACTIVE)
     is_active = models.BooleanField(default=True)
     requires_acceptance = models.BooleanField(default=True)
+    replaces_version = models.CharField(max_length=32, blank=True)
+    business_approved_at = models.DateTimeField(null=True, blank=True)
+    legal_review_status = models.CharField(
+        max_length=24,
+        choices=LegalReviewStatus.choices,
+        default=LegalReviewStatus.PENDING,
+    )
+    legal_reviewed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "booking_legal_documents"
@@ -202,12 +225,13 @@ class LegalDocument(AuditMixin):
             models.UniqueConstraint(fields=["document_type", "version"], name="uniq_legal_doc_type_version"),
             models.UniqueConstraint(
                 fields=["document_type"],
-                condition=Q(is_active=True),
+                condition=Q(status="active"),
                 name="uniq_active_legal_doc_type",
             ),
         ]
         indexes = [
             models.Index(fields=["document_type", "is_active"], name="legal_doc_active_type_idx"),
+            models.Index(fields=["document_type", "status"], name="legal_doc_status_type_idx"),
             models.Index(fields=["effective_at"], name="legal_doc_effective_idx"),
         ]
 
@@ -217,12 +241,46 @@ class LegalDocument(AuditMixin):
 
     def clean(self):
         _require_aware_utc(self.effective_at, "effective_at")
+        _require_aware_utc(self.published_at, "published_at")
+        _require_aware_utc(self.archived_at, "archived_at")
+        _require_aware_utc(self.business_approved_at, "business_approved_at")
+        _require_aware_utc(self.legal_reviewed_at, "legal_reviewed_at")
         if not self.content_markdown.strip():
             raise ValidationError({"content_markdown": "Legal document content is required."})
 
     def save(self, *args, **kwargs):
-        if self.effective_at and timezone.is_aware(self.effective_at):
-            self.effective_at = self.effective_at.astimezone(dt_timezone.utc)
+        for field in (
+            "effective_at",
+            "published_at",
+            "archived_at",
+            "business_approved_at",
+            "legal_reviewed_at",
+        ):
+            value = getattr(self, field)
+            if value and timezone.is_aware(value):
+                setattr(self, field, value.astimezone(dt_timezone.utc))
+        if not self.slug:
+            self.slug = self.document_type.replace("_", "-")
+        if self.status == self.Status.ACTIVE:
+            self.is_active = True
+            if self.published_at is None:
+                self.published_at = timezone.now()
+        else:
+            self.is_active = False
+        if self.status == self.Status.BUSINESS_APPROVED and self.business_approved_at is None:
+            self.business_approved_at = timezone.now()
+        if self.pk and self.status == self.Status.ACTIVE:
+            (
+                LegalDocument.objects.filter(document_type=self.document_type, status=self.Status.ACTIVE)
+                .exclude(pk=self.pk)
+                .update(status=self.Status.ARCHIVED, is_active=False, archived_at=timezone.now())
+            )
+        elif not self.pk and self.status == self.Status.ACTIVE:
+            LegalDocument.objects.filter(document_type=self.document_type, status=self.Status.ACTIVE).update(
+                status=self.Status.ARCHIVED,
+                is_active=False,
+                archived_at=timezone.now(),
+            )
         self.content_hash = self._computed_hash()
         self.full_clean(validate_constraints=False)
         super().save(*args, **kwargs)
@@ -432,6 +490,11 @@ class BookingPolicyAcceptance(AuditMixin):
     privacy_version = models.CharField(max_length=32)
     booking_policy_version = models.CharField(max_length=32)
     cookie_notice_version = models.CharField(max_length=32, blank=True)
+    terms_content_hash = models.CharField(max_length=64, blank=True)
+    privacy_content_hash = models.CharField(max_length=64, blank=True)
+    booking_policy_content_hash = models.CharField(max_length=64, blank=True)
+    cookie_notice_content_hash = models.CharField(max_length=64, blank=True)
+    no_refund_ack_hash = models.CharField(max_length=128, blank=True)
     accepted_at = models.DateTimeField(default=timezone.now)
     ip_hash_hmac = models.CharField(max_length=128, blank=True)
     user_agent_hash_hmac = models.CharField(max_length=128, blank=True)

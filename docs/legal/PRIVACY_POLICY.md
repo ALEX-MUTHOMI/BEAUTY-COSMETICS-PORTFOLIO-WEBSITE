@@ -36,11 +36,13 @@ Operational contact data should be encrypted where needed for later delivery, in
 
 ## International Customers
 
-The service applies one GDPR-grade privacy baseline to all customers. Appointment truth remains Africa/Nairobi regardless of browser timezone or customer location.
+The service applies one Kenya Data Protection Act, 2019 / ODPC-aware and GDPR-grade privacy baseline to all customers where practical. Appointment truth remains Africa/Nairobi regardless of browser timezone or customer location. Data may be processed in locations where hosting, payment, email, security, logging, storage, or support providers operate, subject to appropriate safeguards and contractual review before production.
 
 ## Rights Requests
 
 Customers may request access, correction, deletion, restriction, or other applicable privacy-rights handling through `[privacy request channel]`. Some financial and booking records may need to be retained for legal, accounting, fraud-prevention, or dispute purposes.
+
+Requests relating to Kenya Data Protection Act, 2019 rights, ODPC complaints/escalations, GDPR data subject rights, and other applicable privacy rights should be routed through `[privacy request channel]` until a production privacy contact and operational workflow are approved.
 
 ## Retention And Breach Contact
 

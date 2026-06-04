@@ -12,11 +12,13 @@ Contact email: `[privacy contact email]`
 
 ## Essential Cookies
 
-The service may use essential security, CSRF, session, rate-limit, and status-recovery cookies or equivalent storage needed for secure operation.
+The service may use essential security, CSRF, session, booking flow continuity, rate-limit, customer action/session security, and status-recovery cookies or equivalent storage needed for secure operation.
+
+Essential cookies help protect requests, prevent cross-site request forgery, preserve short booking or OTP status flows, and reduce abuse. They must not contain raw phone numbers, raw email addresses, OTPs, payment provider references, or other unnecessary personal data.
 
 ## Analytics And Advertising
 
-Advertising cookies are not part of the current baseline. If analytics or advertising cookies are added later, a separate consent and opt-out review is required before production.
+We do not currently use analytics or marketing cookies. Advertising cookies are not part of the current baseline. If analytics, marketing, or third-party advertising cookies are added later, they must be reviewed and gated behind an appropriate consent flow before loading.
 
 ## Legal Review
 

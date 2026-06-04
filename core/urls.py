@@ -34,6 +34,7 @@ urlpatterns = [
     path("api/billing/", include("billing.urls")),
     path("api/bookings/", include("bookings.urls")),
     path("api/checkout/", include("checkout.urls")),
+    path("api/legal/", include("bookings.legal_urls")),
 ]
 
 if not settings.DISABLE_DJANGO_ADMIN:
