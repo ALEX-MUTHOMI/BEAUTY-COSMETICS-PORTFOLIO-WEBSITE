@@ -1,4 +1,8 @@
 /**
+ * Module: bookingRequestGovernor
+ * Client-side read-path governor.
+ */
+/**
  * Client-side booking API governor — defense in depth against click/bot exhaustion.
  * Server throttles remain authoritative; this reduces accidental and scripted spam.
  */
@@ -124,3 +128,4 @@ export class BookingRequestGovernor {
     this.abortStatusFetch()
   }
 }
+
