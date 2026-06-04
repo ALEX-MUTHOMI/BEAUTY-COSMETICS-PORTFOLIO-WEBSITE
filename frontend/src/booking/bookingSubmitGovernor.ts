@@ -1,4 +1,8 @@
 /**
+ * Module: bookingSubmitGovernor
+ * Handles submit phase controls.
+ */
+/**
  * Submit-phase governor — hold/checkout click and bot exhaustion controls.
  * Complements BookingRequestGovernor (read path) per OWASP API abuse patterns.
  */
@@ -94,3 +98,4 @@ export class BookingSubmitGovernor {
     this.inFlight = false
   }
 }
+
