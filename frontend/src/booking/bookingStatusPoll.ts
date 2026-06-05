@@ -1,3 +1,7 @@
+/**
+ * Module: bookingStatusPoll
+ * Defines status polling mechanisms.
+ */
 import { retryAfterDelayMs } from '../payment/checkoutResilience'
 import { BookingRequestGovernor, GENERIC_BOOKING_THROTTLE_ERROR } from './bookingRequestGovernor'
 import { fetchBookingStatus, type BookingStatusSnapshot } from './bookingWriteApi'
@@ -118,3 +122,4 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
     )
   })
 }
+
