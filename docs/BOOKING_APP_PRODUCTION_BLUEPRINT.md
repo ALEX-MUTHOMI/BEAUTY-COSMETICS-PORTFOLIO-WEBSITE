@@ -218,6 +218,18 @@ Implemented in B6:
 - Booking status polling support for full-package bookings.
 - Index readiness for local-date, booking-type, resource-range, catalog, and package queries.
 
+Implemented in B7A:
+
+- Staff-only booking portal API mounted under `/api/staff/`.
+- Explicit Django permissions for staff schedule, booking detail, payment summary, contact reveal, and future note management.
+- Spreadsheet-style daily schedule and seven-day overview payloads using public booking references only.
+- Default staff views with no raw phone numbers, raw emails, checkout IDs, ledger IDs, provider IDs, receipt IDs, or download tokens.
+- Payment transparency endpoint that reports safe operational status without exposing Billing ledger truth identifiers.
+- Contact reveal as a POST-only, CSRF-protected, permission-gated action with no-store caching and `StaffActionAuditEvent` records.
+- Generic authorization and not-found responses to reduce customer and booking enumeration risk.
+- Staff pressure coverage for 1,000 bounded schedule reads without mutating booking or financial state.
+- No expansion of booking availability, urgent booking, refunds, gallery, or full admin dashboard behavior.
+
 ## Deferred Phases
 
 - Urgent booking.

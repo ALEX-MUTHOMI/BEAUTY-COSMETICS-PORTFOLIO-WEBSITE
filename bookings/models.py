@@ -635,6 +635,13 @@ class Booking(AuditMixin):
                 fields=["booking_type", "local_booking_date", "status"], name="bookings_type_local_status_idx"
             ),
         ]
+        permissions = [
+            ("view_staff_portal", "Can view staff booking portal schedule"),
+            ("view_staff_booking", "Can view staff booking detail"),
+            ("view_staff_payment_summary", "Can view staff payment summary"),
+            ("view_staff_contact_details", "Can reveal staff contact details"),
+            ("manage_staff_booking_notes", "Can manage staff booking notes"),
+        ]
 
     def clean(self):
         for field in (
