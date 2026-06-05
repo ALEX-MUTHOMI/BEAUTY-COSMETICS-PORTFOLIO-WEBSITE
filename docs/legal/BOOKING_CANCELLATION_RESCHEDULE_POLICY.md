@@ -26,7 +26,9 @@ Paid bookings are non-refundable. Rescheduling may be available according to the
 
 ## Rescheduling
 
-Reschedules are subject to the configured cutoff period and maximum reschedule count. Normal booking and reschedule times are Monday through Saturday, 07:00 <= start < 19:00, Africa/Nairobi. Sunday normal bookings and reschedules are rejected unless a future urgent-booking policy is explicitly implemented.
+Reschedules are subject to the configured cutoff period, maximum reschedule count, product type, and daily capacity. Normal bundle appointments are available only on configured normal-service days, currently Monday, Thursday, Friday, and Saturday, 07:00 <= start < 19:00, Africa/Nairobi, unless an active business policy overrides this. Tuesday and Wednesday are reserved for predefined full-package appointments by default and require at least 24 hours notice. Sunday bookings and reschedules are rejected unless a future urgent-booking policy is explicitly implemented.
+
+Predefined full-package appointments cannot be decomposed or edited by customers during booking. The server-calculated package duration, price, currency, and selected item snapshot govern the booking record.
 
 ## Late Arrival And No-Show
 

@@ -22,7 +22,7 @@ def test_repeat_booking_reuses_customer_profile_by_hmac_without_account_creation
     second = BookingHoldService.create_hold(
         service_public_id=service.id,
         resource_public_id=resource.id,
-        starts_at=valid_business_start_utc(days_ahead=2),
+        starts_at=valid_business_start_utc(days_ahead=3),
         customer_payload=payload,
         idempotency_key="customer-profile-second",
     )

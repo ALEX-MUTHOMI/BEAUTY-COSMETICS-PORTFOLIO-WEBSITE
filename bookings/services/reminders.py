@@ -99,11 +99,18 @@ def reminder_is_sendable(reminder):
 def _safe_email_payload(reminder):
     booking = reminder.booking
     local_start = booking.starts_at.astimezone(timezone.get_fixed_timezone(180))
+    selection = booking.selection_snapshot_json_redacted or {}
+    service_name = selection.get("name")
+    if not service_name and booking.service_id:
+        service_name = booking.service.name
+    if not service_name and booking.full_package_id:
+        service_name = booking.full_package.name
+    service_name = str(service_name or "Selected services")[:80]
     text = "\n".join(
         [
             "Appointment reminder.",
             f"Booking reference: {booking.public_id}",
-            f"Service: {booking.service.name[:80]}",
+            f"Service: {service_name}",
             f"Appointment: {local_start:%Y-%m-%d %I:%M %p} Africa/Nairobi",
             "Paid bookings are not refundable. Rescheduling is available according to policy.",
         ]
@@ -124,7 +131,12 @@ class BookingReminderDeliveryService:
     def send_due(cls, *, now=None, limit=100):
         now = now or timezone.now()
         reminders = list(
-            BookingReminder.objects.select_related("booking", "booking__customer_profile", "booking__service")
+            BookingReminder.objects.select_related(
+                "booking",
+                "booking__customer_profile",
+                "booking__service",
+                "booking__full_package",
+            )
             .filter(
                 status=BookingReminder.Status.PENDING,
                 scheduled_for__lte=now,
@@ -136,8 +148,13 @@ class BookingReminderDeliveryService:
         for reminder in reminders:
             with transaction.atomic():
                 locked = (
-                    BookingReminder.objects.select_for_update()
-                    .select_related("booking", "booking__customer_profile", "booking__service")
+                    BookingReminder.objects.select_for_update(of=("self",))
+                    .select_related(
+                        "booking",
+                        "booking__customer_profile",
+                        "booking__service",
+                        "booking__full_package",
+                    )
                     .get(pk=reminder.pk)
                 )
                 if locked.status != BookingReminder.Status.PENDING:

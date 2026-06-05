@@ -144,6 +144,17 @@ def _status_payload(booking):
             None,
         )
     starts_at = booking.starts_at.astimezone(NAIROBI)
+    selection = booking.selection_snapshot_json_redacted or {}
+    selection_type = selection.get("type") or booking.booking_type
+    if booking.full_package_id:
+        service_name = _safe_text(selection.get("name") or booking.full_package.name)
+    elif booking.service_id:
+        service_name = _safe_text(booking.service.name)
+    else:
+        service_name = "Selected services"
+    duration_minutes = booking.total_duration_minutes
+    if not duration_minutes and booking.service_id:
+        duration_minutes = booking.service.duration_minutes
     return {
         "booking_reference": str(booking.public_id),
         "booking_status": booking.status,
@@ -156,9 +167,9 @@ def _status_payload(booking):
             "date": starts_at.date().isoformat(),
             "start_time_eat": starts_at.strftime("%I:%M %p"),
             "timezone": "Africa/Nairobi",
-            "duration_minutes": booking.service.duration_minutes,
+            "duration_minutes": duration_minutes,
         },
-        "service": {"name": _safe_text(booking.service.name)},
+        "service": {"name": service_name, "selection_type": _safe_text(selection_type, max_length=32)},
         "next_action": _next_action(booking, notification),
     }
 
@@ -176,7 +187,7 @@ def booking_status(request, public_booking_id):
     ).order_by("-created_at")
     reminder_qs = BookingReminder.objects.filter(booking=OuterRef("pk"))
     booking = (
-        Booking.objects.select_related("service", "receipt", "receipt__pdf_artifact")
+        Booking.objects.select_related("service", "full_package", "receipt", "receipt__pdf_artifact")
         .annotate(
             _receipt_notification_status=Subquery(receipt_notification.values("status")[:1]),
             _has_pending_reminder=Exists(reminder_qs.filter(status=BookingReminder.Status.PENDING)),

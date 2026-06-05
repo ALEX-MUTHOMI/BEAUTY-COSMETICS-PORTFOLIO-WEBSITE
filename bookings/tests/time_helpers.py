@@ -14,12 +14,12 @@ def make_utc_from_eat(year, month, day, hour, minute=0):
 
 
 def valid_business_start_utc(days_ahead=0):
-    # Tuesday 10:00 EAT, far enough from the B5 cutoff window without using now()+offset.
+    # Monday 10:00 EAT, far enough from cutoff windows without using now()+offset.
     from datetime import timedelta
 
-    return make_utc_from_eat(2030, 6, 4, 10, 0) + timedelta(days=days_ahead)
+    return make_utc_from_eat(2030, 6, 3, 10, 0) + timedelta(days=days_ahead)
 
 
 def valid_reschedule_start_utc():
-    # Wednesday 10:00 EAT; deterministic replacement slot for lifecycle tests.
-    return make_utc_from_eat(2030, 6, 5, 10, 0)
+    # Thursday 10:00 EAT; deterministic normal-service replacement slot.
+    return make_utc_from_eat(2030, 6, 6, 10, 0)

@@ -4,6 +4,7 @@ import uuid
 from datetime import timedelta
 from datetime import timezone as dt_timezone
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.contrib.postgres.constraints import ExclusionConstraint
@@ -45,22 +46,39 @@ class Service(AuditMixin):
     name = models.CharField(max_length=128)
     slug = models.SlugField(max_length=140, unique=True)
     category = models.CharField(max_length=64)
+    category_ref = models.ForeignKey(
+        "ServiceCategory",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="services",
+    )
+    subcategory = models.ForeignKey(
+        "ServiceSubcategory",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="services",
+    )
     description = models.TextField(blank=True)
     duration_minutes = models.PositiveSmallIntegerField(default=60)
     buffer_before_minutes = models.PositiveSmallIntegerField(default=0)
     buffer_after_minutes = models.PositiveSmallIntegerField(default=0)
     base_price = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=3, default="KES")
     urgent_fee = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     sunday_surcharge = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     urgent_allowed = models.BooleanField(default=False)
     sunday_urgent_allowed = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    sort_order = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
         db_table = "booking_services"
         indexes = [
             models.Index(fields=["slug"], name="booking_service_slug_idx"),
             models.Index(fields=["is_active"], name="booking_service_active_idx"),
+            models.Index(fields=["category_ref", "subcategory", "is_active"], name="booking_service_catalog_idx"),
         ]
 
     def clean(self):
@@ -69,6 +87,120 @@ class Service(AuditMixin):
         for field in ("base_price", "urgent_fee", "sunday_surcharge"):
             if getattr(self, field) < Decimal("0.00"):
                 raise ValidationError({field: "Price values cannot be negative."})
+
+
+class ServiceCategory(AuditMixin):
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    name = models.CharField(max_length=128)
+    slug = models.SlugField(max_length=140, unique=True)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "booking_service_categories"
+        indexes = [
+            models.Index(fields=["slug", "is_active"], name="service_category_slug_active_idx"),
+            models.Index(fields=["sort_order", "is_active"], name="service_category_sort_idx"),
+        ]
+
+
+class ServiceSubcategory(AuditMixin):
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    category = models.ForeignKey(ServiceCategory, on_delete=models.PROTECT, related_name="subcategories")
+    name = models.CharField(max_length=128)
+    slug = models.SlugField(max_length=140)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "booking_service_subcategories"
+        constraints = [
+            models.UniqueConstraint(fields=["category", "slug"], name="uniq_service_subcategory_slug"),
+        ]
+        indexes = [
+            models.Index(fields=["category", "slug", "is_active"], name="service_subcategory_slug_active_idx"),
+            models.Index(fields=["category", "sort_order", "is_active"], name="service_subcategory_sort_idx"),
+        ]
+
+
+class FullPackage(AuditMixin):
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    name = models.CharField(max_length=128)
+    slug = models.SlugField(max_length=140, unique=True)
+    description = models.TextField(blank=True)
+    duration_minutes = models.PositiveSmallIntegerField()
+    buffer_after_minutes = models.PositiveSmallIntegerField(default=0)
+    price_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=3, default="KES")
+    notice_required_hours = models.PositiveSmallIntegerField(default=24)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "booking_full_packages"
+        indexes = [
+            models.Index(fields=["slug", "is_active"], name="full_package_slug_active_idx"),
+            models.Index(fields=["sort_order", "is_active"], name="full_package_sort_idx"),
+        ]
+
+    def clean(self):
+        if self.duration_minutes <= 0:
+            raise ValidationError({"duration_minutes": "Package duration must be positive."})
+        if self.price_amount < Decimal("0.00"):
+            raise ValidationError({"price_amount": "Package price cannot be negative."})
+
+
+class BookingDayPolicy(AuditMixin):
+    class DayType(models.TextChoices):
+        NORMAL = "normal", "Normal"
+        FULL_PACKAGE = "full_package", "Full Package"
+        CLOSED = "closed", "Closed"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    weekday = models.PositiveSmallIntegerField(unique=True)
+    day_type = models.CharField(max_length=32, choices=DayType.choices)
+    business_start_time = models.TimeField()
+    business_end_time = models.TimeField()
+    max_clients = models.PositiveSmallIntegerField()
+    full_package_notice_hours = models.PositiveSmallIntegerField(default=24)
+    normal_bookings_allowed = models.BooleanField(default=False)
+    full_package_allowed = models.BooleanField(default=False)
+    manual_release_allowed = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "booking_day_policies"
+        indexes = [
+            models.Index(fields=["weekday", "is_active"], name="booking_day_policy_weekday_idx"),
+            models.Index(fields=["day_type", "is_active"], name="booking_day_policy_type_idx"),
+        ]
+
+    def clean(self):
+        if self.business_start_time >= self.business_end_time:
+            raise ValidationError("Business start time must be before end time.")
+
+
+class BookingDayState(AuditMixin):
+    class Status(models.TextChoices):
+        OPEN = "open", "Open"
+        FULL = "full", "Full"
+        CLOSED = "closed", "Closed"
+        MANUALLY_RELEASED = "manually_released", "Manually Released"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    local_date = models.DateField(unique=True)
+    timezone_name = models.CharField(max_length=64, default="Africa/Nairobi")
+    policy_snapshot_type = models.CharField(max_length=32)
+    max_clients_snapshot = models.PositiveSmallIntegerField(default=0)
+    active_client_count_snapshot = models.PositiveSmallIntegerField(default=0)
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.OPEN)
+
+    class Meta:
+        db_table = "booking_day_states"
+        indexes = [
+            models.Index(fields=["local_date"], name="booking_day_state_date_idx"),
+            models.Index(fields=["status", "local_date"], name="booking_day_state_status_idx"),
+        ]
 
 
 class BookableResource(AuditMixin):
@@ -435,19 +567,32 @@ class Booking(AuditMixin):
         NORMAL = "normal", "Normal"
         URGENT = "urgent", "Urgent"
         SUNDAY_URGENT = "sunday_urgent", "Sunday Urgent"
+        FULL_PACKAGE = "full_package", "Full Package"
 
     # public_id is the only customer-facing identifier; internal UUIDs must not
     # be exposed in public lookup/status flows.
     public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     customer_profile = models.ForeignKey(CustomerProfile, on_delete=models.PROTECT, related_name="bookings")
-    service = models.ForeignKey(Service, on_delete=models.PROTECT, related_name="bookings")
+    service = models.ForeignKey(Service, on_delete=models.PROTECT, null=True, blank=True, related_name="bookings")
     resource = models.ForeignKey(BookableResource, on_delete=models.PROTECT, related_name="bookings")
+    full_package = models.ForeignKey(
+        FullPackage,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="bookings",
+    )
     # Persist UTC-aware datetimes only. Africa/Nairobi conversion belongs in
     # policy/presentation code before save.
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField()
+    local_booking_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=32, choices=Status.choices, default=Status.REQUESTED)
     booking_type = models.CharField(max_length=32, choices=BookingType.choices, default=BookingType.NORMAL)
+    total_duration_minutes = models.PositiveSmallIntegerField(default=0)
+    total_price_snapshot = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    currency_snapshot = models.CharField(max_length=3, default="KES")
+    selection_snapshot_json_redacted = models.JSONField(default=dict, blank=True)
     urgency_reason = models.CharField(max_length=255, blank=True)
     hold_expires_at = models.DateTimeField(null=True, blank=True)
     checkout_session_id = models.CharField(max_length=128, blank=True)
@@ -483,7 +628,12 @@ class Booking(AuditMixin):
         indexes = [
             models.Index(fields=["public_id"], name="bookings_public_id_idx"),
             models.Index(fields=["resource", "starts_at"], name="bookings_resource_start_idx"),
+            models.Index(fields=["resource", "starts_at", "ends_at"], name="bookings_resource_range_idx"),
             models.Index(fields=["status"], name="bookings_status_idx"),
+            models.Index(fields=["local_booking_date", "status"], name="bookings_local_date_status_idx"),
+            models.Index(
+                fields=["booking_type", "local_booking_date", "status"], name="bookings_type_local_status_idx"
+            ),
         ]
 
     def clean(self):
@@ -517,8 +667,36 @@ class Booking(AuditMixin):
             value = getattr(self, field)
             if value is not None and timezone.is_aware(value):
                 setattr(self, field, value.astimezone(dt_timezone.utc))
+        if self.starts_at:
+            self.local_booking_date = self.starts_at.astimezone(ZoneInfo("Africa/Nairobi")).date()
+        if not self.total_duration_minutes and self.starts_at and self.ends_at:
+            self.total_duration_minutes = max(1, int((self.ends_at - self.starts_at).total_seconds() // 60))
+        if self.total_price_snapshot == Decimal("0.00") and self.service_id:
+            self.total_price_snapshot = self.service.base_price
+            self.currency_snapshot = getattr(self.service, "currency", "KES")
         self.full_clean(validate_constraints=False)
         super().save(*args, **kwargs)
+
+
+class BookingServiceItem(AuditMixin):
+    booking = models.ForeignKey(Booking, on_delete=models.PROTECT, related_name="service_items")
+    service = models.ForeignKey(Service, on_delete=models.PROTECT, related_name="booking_items")
+    sequence_order = models.PositiveSmallIntegerField(default=0)
+    name_snapshot = models.CharField(max_length=128)
+    category_snapshot = models.CharField(max_length=128, blank=True)
+    duration_minutes_snapshot = models.PositiveSmallIntegerField()
+    price_amount_snapshot = models.DecimalField(max_digits=12, decimal_places=2)
+    currency_snapshot = models.CharField(max_length=3, default="KES")
+
+    class Meta:
+        db_table = "booking_service_items"
+        constraints = [
+            models.UniqueConstraint(fields=["booking", "service"], name="uniq_booking_service_item"),
+        ]
+        indexes = [
+            models.Index(fields=["booking"], name="booking_item_booking_idx"),
+            models.Index(fields=["service"], name="booking_item_service_idx"),
+        ]
 
 
 class BookingPolicyAcceptance(AuditMixin):

@@ -95,6 +95,22 @@ Public lookup uses `public_id` plus customer proof such as phone HMAC. Internal 
 
 Booking state transitions, contact reveals, reminder outcomes, reschedule decisions, and circuit-breaker mode changes need correlation IDs and redacted structured logs. Observability must not include raw PII.
 
+## B6 Service Bundles, Full Packages, And Day Capacity
+
+B6 introduces a catalog split between public service categories, service subcategories, individual services, and predefined full-package offerings. Customers can select predefined service bundles, but the backend remains the source of truth for duration, price, currency, and package composition. Client-supplied prices, durations, custom package item lists, or raw service metadata are ignored or rejected.
+
+Normal bundle bookings are allowed only on configured normal-service days. The default policy is Monday, Thursday, Friday, and Saturday from 07:00 to 19:00 Africa/Nairobi with a maximum of five active clients per local day. Tuesday and Wednesday are full-package-only days by default, with a maximum of three active clients per local day and a 24-hour minimum notice policy. Sunday is closed by default.
+
+Service bundles are bounded to avoid algorithmic abuse and unbounded scheduling search. The default bundle rules allow up to four total services, up to three categories, a maximum of one service per category when three categories are selected, and a maximum of two services per category when one or two categories are selected. Mixed-currency bundles are rejected.
+
+Full packages are predefined business products such as all-day bridal or full glam packages. Customers cannot submit custom full-package compositions. A full-package booking stores the selected package snapshot, total price snapshot, total duration snapshot, and local booking date so later catalog edits do not mutate the historical booking record.
+
+Day-level capacity is protected by `BookingDayState` rows locked with `select_for_update()` inside `transaction.atomic()`. The locked row serializes competing attempts for the same Africa/Nairobi local date before a hold is created, while the PostgreSQL exclusion constraint still prevents resource-level overlapping intervals. This is vertical capacity control, not database sharding.
+
+Index readiness for higher scale is explicit: bookings are indexed by resource time range, local booking date/status, and booking type/local date/status. Full horizontal sharding is intentionally deferred until measured production data requires it. If volume grows beyond a single primary database, the planned split key is local booking date plus tenant/location/resource partitioning, while immutable financial truth remains in Billing and is not co-sharded casually with scheduling data.
+
+Customer tracking remains through `/api/bookings/status/<public_booking_id>/`. The response is safe for polling and supports both single-service/bundle and full-package bookings without exposing internal IDs, raw customer contact fields, checkout IDs, ledger IDs, provider references, or receipt tokens.
+
 ## B5 Customer Status, OTP, Reminder, And Reschedule Policy
 
 B5 preserves guest booking. Customers are not forced into accounts, usernames, or passwords. The booking form remains the transactional source of customer truth for a single booking: full name, email, phone, selected service, and selected slot are stored through encrypted values, HMAC lookup hashes, and redacted display fields. Raw email and phone are not primary keys.
@@ -188,9 +204,24 @@ Implemented in B4B:
 - Secure receipt PDF download through hashed expiring tokens and audited download events.
 - Email/PDF delivery cost and deliverability guidance in `docs/BOOKING_EMAIL_RECEIPT_DELIVERY.md`.
 
+Implemented in B6:
+
+- Service category and subcategory catalog foundations.
+- Server-side service bundle validation with bounded category/item rules.
+- Predefined full-package products for long-form appointments.
+- Tuesday/Wednesday full-package-only policy with 24-hour notice.
+- Monday/Thursday/Friday/Saturday normal bundle policy with five-client day cap.
+- `BookingDayState` row locks for local-day admission control under concurrency.
+- Booking snapshots for selected items, package name, total duration, total price, and currency.
+- Bundle/full-package availability generation without per-slot database queries.
+- Checkout and receipt snapshots that use booking totals rather than trusting client amounts.
+- Booking status polling support for full-package bookings.
+- Index readiness for local-date, booking-type, resource-range, catalog, and package queries.
+
 ## Deferred Phases
 
-- B5 Reminder Worker and Reschedule Portal.
-- B6 Urgent Booking.
-- B7 Staff Dashboard.
-- B8 Red-Team, Load, and Observability.
+- Urgent booking.
+- Gallery and staff dashboard expansion.
+- Production database sharding or partitioning execution after measured need.
+- Admin package-management UI.
+- Full production observability dashboarding and alerting.

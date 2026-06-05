@@ -71,7 +71,7 @@ class BookingRescheduleService:
         try:
             with transaction.atomic():
                 booking = (
-                    Booking.objects.select_for_update()
+                    Booking.objects.select_for_update(of=("self",))
                     .select_related("service", "resource", "customer_profile")
                     .get(public_id=booking_public_id)
                 )

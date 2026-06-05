@@ -163,8 +163,8 @@ def create_hold_from_remembered_device(*, token, service_public_id, resource_pub
         "email": decrypt_value(profile.email_encrypted),
         "phone": decrypt_value(profile.phone_encrypted),
     }
-    return BookingHoldService.create_hold(
-        service_public_id=service_public_id,
+    return BookingHoldService.create_bundle_hold(
+        service_public_ids=[service_public_id],
         resource_public_id=resource_public_id,
         starts_at=starts_at,
         customer_payload=payload,

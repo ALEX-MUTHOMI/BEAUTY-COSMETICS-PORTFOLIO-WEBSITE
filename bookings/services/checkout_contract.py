@@ -44,6 +44,14 @@ def _safe_counter(redis_client, key):
 
 
 def _booking_amount(booking):
+    if booking.total_price_snapshot and booking.total_price_snapshot > Decimal("0.00"):
+        return {
+            "base_service_price": booking.total_price_snapshot.quantize(Decimal("0.01")),
+            "urgent_fee": Decimal("0.00"),
+            "sunday_surcharge": Decimal("0.00"),
+            "total_amount": booking.total_price_snapshot.quantize(Decimal("0.01")),
+            "currency": booking.currency_snapshot or "KES",
+        }
     base = booking.service.base_price
     urgent_fee = booking.service.urgent_fee if booking.booking_type == Booking.BookingType.URGENT else Decimal("0.00")
     sunday_fee = (
@@ -74,7 +82,13 @@ def _checkout_customer(booking):
     phone = decrypt_value(booking.customer_profile.phone_encrypted)
     user = User.objects.filter(email=email).first()
     if user is None:
-        user = User.objects.create_user(email=email, phone_number=phone)
+        try:
+            with transaction.atomic():
+                user = User.objects.create_user(email=email, phone_number=phone)
+        except IntegrityError:
+            user = User.objects.filter(email=email).first()
+            if user is None:
+                raise ValidationError(GENERIC_PAYMENT_ERROR)
     return user
 
 
@@ -135,7 +149,7 @@ class BookingCheckoutContractService:
         try:
             with transaction.atomic():
                 booking = (
-                    Booking.objects.select_for_update()
+                    Booking.objects.select_for_update(of=("self",))
                     .select_related("customer_profile", "service")
                     .get(public_id=booking_public_id)
                 )
@@ -209,7 +223,7 @@ class BookingCheckoutContractService:
             raise ValidationError(GENERIC_CHECKOUT_UNAVAILABLE)
         if booking.hold_expires_at and booking.hold_expires_at <= timezone.now():
             raise ValidationError(GENERIC_CHECKOUT_UNAVAILABLE)
-        if not booking.service.is_active:
+        if booking.service_id and not booking.service.is_active:
             raise ValidationError(GENERIC_CHECKOUT_UNAVAILABLE)
 
     @classmethod

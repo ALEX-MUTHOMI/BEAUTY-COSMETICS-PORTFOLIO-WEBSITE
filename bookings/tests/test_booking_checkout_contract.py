@@ -85,6 +85,7 @@ def _held_booking(service=None, resource=None, starts_at=None, key="held-booking
 @pytest.mark.django_db
 def test_held_booking_creates_checkout_with_server_calculated_amount_and_payment_pending_state():
     booking = _held_booking()
+    held_amount = booking.total_price_snapshot
     booking.service.base_price = Decimal("3100.00")
     booking.service.save(update_fields=["base_price", "updated_at"])
 
@@ -100,14 +101,14 @@ def test_held_booking_creates_checkout_with_server_calculated_amount_and_payment
     assert result["checkout_public_id"] == str(session.id)
     assert result["booking_status"] == Booking.Status.PAYMENT_PENDING
     assert result["payment_status"] == CheckoutSession.Status.PAYMENT_PENDING
-    assert result["amount"] == "3100.00"
+    assert result["amount"] == f"{held_amount:.2f}"
     assert result["currency"] == "KES"
     assert result["next_action"] == "initiate_payment"
     assert session.purchasable_type == "booking"
     assert session.purchasable_id == str(booking.id)
-    assert session.amount_snapshot == Decimal("3100.00")
+    assert session.amount_snapshot == held_amount
     assert booking.status == Booking.Status.PAYMENT_PENDING
-    assert BookingPriceSnapshot.objects.filter(booking=booking, total_amount=Decimal("3100.00")).exists()
+    assert BookingPriceSnapshot.objects.filter(booking=booking, total_amount=held_amount).exists()
     assert BookingFinancialHistory.objects.filter(booking=booking, event_type="checkout_created").exists()
     assert "grace@example.com" not in str(result)
     assert "+254" not in str(result)

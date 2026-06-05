@@ -24,6 +24,8 @@ Customers may optionally save details on the same device for faster repeat booki
 
 All appointment times are the business appointment time in Africa/Nairobi. Customers outside Kenya must use the Africa/Nairobi appointment time shown in booking, reminder, status, and receipt surfaces.
 
+Normal service bundles and predefined full packages may have different availability rules. The business may reserve specific days for full-package appointments only. The system calculates appointment duration, price, currency, and package composition from server-side records; customer-edited prices, durations, or custom full-package contents are not valid booking terms.
+
 ## Payments
 
 Payments may be handled through M-Pesa or another payment provider. Payment providers are external processors and may delay, retry, fail, or send callbacks after the customer flow has timed out. The internal billing ledger is the financial source of truth after provider evidence is validated.

@@ -6,7 +6,17 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils import timezone
 
-from bookings.models import BlackoutPeriod, BookableResource, Booking, BookingPolicy, BusinessHours, Service
+from bookings.models import (
+    BlackoutPeriod,
+    BookableResource,
+    Booking,
+    BookingDayPolicy,
+    BookingPolicy,
+    BusinessHours,
+    Service,
+)
+from bookings.services.bundles import get_full_package_summary, validate_service_bundle
+from bookings.services.day_policy import built_in_policy_for_weekday
 
 BUSINESS_TZ = ZoneInfo("Africa/Nairobi")
 MAX_AVAILABILITY_RANGE_DAYS = 14
@@ -85,6 +95,11 @@ def generate_candidates_from_free_intervals(
 
 
 def _as_local_date(value):
+    if isinstance(value, str):
+        try:
+            return date.fromisoformat(value)
+        except ValueError as exc:
+            raise ValidationError("Date range is invalid.") from exc
     if isinstance(value, datetime):
         if timezone.is_naive(value):
             raise ValidationError("Datetime must be timezone-aware.")
@@ -139,6 +154,124 @@ def _safe_increment_counter(request_context):
 
 
 class AvailabilityService:
+    @classmethod
+    def get_bundle_available_slots(
+        cls,
+        service_public_ids,
+        start_date,
+        end_date,
+        resource_id=None,
+        timezone="Africa/Nairobi",
+        request_context=None,
+    ):
+        summary = validate_service_bundle(service_public_ids)
+        return cls._get_selection_available_slots(
+            summary=summary,
+            start_date=start_date,
+            end_date=end_date,
+            resource_id=resource_id,
+            timezone=timezone,
+            request_context=request_context,
+        )
+
+    @classmethod
+    def get_full_package_available_slots(
+        cls,
+        full_package_public_id,
+        start_date,
+        end_date,
+        resource_id=None,
+        timezone="Africa/Nairobi",
+        request_context=None,
+    ):
+        summary = get_full_package_summary(full_package_public_id)
+        return cls._get_selection_available_slots(
+            summary=summary,
+            start_date=start_date,
+            end_date=end_date,
+            resource_id=resource_id,
+            timezone=timezone,
+            request_context=request_context,
+        )
+
+    @classmethod
+    def _get_selection_available_slots(
+        cls,
+        *,
+        summary,
+        start_date,
+        end_date,
+        resource_id=None,
+        timezone="Africa/Nairobi",
+        request_context=None,
+    ):
+        if timezone != "Africa/Nairobi":
+            raise ValidationError("Availability unavailable.")
+        start_day = _as_local_date(start_date)
+        end_day = _as_local_date(end_date)
+        if end_day < start_day:
+            raise ValidationError("Date range is invalid.")
+        range_days = (end_day - start_day).days + 1
+        if range_days > MAX_AVAILABILITY_RANGE_DAYS:
+            raise ValidationError("Date range is too large.")
+        circuit_mode = _safe_increment_counter(request_context)
+        resources = cls._get_resources(resource_id)
+        policy = BookingPolicy.objects.order_by("-created_at").first() or BookingPolicy()
+        query_start_local, _ = _local_day_bounds(start_day)
+        _, query_end_local = _local_day_bounds(end_day)
+        query_start_utc = query_start_local.astimezone(ZoneInfo("UTC"))
+        query_end_utc = query_end_local.astimezone(ZoneInfo("UTC"))
+        resource_ids = [resource.id for resource in resources]
+        business_hours = cls._business_hours_by_resource(resource_ids)
+        bookings = cls._blocking_bookings(resource_ids, query_start_utc, query_end_utc)
+        blackouts = cls._blackouts(resource_ids, query_start_utc, query_end_utc)
+        day_policies = {row.weekday: row for row in BookingDayPolicy.objects.filter(is_active=True)}
+        service_like = type(
+            "SelectionService",
+            (),
+            {
+                "id": summary.full_package.public_id if summary.full_package else summary.items[0].service.id,
+                "duration_minutes": summary.total_duration_minutes,
+                "buffer_before_minutes": summary.buffer_before_minutes,
+                "buffer_after_minutes": summary.buffer_after_minutes,
+            },
+        )()
+        results = []
+        for offset in range(range_days):
+            day = start_day + timedelta(days=offset)
+            day_policy = day_policies.get(day.weekday()) or built_in_policy_for_weekday(day.weekday())
+            allowed = (
+                summary.selection_type == "normal"
+                and day_policy.normal_bookings_allowed
+                or summary.selection_type == "full_package"
+                and day_policy.full_package_allowed
+            )
+            day_slots = []
+            if allowed:
+                for resource in resources:
+                    day_slots.extend(
+                        cls._slots_for_resource_day(
+                            service_like,
+                            resource,
+                            day,
+                            business_hours.get((resource.id, day.weekday())),
+                            bookings,
+                            blackouts,
+                            policy,
+                        )
+                    )
+            results.append({"date": day.isoformat(), "timezone": "Africa/Nairobi", "slots": day_slots})
+        logger.info(
+            "booking.availability.selection_generated",
+            extra={
+                "selection_type": summary.selection_type,
+                "date_range_days": range_days,
+                "result_slot_count": sum(len(day["slots"]) for day in results),
+                "circuit_breaker_mode": circuit_mode,
+            },
+        )
+        return results
+
     @classmethod
     def get_available_slots(
         cls,

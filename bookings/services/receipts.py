@@ -38,10 +38,14 @@ def _receipt_number():
 
 def _receipt_snapshot(booking, session, ledger):
     starts_at = booking.starts_at.astimezone(NAIROBI)
+    selected_items = list(booking.selection_snapshot_json_redacted.get("items", []))
+    package_name = booking.selection_snapshot_json_redacted.get("name", "")
     return {
         "receipt_number": "",
         "booking_reference": str(booking.public_id),
-        "service_name": _safe_text(booking.service.name),
+        "service_name": _safe_text(package_name or (booking.service.name if booking.service_id else "Full package")),
+        "selected_items": selected_items,
+        "selection_type": booking.selection_snapshot_json_redacted.get("type", booking.booking_type),
         "appointment_starts_at": starts_at.isoformat(),
         "appointment_timezone": "Africa/Nairobi",
         "amount_paid": f"{ledger.amount:.2f}",
