@@ -34,6 +34,7 @@ urlpatterns = [
     path("api/billing/", include("billing.urls")),
     path("api/bookings/", include("bookings.urls")),
     path("api/checkout/", include("checkout.urls")),
+    path("api/customers/", include("bookings.customer_urls")),
     path("api/legal/", include("bookings.legal_urls")),
 ]
 

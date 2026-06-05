@@ -20,6 +20,8 @@ Governing law: `[qualified counsel to confirm governing law]`
 
 The service allows customers to request beauty appointments as guest users without creating passwords or forced customer accounts. Payment is required to secure a booking. A booking is confirmed only after the checkout and billing system records successful payment.
 
+Customers may optionally save details on the same device for faster repeat booking. This remembered-device convenience is not a customer account, does not create a password, and does not allow sensitive actions without OTP or another approved verification step. Customers remain responsible for devices they choose to remember and may forget/revoke the device token.
+
 All appointment times are the business appointment time in Africa/Nairobi. Customers outside Kenya must use the Africa/Nairobi appointment time shown in booking, reminder, status, and receipt surfaces.
 
 ## Payments

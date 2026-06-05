@@ -94,7 +94,10 @@ def decrypt_value(value):
 
 def safe_display_name(full_name):
     """Return dashboard-safe display text without exposing full raw PII."""
-    parts = [part for part in (full_name or "").strip().split() if part]
+    cleaned = re.sub(r"<[^>]*>", " ", str(full_name or ""))
+    cleaned = re.sub(r"(?i)\son[a-z]+\s*=\s*\S+", " ", cleaned)
+    cleaned = re.sub(r"[\x00-\x1f\x7f]", " ", cleaned)
+    parts = [part for part in cleaned.strip().split() if part]
     if not parts:
         return "Customer"
     if len(parts) == 1:

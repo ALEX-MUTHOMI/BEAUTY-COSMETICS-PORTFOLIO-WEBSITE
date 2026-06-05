@@ -20,11 +20,15 @@ Governing law: `[qualified counsel to confirm governing law]`
 
 The booking system may collect customer name, email, phone number, booking details, payment status references, receipt metadata, reminder and reschedule records, OTP challenge records, technical logs, and security metadata.
 
-The system does not require a customer password for guest booking flows and does not use marketing messages without a separate opt-in.
+The system creates an operational customer record for booking, payment, receipt, reminder, reschedule support, security, fraud-prevention, and legal/accounting purposes. This customer record is not a login account, does not create a password, and does not expose booking history by itself.
+
+The system does not require a customer password for guest booking flows and does not use marketing messages without a separate opt-in. Customers may optionally choose to remember details on the same device for faster repeat booking. Remembered-device convenience stores only an opaque security token in the browser cookie and does not store name, email, phone number, booking ID, receipt token, or payment provider reference in the cookie.
 
 ## Purpose
 
 Data is used to create bookings, initiate checkout, verify payment status, deliver receipts and reminders, protect sensitive actions with OTP, prevent abuse, support customers, and maintain accounting-safe records.
+
+Remembered-device convenience is used only to show a redacted contact summary and reuse saved contact details for a normal future booking. Sensitive actions such as rescheduling, receipt access, contact changes, private booking access, and data-rights requests still require OTP or another approved verification step.
 
 ## Payment And Email Processors
 
@@ -33,6 +37,8 @@ M-Pesa or other payment providers process payment prompts and callbacks. Email p
 ## Security And Minimization
 
 Operational contact data should be encrypted where needed for later delivery, indexed using keyed HMAC where lookup is required, and redacted in logs, dashboards, public APIs, receipts, emails, and tests. Raw OTPs must not be stored.
+
+Remembered-device lookup tokens must be generated with cryptographically secure randomness. The database stores only keyed-HMAC token hashes. Expired, revoked, forged, or malformed tokens must fail safely and must not reveal whether a customer exists.
 
 ## International Customers
 
@@ -51,6 +57,8 @@ Retention periods are described in the Data Retention Policy. Breach notificatio
 ## Cookies And Sessions
 
 Essential cookies and session/security controls may be used to protect requests and status flows. Advertising cookies are not expected unless a future consent flow is added.
+
+The optional remembered-device cookie is an essential convenience/security cookie only when the customer explicitly chooses it. It is revocable through forget-device behavior and must be HttpOnly, Secure in production, SameSite-protected, expiring, and free of raw personal data.
 
 ## Legal Review
 

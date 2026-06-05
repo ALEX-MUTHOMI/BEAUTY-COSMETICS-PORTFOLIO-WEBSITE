@@ -306,6 +306,11 @@ class CustomerProfile(AuditMixin):
         indexes = [
             models.Index(fields=["phone_hash_hmac"], name="booking_customer_phone_hash_idx"),
             models.Index(fields=["email_hash_hmac"], name="booking_customer_email_hash_idx"),
+            models.Index(
+                fields=["email_hash_hmac", "phone_hash_hmac"],
+                name="booking_customer_email_phone_idx",
+            ),
+            models.Index(fields=["erased_at"], name="booking_customer_erased_idx"),
         ]
 
     @classmethod
@@ -323,14 +328,23 @@ class CustomerProfile(AuditMixin):
 
         normalized_email = normalize_email(email)
         normalized_phone = normalize_phone(phone)
+        email_hash = hmac_email_hash(normalized_email)
+        phone_hash = hmac_phone_hash(normalized_phone)
+        existing = cls.objects.filter(
+            email_hash_hmac=email_hash,
+            phone_hash_hmac=phone_hash,
+            erased_at__isnull=True,
+        ).first()
+        if existing:
+            return existing
         return cls.objects.create(
             full_name_encrypted=encrypt_value(full_name),
             full_name_display=safe_display_name(full_name),
             email_encrypted=encrypt_value(normalized_email),
-            email_hash_hmac=hmac_email_hash(normalized_email),
+            email_hash_hmac=email_hash,
             email_redacted=redact_email(normalized_email),
             phone_encrypted=encrypt_value(normalized_phone),
-            phone_hash_hmac=hmac_phone_hash(normalized_phone),
+            phone_hash_hmac=phone_hash,
             phone_redacted=redact_phone(normalized_phone),
             reminder_consent=reminder_consent,
             marketing_consent=marketing_consent,
@@ -356,6 +370,44 @@ class CustomerProfile(AuditMixin):
                 "updated_at",
             ]
         )
+
+
+class ReturningClientDevice(AuditMixin):
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        REVOKED = "revoked", "Revoked"
+        EXPIRED = "expired", "Expired"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    customer_profile = models.ForeignKey(
+        CustomerProfile,
+        on_delete=models.PROTECT,
+        related_name="returning_devices",
+    )
+    token_hash_hmac = models.CharField(max_length=128, unique=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.ACTIVE)
+    expires_at = models.DateTimeField()
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    revoked_reason = models.CharField(max_length=64, blank=True)
+    ip_hash_hmac = models.CharField(max_length=128, blank=True)
+    user_agent_hash_hmac = models.CharField(max_length=128, blank=True)
+    token_rotated_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "booking_returning_client_devices"
+        indexes = [
+            models.Index(fields=["token_hash_hmac"], name="return_device_token_hash_idx"),
+            models.Index(fields=["customer_profile", "status"], name="return_device_customer_idx"),
+            models.Index(fields=["status", "expires_at"], name="return_device_expiry_idx"),
+            models.Index(fields=["last_used_at"], name="return_device_used_idx"),
+        ]
+
+    def clean(self):
+        _require_aware_utc(self.expires_at, "expires_at")
+        _require_aware_utc(self.last_used_at, "last_used_at")
+        _require_aware_utc(self.revoked_at, "revoked_at")
+        _require_aware_utc(self.token_rotated_at, "token_rotated_at")
 
 
 class Booking(AuditMixin):
