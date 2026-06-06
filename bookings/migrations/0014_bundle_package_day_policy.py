@@ -299,11 +299,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="servicecategory",
-            index=models.Index(fields=["slug", "is_active"], name="service_category_slug_active_idx"),
+            index=models.Index(fields=["slug", "is_active"], name="svc_cat_slug_active_idx"),
         ),
         migrations.AddIndex(
             model_name="servicesubcategory",
-            index=models.Index(fields=["category", "slug", "is_active"], name="service_subcategory_slug_active_idx"),
+            index=models.Index(fields=["category", "slug", "is_active"], name="svc_subcat_slug_act_idx"),
         ),
         migrations.AddIndex(
             model_name="service",

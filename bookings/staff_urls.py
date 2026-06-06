@@ -18,6 +18,7 @@ urlpatterns = [
         name="staff-password-reset-confirm",
     ),
     path("auth/google/start/", staff_auth_views.staff_google_start, name="staff-google-start"),
+    path("auth/apple/start/", staff_auth_views.staff_apple_start, name="staff-apple-start"),
     path("bookings/schedule/", staff_views.staff_booking_schedule, name="staff-booking-schedule"),
     path("bookings/week/", staff_views.staff_booking_week, name="staff-booking-week"),
     path("bookings/<str:public_booking_id>/", staff_views.staff_booking_detail, name="staff-booking-detail"),

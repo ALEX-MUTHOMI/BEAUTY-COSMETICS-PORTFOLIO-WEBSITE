@@ -99,7 +99,7 @@ class ServiceCategory(AuditMixin):
     class Meta:
         db_table = "booking_service_categories"
         indexes = [
-            models.Index(fields=["slug", "is_active"], name="service_category_slug_active_idx"),
+            models.Index(fields=["slug", "is_active"], name="svc_cat_slug_active_idx"),
             models.Index(fields=["sort_order", "is_active"], name="service_category_sort_idx"),
         ]
 
@@ -118,7 +118,7 @@ class ServiceSubcategory(AuditMixin):
             models.UniqueConstraint(fields=["category", "slug"], name="uniq_service_subcategory_slug"),
         ]
         indexes = [
-            models.Index(fields=["category", "slug", "is_active"], name="service_subcategory_slug_active_idx"),
+            models.Index(fields=["category", "slug", "is_active"], name="svc_subcat_slug_act_idx"),
             models.Index(fields=["category", "sort_order", "is_active"], name="service_subcategory_sort_idx"),
         ]
 
@@ -436,11 +436,11 @@ class CustomerProfile(AuditMixin):
     class Meta:
         db_table = "booking_customer_profiles"
         indexes = [
-            models.Index(fields=["phone_hash_hmac"], name="booking_customer_phone_hash_idx"),
-            models.Index(fields=["email_hash_hmac"], name="booking_customer_email_hash_idx"),
+            models.Index(fields=["phone_hash_hmac"], name="bk_cust_phone_hash_idx"),
+            models.Index(fields=["email_hash_hmac"], name="bk_cust_email_hash_idx"),
             models.Index(
                 fields=["email_hash_hmac", "phone_hash_hmac"],
-                name="booking_customer_email_phone_idx",
+                name="bk_cust_email_phone_idx",
             ),
             models.Index(fields=["erased_at"], name="booking_customer_erased_idx"),
         ]

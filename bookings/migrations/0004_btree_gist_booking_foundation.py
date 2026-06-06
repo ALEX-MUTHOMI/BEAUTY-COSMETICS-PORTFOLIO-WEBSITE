@@ -518,11 +518,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="customerprofile",
-            index=models.Index(fields=["phone_hash_hmac"], name="booking_customer_phone_hash_idx"),
+            index=models.Index(fields=["phone_hash_hmac"], name="bk_cust_phone_hash_idx"),
         ),
         migrations.AddIndex(
             model_name="customerprofile",
-            index=models.Index(fields=["email_hash_hmac"], name="booking_customer_email_hash_idx"),
+            index=models.Index(fields=["email_hash_hmac"], name="bk_cust_email_hash_idx"),
         ),
         migrations.AddIndex(
             model_name="booking",

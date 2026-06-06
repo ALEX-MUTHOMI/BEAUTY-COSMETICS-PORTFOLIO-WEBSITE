@@ -21,9 +21,9 @@ describe('staff portal friendly copy and security boundaries', () => {
   it('maps backend states to staff-friendly words without internal jargon', () => {
     expect(friendlyStatus('payment_pending')).toBe('Awaiting payment')
     expect(friendlyStatus('success')).toBe('Payment confirmed')
-    expect(friendlyStatus('manual_review')).toBe('Needs review')
+    expect(friendlyStatus('manual_review')).toBe('Needs attention')
     expect(friendlyStatus('held')).toBe('Awaiting customer payment')
-    expect(friendlyStatus('checkout_session_pending')).toBe('Needs review')
+    expect(friendlyStatus('checkout_session_pending')).toBe('Needs attention')
     expect(containsInternalJargon('ledger correlation ID')).toBe(true)
     expect(safeDisplayText('ledger correlation ID', 'Hidden')).toBe('Hidden')
   })
@@ -57,7 +57,9 @@ describe('staff portal friendly copy and security boundaries', () => {
     const wrapper = mount(StaffBookingDetail, { global: { stubs: globalStubs } })
 
     expect(wrapper.text()).not.toMatch(/checkoutrequest|merchantrequest|ledger/i)
-    await wrapper.get('button').trigger('click')
+    const revealButton = wrapper.findAll('button').find((button) => button.text().includes('Reveal customer contact'))
+    expect(revealButton).toBeDefined()
+    await revealButton?.trigger('click')
     expect(wrapper.text()).toContain("Confirm it's you")
     const completion = wrapper.findAll('button').find((button) => button.text().includes('Mark service completed'))
     expect(completion?.attributes('disabled')).toBeUndefined()
@@ -72,7 +74,8 @@ describe('staff portal friendly copy and security boundaries', () => {
 
     expect(wrapper.text()).toContain('Uploads are disabled')
     expect(wrapper.text()).toContain('Sensitive category')
-    expect(wrapper.get('button').attributes('disabled')).toBeDefined()
+    const uploadButton = wrapper.findAll('button').find((button) => button.text().includes('Upload'))
+    expect(uploadButton?.attributes('disabled')).toBeDefined()
     expect(wrapper.text()).not.toMatch(/raw payload|checkout ID|receipt token/i)
   })
 
@@ -131,7 +134,7 @@ describe('staff portal API client', () => {
       publicBookingId: 'BK-1001',
       bookingStatus: 'Booking confirmed',
       paymentStatus: 'Awaiting payment',
-      rescheduleStatus: 'Needs review',
+      rescheduleStatus: 'Needs attention',
     })
   })
 

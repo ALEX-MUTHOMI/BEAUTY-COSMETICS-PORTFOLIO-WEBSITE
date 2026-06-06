@@ -1,7 +1,10 @@
 import json
+import secrets
+from urllib.parse import urlencode
 
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
-from django.http import JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 
 from bookings.models import StaffSecurityAudit
@@ -42,6 +45,56 @@ def _body(request):
 
 def _staff_forbidden():
     return _json({"detail": "Staff portal is unavailable."}, status=403)
+
+
+def _safe_next_path(next_path):
+    next_path = str(next_path or "").strip()
+    if (
+        not next_path
+        or not next_path.startswith("/")
+        or next_path.startswith("//")
+        or not next_path.startswith("/staff/")
+        or "\r" in next_path
+        or "\n" in next_path
+    ):
+        return "/staff/dashboard"
+    return next_path
+
+
+def _oauth_setting(provider, name, default=""):
+    return getattr(settings, f"STAFF_{provider.upper()}_OAUTH_{name}", default)
+
+
+def _staff_oauth_start(request, provider):
+    client_id = _oauth_setting(provider, "CLIENT_ID")
+    redirect_uri = _oauth_setting(provider, "REDIRECT_URI")
+    auth_url = _oauth_setting(provider, "AUTH_URL")
+    scope = _oauth_setting(provider, "SCOPE", "openid email profile")
+    response_mode = _oauth_setting(provider, "RESPONSE_MODE", "")
+
+    if not client_id or not redirect_uri or not auth_url:
+        label = "Google" if provider == "google" else "Apple"
+        return _json({"detail": f"Staff {label} sign-in is not configured."}, status=503)
+
+    state = secrets.token_urlsafe(32)
+    request.session[f"staff_{provider}_oauth_state"] = state
+    request.session[f"staff_{provider}_oauth_next"] = _safe_next_path(request.GET.get("next"))
+    request.session.modified = True
+
+    query = {
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": scope,
+        "state": state,
+    }
+    if response_mode:
+        query["response_mode"] = response_mode
+
+    response = HttpResponseRedirect(f"{auth_url}?{urlencode(query)}")
+    response["Cache-Control"] = "no-store"
+    response["Referrer-Policy"] = "no-referrer"
+    return response
 
 
 @require_POST
@@ -117,4 +170,9 @@ def staff_password_reset_confirm(request):
 
 @require_GET
 def staff_google_start(request):
-    return _json({"detail": "Staff Google sign-in is not configured."}, status=503)
+    return _staff_oauth_start(request, "google")
+
+
+@require_GET
+def staff_apple_start(request):
+    return _staff_oauth_start(request, "apple")

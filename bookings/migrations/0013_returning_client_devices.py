@@ -88,7 +88,7 @@ class Migration(migrations.Migration):
             model_name="customerprofile",
             index=models.Index(
                 fields=["email_hash_hmac", "phone_hash_hmac"],
-                name="booking_customer_email_phone_idx",
+                name="bk_cust_email_phone_idx",
             ),
         ),
         migrations.AddIndex(

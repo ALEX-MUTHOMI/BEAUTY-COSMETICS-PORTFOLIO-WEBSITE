@@ -12,6 +12,11 @@
         <button type="button" disabled>Connect later</button>
       </article>
       <article>
+        <h2>Appearance</h2>
+        <p>Choose the calmer view for your studio lighting. This stores only a theme preference.</p>
+        <StaffThemeToggle />
+      </article>
+      <article>
         <h2>Password</h2>
         <p>Use a long staff passphrase. Password recovery is available from the sign-in page.</p>
         <NuxtLink to="/staff/forgot-password">Reset password</NuxtLink>
@@ -22,12 +27,13 @@
 
 <script setup lang="ts">
 import StaffPortalShell from './StaffPortalShell.vue'
+import StaffThemeToggle from './StaffThemeToggle.vue'
 </script>
 
 <style scoped>
 .settings-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -59,6 +65,12 @@ import StaffPortalShell from './StaffPortalShell.vue'
 
 .settings-grid button:disabled {
   opacity: 0.55;
+}
+
+@media (max-width: 1080px) {
+  .settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 860px) {

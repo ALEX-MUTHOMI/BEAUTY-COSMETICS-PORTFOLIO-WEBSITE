@@ -15,7 +15,10 @@
         <p class="staff-shell__eyebrow">Staff portal</p>
         <h1>{{ title }}</h1>
       </div>
-      <slot name="actions" />
+      <div class="staff-shell__actions">
+        <StaffThemeToggle />
+        <slot name="actions" />
+      </div>
     </header>
 
     <main class="staff-shell__main" tabindex="-1">
@@ -32,44 +35,66 @@
 </template>
 
 <script setup lang="ts">
+import StaffThemeToggle from './StaffThemeToggle.vue'
+
 defineProps<{
   title: string
 }>()
 
 const navItems = [
-  { label: 'Dashboard', short: 'Home', path: '/staff/dashboard', icon: '✦' },
-  { label: 'Bookings', short: 'Bookings', path: '/staff/bookings', icon: '◷' },
-  { label: 'Reschedules', short: 'Moves', path: '/staff/reschedules', icon: '↻' },
+  { label: 'Dashboard', short: 'Home', path: '/staff/dashboard', icon: '01' },
+  { label: 'Bookings', short: 'Bookings', path: '/staff/bookings', icon: '02' },
+  { label: 'Reschedules', short: 'Moves', path: '/staff/reschedules', icon: '03' },
   { label: 'Payments', short: 'Pay', path: '/staff/payments', icon: 'KES' },
-  { label: 'Gallery', short: 'Gallery', path: '/staff/gallery', icon: '▧' },
-  { label: 'Settings', short: 'Settings', path: '/staff/settings', icon: '⚙' },
+  { label: 'Gallery', short: 'Gallery', path: '/staff/gallery', icon: '04' },
+  { label: 'Settings', short: 'Settings', path: '/staff/settings', icon: '05' },
 ]
 </script>
 
 <style scoped>
 .staff-shell {
+  --staff-text: #241611;
+  --staff-muted: #8a4f34;
+  --staff-surface: rgba(255, 253, 248, 0.82);
+  --staff-border: rgba(55, 32, 22, 0.12);
+  --staff-primary: #7a3f34;
+  --staff-inverse: #fffaf3;
+  --staff-focus: #d89c73;
   min-height: 100vh;
   display: grid;
   grid-template-columns: 17rem minmax(0, 1fr);
   grid-template-rows: auto 1fr;
-  color: #241611;
+  color: var(--staff-text);
   background:
     radial-gradient(circle at top right, rgba(202, 127, 85, 0.22), transparent 28rem),
     linear-gradient(135deg, #fffaf3 0%, #f7eadc 45%, #f0dac6 100%);
 }
 
+:global(html[data-staff-theme='dark']) .staff-shell {
+  --staff-text: #f8efe7;
+  --staff-muted: #cdb9a9;
+  --staff-surface: rgba(40, 29, 25, 0.86);
+  --staff-border: rgba(255, 239, 226, 0.13);
+  --staff-primary: #d59b86;
+  --staff-inverse: #180f0c;
+  --staff-focus: #e0b083;
+  background:
+    radial-gradient(circle at top right, rgba(213, 155, 134, 0.18), transparent 28rem),
+    linear-gradient(135deg, #120b09 0%, #211714 48%, #33211c 100%);
+}
+
 .staff-shell__sidebar {
   grid-row: 1 / span 2;
   padding: 1.5rem;
-  border-right: 1px solid rgba(55, 32, 22, 0.12);
-  background: rgba(255, 253, 248, 0.76);
+  border-right: 1px solid var(--staff-border);
+  background: var(--staff-surface);
   backdrop-filter: blur(18px);
 }
 
 .staff-shell__brand,
 .staff-shell__eyebrow {
   margin: 0 0 1rem;
-  color: #8a4f34;
+  color: var(--staff-muted);
   font: 900 0.78rem/1.2 ui-sans-serif, system-ui, sans-serif;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -87,17 +112,28 @@ const navItems = [
   gap: 0.75rem;
   padding: 0 0.95rem;
   border-radius: 18px;
-  color: #3a241a;
+  color: var(--staff-text);
   text-decoration: none;
   font: 850 0.95rem/1 ui-sans-serif, system-ui, sans-serif;
+}
+
+.staff-shell a span {
+  min-width: 2rem;
+  min-height: 1.55rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--staff-inverse);
+  background: var(--staff-primary);
+  font-size: 0.7rem;
 }
 
 .staff-shell a.router-link-active,
 .staff-shell a:hover,
 .staff-shell a:focus-visible {
   outline: 0;
-  background: #241611;
-  color: #fffaf3;
+  background: var(--staff-text);
+  color: var(--staff-inverse);
 }
 
 .staff-shell__topbar {
@@ -106,6 +142,14 @@ const navItems = [
   gap: 1rem;
   align-items: center;
   padding: clamp(1rem, 3vw, 2rem);
+}
+
+.staff-shell__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  align-items: center;
 }
 
 .staff-shell h1 {
@@ -138,10 +182,11 @@ const navItems = [
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     padding: 0.4rem;
-    border: 1px solid rgba(55, 32, 22, 0.12);
+    border: 1px solid var(--staff-border);
     border-radius: 24px;
-    background: rgba(255, 253, 248, 0.92);
+    background: var(--staff-surface);
     box-shadow: 0 18px 45px rgba(55, 32, 22, 0.2);
+    backdrop-filter: blur(18px);
   }
 
   .staff-shell__bottom a {

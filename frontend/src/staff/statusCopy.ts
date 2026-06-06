@@ -4,8 +4,8 @@ const STATUS_COPY: Record<string, string> = {
   paid: 'Payment confirmed',
   failed: 'Payment failed',
   payment_failed: 'Payment failed',
-  manual_review: 'Needs review',
-  pending_review: 'Needs review',
+  manual_review: 'Needs attention',
+  pending_review: 'Needs attention',
   confirmed: 'Booking confirmed',
   held: 'Awaiting customer payment',
   reschedule_requested: 'Reschedule requested',
@@ -19,7 +19,7 @@ const STATUS_COPY: Record<string, string> = {
   issued: 'Receipt ready',
   sent: 'Sent',
   retry_scheduled: 'Retry scheduled',
-  failed_final: 'Needs admin review',
+  failed_final: 'Needs attention',
   full_package: 'Full-package day',
   normal: 'Normal service day',
   closed: 'Closed',
@@ -29,7 +29,7 @@ const INTERNAL_WORDS = /\b(ledger|checkout session|correlation|provider payload|
 
 export function friendlyStatus(value?: string): string {
   const normalized = String(value || '').trim().toLowerCase()
-  return STATUS_COPY[normalized] || 'Needs review'
+  return STATUS_COPY[normalized] || 'Needs attention'
 }
 
 export function containsInternalJargon(value: string): boolean {

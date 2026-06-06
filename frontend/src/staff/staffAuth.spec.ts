@@ -107,7 +107,7 @@ describe('staff login panel', () => {
     expect(wrapper.find('.staff-login__reset').attributes('href')).toBe('/staff/forgot-password')
 
     await wrapper.find('a.staff-login__google').trigger('click')
-    expect(wrapper.text()).toContain('Google sign-in is not available right now.')
+    expect(wrapper.text()).toContain('Google sign-in is not available yet.')
   })
 
   it('only exposes provider start URLs when provider auth is explicitly enabled', () => {

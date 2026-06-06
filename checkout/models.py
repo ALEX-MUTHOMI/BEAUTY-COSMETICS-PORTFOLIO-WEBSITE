@@ -31,7 +31,7 @@ class CheckoutSession(AuditMixin):
     class Meta:
         db_table = "checkout_sessions"
         indexes = [
-            models.Index(fields=["customer", "status"], name="checkout_se_customer_b2a808_idx"),
+            models.Index(fields=["customer", "status"], name="checkout_sess_cust_status_idx"),
             models.Index(fields=["expires_at"], name="checkout_se_expires_709e52_idx"),
         ]
 

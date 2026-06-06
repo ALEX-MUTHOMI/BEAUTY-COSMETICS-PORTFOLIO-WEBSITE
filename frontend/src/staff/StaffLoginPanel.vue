@@ -1,15 +1,43 @@
 <template>
   <section class="staff-login" aria-labelledby="staff-login-title">
-    <div class="staff-login__copy">
-      <p class="staff-login__eyebrow">Beautician Portal</p>
-      <h1 id="staff-login-title">Sign in to today&apos;s bookings.</h1>
-      <p>
-        Protected staff access for appointments, payment visibility, and audited customer contact
-        reveal. Customer remembered-device access cannot sign in here.
+    <div class="staff-login__brand">
+      <div class="staff-login__brand-top">
+        <div class="staff-login__seal" aria-hidden="true">BC</div>
+        <StaffThemeToggle />
+      </div>
+      <p class="staff-login__eyebrow">Private studio operations</p>
+      <h1 id="staff-login-title">Your beauty desk, ready before the first client arrives.</h1>
+      <p class="staff-login__intro">
+        Secure staff access for appointments, payments, reschedules, and short-lived contact
+        reveal. Customer remembered-device access cannot enter this portal.
       </p>
+
+      <div class="staff-login__preview" aria-label="Portal preview">
+        <article>
+          <span>09:00</span>
+          <strong>Soft glam</strong>
+          <small>Payment confirmed</small>
+        </article>
+        <article>
+          <span>11:30</span>
+          <strong>Full package</strong>
+          <small>Awaiting payment</small>
+        </article>
+        <article>
+          <span>Today</span>
+          <strong>6 bookings</strong>
+          <small>2 need attention</small>
+        </article>
+      </div>
     </div>
 
     <form class="staff-login__card" novalidate @submit.prevent="submitLogin">
+      <div class="staff-login__card-head">
+        <p class="staff-login__eyebrow">Beautician sign in</p>
+        <h2>Open the staff portal</h2>
+        <span>Protected by secure session cookies and staff-only checks.</span>
+      </div>
+
       <input type="hidden" name="csrfmiddlewaretoken" :value="csrfToken" autocomplete="off" />
 
       <label>
@@ -42,8 +70,8 @@
       </label>
 
       <p class="staff-login__policy">
-        Use your staff password. Routine staff login does not require email OTP; recovery is only
-        for forgotten passwords.
+        Use your staff password. Rapid repeated attempts are slowed down and recovery is only for
+        forgotten passwords.
       </p>
 
       <p v-if="statusMessage" class="staff-login__status" role="status" aria-live="polite">
@@ -80,6 +108,10 @@
       <a class="staff-login__reset" :href="passwordResetPath">
         Forgot your staff password?
       </a>
+
+      <p class="staff-login__fineprint">
+        Do not use this screen on a shared device without signing out afterwards.
+      </p>
     </form>
   </section>
 </template>
@@ -89,6 +121,7 @@ import { computed, ref } from 'vue'
 
 import { createClickGate } from './botGuard'
 import { buildStaffAppleLoginUrl, buildStaffGoogleLoginUrl, staffPasswordLogin } from './staffAuth'
+import StaffThemeToggle from './StaffThemeToggle.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -157,74 +190,235 @@ function handleProviderClick(provider: 'Google' | 'Apple', enabled: boolean, eve
     return
   }
   event.preventDefault()
-  statusMessage.value = `${provider} sign-in is not available right now.`
+  statusMessage.value = `${provider} sign-in is not available yet.`
 }
 </script>
 
 <style scoped>
 .staff-login {
+  --ink: #23140f;
+  --muted: #6f4b3a;
+  --cream: #fff8ee;
+  --paper: rgba(255, 252, 247, 0.9);
+  --rose: #b96550;
+  --clay: #6d3426;
+  --staff-text: var(--ink);
+  --staff-muted: var(--muted);
+  --staff-surface: #fffdf8;
+  --staff-surface-muted: rgba(255, 252, 247, 0.62);
+  --staff-border: rgba(35, 20, 15, 0.13);
+  --staff-primary: var(--clay);
+  --staff-inverse: var(--cream);
+  --staff-focus: #d89c73;
   min-height: 100vh;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 430px);
-  gap: clamp(2rem, 6vw, 6rem);
-  align-items: center;
-  padding: clamp(1.5rem, 6vw, 5rem);
-  color: #20130c;
+  gap: 1.35rem;
+  align-items: stretch;
+  padding: 1rem;
+  color: var(--ink);
   background:
-    radial-gradient(circle at 15% 10%, rgba(240, 157, 94, 0.42), transparent 24rem),
-    radial-gradient(circle at 80% 80%, rgba(89, 53, 35, 0.2), transparent 26rem),
-    linear-gradient(135deg, #fff8ef 0%, #efd1b6 42%, #a6533f 100%);
+    radial-gradient(circle at 18% 14%, rgba(255, 224, 185, 0.9), transparent 16rem),
+    radial-gradient(circle at 94% 6%, rgba(185, 101, 80, 0.28), transparent 18rem),
+    linear-gradient(160deg, #fff8ef 0%, #f3dfc8 44%, #b96550 100%);
 }
 
-.staff-login__copy {
-  max-width: 720px;
+:global(html[data-staff-theme='dark']) .staff-login {
+  --ink: #f8efe7;
+  --muted: #cdb9a9;
+  --cream: #180f0c;
+  --paper: rgba(35, 25, 22, 0.9);
+  --rose: #d59b86;
+  --clay: #e0b083;
+  --staff-text: #f8efe7;
+  --staff-muted: #cdb9a9;
+  --staff-surface: #2a1d19;
+  --staff-surface-muted: rgba(55, 39, 33, 0.78);
+  --staff-border: rgba(255, 239, 226, 0.14);
+  --staff-primary: #d59b86;
+  --staff-inverse: #180f0c;
+  --staff-focus: #e0b083;
+  background:
+    radial-gradient(circle at 18% 14%, rgba(152, 86, 70, 0.32), transparent 16rem),
+    radial-gradient(circle at 94% 6%, rgba(224, 176, 131, 0.16), transparent 18rem),
+    linear-gradient(160deg, #140d0a 0%, #231714 48%, #3b211b 100%);
+}
+
+.staff-login__brand,
+.staff-login__card {
+  border: 1px solid var(--staff-border);
+  box-shadow: 0 28px 80px rgba(43, 22, 14, 0.16);
+}
+
+.staff-login__brand {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  align-content: end;
+  gap: 1rem;
+  min-height: 25rem;
+  padding: clamp(1.2rem, 8vw, 3rem);
+  border-radius: 34px;
+  background:
+    linear-gradient(140deg, rgba(35, 20, 15, 0.12), rgba(35, 20, 15, 0)),
+    linear-gradient(135deg, rgba(255, 250, 243, 0.84), rgba(233, 190, 161, 0.72));
+}
+
+.staff-login__brand-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.staff-login__brand::before,
+.staff-login__brand::after {
+  content: '';
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.staff-login__brand::before {
+  width: 18rem;
+  height: 18rem;
+  top: -7rem;
+  right: -6rem;
+  background: rgba(35, 20, 15, 0.08);
+}
+
+.staff-login__brand::after {
+  width: 14rem;
+  height: 14rem;
+  bottom: -6rem;
+  left: -4rem;
+  background: rgba(185, 101, 80, 0.18);
+}
+
+.staff-login__seal {
+  position: relative;
+  z-index: 1;
+  width: 3.2rem;
+  height: 3.2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 1.1rem;
+  color: var(--staff-inverse);
+  background: var(--staff-text);
+  font: 950 1rem/1 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.08em;
 }
 
 .staff-login__eyebrow {
-  margin: 0 0 1rem;
+  position: relative;
+  z-index: 1;
+  margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  font: 800 0.78rem ui-sans-serif, system-ui, sans-serif;
+  color: var(--clay);
+  font: 900 0.72rem ui-sans-serif, system-ui, sans-serif;
 }
 
 .staff-login h1 {
-  max-width: 10ch;
+  position: relative;
+  z-index: 1;
+  max-width: 12ch;
   margin: 0;
-  font-size: clamp(3rem, 8vw, 6.6rem);
-  line-height: 0.9;
+  font-size: clamp(2.7rem, 12vw, 5.6rem);
+  line-height: 0.86;
+  letter-spacing: -0.08em;
 }
 
-.staff-login__copy p:last-child {
-  max-width: 58ch;
-  color: #563324;
-  font: 1.05rem/1.7 ui-sans-serif, system-ui, sans-serif;
+.staff-login__intro {
+  position: relative;
+  z-index: 1;
+  max-width: 48ch;
+  margin: 0;
+  color: var(--muted);
+  font: 1rem/1.65 ui-sans-serif, system-ui, sans-serif;
+}
+
+.staff-login__preview {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.staff-login__preview article {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: 0.15rem 0.8rem;
+  align-items: center;
+  padding: 0.85rem;
+  border: 1px solid rgba(35, 20, 15, 0.1);
+  border-radius: 22px;
+  background: var(--staff-surface-muted);
+  backdrop-filter: blur(12px);
+}
+
+.staff-login__preview span {
+  grid-row: span 2;
+  color: var(--clay);
+  font-weight: 950;
+}
+
+.staff-login__preview strong,
+.staff-login__preview small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-login__preview small {
+  color: var(--muted);
 }
 
 .staff-login__card {
+  align-self: center;
   display: grid;
   gap: 1rem;
   padding: clamp(1.25rem, 4vw, 2rem);
-  border: 1px solid rgba(32, 19, 12, 0.16);
-  border-radius: 28px;
-  background: rgba(255, 251, 246, 0.84);
-  box-shadow: 0 30px 90px rgba(44, 24, 12, 0.22);
+  border-radius: 30px;
+  background: var(--paper);
   backdrop-filter: blur(18px);
+}
+
+.staff-login__card-head {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.staff-login__card-head h2,
+.staff-login__card-head span {
+  margin: 0;
+}
+
+.staff-login__card-head h2 {
+  font-size: 1.8rem;
+  letter-spacing: -0.04em;
+}
+
+.staff-login__card-head span {
+  color: var(--muted);
+  font: 0.92rem/1.45 ui-sans-serif, system-ui, sans-serif;
 }
 
 .staff-login label {
   display: grid;
   gap: 0.45rem;
-  font: 800 0.82rem ui-sans-serif, system-ui, sans-serif;
+  font: 900 0.82rem ui-sans-serif, system-ui, sans-serif;
 }
 
 .staff-login input {
   width: 100%;
-  min-height: 3rem;
-  border: 1px solid rgba(32, 19, 12, 0.2);
-  border-radius: 16px;
+  min-height: 3.25rem;
+  border: 1px solid var(--staff-border);
+  border-radius: 18px;
   padding: 0 1rem;
-  background: #fffdf9;
-  color: #20130c;
+  background: var(--staff-surface);
+  color: var(--ink);
   font: 1rem ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -238,7 +432,7 @@ function handleProviderClick(provider: 'Google' | 'Apple', enabled: boolean, eve
 .staff-login__status,
 .staff-login__reset {
   margin: 0;
-  color: #684331;
+  color: var(--staff-muted);
   font: 0.9rem/1.55 ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -257,16 +451,17 @@ function handleProviderClick(provider: 'Google' | 'Apple', enabled: boolean, eve
 .staff-login__primary {
   border: 0;
   color: #fffaf3;
-  background: #20130c;
+  background: linear-gradient(135deg, var(--staff-text), var(--staff-primary));
   cursor: pointer;
+  box-shadow: 0 16px 34px rgba(35, 20, 15, 0.22);
 }
 
 .staff-login__ghost {
   min-width: 4.4rem;
-  border: 1px solid rgba(32, 19, 12, 0.16);
+  border: 1px solid var(--staff-border);
   border-radius: 16px;
-  color: #20130c;
-  background: #fff8ef;
+  color: var(--staff-text);
+  background: var(--staff-surface);
   cursor: pointer;
   font-weight: 900;
 }
@@ -277,9 +472,9 @@ function handleProviderClick(provider: 'Google' | 'Apple', enabled: boolean, eve
 }
 
 .staff-login__google {
-  border: 1px solid rgba(32, 19, 12, 0.18);
-  color: #20130c;
-  background: #ffffff;
+  border: 1px solid var(--staff-border);
+  color: var(--staff-text);
+  background: var(--staff-surface);
 }
 
 .staff-login__google[aria-disabled='true'] {
@@ -320,13 +515,40 @@ function handleProviderClick(provider: 'Google' | 'Apple', enabled: boolean, eve
   justify-self: center;
 }
 
-@media (max-width: 820px) {
+@media (min-width: 860px) {
   .staff-login {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1.12fr) minmax(360px, 440px);
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: center;
+    padding: clamp(1.5rem, 5vw, 4rem);
   }
 
-  .staff-login h1 {
-    max-width: 11ch;
+  .staff-login__brand {
+    min-height: calc(100vh - clamp(3rem, 10vw, 8rem));
+  }
+
+  .staff-login__preview {
+    max-width: 34rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .staff-login__preview article {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .staff-login {
+    padding: 0.65rem;
+  }
+
+  .staff-login__brand,
+  .staff-login__card {
+    border-radius: 24px;
+  }
+
+  .staff-login__password-control {
+    grid-template-columns: 1fr;
   }
 }
 </style>
