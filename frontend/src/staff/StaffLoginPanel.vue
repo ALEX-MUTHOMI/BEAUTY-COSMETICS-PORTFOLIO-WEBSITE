@@ -26,14 +26,19 @@
 
       <label>
         <span>Password</span>
-        <input
-          v-model="password"
-          autocomplete="current-password"
-          minlength="15"
-          name="password"
-          required
-          type="password"
-        />
+        <span class="staff-login__password-control">
+          <input
+            v-model="password"
+            autocomplete="current-password"
+            minlength="15"
+            name="password"
+            required
+            :type="showPassword ? 'text' : 'password'"
+          />
+          <button type="button" class="staff-login__ghost" @click="showPassword = !showPassword">
+            {{ showPassword ? 'Hide' : 'Show' }}
+          </button>
+        </span>
       </label>
 
       <p class="staff-login__policy">
@@ -46,12 +51,30 @@
       </p>
 
       <button class="staff-login__primary" type="submit" :disabled="submitting">
+        <span v-if="submitting" class="staff-login__spinner" aria-hidden="true" />
         {{ submitting ? 'Checking access...' : 'Sign in securely' }}
       </button>
 
-      <a class="staff-login__google" :href="googleLoginUrl" rel="nofollow">
+      <a
+        class="staff-login__google"
+        :href="googleEnabled ? googleLoginUrl : '#'"
+        rel="nofollow"
+        :aria-disabled="!googleEnabled"
+        @click="handleProviderClick('Google', googleEnabled, $event)"
+      >
         <span aria-hidden="true">G</span>
         Continue with Google
+      </a>
+
+      <a
+        class="staff-login__google staff-login__apple"
+        :href="appleEnabled ? appleLoginUrl : '#'"
+        rel="nofollow"
+        :aria-disabled="!appleEnabled"
+        @click="handleProviderClick('Apple', appleEnabled, $event)"
+      >
+        <span aria-hidden="true">A</span>
+        Continue with Apple
       </a>
 
       <a class="staff-login__reset" :href="passwordResetPath">
@@ -64,7 +87,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { buildStaffGoogleLoginUrl, staffPasswordLogin } from './staffAuth'
+import { createClickGate } from './botGuard'
+import { buildStaffAppleLoginUrl, buildStaffGoogleLoginUrl, staffPasswordLogin } from './staffAuth'
 
 const props = withDefaults(
   defineProps<{
@@ -72,10 +96,14 @@ const props = withDefaults(
     csrfToken: string
     nextPath?: string
     passwordResetPath?: string
+    googleEnabled?: boolean
+    appleEnabled?: boolean
   }>(),
   {
-    nextPath: '/staff/portal',
-    passwordResetPath: '/staff/password-reset',
+    nextPath: '/staff/dashboard',
+    passwordResetPath: '/staff/forgot-password',
+    googleEnabled: false,
+    appleEnabled: false,
   },
 )
 
@@ -87,10 +115,17 @@ const email = ref('')
 const password = ref('')
 const submitting = ref(false)
 const statusMessage = ref('')
+const showPassword = ref(false)
+const clickGate = createClickGate(1200)
 
 const googleLoginUrl = computed(() => buildStaffGoogleLoginUrl(props.apiBaseUrl, props.nextPath))
+const appleLoginUrl = computed(() => buildStaffAppleLoginUrl(props.apiBaseUrl, props.nextPath))
 
 async function submitLogin() {
+  if (!clickGate.canRun('staff-login')) {
+    statusMessage.value = 'Please wait a moment before trying again.'
+    return
+  }
   submitting.value = true
   statusMessage.value = ''
 
@@ -113,7 +148,16 @@ async function submitLogin() {
     statusMessage.value = 'Invalid credentials.'
   } finally {
     submitting.value = false
+    clickGate.finish('staff-login')
   }
+}
+
+function handleProviderClick(provider: 'Google' | 'Apple', enabled: boolean, event: MouseEvent) {
+  if (enabled) {
+    return
+  }
+  event.preventDefault()
+  statusMessage.value = `${provider} sign-in is not available right now.`
 }
 </script>
 
@@ -174,6 +218,7 @@ async function submitLogin() {
 }
 
 .staff-login input {
+  width: 100%;
   min-height: 3rem;
   border: 1px solid rgba(32, 19, 12, 0.2);
   border-radius: 16px;
@@ -181,6 +226,12 @@ async function submitLogin() {
   background: #fffdf9;
   color: #20130c;
   font: 1rem ui-sans-serif, system-ui, sans-serif;
+}
+
+.staff-login__password-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
 }
 
 .staff-login__policy,
@@ -210,6 +261,16 @@ async function submitLogin() {
   cursor: pointer;
 }
 
+.staff-login__ghost {
+  min-width: 4.4rem;
+  border: 1px solid rgba(32, 19, 12, 0.16);
+  border-radius: 16px;
+  color: #20130c;
+  background: #fff8ef;
+  cursor: pointer;
+  font-weight: 900;
+}
+
 .staff-login__primary:disabled {
   cursor: wait;
   opacity: 0.68;
@@ -219,6 +280,30 @@ async function submitLogin() {
   border: 1px solid rgba(32, 19, 12, 0.18);
   color: #20130c;
   background: #ffffff;
+}
+
+.staff-login__google[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+.staff-login__apple span {
+  background: #20130c;
+}
+
+.staff-login__spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 250, 243, 0.35);
+  border-top-color: #fffaf3;
+  border-radius: 50%;
+  animation: staff-spin 0.8s linear infinite;
+}
+
+@keyframes staff-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .staff-login__google span {

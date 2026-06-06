@@ -3,25 +3,35 @@ import { describe, expect, it, vi } from 'vitest'
 
 import StaffLoginPanel from './StaffLoginPanel.vue'
 import {
+  buildStaffAppleLoginUrl,
   buildStaffGoogleLoginUrl,
   buildStaffLoginUrl,
+  sanitizeNextPath,
   staffPasswordLogin,
   storageContainsStaffSecrets,
 } from './staffAuth'
+import { createClickGate } from './botGuard'
 
 describe('staff auth client security contract', () => {
   it('builds bounded backend URLs without exposing tokens in browser storage', async () => {
     expect(buildStaffLoginUrl('https://api.example.com/')).toBe('https://api.example.com/api/staff/auth/login/')
-    expect(buildStaffGoogleLoginUrl('https://api.example.com/', '/staff/portal')).toBe(
-      'https://api.example.com/api/staff/auth/google/start/?next=%2Fstaff%2Fportal',
+    expect(buildStaffGoogleLoginUrl('https://api.example.com/', '/staff/dashboard')).toBe(
+      'https://api.example.com/api/staff/auth/google/start/?next=%2Fstaff%2Fdashboard',
+    )
+    expect(buildStaffAppleLoginUrl('https://api.example.com/', '/staff/settings/security')).toBe(
+      'https://api.example.com/api/staff/auth/apple/start/?next=%2Fstaff%2Fsettings%2Fsecurity',
     )
     expect(buildStaffGoogleLoginUrl('https://api.example.com/', 'https://evil.example')).toBe(
-      'https://api.example.com/api/staff/auth/google/start/?next=%2Fstaff%2Fportal',
+      'https://api.example.com/api/staff/auth/google/start/?next=%2Fstaff%2Fdashboard',
     )
-    expect(buildStaffGoogleLoginUrl('http://web:8000', '/staff/portal')).toBe(
-      '/api/staff/auth/google/start/?next=%2Fstaff%2Fportal',
+    expect(buildStaffGoogleLoginUrl('http://web:8000', '/staff/dashboard')).toBe(
+      '/api/staff/auth/google/start/?next=%2Fstaff%2Fdashboard',
     )
     expect(buildStaffLoginUrl('http://web:8000')).toBe('/api/staff/auth/login/')
+    expect(sanitizeNextPath('/staff/bookings/BK-1001')).toBe('/staff/bookings/BK-1001')
+    expect(sanitizeNextPath('/customer/bookings')).toBe('/staff/dashboard')
+    expect(sanitizeNextPath('//evil.example/staff/dashboard')).toBe('/staff/dashboard')
+    expect(sanitizeNextPath('/staff/dashboard\r\nLocation:https://evil.example')).toBe('/staff/dashboard')
 
     localStorage.clear()
     sessionStorage.clear()
@@ -64,10 +74,21 @@ describe('staff auth client security contract', () => {
     })
     expect(storageContainsStaffSecrets(localStorage)).toBe(false)
   })
+
+  it('client-side click gate blocks rapid duplicate actions without being the security boundary', () => {
+    const gate = createClickGate(1200)
+
+    expect(gate.canRun('staff-login', 10_000)).toBe(true)
+    expect(gate.canRun('staff-login', 10_100)).toBe(false)
+    expect(gate.isRunning('staff-login')).toBe(true)
+    gate.finish('staff-login')
+    expect(gate.canRun('staff-login', 10_100)).toBe(false)
+    expect(gate.canRun('staff-login', 11_201)).toBe(true)
+  })
 })
 
 describe('staff login panel', () => {
-  it('renders password login, Google SSO, reset, and accessibility status surfaces', () => {
+  it('renders password login, disabled OAuth surfaces, reset, and accessibility status surfaces', async () => {
     const wrapper = mount(StaffLoginPanel, {
       props: {
         apiBaseUrl: 'https://api.example.com',
@@ -79,7 +100,46 @@ describe('staff login panel', () => {
     expect(wrapper.find('input[type="password"]').attributes('autocomplete')).toBe('current-password')
     expect(wrapper.find('input[type="password"]').attributes('minlength')).toBe('15')
     expect(wrapper.text()).toContain('Continue with Google')
-    expect(wrapper.find('a.staff-login__google').attributes('href')).toContain('/api/staff/auth/google/start/')
+    expect(wrapper.text()).toContain('Continue with Apple')
+    expect(wrapper.find('a.staff-login__google').attributes('href')).toBe('#')
+    expect(wrapper.find('a.staff-login__google').attributes('aria-disabled')).toBe('true')
     expect(wrapper.text()).toContain('Forgot your staff password?')
+    expect(wrapper.find('.staff-login__reset').attributes('href')).toBe('/staff/forgot-password')
+
+    await wrapper.find('a.staff-login__google').trigger('click')
+    expect(wrapper.text()).toContain('Google sign-in is not available right now.')
+  })
+
+  it('only exposes provider start URLs when provider auth is explicitly enabled', () => {
+    const wrapper = mount(StaffLoginPanel, {
+      props: {
+        apiBaseUrl: 'https://api.example.com',
+        csrfToken: 'csrf-token',
+        googleEnabled: true,
+        appleEnabled: true,
+        nextPath: '/staff/dashboard',
+      },
+    })
+
+    const links = wrapper.findAll('a.staff-login__google')
+    expect(links).toHaveLength(2)
+    const [googleLink, appleLink] = links
+    expect(googleLink?.attributes('href')).toContain('/api/staff/auth/google/start/?next=%2Fstaff%2Fdashboard')
+    expect(appleLink?.attributes('href')).toContain('/api/staff/auth/apple/start/?next=%2Fstaff%2Fdashboard')
+  })
+
+  it('shows and hides password input without persisting secrets', async () => {
+    const wrapper = mount(StaffLoginPanel, {
+      props: {
+        apiBaseUrl: 'https://api.example.com',
+        csrfToken: 'csrf-token',
+      },
+    })
+
+    expect(wrapper.find('input[name="password"]').attributes('type')).toBe('password')
+    await wrapper.find('button.staff-login__ghost').trigger('click')
+    expect(wrapper.find('input[name="password"]').attributes('type')).toBe('text')
+    expect(storageContainsStaffSecrets(localStorage)).toBe(false)
+    expect(storageContainsStaffSecrets(sessionStorage)).toBe(false)
   })
 })

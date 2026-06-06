@@ -12,7 +12,7 @@ export interface StaffLoginResult {
 }
 
 const GENERIC_LOGIN_ERROR = 'Invalid credentials.'
-const DEFAULT_NEXT_PATH = '/staff/portal'
+const DEFAULT_NEXT_PATH = '/staff/dashboard'
 
 function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, '')
@@ -31,7 +31,13 @@ function publicApiBaseUrl(apiBaseUrl: string): string {
 }
 
 function sanitizeNextPath(nextPath?: string): string {
-  if (!nextPath || !nextPath.startsWith('/') || nextPath.startsWith('//')) {
+  if (
+    !nextPath ||
+    !nextPath.startsWith('/') ||
+    nextPath.startsWith('//') ||
+    !nextPath.startsWith('/staff/') ||
+    /[\r\n]/.test(nextPath)
+  ) {
     return DEFAULT_NEXT_PATH
   }
   return nextPath
@@ -48,6 +54,15 @@ export function buildStaffGoogleLoginUrl(apiBaseUrl: string, nextPath = DEFAULT_
     return `/api/staff/auth/google/start/?${query}`
   }
   return `${baseUrl}/api/staff/auth/google/start/?${query}`
+}
+
+export function buildStaffAppleLoginUrl(apiBaseUrl: string, nextPath = DEFAULT_NEXT_PATH): string {
+  const baseUrl = publicApiBaseUrl(apiBaseUrl)
+  const query = new URLSearchParams({ next: sanitizeNextPath(nextPath) }).toString()
+  if (!baseUrl) {
+    return `/api/staff/auth/apple/start/?${query}`
+  }
+  return `${baseUrl}/api/staff/auth/apple/start/?${query}`
 }
 
 export async function staffPasswordLogin(
@@ -102,3 +117,5 @@ export function storageContainsStaffSecrets(storage: Storage): boolean {
   }
   return false
 }
+
+export { sanitizeNextPath }

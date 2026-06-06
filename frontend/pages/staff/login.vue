@@ -1,8 +1,10 @@
 <template>
   <StaffLoginPanel
     :api-base-url="runtimeConfig.public.apiBaseUrl"
+    :apple-enabled="runtimeConfig.public.staffAppleEnabled"
     :csrf-token="csrfToken"
-    next-path="/staff/portal"
+    :google-enabled="runtimeConfig.public.staffGoogleEnabled"
+    next-path="/staff/dashboard"
     @signed-in="handleSignedIn"
   />
 </template>
