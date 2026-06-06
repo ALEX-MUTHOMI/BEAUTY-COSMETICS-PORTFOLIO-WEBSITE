@@ -24,6 +24,8 @@ The system creates an operational customer record for booking, payment, receipt,
 
 The system does not require a customer password for guest booking flows and does not use marketing messages without a separate opt-in. Customers may optionally choose to remember details on the same device for faster repeat booking. Remembered-device convenience stores only an opaque security token in the browser cookie and does not store name, email, phone number, booking ID, receipt token, or payment provider reference in the cookie.
 
+Staff/beautician accounts are separate from customer booking records. Staff authentication may process staff email, password hash, session metadata, password-reset challenge metadata, re-authentication events, and staff security audit events. Staff passwords are not stored in plaintext, reset tokens are stored only as hashes, and staff security audit metadata must be redacted or HMACed.
+
 ## Purpose
 
 Data is used to create bookings, initiate checkout, verify payment status, deliver receipts and reminders, protect sensitive actions with OTP, prevent abuse, support customers, and maintain accounting-safe records.
@@ -59,6 +61,8 @@ Retention periods are described in the Data Retention Policy. Breach notificatio
 Essential cookies and session/security controls may be used to protect requests and status flows. Advertising cookies are not expected unless a future consent flow is added.
 
 The optional remembered-device cookie is an essential convenience/security cookie only when the customer explicitly chooses it. It is revocable through forget-device behavior and must be HttpOnly, Secure in production, SameSite-protected, expiring, and free of raw personal data.
+
+Staff portal sessions are essential security sessions for authorized staff only. They do not create customer accounts, do not grant access from customer remembered-device cookies, and expire after configured idle and absolute limits. Recent password re-authentication may be required before staff can reveal operational customer contact details.
 
 ## Legal Review
 

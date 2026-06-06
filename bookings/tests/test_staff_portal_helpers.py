@@ -2,6 +2,7 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.utils import timezone
 
 from bookings.models import Booking
 
@@ -30,6 +31,12 @@ def make_customer_user(email="customer-portal@example.com"):
 def staff_login(client, permissions=None, superuser=False):
     user = make_staff_user(permissions=permissions, superuser=superuser)
     client.force_login(user)
+    session = client.session
+    now = timezone.now().timestamp()
+    session["staff_auth_at"] = now
+    session["staff_last_activity_at"] = now
+    session["staff_recent_auth_at"] = now
+    session.save()
     return user
 
 

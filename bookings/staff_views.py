@@ -1,6 +1,14 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 
+from bookings.models import StaffSecurityAudit
+from bookings.services.staff_auth import (
+    GENERIC_REAUTH_REQUIRED,
+    GENERIC_SESSION_EXPIRED,
+    audit_staff_event,
+    enforce_staff_session,
+    has_recent_staff_auth,
+)
 from bookings.services.staff_portal import (
     StaffBookingNotFound,
     StaffPortalValidationError,
@@ -23,6 +31,14 @@ def _forbidden():
     return _json({"detail": "Staff portal is unavailable."}, status=403)
 
 
+def _session_expired():
+    return _json({"detail": GENERIC_SESSION_EXPIRED}, status=403)
+
+
+def _recent_reauth_required():
+    return _json({"detail": GENERIC_REAUTH_REQUIRED}, status=403)
+
+
 def _has_staff_permission(user, codename):
     if not getattr(user, "is_authenticated", False) or not getattr(user, "is_staff", False):
         return False
@@ -30,7 +46,17 @@ def _has_staff_permission(user, codename):
 
 
 def _require_staff_permission(request, codename):
+    if not getattr(request.user, "is_authenticated", False) or not getattr(request.user, "is_staff", False):
+        return _forbidden()
+    if not enforce_staff_session(request):
+        return _session_expired()
     if not _has_staff_permission(request.user, codename):
+        audit_staff_event(
+            StaffSecurityAudit.EventType.PERMISSION_DENIED,
+            staff_user=request.user,
+            request=request,
+            metadata={"permission": codename},
+        )
         return _forbidden()
     return None
 
@@ -102,6 +128,8 @@ def staff_booking_contact_access(request, public_booking_id):
     denied = _require_staff_permission(request, "view_staff_contact_details")
     if denied:
         return denied
+    if not has_recent_staff_auth(request):
+        return _recent_reauth_required()
     try:
         payload = reveal_contact(
             public_booking_id,
@@ -114,4 +142,10 @@ def staff_booking_contact_access(request, public_booking_id):
         return _not_found()
     except StaffPortalValidationError:
         return _validation_error()
+    audit_staff_event(
+        StaffSecurityAudit.EventType.CONTACT_REVEAL,
+        staff_user=request.user,
+        request=request,
+        metadata={"booking_reference": public_booking_id},
+    )
     return _json(payload)

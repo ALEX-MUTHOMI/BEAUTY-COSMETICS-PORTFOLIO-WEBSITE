@@ -1087,3 +1087,73 @@ class StaffActionAuditEvent(AuditMixin):
 
     class Meta:
         db_table = "booking_staff_action_audit_events"
+
+
+class StaffSecurityAudit(AuditMixin):
+    class EventType(models.TextChoices):
+        LOGIN_SUCCESS = "login_success", "Login Success"
+        LOGIN_FAILURE = "login_failure", "Login Failure"
+        LOGIN_RATE_LIMITED = "login_rate_limited", "Login Rate Limited"
+        LOGOUT = "logout", "Logout"
+        SESSION_EXPIRED = "session_expired", "Session Expired"
+        PASSWORD_RESET_REQUESTED = "password_reset_requested", "Password Reset Requested"
+        PASSWORD_RESET_COMPLETED = "password_reset_completed", "Password Reset Completed"
+        REAUTH_SUCCESS = "reauth_success", "Reauth Success"
+        REAUTH_FAILURE = "reauth_failure", "Reauth Failure"
+        CONTACT_REVEAL = "contact_reveal", "Contact Reveal"
+        PERMISSION_DENIED = "permission_denied", "Permission Denied"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    staff_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="staff_security_audits",
+    )
+    event_type = models.CharField(max_length=64, choices=EventType.choices)
+    ip_hash_hmac = models.CharField(max_length=128, blank=True)
+    user_agent_hash_hmac = models.CharField(max_length=128, blank=True)
+    metadata_redacted = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        db_table = "booking_staff_security_audits"
+        indexes = [
+            models.Index(fields=["event_type", "created_at"], name="staff_sec_event_time_idx"),
+            models.Index(fields=["staff_user", "created_at"], name="staff_sec_user_time_idx"),
+        ]
+
+
+class StaffPasswordResetChallenge(AuditMixin):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        USED = "used", "Used"
+        EXPIRED = "expired", "Expired"
+        REVOKED = "revoked", "Revoked"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    staff_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="staff_password_reset_challenges",
+    )
+    email_hash_hmac = models.CharField(max_length=128, db_index=True)
+    token_hash_hmac = models.CharField(max_length=128, unique=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    ip_hash_hmac = models.CharField(max_length=128, blank=True)
+    user_agent_hash_hmac = models.CharField(max_length=128, blank=True)
+
+    class Meta:
+        db_table = "booking_staff_password_reset_challenges"
+        indexes = [
+            models.Index(fields=["email_hash_hmac", "created_at"], name="staff_reset_email_time_idx"),
+            models.Index(fields=["status", "expires_at"], name="staff_reset_status_exp_idx"),
+        ]
+
+    def clean(self):
+        _require_aware_utc(self.expires_at, "expires_at")
+        _require_aware_utc(self.used_at, "used_at")

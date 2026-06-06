@@ -1,0 +1,120 @@
+import json
+
+from django.contrib.auth import authenticate, login, logout
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET, require_POST
+
+from bookings.models import StaffSecurityAudit
+from bookings.services.staff_auth import (
+    GENERIC_INVALID_CREDENTIALS,
+    GENERIC_RATE_LIMITED,
+    GENERIC_RESET_INVALID,
+    GENERIC_RESET_RESPONSE,
+    GENERIC_SESSION_EXPIRED,
+    StaffAuthError,
+    StaffAuthRateLimited,
+    assert_login_not_throttled,
+    audit_staff_event,
+    clear_login_failures,
+    confirm_staff_password_reset,
+    enforce_staff_session,
+    mark_staff_recent_auth,
+    mark_staff_session_authenticated,
+    record_login_failure,
+    request_staff_password_reset,
+    staff_profile,
+)
+
+
+def _json(payload, status=200):
+    response = JsonResponse(payload, status=status)
+    response["Cache-Control"] = "no-store"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+def _body(request):
+    try:
+        return json.loads(request.body.decode() or "{}")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return {}
+
+
+def _staff_forbidden():
+    return _json({"detail": "Staff portal is unavailable."}, status=403)
+
+
+@require_POST
+def staff_login(request):
+    payload = _body(request)
+    email = str(payload.get("email", "")).strip().lower()
+    password = str(payload.get("password", ""))
+    try:
+        assert_login_not_throttled(email, request)
+    except StaffAuthRateLimited:
+        return _json({"detail": GENERIC_RATE_LIMITED}, status=429)
+
+    user = authenticate(request, username=email, password=password)
+    if not user or not getattr(user, "is_active", False) or not getattr(user, "is_staff", False):
+        record_login_failure(email, request, staff_user=user if getattr(user, "is_staff", False) else None)
+        return _json({"detail": GENERIC_INVALID_CREDENTIALS}, status=400)
+
+    login(request, user)
+    mark_staff_session_authenticated(request)
+    clear_login_failures(email, request)
+    audit_staff_event(StaffSecurityAudit.EventType.LOGIN_SUCCESS, staff_user=user, request=request)
+    return _json(staff_profile(user))
+
+
+@require_POST
+def staff_logout(request):
+    user = request.user if getattr(request.user, "is_authenticated", False) else None
+    if user and getattr(user, "is_staff", False):
+        audit_staff_event(StaffSecurityAudit.EventType.LOGOUT, staff_user=user, request=request)
+    logout(request)
+    return _json({"detail": "Signed out."})
+
+
+@require_GET
+def staff_me(request):
+    if not enforce_staff_session(request):
+        return _json({"detail": GENERIC_SESSION_EXPIRED}, status=403)
+    return _json(staff_profile(request.user))
+
+
+@require_POST
+def staff_reauth(request):
+    if not enforce_staff_session(request):
+        return _staff_forbidden()
+    payload = _body(request)
+    password = str(payload.get("password", ""))
+    user = authenticate(request, username=request.user.email, password=password)
+    if not user or user.pk != request.user.pk:
+        audit_staff_event(StaffSecurityAudit.EventType.REAUTH_FAILURE, staff_user=request.user, request=request)
+        return _json({"detail": GENERIC_INVALID_CREDENTIALS}, status=400)
+    mark_staff_recent_auth(request)
+    audit_staff_event(StaffSecurityAudit.EventType.REAUTH_SUCCESS, staff_user=request.user, request=request)
+    return _json({"detail": "Recent staff password confirmed."})
+
+
+@require_POST
+def staff_password_reset_request(request):
+    payload = _body(request)
+    request_staff_password_reset(str(payload.get("email", "")), request)
+    return _json({"detail": GENERIC_RESET_RESPONSE})
+
+
+@require_POST
+def staff_password_reset_confirm(request):
+    payload = _body(request)
+    try:
+        confirm_staff_password_reset(str(payload.get("token", "")), str(payload.get("new_password", "")), request)
+    except (StaffAuthError, ValueError):
+        return _json({"detail": GENERIC_RESET_INVALID}, status=400)
+    logout(request)
+    return _json({"detail": "Password reset complete."})
+
+
+@require_GET
+def staff_google_start(request):
+    return _json({"detail": "Staff Google sign-in is not configured."}, status=503)

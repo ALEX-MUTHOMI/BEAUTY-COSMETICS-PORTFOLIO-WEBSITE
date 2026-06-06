@@ -87,6 +87,12 @@ The customer remedy is rescheduling, not self-service refunds. The old slot must
 
 Staff views must default to redacted customer contact data. Any reveal of operational contact fields must be permission checked and written to `StaffActionAuditEvent`. Bulk export and dashboard filtering need explicit authorization and redaction in later phases.
 
+The beautician staff account uses email plus a strong password, not customer-style OTP on every login. Staff passwords are hashed through Django's Argon2 hasher, staff-specific validation rejects weak/common/account-derived passwords, and staff login uses cookie-backed Django sessions rather than browser-stored bearer tokens. Failed staff logins are throttled by hashed email/IP risk buckets.
+
+Staff sessions have both idle and absolute lifetime limits. Login rotates the Django session, logout invalidates it, and password reset invalidates existing sessions through Django's password-session hash. Sensitive staff actions, including customer contact reveal, require a recent password re-authentication window in addition to the existing permission check.
+
+Forgot-password is recovery-only. Reset challenges store hashed high-entropy tokens, expire quickly, are single-use, and use fake email delivery in default tests. Google OAuth, passkeys, and TOTP MFA are deferred until explicitly scoped and tested; they must not be claimed as active controls.
+
 ## Enumeration Protection
 
 Public lookup uses `public_id` plus customer proof such as phone HMAC. Internal primary keys must not be exposed. Unknown records should return generic responses.
@@ -230,6 +236,16 @@ Implemented in B7A:
 - Staff pressure coverage for 1,000 bounded schedule reads without mutating booking or financial state.
 - No expansion of booking availability, urgent booking, refunds, gallery, or full admin dashboard behavior.
 
+Implemented in B7A-SEC-BACKEND:
+
+- Staff auth endpoints under `/api/staff/auth/` for login, logout, session status, recent password re-authentication, password reset request/confirm, and safe Google OAuth not-configured response.
+- Staff password security with Argon2-first hashing and staff-specific weak/common/account-derived password rejection.
+- Redis-backed staff login throttling with generic invalid/cooldown responses and redacted security audit events.
+- Timed staff sessions with idle and absolute expiry, session rotation on login, logout invalidation, and password-reset session invalidation.
+- Recent password re-authentication for customer contact reveal, without adding email OTP to routine staff login.
+- `StaffSecurityAudit` and `StaffPasswordResetChallenge` records that store HMAC/hash/redacted metadata only.
+- Customer remembered-device cookies and customer OTP session flags remain isolated from staff portal access.
+
 ## Deferred Phases
 
 - Urgent booking.
@@ -237,3 +253,4 @@ Implemented in B7A:
 - Production database sharding or partitioning execution after measured need.
 - Admin package-management UI.
 - Full production observability dashboarding and alerting.
+- Optional TOTP/passkey MFA and full Google OAuth for staff.

@@ -24,6 +24,10 @@ Remembered-device active tokens should expire after a short configurable period,
 
 OTP challenges should be deleted or anonymized after their short security-retention window, normally 30 to 90 days. Booking flow sessions and non-sensitive status recovery state should expire quickly, normally 30 to 60 minutes unless a shorter security policy applies.
 
+Staff password reset challenges should expire quickly, normally 15 to 30 minutes, and should retain only hashed tokens, hashed email, status, timestamps, and redacted/HMACed request metadata for a short security review window. Used, expired, or revoked reset challenges should not be reusable.
+
+Staff security audit records should be retained for security accountability and abuse investigation for a defined operational window approved before production. Audit metadata must not contain raw passwords, reset tokens, session IDs, raw IP addresses, OTPs, raw customer contact details, or provider credentials. Contact reveal audit records may need longer retention where justified by privacy, dispute, or compliance obligations.
+
 ## Backups
 
 Backups may retain data until their normal rotation expires. Backup access must be limited and audited.
