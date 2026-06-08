@@ -1,4 +1,8 @@
 /**
+ * Module: bookingIdempotency
+ * Ensures booking idempotency.
+ */
+/**
  * @module bookingIdempotency
  * Helpers for enforcing idempotency during booking submissions.
  */
@@ -35,3 +39,4 @@ export function buildStkIdempotencyKey(checkoutPublicId: string, attemptNonce: s
 export function createBookingAttemptNonce(): string {
   return crypto.randomUUID()
 }
+
