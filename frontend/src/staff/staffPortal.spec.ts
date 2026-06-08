@@ -69,14 +69,15 @@ describe('staff portal friendly copy and security boundaries', () => {
     expect(completed?.attributes('disabled')).toBeDefined()
   })
 
-  it('keeps gallery upload disabled until a secure backend pipeline exists', () => {
+  it('renders gallery upload navigation with friendly states and no backend jargon', () => {
     const wrapper = mount(StaffGalleryWorkspace, { global: { stubs: globalStubs } })
 
-    expect(wrapper.text()).toContain('Uploads are disabled')
-    expect(wrapper.text()).toContain('Sensitive category')
+    expect(wrapper.text()).toContain('Checking image')
+    expect(wrapper.text()).toContain('Choose JPG, PNG, or WebP')
+    expect(wrapper.text()).toContain('Sensitive waxing image')
     const uploadButton = wrapper.findAll('button').find((button) => button.text().includes('Upload'))
     expect(uploadButton?.attributes('disabled')).toBeDefined()
-    expect(wrapper.text()).not.toMatch(/raw payload|checkout ID|receipt token/i)
+    expect(wrapper.text()).not.toMatch(/raw payload|checkout ID|receipt token|quarantine|storage key/i)
   })
 
   it('renders settings/security copy without low-level implementation detail', () => {

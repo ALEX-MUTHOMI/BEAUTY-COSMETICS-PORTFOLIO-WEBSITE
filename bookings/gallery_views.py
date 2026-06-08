@@ -1,12 +1,14 @@
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import Prefetch
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 
-from bookings.models import GalleryCategory
+from bookings.models import GalleryCategory, GallerySubcategory
 from bookings.services.gallery_images import create_gallery_image_from_upload
 from bookings.services.gallery_public import (
     get_homepage_gallery,
     get_public_category_gallery,
+    get_public_service_gallery,
     get_public_subcategory_gallery,
 )
 from bookings.services.staff_auth import GENERIC_SESSION_EXPIRED, enforce_staff_session
@@ -41,7 +43,14 @@ def staff_gallery_categories(request):
     if denied:
         return denied
     categories = (
-        GalleryCategory.objects.filter(is_active=True).prefetch_related("subcategories").order_by("sort_order", "name")
+        GalleryCategory.objects.filter(is_active=True)
+        .prefetch_related(
+            Prefetch(
+                "subcategories",
+                queryset=GallerySubcategory.objects.filter(is_active=True).order_by("sort_order", "name"),
+            )
+        )
+        .order_by("sort_order", "name")
     )
     return _json(
         {
@@ -59,7 +68,7 @@ def staff_gallery_categories(request):
                             "sensitivity_default": sub.sensitivity_default,
                             "requires_warning_default": sub.requires_warning_default,
                         }
-                        for sub in category.subcategories.filter(is_active=True).order_by("sort_order", "name")
+                        for sub in category.subcategories.all()
                     ],
                 }
                 for category in categories
@@ -90,6 +99,8 @@ def staff_gallery_image_upload(request):
         message = str(exc).lower()
         if "cap" in message:
             return _safe_validation(status=429)
+        if "duplicate" in message:
+            return _safe_validation(status=409)
         return _safe_validation()
     return _json(
         {
@@ -113,6 +124,14 @@ def public_gallery_homepage(request):
 def public_gallery_category(request, category_slug):
     try:
         return _json(get_public_category_gallery(category_slug))
+    except ObjectDoesNotExist:
+        return _json({"detail": "Gallery category is unavailable."}, status=404)
+
+
+@require_GET
+def public_gallery_service(request, service_slug):
+    try:
+        return _json(get_public_service_gallery(service_slug))
     except ObjectDoesNotExist:
         return _json({"detail": "Gallery category is unavailable."}, status=404)
 

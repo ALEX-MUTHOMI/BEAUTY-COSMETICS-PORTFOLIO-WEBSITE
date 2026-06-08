@@ -102,6 +102,10 @@ def validate_gallery_upload(upload):
     return content
 
 
+def raw_upload_hash(content):
+    return hashlib.sha256(content).hexdigest()
+
+
 def enforce_gallery_caps(*, staff_user, desired_status=None):
     if desired_status == GalleryImage.Status.PUBLISHED:
         if GalleryImage.objects.filter(status=GalleryImage.Status.PUBLISHED).count() >= _setting_int(
@@ -123,7 +127,20 @@ def enforce_gallery_caps(*, staff_user, desired_status=None):
 
 def create_gallery_image_from_upload(*, staff_user, category_public_id, upload, title="", subcategory_public_id=None):
     enforce_gallery_caps(staff_user=staff_user)
-    content = validate_gallery_upload(upload)
+    try:
+        content = validate_gallery_upload(upload)
+    except ValidationError:
+        audit_gallery_event(GalleryAuditLog.EventType.REJECTED, staff_user=staff_user)
+        raise
+    raw_hash = raw_upload_hash(content)
+    duplicate_exists = (
+        GalleryImage.objects.filter(raw_original_sha256=raw_hash)
+        .exclude(status__in=[GalleryImage.Status.ARCHIVED, GalleryImage.Status.DELETE_PENDING])
+        .exists()
+    )
+    if duplicate_exists:
+        audit_gallery_event(GalleryAuditLog.EventType.DUPLICATE_REJECTED, staff_user=staff_user)
+        raise ValidationError("Duplicate gallery image was not accepted.")
     category = GalleryCategory.objects.get(public_id=category_public_id, is_active=True)
     subcategory = None
     if subcategory_public_id:
@@ -145,6 +162,7 @@ def create_gallery_image_from_upload(*, staff_user, category_public_id, upload, 
         status=GalleryImage.Status.QUARANTINED,
         sensitivity_level=sensitivity,
         requires_warning=requires_warning,
+        raw_original_sha256=raw_hash,
     )
     key = build_quarantine_key(str(batch.public_id), str(image.public_id), getattr(upload, "name", ""))
     try:
@@ -264,3 +282,15 @@ def archive_gallery_image(image, *, staff_user):
     image.save(update_fields=["status", "archived_at", "updated_at"])
     audit_gallery_event(GalleryAuditLog.EventType.ARCHIVED, staff_user=staff_user, gallery_image=image)
     return image
+
+
+def retry_failed_gallery_image(image, *, staff_user):
+    image.refresh_from_db()
+    if image.status != GalleryImage.Status.FAILED:
+        raise ValidationError("Only failed gallery images can be retried.")
+    if not image.quarantine_key:
+        raise ValidationError("Gallery image cannot be retried.")
+    image.status = GalleryImage.Status.QUARANTINED
+    image.processing_error_code = ""
+    image.save(update_fields=["status", "processing_error_code", "updated_at"])
+    return process_gallery_image_now(str(image.public_id))

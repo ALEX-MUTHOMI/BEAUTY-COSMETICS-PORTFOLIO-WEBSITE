@@ -2,6 +2,12 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
+def _gallery_test_storage(settings, tmp_path):
+    settings.GALLERY_STORAGE_ROOT = tmp_path / "gallery-storage"
+    yield
+
+
+@pytest.fixture(autouse=True)
 def _clear_test_cache():
     from django.core.cache import cache
 

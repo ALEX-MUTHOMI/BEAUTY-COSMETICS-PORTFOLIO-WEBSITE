@@ -22,7 +22,9 @@ def test_gallery_upload_intent_pressure_is_bounded_by_caps(tmp_path, settings):
             {
                 "category_public_id": str(category.public_id),
                 "image": SimpleUploadedFile(
-                    f"{index}.jpg", make_test_image_bytes(size=(640, 480)), content_type="image/jpeg"
+                    f"{index}.jpg",
+                    make_test_image_bytes(size=(640, 480), color=((index * 7) % 255, 120, 90)),
+                    content_type="image/jpeg",
                 ),
             },
             secure=True,

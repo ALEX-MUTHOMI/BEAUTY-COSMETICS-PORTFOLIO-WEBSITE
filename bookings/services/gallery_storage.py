@@ -49,8 +49,8 @@ class GalleryObjectStorage:
 
     def put(self, key, content):
         path = self._path(key)
-        path.parent.mkdir(parents=True, exist_ok=True)
         try:
+            path.parent.mkdir(parents=True, exist_ok=True)
             with open(path, "wb") as handle:
                 handle.write(content)
         except OSError as exc:

@@ -1188,6 +1188,7 @@ class GalleryImage(AuditMixin):
     sensitive_publish_confirmed = models.BooleanField(default=False)
     original_private_key = models.CharField(max_length=255, blank=True)
     quarantine_key = models.CharField(max_length=255, blank=True)
+    raw_original_sha256 = models.CharField(max_length=64, blank=True, db_index=True)
     processing_error_code = models.CharField(max_length=64, blank=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="gallery_images")
     published_at = models.DateTimeField(null=True, blank=True)
@@ -1203,6 +1204,7 @@ class GalleryImage(AuditMixin):
             ),
             models.Index(fields=["sensitivity_level", "requires_warning"], name="gallery_img_sensitive_idx"),
             models.Index(fields=["uploaded_by", "created_at"], name="gallery_img_uploader_idx"),
+            models.Index(fields=["raw_original_sha256", "status"], name="gallery_img_raw_hash_idx"),
         ]
 
     def clean(self):
@@ -1257,6 +1259,8 @@ class GalleryAuditLog(AuditMixin):
         ARCHIVED = "archived", "Archived"
         REPLACED = "replaced", "Replaced"
         DELETED = "deleted", "Deleted"
+        REJECTED = "rejected", "Rejected"
+        DUPLICATE_REJECTED = "duplicate_rejected", "Duplicate Rejected"
         SENSITIVE_PUBLISH_CONFIRMED = "sensitive_publish_confirmed", "Sensitive Publish Confirmed"
         CONSENT_MARKED = "consent_marked", "Consent Marked"
         CAP_REJECTED = "cap_rejected", "Cap Rejected"

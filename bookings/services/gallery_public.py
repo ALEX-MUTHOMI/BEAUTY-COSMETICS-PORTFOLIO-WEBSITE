@@ -74,6 +74,16 @@ def get_public_category_gallery(category_slug):
     }
 
 
+def get_public_service_gallery(service_slug):
+    payload = get_public_category_gallery(service_slug)
+    payload["service"] = {
+        "slug": payload["category"]["slug"],
+        "name": payload["category"]["name"],
+        "requires_warning": payload["category"]["requires_warning"],
+    }
+    return payload
+
+
 def get_public_subcategory_gallery(category_slug, subcategory_slug):
     limit = int(getattr(settings, "GALLERY_PUBLIC_SUBCATEGORY_LIMIT", 10))
     category = GalleryCategory.objects.get(slug=category_slug, is_active=True)

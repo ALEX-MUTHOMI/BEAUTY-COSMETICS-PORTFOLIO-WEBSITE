@@ -28,6 +28,22 @@ export interface StaffSchedule {
   appointments: StaffAppointment[]
 }
 
+export interface StaffGallerySubcategory {
+  publicId: string
+  name: string
+  slug: string
+  sensitivityDefault: string
+  requiresWarningDefault: boolean
+}
+
+export interface StaffGalleryCategory {
+  publicId: string
+  name: string
+  slug: string
+  isSensitiveDefault: boolean
+  subcategories: StaffGallerySubcategory[]
+}
+
 export interface StaffApiResult<T> {
   ok: boolean
   status: number
@@ -91,6 +107,84 @@ export async function getStaffMe(apiBaseUrl: string, fetcher?: Fetcher): Promise
     data: {
       displayName: safeDisplayText(result.data.display_name, 'Staff'),
       permissions: Array.isArray(result.data.permissions) ? result.data.permissions : [],
+    },
+  }
+}
+
+export async function getStaffGalleryCategories(
+  apiBaseUrl: string,
+  fetcher?: Fetcher,
+): Promise<StaffApiResult<{ categories: StaffGalleryCategory[] }>> {
+  const result = await staffFetch<{ categories?: Record<string, unknown>[] }>(
+    apiBaseUrl,
+    '/api/staff/gallery/categories/',
+    fetcher,
+  )
+  if (!result.ok || !result.data) {
+    return { ...result, data: undefined }
+  }
+  return {
+    ...result,
+    data: {
+      categories: (result.data.categories || []).map((category) => ({
+        publicId: safeDisplayText(category.public_id),
+        name: safeDisplayText(category.name),
+        slug: safeDisplayText(category.slug),
+        isSensitiveDefault: Boolean(category.is_sensitive_default),
+        subcategories: Array.isArray(category.subcategories)
+          ? category.subcategories.map((subcategory) => {
+              const item = subcategory as Record<string, unknown>
+              return {
+                publicId: safeDisplayText(item.public_id),
+                name: safeDisplayText(item.name),
+                slug: safeDisplayText(item.slug),
+                sensitivityDefault: safeDisplayText(item.sensitivity_default, 'normal'),
+                requiresWarningDefault: Boolean(item.requires_warning_default),
+              }
+            })
+          : [],
+      })),
+    },
+  }
+}
+
+export async function postStaffGalleryImage(
+  apiBaseUrl: string,
+  formData: FormData,
+  csrfToken: string,
+  fetcher: Fetcher = fetch,
+): Promise<StaffApiResult<{ image: { publicId: string; status: string; title: string; category: string } }>> {
+  const response = await fetcher(`${apiBase(apiBaseUrl)}/api/staff/gallery/images/`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      Accept: 'application/json',
+    },
+    body: formData,
+  })
+  const data = await safeJson(response)
+  if (!response.ok || typeof data !== 'object' || data === null || !('image' in data)) {
+    return {
+      ok: false,
+      status: response.status,
+      message:
+        response.status === 409
+          ? 'This image is already in the gallery.'
+          : 'Could not use this image. Choose a clear JPG, PNG, or WebP and try again.',
+    }
+  }
+  const image = (data as { image: Record<string, unknown> }).image
+  return {
+    ok: true,
+    status: response.status,
+    data: {
+      image: {
+        publicId: safeDisplayText(image.public_id),
+        status: safeDisplayText(image.status, 'checking'),
+        title: safeDisplayText(image.title),
+        category: safeDisplayText(image.category),
+      },
     },
   }
 }
