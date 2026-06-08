@@ -64,6 +64,12 @@ The optional remembered-device cookie is an essential convenience/security cooki
 
 Staff portal sessions are essential security sessions for authorized staff only. They do not create customer accounts, do not grant access from customer remembered-device cookies, and expire after configured idle and absolute limits. Recent password re-authentication may be required before staff can reveal operational customer contact details.
 
+## Portfolio Gallery Images
+
+Authorized staff may upload portfolio images for configured beauty service categories. Customer-uploaded gallery publishing is not supported in this phase. If a portfolio image identifies a client, consent must be confirmed before publication. Sensitive waxing images require warning controls and are excluded from homepage display by default.
+
+Original uploads are private quarantine/processing inputs. Public gallery pages should use optimized derivative images only. GPS/EXIF metadata is stripped during processing, and private object-storage keys must not be exposed in public APIs.
+
 ## Legal Review
 
 This document is an engineering draft. It must be reviewed and approved by qualified legal counsel before production.

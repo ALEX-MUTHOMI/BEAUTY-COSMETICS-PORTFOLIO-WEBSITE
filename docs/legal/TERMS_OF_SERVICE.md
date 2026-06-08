@@ -44,6 +44,10 @@ Customers must provide accurate contact details for payment prompts, receipts, r
 
 Email delivery, M-Pesa prompts, callbacks, and receipt generation can be delayed by third-party providers or network conditions. The service should provide a safe status lookup and must not expose private booking or payment identifiers.
 
+## Portfolio Gallery
+
+Gallery content is curated by authorized staff. Staff are responsible for selecting accurate categories/subcategories and confirming that identifiable client images have appropriate consent before publication. Sensitive waxing content must follow platform warning and publication restrictions. Customer self-uploaded gallery publishing is not part of this phase.
+
 ## Liability And Force Majeure
 
 Liability limits, force majeure language, dispute process, and consumer-protection carveouts require legal review before production use.

@@ -14,5 +14,5 @@ def test_booking_indexes_and_partition_readiness_fields_exist():
     assert {index.name for index in BookingDayState._meta.indexes} >= {"booking_day_state_date_idx"}
     assert {index.name for index in BookingServiceItem._meta.indexes} >= {"booking_item_booking_idx"}
     assert {index.name for index in FullPackage._meta.indexes} >= {"full_package_slug_active_idx"}
-    assert {index.name for index in ServiceCategory._meta.indexes} >= {"service_category_slug_active_idx"}
+    assert {index.name for index in ServiceCategory._meta.indexes} >= {"svc_cat_slug_active_idx"}
     assert {index.name for index in Service._meta.indexes} >= {"booking_service_catalog_idx"}

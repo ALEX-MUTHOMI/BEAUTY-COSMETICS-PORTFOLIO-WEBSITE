@@ -246,10 +246,21 @@ Implemented in B7A-SEC-BACKEND:
 - `StaffSecurityAudit` and `StaffPasswordResetChallenge` records that store HMAC/hash/redacted metadata only.
 - Customer remembered-device cookies and customer OTP session flags remain isolated from staff portal access.
 
+Implemented in B7B Gallery CMS backend:
+
+- Staff-only gallery upload intake mounted under `/api/staff/gallery/`.
+- Private quarantine storage abstraction for raw uploads; public APIs return optimized derivatives only.
+- Pillow-based image validation and WebP variant generation with EXIF/GPS stripping through image re-encoding.
+- Server-side gallery caps for daily upload, draft, published, homepage, category, subcategory, and sensitive output.
+- Sensitive waxing controls requiring warning metadata, explicit staff confirmation, and no homepage exposure by default.
+- Identifiable portfolio image consent state that blocks publish until confirmed.
+- Gallery audit records for upload, processing, publish, archive, storage failure, consent, and sensitive-publication actions.
+- No AI image classification in this phase; staff selects category/subcategory and deterministic source-profile heuristics only tune processing.
+
 ## Deferred Phases
 
 - Urgent booking.
-- Gallery and staff dashboard expansion.
+- Advanced gallery frontend masonry/crop/focal-point tooling.
 - Production database sharding or partitioning execution after measured need.
 - Admin package-management UI.
 - Full production observability dashboarding and alerting.

@@ -74,7 +74,7 @@ def _hash_or_blank(value):
 def _redis_namespace():
     current_test = os.environ.get("PYTEST_CURRENT_TEST")
     if current_test:
-        return f"staff-auth:test:{hash_sensitive_value(current_test.split(' ')[0])[:16]}"
+        return f"staff-auth:test:{os.getpid()}:{hash_sensitive_value(current_test.split(' ')[0])[:16]}"
     return "staff-auth:runtime"
 
 

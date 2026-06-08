@@ -9,6 +9,8 @@ volumes:
     driver: local
   receipt_artifacts:
     driver: local
+  gallery_storage:
+    driver: local
   pytest_cache:
     driver: local
 
@@ -101,6 +103,7 @@ services:
     volumes:
       - .:/app:rw
       - receipt_artifacts:/app/var/receipt-artifacts:rw
+      - gallery_storage:/app/var/gallery-storage:rw
       - pytest_cache:/app/var/pytest-cache:rw
     ports:
       - "8000:8000"
@@ -215,6 +218,21 @@ services:
       - CUSTOMER_ACTION_SESSION_TTL_MINUTES=${CUSTOMER_ACTION_SESSION_TTL_MINUTES:-15}
       - BOOKING_REMINDER_2H_ENABLED=${BOOKING_REMINDER_2H_ENABLED:-false}
       - BOOKING_REMINDER_MAX_ATTEMPTS=${BOOKING_REMINDER_MAX_ATTEMPTS:-3}
+      - GALLERY_STORAGE_ROOT=${GALLERY_STORAGE_ROOT:-/app/var/gallery-storage}
+      - GALLERY_PUBLIC_BASE_URL=${GALLERY_PUBLIC_BASE_URL:-/media/}
+      - GALLERY_MAX_BATCH_IMAGES=${GALLERY_MAX_BATCH_IMAGES:-10}
+      - GALLERY_MAX_STANDARD_IMAGE_BYTES=${GALLERY_MAX_STANDARD_IMAGE_BYTES:-10485760}
+      - GALLERY_MAX_HIGH_RES_IMAGE_BYTES=${GALLERY_MAX_HIGH_RES_IMAGE_BYTES:-26214400}
+      - GALLERY_MAX_BATCH_BYTES=${GALLERY_MAX_BATCH_BYTES:-62914560}
+      - GALLERY_MAX_IMAGE_PIXELS=${GALLERY_MAX_IMAGE_PIXELS:-50000000}
+      - GALLERY_MAX_DAILY_UPLOADS=${GALLERY_MAX_DAILY_UPLOADS:-30}
+      - GALLERY_MAX_DRAFT_IMAGES=${GALLERY_MAX_DRAFT_IMAGES:-100}
+      - GALLERY_MAX_PUBLISHED_IMAGES=${GALLERY_MAX_PUBLISHED_IMAGES:-80}
+      - GALLERY_HOMEPAGE_FEATURED_LIMIT=${GALLERY_HOMEPAGE_FEATURED_LIMIT:-12}
+      - GALLERY_PUBLIC_CATEGORY_LIMIT=${GALLERY_PUBLIC_CATEGORY_LIMIT:-18}
+      - GALLERY_PUBLIC_SUBCATEGORY_LIMIT=${GALLERY_PUBLIC_SUBCATEGORY_LIMIT:-10}
+      - GALLERY_PUBLIC_SENSITIVE_LIMIT=${GALLERY_PUBLIC_SENSITIVE_LIMIT:-6}
+      - GALLERY_PROCESSING_TIMEOUT_SECONDS=${GALLERY_PROCESSING_TIMEOUT_SECONDS:-15}
       - STAFF_GOOGLE_OAUTH_CLIENT_ID=${STAFF_GOOGLE_OAUTH_CLIENT_ID:-}
       - STAFF_GOOGLE_OAUTH_REDIRECT_URI=${STAFF_GOOGLE_OAUTH_REDIRECT_URI:-}
       - STAFF_GOOGLE_OAUTH_SCOPE=${STAFF_GOOGLE_OAUTH_SCOPE:-openid email profile}
@@ -510,3 +528,61 @@ services:
       - no-new-privileges:true
     profiles:
       - receipts
+
+  gallery-worker:
+    image: beauty_web_app:latest
+    container_name: beauty_gallery_worker
+    command: celery -A core worker --loglevel=info -Q gallery --concurrency=${GALLERY_WORKER_CONCURRENCY:-1}
+    volumes:
+      - .:/app:rw
+      - gallery_storage:/app/var/gallery-storage:rw
+      - pytest_cache:/app/var/pytest-cache:rw
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - POETRY_VIRTUALENVS_CREATE=false
+      - PATH=/app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+      - SECRET_KEY=${SECRET_KEY:-phase1-phase2-prod-verification-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PII_HASH_PEPPER=${PII_HASH_PEPPER:-local-test-pii-hash-pepper-change-me}
+      - PII_ENCRYPTION_KEY=${PII_ENCRYPTION_KEY:-local-test-pii-encryption-key-change-me}
+      - POSTGRES_DB=${POSTGRES_DB:-beauty_db}
+      - POSTGRES_USER=${POSTGRES_USER:-beauty_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-beauty_secure_password}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
+      - PYTEST_CACHE_DIR=${PYTEST_CACHE_DIR:-/app/var/pytest-cache}
+      - GALLERY_STORAGE_ROOT=${GALLERY_STORAGE_ROOT:-/app/var/gallery-storage}
+      - GALLERY_PUBLIC_BASE_URL=${GALLERY_PUBLIC_BASE_URL:-/media/}
+      - GALLERY_MAX_BATCH_IMAGES=${GALLERY_MAX_BATCH_IMAGES:-10}
+      - GALLERY_MAX_STANDARD_IMAGE_BYTES=${GALLERY_MAX_STANDARD_IMAGE_BYTES:-10485760}
+      - GALLERY_MAX_HIGH_RES_IMAGE_BYTES=${GALLERY_MAX_HIGH_RES_IMAGE_BYTES:-26214400}
+      - GALLERY_MAX_BATCH_BYTES=${GALLERY_MAX_BATCH_BYTES:-62914560}
+      - GALLERY_MAX_IMAGE_PIXELS=${GALLERY_MAX_IMAGE_PIXELS:-50000000}
+      - GALLERY_MAX_DAILY_UPLOADS=${GALLERY_MAX_DAILY_UPLOADS:-30}
+      - GALLERY_MAX_DRAFT_IMAGES=${GALLERY_MAX_DRAFT_IMAGES:-100}
+      - GALLERY_MAX_PUBLISHED_IMAGES=${GALLERY_MAX_PUBLISHED_IMAGES:-80}
+      - GALLERY_HOMEPAGE_FEATURED_LIMIT=${GALLERY_HOMEPAGE_FEATURED_LIMIT:-12}
+      - GALLERY_PUBLIC_CATEGORY_LIMIT=${GALLERY_PUBLIC_CATEGORY_LIMIT:-18}
+      - GALLERY_PUBLIC_SUBCATEGORY_LIMIT=${GALLERY_PUBLIC_SUBCATEGORY_LIMIT:-10}
+      - GALLERY_PUBLIC_SENSITIVE_LIMIT=${GALLERY_PUBLIC_SENSITIVE_LIMIT:-6}
+      - GALLERY_PROCESSING_TIMEOUT_SECONDS=${GALLERY_PROCESSING_TIMEOUT_SECONDS:-15}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - beauty_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    profiles:
+      - gallery
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
+    restart: unless-stopped

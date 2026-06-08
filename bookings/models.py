@@ -1052,6 +1052,249 @@ class CustomerActionSession(AuditMixin):
         _require_aware_utc(self.used_at, "used_at")
 
 
+class GalleryCategory(AuditMixin):
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    name = models.CharField(max_length=96)
+    slug = models.SlugField(max_length=110, unique=True)
+    description = models.CharField(max_length=255, blank=True)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    is_sensitive_default = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "gallery_categories"
+        ordering = ["sort_order", "name"]
+        indexes = [models.Index(fields=["slug", "is_active"], name="gallery_cat_slug_active_idx")]
+
+    def __str__(self):
+        return self.name
+
+
+class GallerySubcategory(AuditMixin):
+    class SensitivityDefault(models.TextChoices):
+        NORMAL = "normal", "Normal"
+        SENSITIVE = "sensitive", "Sensitive"
+        RESTRICTED = "restricted", "Restricted"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    category = models.ForeignKey(GalleryCategory, on_delete=models.PROTECT, related_name="subcategories")
+    name = models.CharField(max_length=96)
+    slug = models.SlugField(max_length=110)
+    description = models.CharField(max_length=255, blank=True)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    sensitivity_default = models.CharField(
+        max_length=16,
+        choices=SensitivityDefault.choices,
+        default=SensitivityDefault.NORMAL,
+    )
+    requires_warning_default = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "gallery_subcategories"
+        ordering = ["sort_order", "name"]
+        constraints = [
+            models.UniqueConstraint(fields=["category", "slug"], name="uniq_gallery_subcat_slug"),
+        ]
+        indexes = [models.Index(fields=["category", "slug", "is_active"], name="gallery_subcat_active_idx")]
+
+    def __str__(self):
+        return f"{self.category.slug}/{self.slug}"
+
+
+class GalleryUploadBatch(AuditMixin):
+    class Status(models.TextChoices):
+        CREATED = "created", "Created"
+        UPLOADING = "uploading", "Uploading"
+        PROCESSING = "processing", "Processing"
+        COMPLETED = "completed", "Completed"
+        FAILED = "failed", "Failed"
+        CANCELLED = "cancelled", "Cancelled"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    staff_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="gallery_batches")
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.CREATED)
+    image_count = models.PositiveSmallIntegerField(default=0)
+    total_size_bytes = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = "gallery_upload_batches"
+        indexes = [models.Index(fields=["staff_user", "created_at", "status"], name="gallery_batch_staff_idx")]
+
+
+class GalleryImage(AuditMixin):
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        UPLOADED = "uploaded", "Uploaded"
+        QUARANTINED = "quarantined", "Quarantined"
+        PROCESSING = "processing", "Processing"
+        READY = "ready", "Ready"
+        PUBLISHED = "published", "Published"
+        ARCHIVED = "archived", "Archived"
+        REJECTED = "rejected", "Rejected"
+        DELETE_PENDING = "delete_pending", "Delete Pending"
+        FAILED = "failed", "Failed"
+
+    class SourceProfile(models.TextChoices):
+        UNKNOWN = "unknown", "Unknown"
+        PHONE_STANDARD = "phone_standard", "Phone Standard"
+        EDITED_EXPORT = "edited_export", "Edited Export"
+        HIGH_RES_CAMERA = "high_res_camera", "High-Resolution Camera"
+        COMPRESSED_SOCIAL = "compressed_social", "Compressed Social"
+
+    class Sensitivity(models.TextChoices):
+        NORMAL = "normal", "Normal"
+        SENSITIVE = "sensitive", "Sensitive"
+        RESTRICTED = "restricted", "Restricted"
+
+    class ConsentStatus(models.TextChoices):
+        NOT_REQUIRED = "not_required", "Not Required"
+        REQUIRED_PENDING = "required_pending", "Required Pending"
+        CONFIRMED = "confirmed", "Confirmed"
+        REJECTED = "rejected", "Rejected"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    upload_batch = models.ForeignKey(
+        GalleryUploadBatch,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="images",
+    )
+    category = models.ForeignKey(GalleryCategory, on_delete=models.PROTECT, related_name="images")
+    subcategory = models.ForeignKey(
+        GallerySubcategory,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="images",
+    )
+    title = models.CharField(max_length=120, blank=True)
+    description = models.CharField(max_length=500, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    source_profile = models.CharField(max_length=32, choices=SourceProfile.choices, default=SourceProfile.UNKNOWN)
+    sensitivity_level = models.CharField(max_length=16, choices=Sensitivity.choices, default=Sensitivity.NORMAL)
+    requires_warning = models.BooleanField(default=False)
+    show_on_homepage = models.BooleanField(default=False)
+    is_featured = models.BooleanField(default=False)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+    consent_status = models.CharField(
+        max_length=24,
+        choices=ConsentStatus.choices,
+        default=ConsentStatus.NOT_REQUIRED,
+    )
+    consent_note_redacted = models.CharField(max_length=255, blank=True)
+    is_identifiable = models.BooleanField(default=False)
+    sensitive_publish_confirmed = models.BooleanField(default=False)
+    original_private_key = models.CharField(max_length=255, blank=True)
+    quarantine_key = models.CharField(max_length=255, blank=True)
+    processing_error_code = models.CharField(max_length=64, blank=True)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="gallery_images")
+    published_at = models.DateTimeField(null=True, blank=True)
+    archived_at = models.DateTimeField(null=True, blank=True)
+    delete_after = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "gallery_images"
+        indexes = [
+            models.Index(fields=["status", "category", "subcategory"], name="gallery_img_status_cat_idx"),
+            models.Index(
+                fields=["status", "show_on_homepage", "is_featured", "published_at"], name="gallery_img_home_idx"
+            ),
+            models.Index(fields=["sensitivity_level", "requires_warning"], name="gallery_img_sensitive_idx"),
+            models.Index(fields=["uploaded_by", "created_at"], name="gallery_img_uploader_idx"),
+        ]
+
+    def clean(self):
+        if self.subcategory and self.category_id and self.subcategory.category_id != self.category_id:
+            raise ValidationError({"subcategory": "Subcategory does not belong to category."})
+        _require_aware_utc(self.published_at, "published_at")
+        _require_aware_utc(self.archived_at, "archived_at")
+        _require_aware_utc(self.delete_after, "delete_after")
+
+    def public_payload(self):
+        from bookings.services.gallery_public import image_public_payload
+
+        return image_public_payload(self)
+
+
+class GalleryImageVariant(AuditMixin):
+    class VariantType(models.TextChoices):
+        THUMBNAIL = "thumbnail", "Thumbnail"
+        MOBILE = "mobile", "Mobile"
+        TABLET = "tablet", "Tablet"
+        DESKTOP = "desktop", "Desktop"
+        HERO = "hero", "Hero"
+        BLUR_PLACEHOLDER = "blur_placeholder", "Blur Placeholder"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    gallery_image = models.ForeignKey(GalleryImage, on_delete=models.CASCADE, related_name="variants")
+    variant_type = models.CharField(max_length=32, choices=VariantType.choices)
+    storage_key = models.CharField(max_length=255)
+    width = models.PositiveIntegerField()
+    height = models.PositiveIntegerField()
+    format = models.CharField(max_length=16)
+    size_bytes = models.PositiveIntegerField()
+    sha256_hash = models.CharField(max_length=64)
+    is_public = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "gallery_image_variants"
+        constraints = [
+            models.UniqueConstraint(fields=["gallery_image", "variant_type"], name="uniq_gallery_variant_type"),
+        ]
+        indexes = [models.Index(fields=["gallery_image", "variant_type"], name="gallery_variant_type_idx")]
+
+
+class GalleryAuditLog(AuditMixin):
+    class EventType(models.TextChoices):
+        UPLOAD_INTENT_CREATED = "upload_intent_created", "Upload Intent Created"
+        UPLOADED_TO_QUARANTINE = "uploaded_to_quarantine", "Uploaded To Quarantine"
+        PROCESSING_STARTED = "processing_started", "Processing Started"
+        PROCESSING_SUCCEEDED = "processing_succeeded", "Processing Succeeded"
+        PROCESSING_FAILED = "processing_failed", "Processing Failed"
+        PUBLISHED = "published", "Published"
+        ARCHIVED = "archived", "Archived"
+        REPLACED = "replaced", "Replaced"
+        DELETED = "deleted", "Deleted"
+        SENSITIVE_PUBLISH_CONFIRMED = "sensitive_publish_confirmed", "Sensitive Publish Confirmed"
+        CONSENT_MARKED = "consent_marked", "Consent Marked"
+        CAP_REJECTED = "cap_rejected", "Cap Rejected"
+        STORAGE_FAILURE = "storage_failure", "Storage Failure"
+        METADATA_REDACTED = "metadata_redacted", "Metadata Redacted"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    staff_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="gallery_audit_events",
+    )
+    gallery_image = models.ForeignKey(
+        GalleryImage,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="audit_events",
+    )
+    upload_batch = models.ForeignKey(
+        GalleryUploadBatch,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="audit_events",
+    )
+    event_type = models.CharField(max_length=48, choices=EventType.choices)
+    metadata_redacted = models.JSONField(default=dict, blank=True)
+    ip_hash_hmac = models.CharField(max_length=128, blank=True)
+    user_agent_hash_hmac = models.CharField(max_length=128, blank=True)
+
+    class Meta:
+        db_table = "gallery_audit_logs"
+        indexes = [models.Index(fields=["event_type", "created_at"], name="gallery_audit_event_idx")]
+
+
 class BookingAuditEvent(AuditMixin):
     booking = models.ForeignKey(Booking, on_delete=models.PROTECT, related_name="audit_events")
     old_status = models.CharField(max_length=32, blank=True)

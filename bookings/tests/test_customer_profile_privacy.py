@@ -20,5 +20,5 @@ def test_customer_profile_pii_is_encrypted_hmaced_redacted_and_indexed():
     assert profile.phone_redacted == "+2547***678"
     assert profile.marketing_consent is False
     index_names = {index.name for index in CustomerProfile._meta.indexes}
-    assert "booking_customer_phone_hash_idx" in index_names
-    assert "booking_customer_email_hash_idx" in index_names
+    assert "bk_cust_phone_hash_idx" in index_names
+    assert "bk_cust_email_hash_idx" in index_names

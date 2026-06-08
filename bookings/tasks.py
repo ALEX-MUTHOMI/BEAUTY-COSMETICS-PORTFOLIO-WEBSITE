@@ -35,3 +35,18 @@ def sweep_booking_reminders(limit=100, correlation_id=None):
     from bookings.services.reminders import BookingReminderDeliveryService
 
     BookingReminderDeliveryService.send_due(limit=limit)
+
+
+@shared_task(
+    name="bookings.tasks.process_gallery_image",
+    queue="gallery",
+    rate_limit="60/m",
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_kwargs={"max_retries": 2},
+    ignore_result=True,
+)
+def process_gallery_image(image_public_id, correlation_id=None):
+    from bookings.services.gallery_images import process_gallery_image_now
+
+    process_gallery_image_now(image_public_id)

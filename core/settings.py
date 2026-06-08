@@ -223,6 +223,7 @@ CELERY_TASK_ROUTES = {
     "bookings.tasks.process_booking_notification": {"queue": "receipts"},
     "bookings.tasks.sweep_booking_notifications": {"queue": "receipts"},
     "bookings.tasks.sweep_booking_reminders": {"queue": "receipts"},
+    "bookings.tasks.process_gallery_image": {"queue": "gallery"},
 }
 CELERY_TASK_QUEUES = (
     Queue("celery", Exchange("celery"), routing_key="celery"),
@@ -230,6 +231,7 @@ CELERY_TASK_QUEUES = (
     Queue("billing", Exchange("billing"), routing_key="billing"),
     Queue("dlq_billing", Exchange("dlq_billing"), routing_key="dlq_billing"),
     Queue("receipts", Exchange("receipts"), routing_key="receipts"),
+    Queue("gallery", Exchange("gallery"), routing_key="gallery"),
 )
 
 # ==============================================================================
@@ -331,6 +333,22 @@ STAFF_APPLE_OAUTH_SCOPE = os.environ.get("STAFF_APPLE_OAUTH_SCOPE", "name email"
 STAFF_APPLE_OAUTH_RESPONSE_MODE = os.environ.get("STAFF_APPLE_OAUTH_RESPONSE_MODE", "form_post")
 BOOKING_REMINDER_2H_ENABLED = os.environ.get("BOOKING_REMINDER_2H_ENABLED", "false")
 BOOKING_REMINDER_MAX_ATTEMPTS = int(os.environ.get("BOOKING_REMINDER_MAX_ATTEMPTS", "3"))
+
+GALLERY_STORAGE_ROOT = os.environ.get("GALLERY_STORAGE_ROOT", str(BASE_DIR / "var" / "gallery-storage"))
+GALLERY_PUBLIC_BASE_URL = os.environ.get("GALLERY_PUBLIC_BASE_URL", "/media/")
+GALLERY_MAX_BATCH_IMAGES = int(os.environ.get("GALLERY_MAX_BATCH_IMAGES", "10"))
+GALLERY_MAX_STANDARD_IMAGE_BYTES = int(os.environ.get("GALLERY_MAX_STANDARD_IMAGE_BYTES", "10485760"))
+GALLERY_MAX_HIGH_RES_IMAGE_BYTES = int(os.environ.get("GALLERY_MAX_HIGH_RES_IMAGE_BYTES", "26214400"))
+GALLERY_MAX_BATCH_BYTES = int(os.environ.get("GALLERY_MAX_BATCH_BYTES", "62914560"))
+GALLERY_MAX_IMAGE_PIXELS = int(os.environ.get("GALLERY_MAX_IMAGE_PIXELS", "50000000"))
+GALLERY_MAX_DAILY_UPLOADS = int(os.environ.get("GALLERY_MAX_DAILY_UPLOADS", "30"))
+GALLERY_MAX_DRAFT_IMAGES = int(os.environ.get("GALLERY_MAX_DRAFT_IMAGES", "100"))
+GALLERY_MAX_PUBLISHED_IMAGES = int(os.environ.get("GALLERY_MAX_PUBLISHED_IMAGES", "80"))
+GALLERY_HOMEPAGE_FEATURED_LIMIT = int(os.environ.get("GALLERY_HOMEPAGE_FEATURED_LIMIT", "12"))
+GALLERY_PUBLIC_CATEGORY_LIMIT = int(os.environ.get("GALLERY_PUBLIC_CATEGORY_LIMIT", "18"))
+GALLERY_PUBLIC_SUBCATEGORY_LIMIT = int(os.environ.get("GALLERY_PUBLIC_SUBCATEGORY_LIMIT", "10"))
+GALLERY_PUBLIC_SENSITIVE_LIMIT = int(os.environ.get("GALLERY_PUBLIC_SENSITIVE_LIMIT", "6"))
+GALLERY_PROCESSING_TIMEOUT_SECONDS = int(os.environ.get("GALLERY_PROCESSING_TIMEOUT_SECONDS", "15"))
 
 # ==============================================================================
 # DJANGO REST FRAMEWORK CONFIGURATIONS

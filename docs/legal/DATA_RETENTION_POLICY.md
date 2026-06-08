@@ -28,6 +28,8 @@ Staff password reset challenges should expire quickly, normally 15 to 30 minutes
 
 Staff security audit records should be retained for security accountability and abuse investigation for a defined operational window approved before production. Audit metadata must not contain raw passwords, reset tokens, session IDs, raw IP addresses, OTPs, raw customer contact details, or provider credentials. Contact reveal audit records may need longer retention where justified by privacy, dispute, or compliance obligations.
 
+Gallery originals enter private quarantine for validation and processing. Failed, rejected, replaced, draft, and delete-pending media should be cleaned through bounded background jobs. Public portfolio pages should use optimized derivatives, not raw uploads. Gallery publish, archive, delete, consent, sensitive-publication, and storage-failure audit records should be retained for accountability.
+
 ## Backups
 
 Backups may retain data until their normal rotation expires. Backup access must be limited and audited.

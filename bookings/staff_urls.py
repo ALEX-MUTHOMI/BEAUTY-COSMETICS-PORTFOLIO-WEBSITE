@@ -1,6 +1,6 @@
 from django.urls import path
 
-from bookings import staff_auth_views, staff_views
+from bookings import gallery_views, staff_auth_views, staff_views
 
 urlpatterns = [
     path("auth/login/", staff_auth_views.staff_login, name="staff-auth-login"),
@@ -32,4 +32,6 @@ urlpatterns = [
         staff_views.staff_booking_contact_access,
         name="staff-booking-contact-access",
     ),
+    path("gallery/categories/", gallery_views.staff_gallery_categories, name="staff-gallery-categories"),
+    path("gallery/images/", gallery_views.staff_gallery_image_upload, name="staff-gallery-image-upload"),
 ]
