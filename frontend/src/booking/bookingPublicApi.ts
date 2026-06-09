@@ -1,3 +1,7 @@
+/**
+ * Module: bookingPublicApi
+ * Public booking operations.
+ */
 import { GENERIC_BOOKING_API_ERROR, isIsoDate, isUuid, publicBookingGet, safeApiText } from './bookingApi'
 
 export type CalendarDayStatus =
@@ -301,3 +305,4 @@ export function dayStatusLabel(day: CalendarDay): string {
 export function isDaySelectable(day: CalendarDay): boolean {
   return day.status === 'available'
 }
+
