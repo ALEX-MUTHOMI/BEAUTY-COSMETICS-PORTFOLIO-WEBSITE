@@ -18,7 +18,10 @@ Including another URLconf
 from django.conf import settings
 from django.contrib import admin
 from django.http import JsonResponse
+from django.middleware.csrf import get_token
 from django.urls import include, path
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_GET
 
 from users.views import RequestOTPView, VerifyOTPView
 
@@ -27,8 +30,19 @@ def health_check(_request):
     return JsonResponse({"status": "ok"})
 
 
+@ensure_csrf_cookie
+@require_GET
+def csrf_bootstrap(request):
+    response = JsonResponse({"csrf_token": get_token(request)})
+    response["Cache-Control"] = "no-store"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
 urlpatterns = [
     path("health/", health_check, name="health-check"),
+    path("api/health-check/", health_check, name="api-health-check"),
+    path("api/csrf/", csrf_bootstrap, name="api-csrf-bootstrap"),
     path("api/auth/request-otp/", RequestOTPView.as_view(), name="request-otp"),
     path("api/auth/verify-otp/", VerifyOTPView.as_view(), name="verify-otp"),
     path("api/billing/", include("billing.urls")),

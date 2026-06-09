@@ -24,6 +24,13 @@ GENERIC_RESET_INVALID = "Password reset request is invalid or expired."
 GENERIC_REAUTH_REQUIRED = "Recent staff password confirmation required."
 
 STAFF_PASSWORD_RESET_OUTBOX = []
+STAFF_PORTAL_PERMISSION_CODES = {
+    "manage_staff_booking_notes",
+    "view_staff_booking",
+    "view_staff_contact_details",
+    "view_staff_payment_summary",
+    "view_staff_portal",
+}
 
 _COMMON_PATTERNS = (
     "password",
@@ -244,9 +251,10 @@ def staff_profile(user):
     return {
         "display_name": _display_name(user),
         "permissions": sorted(
-            permission.split(".", 1)[1]
+            code
             for permission in user.get_all_permissions()
-            if permission.startswith("bookings.view_staff") or permission.startswith("bookings.manage_staff")
+            for code in [permission.split(".", 1)[1]]
+            if permission.startswith("bookings.") and code in STAFF_PORTAL_PERMISSION_CODES
         ),
         "next": "/staff/portal",
     }

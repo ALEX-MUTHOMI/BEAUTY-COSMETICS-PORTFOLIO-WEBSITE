@@ -8,5 +8,7 @@ venvvenv/
 .cache/
 .pytest_cache/
 .ruff_cache/
+tests/postman/reports/*.json
+!tests/postman/reports/.gitkeep
 var/
 node_modules/
