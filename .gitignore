@@ -8,6 +8,8 @@ venvvenv/
 .cache/
 .pytest_cache/
 .ruff_cache/
+__pycache__/
+*.py[cod]
 tests/postman/reports/*.json
 !tests/postman/reports/.gitkeep
 var/
