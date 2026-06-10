@@ -11,10 +11,10 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "function nextBusinessDate(offsetDays) {",
+          "function nextAllowedDate(offsetDays, allowedJsWeekdays) {",
           "  const now = new Date();",
           "  let candidate = new Date(now.getTime() + offsetDays * 24 * 60 * 60 * 1000);",
-          "  while (candidate.getDay() === 0) {",
+          "  while (!allowedJsWeekdays.includes(candidate.getDay())) {",
           "    candidate = new Date(candidate.getTime() + 24 * 60 * 60 * 1000);",
           "  }",
           "  return candidate.toISOString().slice(0, 10);",
@@ -22,8 +22,8 @@
           "if (!pm.environment.get('run_id')) {",
           "  const runId = String(Date.now());",
           "  pm.environment.set('run_id', runId);",
-          "  const normalDate = nextBusinessDate(7);",
-          "  const packageDate = nextBusinessDate(8);",
+          "  const normalDate = nextAllowedDate(7, [1, 4, 5, 6]);",
+          "  const packageDate = nextAllowedDate(8, [2, 3]);",
           "  pm.environment.set('normal_date', normalDate);",
           "  pm.environment.set('full_package_date', packageDate);",
           "  pm.environment.set('normal_starts_at', normalDate + 'T09:00:00+03:00');",
@@ -308,7 +308,8 @@
                   "pm.expect(availability).to.be.an('array').and.not.empty;",
                   "const day = availability.find((candidate) => candidate.slots && candidate.slots.length) || availability[0];",
                   "pm.expect(day.slots).to.be.an('array').and.not.empty;",
-                  "pm.environment.set('normal_starts_at', day.slots[0].starts_at);"
+                  "pm.environment.set('normal_starts_at', day.slots[0].starts_at);",
+                  "pm.environment.set('resource_public_id', day.slots[0].resource_public_id);"
                 ]
               }
             }
@@ -346,7 +347,7 @@
                 "value": "https"
               }
             ],
-            "url": "{{base_url}}/api/bookings/availability/?selection_type=full_package&full_package_public_id={{full_package_public_id}}&start_date={{full_package_date}}&end_date={{full_package_date}}"
+            "url": "{{base_url}}/api/bookings/availability/?selection_type=full_package&full_package_public_id={{full_package_public_id}}&resource_public_id={{resource_public_id}}&start_date={{full_package_date}}&end_date={{full_package_date}}"
           }
         },
         {
@@ -392,7 +393,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"selection_type\": \"normal\",\n  \"service_public_id\": \"{{service_public_id}}\",\n  \"starts_at\": \"{{normal_starts_at}}\",\n  \"idempotency_key\": \"{{hold_idempotency_key}}\",\n  \"customer\": {\n    \"full_name\": \"Newman Customer\",\n    \"email\": \"newman.customer@example.invalid\",\n    \"phone\": \"+254700000000\"\n  }\n}"
+              "raw": "{\n  \"selection_type\": \"normal\",\n  \"service_public_id\": \"{{service_public_id}}\",\n  \"resource_public_id\": \"{{resource_public_id}}\",\n  \"starts_at\": \"{{normal_starts_at}}\",\n  \"idempotency_key\": \"{{hold_idempotency_key}}\",\n  \"customer\": {\n    \"full_name\": \"Newman Customer\",\n    \"email\": \"newman.customer@example.invalid\",\n    \"phone\": \"+254700000000\"\n  }\n}"
             },
             "url": "{{base_url}}/api/bookings/holds/"
           }
@@ -437,7 +438,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"selection_type\": \"normal\",\n  \"service_public_id\": \"{{service_public_id}}\",\n  \"starts_at\": \"{{normal_starts_at}}\",\n  \"idempotency_key\": \"{{hold_idempotency_key}}\",\n  \"customer\": {\n    \"full_name\": \"Newman Customer\",\n    \"email\": \"newman.customer@example.invalid\",\n    \"phone\": \"+254700000000\"\n  }\n}"
+              "raw": "{\n  \"selection_type\": \"normal\",\n  \"service_public_id\": \"{{service_public_id}}\",\n  \"resource_public_id\": \"{{resource_public_id}}\",\n  \"starts_at\": \"{{normal_starts_at}}\",\n  \"idempotency_key\": \"{{hold_idempotency_key}}\",\n  \"customer\": {\n    \"full_name\": \"Newman Customer\",\n    \"email\": \"newman.customer@example.invalid\",\n    \"phone\": \"+254700000000\"\n  }\n}"
             },
             "url": "{{base_url}}/api/bookings/holds/"
           }
@@ -482,7 +483,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"selection_type\": \"normal\",\n  \"service_public_id\": \"{{service_public_id}}\",\n  \"starts_at\": \"{{normal_starts_at}}\",\n  \"idempotency_key\": \"tampered-{{run_id}}\",\n  \"amount\": \"1.00\",\n  \"customer\": {\n    \"full_name\": \"Newman Customer\",\n    \"email\": \"newman.customer@example.invalid\",\n    \"phone\": \"+254700000000\"\n  }\n}"
+              "raw": "{\n  \"selection_type\": \"normal\",\n  \"service_public_id\": \"{{service_public_id}}\",\n  \"resource_public_id\": \"{{resource_public_id}}\",\n  \"starts_at\": \"{{normal_starts_at}}\",\n  \"idempotency_key\": \"tampered-{{run_id}}\",\n  \"amount\": \"1.00\",\n  \"customer\": {\n    \"full_name\": \"Newman Customer\",\n    \"email\": \"newman.customer@example.invalid\",\n    \"phone\": \"+254700000000\"\n  }\n}"
             },
             "url": "{{base_url}}/api/bookings/holds/"
           }
