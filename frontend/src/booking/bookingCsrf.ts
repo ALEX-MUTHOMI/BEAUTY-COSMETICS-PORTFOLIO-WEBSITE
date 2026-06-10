@@ -1,3 +1,7 @@
+/**
+ * Module: bookingCsrf
+ * CSRF protection and handling.
+ */
 import { trimApiBaseUrl } from './bookingApi'
 import { resolveTrustedApiBaseUrl } from './bookingApiBaseTrust'
 
@@ -66,3 +70,4 @@ export async function ensureBookingCsrfToken(
     clearTimeout(timeoutId)
   }
 }
+
