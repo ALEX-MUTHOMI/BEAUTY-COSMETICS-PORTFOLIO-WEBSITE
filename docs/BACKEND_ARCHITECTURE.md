@@ -17,11 +17,11 @@ Bookings may reference Checkout and Billing only through explicit service contra
 | --- | --- | --- | --- | --- | --- | --- |
 | `bookings/models.py` | Booking, receipt, notification, gallery, staff data models | Very large model file with many subdomains | Keep stable until model extraction can be done without migration churn | High | `bookings/tests`, integration, security | No |
 | `bookings/api_views.py` | Public API adapters for catalog, availability, holds, checkout bridge | Public API concerns were flat at app root | `bookings/api/public_views.py` with compatibility shim | Low | `tests/api`, Newman, `bookings/tests` | Yes |
-| `bookings/views.py` | Public booking status read model | Response projection logic lives in view module | Later move query/payload builders to selectors/presenters | Medium | `tests/api`, `bookings/tests`, security | No |
+| `bookings/views.py` | Public booking status HTTP adapter | **B8A DONE**: 7 status functions extracted to `bookings/selectors/booking_status.py`; view is now thin | — | Low | `tests/api`, `bookings/tests`, security | Yes |
 | `bookings/services/availability.py` | Slot search and capacity rules | Performance/security sensitive scheduling algorithm | `bookings/services/availability/engine.py` later | High | availability/load/security tests | No |
 | `bookings/services/holds.py` | Hold creation, abuse controls, idempotency | Concurrency and anti-bot sensitive | Split only with dedicated hold regression suite | High | hold, load, API, security tests | No |
 | `bookings/services/checkout_contract.py` | Booking to Checkout/Billing coordination | Cross-context state consistency | Keep as explicit anti-corruption layer | High | booking checkout contract, integration, security | No |
-| `bookings/services/receipt_pdf.py` | Receipt PDF artifact generation and reuse | Security-sensitive renderer isolation | Keep service boundary; future package `bookings/receipts/` | Medium | receipt PDF/security tests | No |
+| `bookings/services/receipt_pdf.py` | Compatibility wrapper | **B8A DONE**: Canonical at `bookings/infrastructure/receipt_pdf.py` | — | Low | receipt PDF/security tests | Yes |
 | `checkout/views.py` | DRF perimeter for checkout/session/STK/webhook | Thin and correctly catches provider/state errors | Keep API layer | Medium | checkout/security/integration tests | No |
 | `checkout/services.py` | Checkout orchestration, locking, webhook processing | Financial attack surface | Keep stable; split only with callback storm tests running | High | checkout/load/security/integration tests | No |
 | `checkout/providers/mpesa.py` | Real Daraja adapter | External payment boundary | Keep isolated under providers | High | Daraja adapter/external contract tests | No |
@@ -34,11 +34,13 @@ Bookings may reference Checkout and Billing only through explicit service contra
 The safe long-term shape is:
 
 - `bookings/api/`: public booking API adapters and response contracts.
-- `bookings/selectors/`: read-model queries and status payload assembly.
-- `bookings/services/`: booking business services and state transitions.
-- `bookings/receipts/`: receipt PDF, artifact reuse, notification outbox, and delivery retry policy.
-- `bookings/gallery/`: secure media quarantine, validation, publishing, and cleanup.
-- `bookings/staff/`: staff authentication, portal selectors, and staff security policy.
+- `bookings/domain/`: pure business rules — no ORM, no side effects. (**B8A: created**, contains `circuit_breaker.py`)
+- `bookings/selectors/`: read-model queries and status payload assembly. (**B8A: created**, contains `booking_status.py`, `gallery_public.py`, `public_catalog.py`, `public_lookup.py`)
+- `bookings/infrastructure/`: external provider/storage adapters. (**B8A: created**, contains `email_provider.py`, `gallery_storage.py`, `receipt_pdf.py`)
+- `bookings/services/`: booking business services and state transitions. (Trimmed: moved 7 modules to domain/selectors/infrastructure, wrappers remain)
+- `bookings/receipts/`: receipt PDF, artifact reuse, notification outbox, and delivery retry policy. (Future)
+- `bookings/gallery/`: secure media quarantine, validation, publishing, and cleanup. (Future)
+- `bookings/staff/`: staff authentication, portal selectors, and staff security policy. (Future)
 - `checkout/providers/`: fake and real provider adapters only.
 - `checkout/services/`: checkout orchestration and webhook transaction boundary.
 - `billing/services/`: ledger/audit/settlement transitions only.
