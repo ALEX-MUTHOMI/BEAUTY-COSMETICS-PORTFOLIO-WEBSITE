@@ -2,6 +2,8 @@
 .env.*
 !.env.example
 !.env.staging.example
+db.sqlite3
+*.sqlite3
 venv/
 venvvenv/
 .local/
@@ -10,7 +12,13 @@ venvvenv/
 .ruff_cache/
 __pycache__/
 *.py[cod]
+*.log
+htmlcov/
+coverage.xml
+.coverage
 tests/postman/reports/*.json
 !tests/postman/reports/.gitkeep
 var/
+media/
+uploads/
 node_modules/

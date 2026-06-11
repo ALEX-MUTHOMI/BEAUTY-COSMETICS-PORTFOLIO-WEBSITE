@@ -89,3 +89,17 @@ Tests for a module follow this pattern:
 **Note**: Test files have NOT been relocated in this phase. They remain in their
 original directories and continue to import via the old `bookings.services.*`
 paths, which are now compatibility wrappers.
+
+## Fixture Ownership
+
+- Root `conftest.py` is limited to global safety fixtures, pytest markers, and
+  external-test gating.
+- External provider tests remain skipped unless `--run-external` is supplied.
+- Gallery storage tests use per-test temporary storage and must not write to
+  production media paths.
+- Reusable factories should be introduced under `tests/factories/` in a
+  dedicated low-risk slice. Do not bulk-move existing test setup without a full
+  partitioned rerun.
+- Booking date/time fixtures must explicitly choose business-policy-compatible
+  days unless the test is intentionally asserting Tuesday/Wednesday/full-package
+  or closed-day behavior.

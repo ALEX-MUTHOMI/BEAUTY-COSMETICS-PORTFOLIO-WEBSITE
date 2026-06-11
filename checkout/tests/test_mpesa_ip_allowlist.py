@@ -52,6 +52,7 @@ def test_sandbox_tunnel_callback_host_can_bypass_safaricom_cidr_only_in_sandbox(
 @pytest.mark.django_db
 def test_sandbox_tunnel_callback_bypass_is_not_available_in_production(settings):
     settings.DARAJA_ENV = "production"
+    settings.ALLOWED_HOSTS = ["beauty-checkout.trycloudflare.com"]
     settings.DARAJA_CALLBACK_URL = "https://beauty-checkout.trycloudflare.com/api/checkout/mpesa/webhook/"
     settings.DARAJA_SANDBOX_CALLBACK_TUNNEL_DOMAINS = ["trycloudflare.com", "ngrok-free.app", "ngrok.io"]
     settings.SAFARICOM_ALLOWED_CIDRS = ["196.201.214.0/24"]
@@ -72,6 +73,7 @@ def test_sandbox_tunnel_callback_bypass_is_not_available_in_production(settings)
 @pytest.mark.django_db
 def test_sandbox_tunnel_callback_bypass_requires_configured_host_match(settings):
     settings.DARAJA_ENV = "sandbox"
+    settings.ALLOWED_HOSTS = ["beauty-checkout.trycloudflare.com", "attacker.trycloudflare.com"]
     settings.DARAJA_CALLBACK_URL = "https://beauty-checkout.trycloudflare.com/api/checkout/mpesa/webhook/"
     settings.DARAJA_SANDBOX_CALLBACK_TUNNEL_DOMAINS = ["trycloudflare.com", "ngrok-free.app", "ngrok.io"]
     settings.SAFARICOM_ALLOWED_CIDRS = ["196.201.214.0/24"]

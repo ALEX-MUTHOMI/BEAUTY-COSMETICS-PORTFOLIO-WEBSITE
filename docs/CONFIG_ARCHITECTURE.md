@@ -23,6 +23,34 @@ for local, test, and normal CI execution.
 | Checkout/Billing providers | `core/settings.py` and app adapters | Fake provider is the safe default for tests and CI |
 | External Daraja sandbox | `tests/external/` and management command | Must be run explicitly, never during default pytest |
 
+## Root File Ownership
+
+| Path | Purpose | Root status | Security/pipeline decision |
+| --- | --- | --- | --- |
+| `.dockerignore` | Docker build exclusion rules | Keep at root | Excludes env/cache/local DB artifacts from images |
+| `.env` | Local real environment | Must stay untracked | Ignored by `.gitignore`; never commit values |
+| `.env.example` | Local placeholder contract | Keep at root | Placeholder-only values; safe to track |
+| `.env.staging.example` | Staging placeholder contract | Keep at root | Placeholder-only values; safe to track |
+| `.flake8` | Lint config | Keep at root | Tool expects root config |
+| `.gitignore` | Git artifact protection | Keep at root | Protects env files, SQLite DBs, logs, reports, media, uploads |
+| `.pre-commit-config.yaml` | Hook config | Keep at root | Tool expects root config |
+| `Caddyfile.staging` | Restricted staging reverse proxy | Keep for now | May move to `deploy/` only with Compose/docs updates |
+| `conftest.py` | Global pytest options and safe autouse fixtures | Keep small at root | External tests remain opt-in; shared fixture extraction deferred |
+| `db.sqlite3` | Local SQLite fallback artifact | Must stay untracked | Removed from Git tracking; ignored going forward |
+| `docker-compose*.yml` | Local/staging Docker orchestration | Keep at root | Moving would break documented commands |
+| `Dockerfile` | Backend image build | Keep at root | Compose/CI reference root Dockerfile |
+| `manage.py` | Django command entrypoint | Keep at root | Django convention/tool expectation |
+| `poetry.lock`, `pyproject.toml` | Python dependency/tool config | Keep at root | Poetry expects root project files |
+| `pytest.ini` | Pytest marker/settings config | Keep at root | Pytest expects root config |
+| `README.md` | Repo overview | Keep at root | Human entrypoint |
+
+## Production Fail-Closed Checks
+
+- `ALLOWED_HOSTS` defaults to explicit local/test hosts only.
+- `DEBUG=False` with `ALLOWED_HOSTS=*` raises `ImproperlyConfigured`.
+- Docker Compose local defaults use explicit `localhost`, `127.0.0.1`,
+  `0.0.0.0`, `web`, and `testserver` rather than wildcard hosts.
+
 ## Deferred Split
 
 A settings package split (`core/settings/base.py`, `local.py`, `test.py`,

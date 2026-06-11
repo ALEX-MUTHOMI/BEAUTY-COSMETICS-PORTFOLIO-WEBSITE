@@ -116,7 +116,7 @@ services:
       - PATH=/app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
       - SECRET_KEY=${SECRET_KEY:-phase1-phase2-prod-verification-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f}
       - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-True}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,web,testserver}
       - DISABLE_DJANGO_ADMIN=${DISABLE_DJANGO_ADMIN:-False}
       - DRF_DISABLE_BROWSABLE_API=${DRF_DISABLE_BROWSABLE_API:-False}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
@@ -186,6 +186,7 @@ services:
       - DARAJA_READ_TIMEOUT_SECONDS=${DARAJA_READ_TIMEOUT_SECONDS:-5}
       - DARAJA_TOKEN_CACHE_TTL_SECONDS=${DARAJA_TOKEN_CACHE_TTL_SECONDS:-3300}
       - DARAJA_ALLOWED_SANDBOX_IPS=${DARAJA_ALLOWED_SANDBOX_IPS:-}
+      - SAFARICOM_ALLOWED_CIDRS=${SAFARICOM_ALLOWED_CIDRS:-196.201.214.0/24,196.201.216.0/24,127.0.0.1/32,172.16.0.0/12}
 
       # ------------------------------------------------------------------------
       # Transactional email / receipt delivery
@@ -335,7 +336,7 @@ services:
       - PATH=/app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
       - SECRET_KEY=${SECRET_KEY:-phase1-phase2-prod-verification-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f}
       - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-True}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,web,testserver}
       - DISABLE_DJANGO_ADMIN=${DISABLE_DJANGO_ADMIN:-False}
       - DRF_DISABLE_BROWSABLE_API=${DRF_DISABLE_BROWSABLE_API:-False}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
@@ -402,6 +403,7 @@ services:
       - DARAJA_READ_TIMEOUT_SECONDS=${DARAJA_READ_TIMEOUT_SECONDS:-5}
       - DARAJA_TOKEN_CACHE_TTL_SECONDS=${DARAJA_TOKEN_CACHE_TTL_SECONDS:-3300}
       - DARAJA_ALLOWED_SANDBOX_IPS=${DARAJA_ALLOWED_SANDBOX_IPS:-}
+      - SAFARICOM_ALLOWED_CIDRS=${SAFARICOM_ALLOWED_CIDRS:-196.201.214.0/24,196.201.216.0/24,127.0.0.1/32,172.16.0.0/12}
 
       # ------------------------------------------------------------------------
       # Transactional email / receipt delivery

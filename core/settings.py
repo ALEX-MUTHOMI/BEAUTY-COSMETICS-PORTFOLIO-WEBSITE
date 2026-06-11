@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
 from kombu import Exchange, Queue
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -28,7 +29,12 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-%m$)l3#zgq)20cmf5!=nf
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1", "t")
 
-ALLOWED_HOSTS = [host.strip() for host in os.environ.get("ALLOWED_HOSTS", "*").split(",") if host.strip()]
+_DEFAULT_ALLOWED_HOSTS = "localhost,127.0.0.1,0.0.0.0,web,testserver"
+ALLOWED_HOSTS = [
+    host.strip() for host in os.environ.get("ALLOWED_HOSTS", _DEFAULT_ALLOWED_HOSTS).split(",") if host.strip()
+]
+if not DEBUG and ("*" in ALLOWED_HOSTS or not ALLOWED_HOSTS):
+    raise ImproperlyConfigured("ALLOWED_HOSTS must be explicit when DEBUG=False.")
 DISABLE_DJANGO_ADMIN = os.environ.get("DISABLE_DJANGO_ADMIN", "False").lower() in (
     "true",
     "1",
