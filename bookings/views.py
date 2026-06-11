@@ -9,19 +9,13 @@ from bookings.models import (
     BookingNotification,
     BookingReminder,
 )
-from bookings.selectors.booking_status import status_payload
-
-# Compatibility re-exports: old private names used by existing tests.
-# Canonical implementation lives in bookings.selectors.booking_status.
-from bookings.selectors.booking_status import (  # noqa: F401
-    email_status as _email_status,
-    next_action as _next_action,
-    payment_status as _payment_status,
-    receipt_status as _receipt_status,
-    reminder_status as _reminder_status,
-    reschedule_payload as _reschedule_payload,
-    status_payload as _status_payload,
-)
+from bookings.selectors.booking_status import email_status as _email_status  # noqa: F401
+from bookings.selectors.booking_status import next_action as _next_action  # noqa: F401
+from bookings.selectors.booking_status import payment_status as _payment_status  # noqa: F401
+from bookings.selectors.booking_status import receipt_status as _receipt_status  # noqa: F401
+from bookings.selectors.booking_status import reminder_status as _reminder_status  # noqa: F401
+from bookings.selectors.booking_status import reschedule_payload as _reschedule_payload  # noqa: F401
+from bookings.selectors.booking_status import status_payload as _status_payload
 
 GENERIC_STATUS_UNAVAILABLE = {"detail": "Booking status is unavailable."}
 
@@ -63,7 +57,7 @@ def booking_status(request, public_booking_id):
     if booking is None:
         return _generic_404()
 
-    response = JsonResponse(status_payload(booking))
+    response = JsonResponse(_status_payload(booking))
     response["Cache-Control"] = "no-store"
     response["X-Content-Type-Options"] = "nosniff"
     return response
