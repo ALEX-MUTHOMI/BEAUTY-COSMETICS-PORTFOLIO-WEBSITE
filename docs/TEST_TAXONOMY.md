@@ -32,6 +32,8 @@ Tests are automatically marked based on their directory path:
 ## Partitioned Verification Protocol
 
 Run these in order. If any partition fails, stop and investigate before continuing.
+Do not run these partitions in parallel against the same Docker Postgres test
+database unless a separate isolated test database strategy is configured.
 
 ### Quick Smoke (< 2 min)
 ```bash

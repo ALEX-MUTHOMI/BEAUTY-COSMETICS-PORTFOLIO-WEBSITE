@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils import timezone
 
+from bookings.domain.day_policy import built_in_policy_for_weekday
 from bookings.models import (
     BlackoutPeriod,
     BookableResource,
@@ -16,7 +17,6 @@ from bookings.models import (
     Service,
 )
 from bookings.services.bundles import get_full_package_summary, validate_service_bundle
-from bookings.services.day_policy import built_in_policy_for_weekday
 
 BUSINESS_TZ = ZoneInfo("Africa/Nairobi")
 MAX_AVAILABILITY_RANGE_DAYS = 14

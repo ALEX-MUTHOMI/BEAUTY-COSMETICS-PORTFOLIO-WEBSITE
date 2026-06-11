@@ -24,9 +24,10 @@ layered structure: `domain/`, `selectors/`, `infrastructure/`, and `services/`.
 | Before                                | After                                  | Reason                         |
 |---------------------------------------|----------------------------------------|--------------------------------|
 | `bookings/services/circuit_breaker.py` | `bookings/domain/circuit_breaker.py`  | Redis-backed, no Django ORM    |
+| Day-policy rule helpers in `bookings/services/day_policy.py` | `bookings/domain/day_policy.py` | Deterministic weekday/window validation helpers only |
 
 **Not moved** (failed purity check — use Django ORM writes):
-- `services/day_policy.py` — `transaction.atomic`, `select_for_update`, `BookingDayState.objects`
+- `services/day_policy.py` — canonical ORM-backed policy lookup, `transaction.atomic`, `select_for_update`, `BookingDayState.objects`
 - `services/state_machine.py` — `transaction.atomic`, `Booking.objects.select_for_update`, `BookingAuditEvent.objects.create`
 - `services/policy.py` — `BusinessHours.objects.filter()`
 
@@ -68,6 +69,10 @@ from bookings.infrastructure.email_provider import *  # noqa: F401,F403
 | `bookings.services.email_provider`    | `bookings.infrastructure.email_provider`      |
 | `bookings.services.gallery_storage`   | `bookings.infrastructure.gallery_storage`     |
 | `bookings.services.receipt_pdf`       | `bookings.infrastructure.receipt_pdf`         |
+
+`bookings.services.day_policy` is intentionally not a wrapper. It remains the
+canonical service for ORM-backed day-policy lookup and capacity locking. Pure
+weekday/window helpers live in `bookings.domain.day_policy`.
 
 ## What Was NOT Changed
 
@@ -112,7 +117,8 @@ bookings/
 │   └── public_views.py
 ├── domain/             ← NEW: pure business rules
 │   ├── __init__.py
-│   └── circuit_breaker.py
+│   ├── circuit_breaker.py
+│   └── day_policy.py       ← pure weekday/window rules only
 ├── infrastructure/     ← NEW: external adapters
 │   ├── __init__.py
 │   ├── email_provider.py

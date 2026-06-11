@@ -14,6 +14,7 @@ from zoneinfo import ZoneInfo
 from django.utils import timezone
 
 from bookings.models import (
+    Booking,
     BookingNotification,
     BookingPolicy,
     BookingReceipt,
@@ -190,3 +191,37 @@ def status_payload(booking):
         "service": {"name": service_name, "selection_type": _safe_text(selection_type, max_length=32)},
         "next_action": next_action(booking, notification),
     }
+
+
+def get_public_booking_for_status(public_id):
+    """Fetch the public booking status read model.
+
+    The public status view should remain an HTTP adapter. Query shape and
+    annotation details live here so route code does not grow business/read-model
+    logic or accidentally expose private identifiers.
+    """
+    from django.db.models import Exists, OuterRef, Subquery
+
+    receipt_notification = BookingNotification.objects.filter(
+        booking=OuterRef("pk"),
+        notification_type="booking_confirmed_with_receipt",
+    ).order_by("-created_at")
+    reminder_qs = BookingReminder.objects.filter(booking=OuterRef("pk"))
+    return (
+        Booking.objects.select_related("service", "full_package", "receipt", "receipt__pdf_artifact")
+        .annotate(
+            _receipt_notification_status=Subquery(receipt_notification.values("status")[:1]),
+            _has_pending_reminder=Exists(reminder_qs.filter(status=BookingReminder.Status.PENDING)),
+            _has_sent_reminder=Exists(reminder_qs.filter(status=BookingReminder.Status.SENT)),
+            _has_failed_reminder=Exists(
+                reminder_qs.filter(
+                    status__in=[
+                        BookingReminder.Status.FAILED,
+                        BookingReminder.Status.ADMIN_REVIEW_REQUIRED,
+                    ]
+                )
+            ),
+        )
+        .filter(public_id=public_id)
+        .first()
+    )

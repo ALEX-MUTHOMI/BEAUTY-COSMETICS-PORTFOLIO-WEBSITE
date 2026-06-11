@@ -20,6 +20,7 @@ Bookings may reference Checkout and Billing only through explicit service contra
 | `bookings/views.py` | Public booking status HTTP adapter | **B8A DONE**: 7 status functions extracted to `bookings/selectors/booking_status.py`; view is now thin | — | Low | `tests/api`, `bookings/tests`, security | Yes |
 | `bookings/services/availability.py` | Slot search and capacity rules | Performance/security sensitive scheduling algorithm | `bookings/services/availability/engine.py` later | High | availability/load/security tests | No |
 | `bookings/services/holds.py` | Hold creation, abuse controls, idempotency | Concurrency and anti-bot sensitive | Split only with dedicated hold regression suite | High | hold, load, API, security tests | No |
+| `bookings/services/day_policy.py` | ORM-backed day-policy lookup and row-locked capacity snapshots | Database lock boundary; must not move wholesale into domain | Keep service canonical; pure helpers only in `bookings/domain/day_policy.py` | High | day-policy, hold, full-package, load tests | No |
 | `bookings/services/checkout_contract.py` | Booking to Checkout/Billing coordination | Cross-context state consistency | Keep as explicit anti-corruption layer | High | booking checkout contract, integration, security | No |
 | `bookings/services/receipt_pdf.py` | Compatibility wrapper | **B8A DONE**: Canonical at `bookings/infrastructure/receipt_pdf.py` | — | Low | receipt PDF/security tests | Yes |
 | `checkout/views.py` | DRF perimeter for checkout/session/STK/webhook | Thin and correctly catches provider/state errors | Keep API layer | Medium | checkout/security/integration tests | No |
@@ -34,7 +35,7 @@ Bookings may reference Checkout and Billing only through explicit service contra
 The safe long-term shape is:
 
 - `bookings/api/`: public booking API adapters and response contracts.
-- `bookings/domain/`: pure business rules — no ORM, no side effects. (**B8A: created**, contains `circuit_breaker.py`)
+- `bookings/domain/`: pure business rules — no ORM, no side effects. (**B8A: created**, contains `circuit_breaker.py`; day-policy pure helpers live in `day_policy.py`)
 - `bookings/selectors/`: read-model queries and status payload assembly. (**B8A: created**, contains `booking_status.py`, `gallery_public.py`, `public_catalog.py`, `public_lookup.py`)
 - `bookings/infrastructure/`: external provider/storage adapters. (**B8A: created**, contains `email_provider.py`, `gallery_storage.py`, `receipt_pdf.py`)
 - `bookings/services/`: booking business services and state transitions. (Trimmed: moved 7 modules to domain/selectors/infrastructure, wrappers remain)

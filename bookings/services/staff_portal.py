@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from billing.models import LedgerTransaction
 from billing.redaction import hash_sensitive_value
+from bookings.domain.day_policy import built_in_policy_for_weekday
 from bookings.models import (
     BOOKING_BLOCKING_STATUSES,
     Booking,
@@ -18,7 +19,6 @@ from bookings.models import (
     StaffActionAuditEvent,
 )
 from bookings.privacy import decrypt_value, safe_display_name
-from bookings.services.day_policy import built_in_policy_for_weekday
 from checkout.models import CheckoutSession
 
 EAT = ZoneInfo("Africa/Nairobi")
