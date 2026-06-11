@@ -43,6 +43,7 @@ for local, test, and normal CI execution.
 | `poetry.lock`, `pyproject.toml` | Python dependency/tool config | Keep at root | Poetry expects root project files |
 | `pytest.ini` | Pytest marker/settings config | Keep at root | Pytest expects root config |
 | `README.md` | Repo overview | Keep at root | Human entrypoint |
+| `requirements.txtcd` | Accidental zero-byte typo artifact | Removed | No references found; Poetry remains canonical |
 
 ## Production Fail-Closed Checks
 
@@ -50,6 +51,9 @@ for local, test, and normal CI execution.
 - `DEBUG=False` with `ALLOWED_HOSTS=*` raises `ImproperlyConfigured`.
 - Docker Compose local defaults use explicit `localhost`, `127.0.0.1`,
   `0.0.0.0`, `web`, and `testserver` rather than wildcard hosts.
+- Local Newman fake-webhook testing allows Docker bridge CIDRs only in the
+  local Compose/default env path. Staging keeps the stricter Safaricom CIDR
+  example.
 
 ## Deferred Split
 

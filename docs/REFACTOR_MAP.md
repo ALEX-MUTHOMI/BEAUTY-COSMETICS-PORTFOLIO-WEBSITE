@@ -84,6 +84,14 @@ weekday/window helpers live in `bookings.domain.day_policy`.
 | Test file relocation    | 168 test files with inter-file imports                       |
 | `checkout/` and `billing/` | Already well-structured as separate Django apps           |
 
+## Root Cleanup
+
+| Path | Decision | Reason |
+| --- | --- | --- |
+| `requirements.txtcd` | Removed | Zero-byte typo artifact; no references found; Poetry remains canonical |
+| `Caddyfile.staging` | Kept at root | `docker-compose.staging.yml` mounts it directly; moving requires a dedicated deployment-reference update |
+| `docker-compose*.yml` | Kept at root | Documented Docker commands and CI/local workflows expect root Compose files |
+
 ## Before/After Tree
 
 ### Before
