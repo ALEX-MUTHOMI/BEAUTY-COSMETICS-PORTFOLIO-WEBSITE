@@ -891,6 +891,10 @@
               {
                 "key": "X-Forwarded-Proto",
                 "value": "https"
+              },
+              {
+                "key": "Cookie",
+                "value": "sessionid={{sessionid}}"
               }
             ],
             "url": "{{base_url}}/api/staff/gallery/categories/"

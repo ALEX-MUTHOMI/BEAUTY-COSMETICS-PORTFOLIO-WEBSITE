@@ -1,0 +1,34 @@
+# Local passive security scan override.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.security-scan.yml up -d web worker
+#
+# This is not a production or staging profile. It disables only the local
+# HTTP-to-HTTPS redirect so Dockerized scanners can reach Django over HTTP.
+# Payment and notification providers remain fake.
+
+services:
+  web:
+    environment:
+      SECURITY_SCAN_MODE: "true"
+      SECURE_SSL_REDIRECT: "False"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0,web,testserver,host.docker.internal"
+      CSRF_TRUSTED_ORIGINS: "http://localhost:8000,http://127.0.0.1:8000,http://host.docker.internal:8000"
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000"
+      PAYMENT_PROVIDER_MODE: "fake"
+      CHECKOUT_MPESA_PROVIDER: "fake"
+      EMAIL_PROVIDER: "fake"
+
+  worker:
+    environment:
+      SECURITY_SCAN_MODE: "true"
+      SECURE_SSL_REDIRECT: "False"
+      PAYMENT_PROVIDER_MODE: "fake"
+      CHECKOUT_MPESA_PROVIDER: "fake"
+      EMAIL_PROVIDER: "fake"
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A core inspect ping -d celery@$$HOSTNAME --timeout=10 | grep -q OK"]
+      interval: 30s
+      timeout: 20s
+      retries: 5
+      start_period: 40s

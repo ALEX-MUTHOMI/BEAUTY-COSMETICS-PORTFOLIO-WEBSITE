@@ -2,6 +2,7 @@
 .env.*
 !.env.example
 !.env.staging.example
+!.env.security-scan.example
 db.sqlite3
 *.sqlite3
 venv/
@@ -18,6 +19,8 @@ coverage.xml
 .coverage
 tests/postman/reports/*.json
 !tests/postman/reports/.gitkeep
+reports/security/zap/*
+!reports/security/zap/.gitkeep
 var/
 media/
 uploads/
