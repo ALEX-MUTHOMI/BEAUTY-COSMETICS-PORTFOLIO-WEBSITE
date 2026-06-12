@@ -1,4 +1,4 @@
-# B8A Refactor Map — Visible Backend Reorganization
+# B8A/B8E Refactor Map — Visible Backend Reorganization
 
 ## Phase 2C-B8A Execution Date
 2026-06-10
@@ -6,6 +6,8 @@
 ## Summary
 Reorganized `bookings/` from a flat service directory into a modular-monolith
 layered structure: `domain/`, `selectors/`, `infrastructure/`, and `services/`.
+B8E continued this by extracting shared booking test factories and moving the
+public gallery read model into the gallery bounded context.
 
 ## Layering Convention
 
@@ -38,7 +40,14 @@ layered structure: `domain/`, `selectors/`, `infrastructure/`, and `services/`.
 | `bookings/views.py` (7 inline functions) | `bookings/selectors/booking_status.py`     | Status presentation / selector logic  |
 | `bookings/services/catalog.py`          | `bookings/selectors/public_catalog.py`      | Re-export of read-only catalog queries |
 | `bookings/services/public_lookup.py`    | `bookings/selectors/public_lookup.py`       | Read-only booking lookup              |
-| `bookings/services/gallery_public.py`   | `bookings/selectors/gallery_public.py`      | Read-only gallery queries (verified)  |
+| `bookings/services/gallery_public.py`   | `bookings/selectors/gallery_public.py`      | Read-only gallery queries (verified in B8A) |
+| `bookings/selectors/gallery_public.py`  | `bookings/gallery/selectors/public_gallery.py` | Gallery bounded-context read model (B8E) |
+
+### Moved to `tests/factories/` (Shared Test Harness)
+
+| Before | After | Reason |
+| --- | --- | --- |
+| `bookings/tests/factories.py` | `tests/factories/booking_factories.py` | Cross-suite booking/service/customer test factory ownership |
 
 ### Moved to `bookings/infrastructure/` (Provider/Storage Adapters)
 
@@ -65,7 +74,8 @@ from bookings.infrastructure.email_provider import *  # noqa: F401,F403
 | `bookings.services.circuit_breaker`   | `bookings.domain.circuit_breaker`             |
 | `bookings.services.catalog`           | `bookings.selectors.public_catalog`           |
 | `bookings.services.public_lookup`     | `bookings.selectors.public_lookup`            |
-| `bookings.services.gallery_public`    | `bookings.selectors.gallery_public`           |
+| `bookings.services.gallery_public`    | `bookings.gallery.selectors.public_gallery`   |
+| `bookings.selectors.gallery_public`   | `bookings.gallery.selectors.public_gallery`   |
 | `bookings.services.email_provider`    | `bookings.infrastructure.email_provider`      |
 | `bookings.services.gallery_storage`   | `bookings.infrastructure.gallery_storage`     |
 | `bookings.services.receipt_pdf`       | `bookings.infrastructure.receipt_pdf`         |
@@ -80,8 +90,8 @@ weekday/window helpers live in `bookings.domain.day_policy`.
 |-------------------------|--------------------------------------------------------------|
 | `models.py` split       | Migration surgery risk — requires dedicated subphase         |
 | Staff sub-package       | High import churn (12 URL routes + 30+ staff tests)          |
-| Gallery sub-package     | Deep coupling to models                                      |
-| Test file relocation    | 168 test files with inter-file imports                       |
+| Gallery upload/processing service split | Deep coupling to storage, Pillow validation, Celery, and security tests |
+| Test import bulk migration | Dozens of tests still use stable compatibility imports; broad churn deferred |
 | `checkout/` and `billing/` | Already well-structured as separate Django apps           |
 
 ## Root Cleanup
@@ -135,7 +145,7 @@ bookings/
 ├── selectors/          ← NEW: read-only queries + presentation
 │   ├── __init__.py
 │   ├── booking_status.py
-│   ├── gallery_public.py
+│   ├── gallery_public.py  ← compat wrapper → bookings/gallery/selectors/
 │   ├── public_catalog.py
 │   └── public_lookup.py
 ├── services/           ← TRIMMED: mutation workflows only + compat wrappers
@@ -153,4 +163,14 @@ bookings/
 │   └── state_machine.py
 ├── views.py            ← THIN: imports status_payload from selectors/
 └── ...
+tests/
+├── factories/
+│   ├── __init__.py
+│   └── booking_factories.py
+bookings/
+├── gallery/
+│   ├── __init__.py
+│   └── selectors/
+│       ├── __init__.py
+│       └── public_gallery.py
 ```

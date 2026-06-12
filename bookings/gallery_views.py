@@ -3,14 +3,14 @@ from django.db.models import Prefetch
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 
-from bookings.models import GalleryCategory, GallerySubcategory
-from bookings.services.gallery_images import create_gallery_image_from_upload
-from bookings.services.gallery_public import (
+from bookings.gallery.selectors.public_gallery import (
     get_homepage_gallery,
     get_public_category_gallery,
     get_public_service_gallery,
     get_public_subcategory_gallery,
 )
+from bookings.models import GalleryCategory, GallerySubcategory
+from bookings.services.gallery_images import create_gallery_image_from_upload
 from bookings.services.staff_auth import GENERIC_SESSION_EXPIRED, enforce_staff_session
 
 

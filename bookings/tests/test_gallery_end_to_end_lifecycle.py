@@ -1,9 +1,9 @@
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from bookings.gallery.selectors.public_gallery import get_homepage_gallery
 from bookings.models import GalleryCategory, GalleryImage
 from bookings.services.gallery_images import archive_gallery_image, process_gallery_image_now, publish_gallery_image
-from bookings.services.gallery_public import get_homepage_gallery
 from bookings.tests.gallery_test_helpers import make_staff_session, make_test_image_bytes
 from bookings.tests.test_staff_auth_helpers import make_staff
 

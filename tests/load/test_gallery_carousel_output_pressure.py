@@ -1,7 +1,7 @@
 import pytest
 
+from bookings.gallery.selectors.public_gallery import get_homepage_gallery
 from bookings.models import GalleryCategory, GalleryImage, GalleryImageVariant
-from bookings.services.gallery_public import get_homepage_gallery
 from bookings.tests.test_staff_auth_helpers import make_staff
 
 

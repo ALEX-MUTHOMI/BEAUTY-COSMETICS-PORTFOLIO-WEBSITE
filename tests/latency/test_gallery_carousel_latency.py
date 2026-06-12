@@ -1,6 +1,6 @@
 import pytest
 
-from bookings.services.gallery_public import get_homepage_gallery
+from bookings.gallery.selectors.public_gallery import get_homepage_gallery
 
 
 @pytest.mark.django_db

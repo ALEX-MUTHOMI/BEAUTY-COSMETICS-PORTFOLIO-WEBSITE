@@ -1,10 +1,10 @@
 import pytest
 from django.core.exceptions import ValidationError
 
+from bookings.gallery.selectors.public_gallery import get_homepage_gallery
 from bookings.models import GalleryCategory, GalleryImage
 from bookings.services import gallery_images
 from bookings.services.gallery_images import process_gallery_image_now
-from bookings.services.gallery_public import get_homepage_gallery
 from bookings.services.gallery_storage import GalleryObjectStorage
 from bookings.tests.gallery_test_helpers import make_test_image_bytes
 from bookings.tests.test_staff_auth_helpers import make_staff

@@ -36,11 +36,11 @@ The safe long-term shape is:
 
 - `bookings/api/`: public booking API adapters and response contracts.
 - `bookings/domain/`: pure business rules — no ORM, no side effects. (**B8A: created**, contains `circuit_breaker.py`; day-policy pure helpers live in `day_policy.py`)
-- `bookings/selectors/`: read-model queries and status payload assembly. (**B8A: created**, contains `booking_status.py`, `gallery_public.py`, `public_catalog.py`, `public_lookup.py`)
+- `bookings/selectors/`: read-model queries and status payload assembly. (**B8A: created**, contains `booking_status.py`, `public_catalog.py`, `public_lookup.py`, and a `gallery_public.py` compatibility wrapper)
 - `bookings/infrastructure/`: external provider/storage adapters. (**B8A: created**, contains `email_provider.py`, `gallery_storage.py`, `receipt_pdf.py`)
 - `bookings/services/`: booking business services and state transitions. (Trimmed: moved 7 modules to domain/selectors/infrastructure, wrappers remain)
 - `bookings/receipts/`: receipt PDF, artifact reuse, notification outbox, and delivery retry policy. (Future)
-- `bookings/gallery/`: secure media quarantine, validation, publishing, and cleanup. (Future)
+- `bookings/gallery/`: secure media bounded context. (**B8E: created**, contains `selectors/public_gallery.py`; quarantine, validation, publishing, and cleanup service splits remain future work)
 - `bookings/staff/`: staff authentication, portal selectors, and staff security policy. (Future)
 - `checkout/providers/`: fake and real provider adapters only.
 - `checkout/services/`: checkout orchestration and webhook transaction boundary.
@@ -55,3 +55,17 @@ The safe long-term shape is:
 - Preserve existing import compatibility during moves.
 - Run Docker checks before and after each bounded move.
 - Do not move high-risk service code without first running its targeted concurrency/security suite.
+
+## B8E Incremental Refactor Note
+
+B8E moved only low-risk read-only/test-support code:
+
+- `tests/factories/booking_factories.py` is the canonical shared booking factory module.
+- `bookings/tests/factories.py` remains a wrapper for old test imports.
+- `bookings/gallery/selectors/public_gallery.py` is the canonical public gallery read model.
+- `bookings/selectors/gallery_public.py` and `bookings/services/gallery_public.py` remain compatibility wrappers.
+
+The high-risk gallery processing/upload service, staff auth/session workflows,
+booking state machine, and checkout/billing payment contracts remain in their
+existing service modules until each can be split with a dedicated security and
+concurrency test slice.

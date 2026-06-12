@@ -1215,7 +1215,7 @@ class GalleryImage(AuditMixin):
         _require_aware_utc(self.delete_after, "delete_after")
 
     def public_payload(self):
-        from bookings.services.gallery_public import image_public_payload
+        from bookings.gallery.selectors.public_gallery import image_public_payload
 
         return image_public_payload(self)
 

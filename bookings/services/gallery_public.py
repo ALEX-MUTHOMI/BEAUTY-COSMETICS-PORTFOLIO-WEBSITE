@@ -1,7 +1,7 @@
-# Compatibility wrapper. Canonical implementation lives in bookings.selectors.gallery_public.
-# New code should import from bookings.selectors.gallery_public.
-from bookings.selectors.gallery_public import *  # noqa: F401,F403
-from bookings.selectors.gallery_public import (  # noqa: F811
+"""Compatibility wrapper. Canonical implementation lives in bookings.gallery.selectors.public_gallery."""
+
+from bookings.gallery.selectors.public_gallery import *  # noqa: F401,F403
+from bookings.gallery.selectors.public_gallery import (  # noqa: F811
     get_homepage_gallery,
     get_public_category_gallery,
     get_public_service_gallery,

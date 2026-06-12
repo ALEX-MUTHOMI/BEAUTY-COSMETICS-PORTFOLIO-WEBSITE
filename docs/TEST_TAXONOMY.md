@@ -4,16 +4,16 @@
 
 | Directory                | Count | Focus Area                                      | Partition Command                                          |
 |--------------------------|-------|--------------------------------------------------|------------------------------------------------------------|
-| `bookings/tests/`        | 168   | Domain models, services, selectors, views        | `pytest bookings/tests -q`                                 |
-| `checkout/tests/`        | 28    | Checkout session lifecycle, Daraja, webhooks      | `pytest checkout/tests -q`                                 |
-| `billing/tests/`         | 17    | Ledger lifecycle, financial audit, redaction      | `pytest billing/tests -q`                                  |
-| `tests/api/`             | 1     | Backend API acceptance contract                  | `pytest tests/api -q`                                      |
-| `tests/integration/`     | 28    | Full lifecycle (booking→checkout→billing→receipt) | `pytest tests/integration -q`                              |
-| `tests/security/`        | 58    | Red team (auth, billing, holds, checkout, gallery)| `pytest tests/security -q`                                 |
-| `tests/load/`            | 25    | Hold pressure, checkout storm, webhook storm     | `pytest tests/load -vv --durations=25`                     |
-| `tests/latency/`         | 26    | Kenya network latency simulation, timeouts       | `pytest tests/latency -vv --durations=25`                  |
-| `tests/unit/`            | 2     | Auth and user unit tests                         | `pytest tests/unit -q`                                     |
-| `tests/external/`        | 3     | Daraja sandbox, email provider sandbox           | `pytest tests/external --run-external -q`                  |
+| `bookings/tests/`        | 290   | Domain models, services, selectors, views        | `pytest bookings/tests -q`                                 |
+| `checkout/tests/`        | 66    | Checkout session lifecycle, Daraja, webhooks      | `pytest checkout/tests -q`                                 |
+| `billing/tests/`         | 25    | Ledger lifecycle, financial audit, redaction      | `pytest billing/tests -q`                                  |
+| `tests/api/`             | 3     | Backend API acceptance contract                  | `pytest tests/api -q`                                      |
+| `tests/integration/`     | 33    | Full lifecycle (booking→checkout→billing→receipt) | `pytest tests/integration -q`                              |
+| `tests/security/`        | 80    | Red team (auth, billing, holds, checkout, gallery)| `pytest tests/security -q`                                 |
+| `tests/load/`            | 26    | Hold pressure, checkout storm, webhook storm     | `pytest tests/load -vv --durations=25`                     |
+| `tests/latency/`         | 27    | Kenya network latency simulation, timeouts       | `pytest tests/latency -vv --durations=25`                  |
+| `tests/unit/`            | 11    | Auth and user unit tests                         | `pytest tests/unit -q`                                     |
+| `tests/external/`        | 4     | Daraja sandbox, email provider sandbox           | `pytest tests/external --run-external -q`                  |
 | `tests/postman/`         | —     | Postman collection + environments                | Newman CLI                                                 |
 
 ## Auto-Markers (conftest.py)
@@ -83,12 +83,12 @@ Tests for a module follow this pattern:
 | `bookings/selectors/booking_status.py` | `bookings/tests/test_booking_status_endpoint.py` |
 | `bookings/domain/circuit_breaker.py`   | `bookings/tests/test_booking_hold_abuse_circuit_breaker.py` |
 | `bookings/infrastructure/email_provider.py` | `bookings/tests/test_email_provider_contract.py` |
-| `bookings/selectors/gallery_public.py` | `bookings/tests/test_gallery_public_output_contract.py` |
+| `bookings/gallery/selectors/public_gallery.py` | `bookings/tests/test_gallery_public_output_contract.py` |
 | `checkout/services.py`                 | `checkout/tests/test_checkout_session_lifecycle.py` |
 
 **Note**: Test files have NOT been relocated in this phase. They remain in their
-original directories and continue to import via the old `bookings.services.*`
-paths, which are now compatibility wrappers.
+original directories. Some tests still import stable compatibility wrappers;
+canonical factory ownership is now under `tests/factories/`.
 
 ## Fixture Ownership
 
@@ -97,9 +97,11 @@ paths, which are now compatibility wrappers.
 - External provider tests remain skipped unless `--run-external` is supplied.
 - Gallery storage tests use per-test temporary storage and must not write to
   production media paths.
-- Reusable factories should be introduced under `tests/factories/` in a
-  dedicated low-risk slice. Do not bulk-move existing test setup without a full
-  partitioned rerun.
+- `tests/factories/booking_factories.py` owns shared booking, service, resource,
+  and customer-profile factories.
+- `bookings/tests/factories.py` is a compatibility wrapper for old imports.
+- Do not put provider secrets, real phone numbers, raw receipt tokens, checkout
+  IDs, or storage keys in factory defaults.
 - Booking date/time fixtures must explicitly choose business-policy-compatible
   days unless the test is intentionally asserting Tuesday/Wednesday/full-package
   or closed-day behavior.
