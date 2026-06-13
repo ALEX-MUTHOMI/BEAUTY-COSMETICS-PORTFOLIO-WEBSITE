@@ -10,7 +10,6 @@ from django.urls import URLPattern, URLResolver, get_resolver
 from django.views.decorators.http import require_GET
 from rest_framework.schemas.openapi import SchemaGenerator
 
-
 ALLOWED_SCHEMA_PREFIXES = (
     "/health/",
     "/api/health-check/",
@@ -158,11 +157,11 @@ def build_safe_openapi_schema() -> dict[str, Any]:
     schema = copy.deepcopy(generator.get_schema(request=None, public=True))
     paths = schema.get("paths", {})
     schema["paths"] = {
-        path: _redact_schema_markers(path_schema)
-        for path, path_schema in paths.items()
-        if _is_safe_schema_path(path)
+        path: _redact_schema_markers(path_schema) for path, path_schema in paths.items() if _is_safe_schema_path(path)
     }
-    schema["paths"].update({path: ops for path, ops in _safe_route_inventory_paths().items() if path not in schema["paths"]})
+    schema["paths"].update(
+        {path: ops for path, ops in _safe_route_inventory_paths().items() if path not in schema["paths"]}
+    )
     schema["info"] = {
         "title": "Beauty API",
         "version": "security-scan",

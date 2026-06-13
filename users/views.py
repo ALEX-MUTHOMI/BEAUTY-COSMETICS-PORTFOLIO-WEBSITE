@@ -5,8 +5,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from users.serializers import OTPRequestSerializer, OTPVerifySerializer
 from users.redaction import redact_email
+from users.serializers import OTPRequestSerializer, OTPVerifySerializer
 from users.services import OTPService
 from users.tasks import send_express_otp_email
 from users.throttles import OTPAnonRateThrottle

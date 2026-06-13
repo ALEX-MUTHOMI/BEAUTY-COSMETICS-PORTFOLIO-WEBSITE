@@ -4,7 +4,6 @@ import pytest
 from django.conf import settings
 from django.test import override_settings
 
-
 SECURITY_HEADER_PATHS = (
     "/health/",
     "/api/health-check/",
@@ -120,3 +119,15 @@ def test_security_scan_mode_fails_turnstile_closed_without_external_call(client,
     )
 
     assert response.status_code == 400
+
+
+@override_settings(SECURITY_SCAN_MODE=True)
+def test_otp_throttle_handles_json_string_body_without_500(client):
+    response = client.post(
+        "/api/auth/request-otp/",
+        '"scanner-generated-string"',
+        content_type="application/json",
+        secure=True,
+    )
+
+    assert response.status_code in {400, 415}

@@ -4,7 +4,6 @@ from collections.abc import Callable
 
 from django.http import HttpRequest, HttpResponse
 
-
 CONTENT_SECURITY_POLICY = (
     "default-src 'self'; "
     "base-uri 'self'; "
@@ -77,6 +76,8 @@ class SecurityHeadersMiddleware:
 
     @staticmethod
     def _apply_no_store(response: HttpResponse) -> None:
-        response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        existing_cache_control = response.headers.get("Cache-Control", "")
+        if "no-store" not in existing_cache_control.lower():
+            response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response["Pragma"] = "no-cache"
         response["Expires"] = "0"

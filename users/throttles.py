@@ -16,7 +16,8 @@ class OTPAnonRateThrottle(RedisTokenBucketThrottle):
 
     def get_cache_ident(self, request, view):
         # Retrieve target email from request payload
-        email = request.data.get("email", "").strip().lower()
+        data = request.data if hasattr(request.data, "get") else {}
+        email = str(data.get("email", "")).strip().lower()
         if not email:
             # Fallback to standard IP-only throttling if payload is malformed
             return self.get_ident(request)
