@@ -18,6 +18,9 @@ and safe baseline execution. No patches were applied in Phase 3A.
 | 3A-P-011 | OWASP API4/API6 mapping | Per-endpoint rate-limit inventory | Medium | 3B abuse controls | Document/test rate limits for OTP, holds, checkout, STK, webhook, gallery upload, status polling | Medium | Backend/SRE |
 | 3A-P-012 | Dependency review | Vulnerable/outdated components | Medium | Dependency audit phase | Poetry/npm audit or equivalent SBOM check in CI | Medium | DevSecOps |
 | 3A-P-013 | ZAP passive findings | Missing CSP, Permissions-Policy, CORP, and cache headers on health/error responses | Medium | Security headers hardening | Middleware/header tests plus rerun ZAP baseline | Low/Medium | Backend/Security |
+| 3A-P-014 | ZAP coverage | OpenAPI schema unavailable for schema-driven passive API scan | Medium | API documentation/security tooling | Add OpenAPI schema and safe ZAP API baseline if product decision approves public/internal schema | Medium | API/Security |
+| 3A-P-015 | ZAP Newman proxy | CSRF cookie reported without HttpOnly in passive workflow scan | Low/Needs review | CSRF policy review | Explicit CSRF cookie policy test/doc; confirm frontend CSRF header mechanism requires script-readable CSRF token or redesign bootstrap | Low/Medium | Backend/Frontend Security |
+| 3A-P-016 | ZAP Newman proxy | API responses missing CSP/security headers in workflow-observed route | Medium | Security headers hardening | Header middleware tests covering normal, API, 404, and error responses | Low/Medium | Backend/Security |
 
 ## Deferred But Required Before Production Readiness
 

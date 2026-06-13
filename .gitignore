@@ -19,8 +19,11 @@ coverage.xml
 .coverage
 tests/postman/reports/*.json
 !tests/postman/reports/.gitkeep
-reports/security/zap/*
+reports/security/zap/**
+!reports/security/zap/
 !reports/security/zap/.gitkeep
+!reports/security/zap/**/
+!reports/security/zap/**/.gitkeep
 var/
 media/
 uploads/

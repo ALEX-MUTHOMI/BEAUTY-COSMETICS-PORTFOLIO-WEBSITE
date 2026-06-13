@@ -18,6 +18,7 @@ services:
       PAYMENT_PROVIDER_MODE: "fake"
       CHECKOUT_MPESA_PROVIDER: "fake"
       EMAIL_PROVIDER: "fake"
+      ENABLE_OPENAPI_SCHEMA: "true"
 
   worker:
     environment:

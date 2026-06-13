@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.serializers import OTPRequestSerializer, OTPVerifySerializer
+from users.redaction import redact_email
 from users.services import OTPService
 from users.tasks import send_express_otp_email
 from users.throttles import OTPAnonRateThrottle
@@ -43,7 +44,7 @@ class RequestOTPView(APIView):
         # 2. Assert Soft-Deletion Boundary
         # If an account is soft-deleted/anonymized, we block OTP request immediately
         if User.objects.all_with_deleted().filter(email=email, is_deleted=True).exists():
-            logger.warning(f"[-] Blocked OTP request attempt on soft-deleted account: {email}")
+            logger.warning("[-] Blocked OTP request attempt on soft-deleted account: %s", redact_email(email))
             return Response(
                 {"error": "This account has been permanently deactivated/anonymized."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -98,14 +99,14 @@ class VerifyOTPView(APIView):
             # Friction-free Onboarding: Auto-create account since OTP is verified
             user = User.objects.create_user(email=email)
             is_new = True
-            logger.info(f"[+] Passwordless onboarding complete. Created new account: {email}")
+            logger.info("[+] Passwordless onboarding complete. Created new account: %s", redact_email(email))
 
         # 4. Bind session authentication context
         user.is_otp_verified = True
         user.save()
 
         login(request, user)
-        logger.info(f"[+] Successful passwordless session login for: {email}")
+        logger.info("[+] Successful passwordless session login for: %s", redact_email(email))
 
         return Response(
             {

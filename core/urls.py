@@ -23,6 +23,7 @@ from django.urls import include, path
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
 
+from core.openapi import openapi_schema_view
 from users.views import RequestOTPView, VerifyOTPView
 
 
@@ -43,6 +44,7 @@ urlpatterns = [
     path("health/", health_check, name="health-check"),
     path("api/health-check/", health_check, name="api-health-check"),
     path("api/csrf/", csrf_bootstrap, name="api-csrf-bootstrap"),
+    path("api/schema/", openapi_schema_view, name="api-openapi-schema"),
     path("api/auth/request-otp/", RequestOTPView.as_view(), name="request-otp"),
     path("api/auth/verify-otp/", VerifyOTPView.as_view(), name="verify-otp"),
     path("api/billing/", include("billing.urls")),

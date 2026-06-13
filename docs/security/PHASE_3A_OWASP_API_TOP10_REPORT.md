@@ -190,14 +190,28 @@ complete object-authorization matrix for all object-id routes.
 
 ## ZAP Baseline Summary
 
-ZAP baseline was attempted against the owned local target:
+Phase 3A-P0 stabilized passive ZAP execution and Phase 3A-P1 broadened passive
+coverage.
 
-```text
-docker run --rm -v ${PWD}\reports\security\zap:/zap/wrk/:rw ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://host.docker.internal:8000 -m 2 -r zap-baseline.html -w zap-baseline.md -J zap-baseline.json
-```
+Completed local passive modes:
 
-Result: command timed out after 10 minutes. No ZAP report artifacts were produced.
-No ZAP findings are claimed. This blocks a clean Phase 3A acceptance.
+- Health baseline: `http://host.docker.internal:8000/health/`.
+- Root baseline: `http://host.docker.internal:8000/`.
+- Newman-through-ZAP passive proxy for API workflows.
+
+Deferred:
+
+- API schema scan, because no local OpenAPI schema endpoint exists.
+
+No ZAP full scan, active scan, Burp scan, production scan, real Daraja call, real
+email provider call, or real storage provider call was run.
+
+Findings are tracked in `docs/security/ZAP_BASELINE_TRIAGE.md` and coverage is
+tracked in `docs/security/ZAP_COVERAGE_SUMMARY.md`.
+
+Open ZAP findings include missing CSP/Permissions-Policy/CORP/cache headers and
+a CSRF cookie HttpOnly policy review item. These are not ignored and remain in
+the patch backlog.
 
 ## Log/Privacy Review
 

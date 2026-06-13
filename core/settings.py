@@ -40,6 +40,11 @@ DISABLE_DJANGO_ADMIN = os.environ.get("DISABLE_DJANGO_ADMIN", "False").lower() i
     "1",
     "t",
 )
+SECURITY_SCAN_MODE = os.environ.get("SECURITY_SCAN_MODE", "False").lower() in (
+    "true",
+    "1",
+    "t",
+)
 
 # Production security configuration gates
 if not DEBUG:
@@ -75,6 +80,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "core.middleware.security_headers.SecurityHeadersMiddleware",
     "core.middleware.correlation_id.CorrelationIdMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -372,6 +378,12 @@ REST_FRAMEWORK = {
         "checkout_stk_push": "3/min",
     },
 }
+
+ENABLE_OPENAPI_SCHEMA = os.environ.get("ENABLE_OPENAPI_SCHEMA", "False").lower() in (
+    "true",
+    "1",
+    "t",
+)
 
 if os.environ.get("DRF_DISABLE_BROWSABLE_API", "False").lower() in ("true", "1", "t"):
     REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
