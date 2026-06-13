@@ -3,9 +3,12 @@ import json
 from collections import Counter
 from pathlib import Path
 
-SENSITIVE_MARKERS = (
+COOKIE_CONTROL_MARKERS = (
     "sessionid",
     "csrftoken",
+)
+
+SECRET_MARKERS = (
     "access token",
     "refresh token",
     "consumer secret",
@@ -50,16 +53,16 @@ def observed_urls(alerts: list[dict], urls_file: Path | None) -> set[str]:
     return urls
 
 
-def scan_for_sensitive_markers(paths: list[Path]) -> int:
-    leaks = 0
+def scan_for_markers(paths: list[Path], markers: tuple[str, ...]) -> int:
+    hits = 0
     for path in paths:
         if not path.exists():
             continue
         text = path.read_text(encoding="utf-8", errors="ignore").lower()
-        for marker in SENSITIVE_MARKERS:
+        for marker in markers:
             if marker in text:
-                leaks += 1
-    return leaks
+                hits += 1
+    return hits
 
 
 def main() -> int:
@@ -74,13 +77,16 @@ def main() -> int:
     alerts = alerts_from_report(report)
     counts = alert_counts(alerts)
     urls = observed_urls(alerts, args.urls_file)
-    leak_markers = scan_for_sensitive_markers([args.file, args.urls_file] if args.urls_file else [args.file])
+    scanned_paths = [args.file, args.urls_file] if args.urls_file else [args.file]
+    secret_markers = scan_for_markers(scanned_paths, SECRET_MARKERS)
+    cookie_markers = scan_for_markers(scanned_paths, COOKIE_CONTROL_MARKERS)
 
     print(f"ZAP_SUMMARY_FILE={args.file}")
     print(f"ZAP_ALERTS={len(alerts)}")
     print(f"ZAP_ALERT_RISK_COUNTS={dict(sorted(counts.items()))}")
     print(f"ZAP_OBSERVED_URL_COUNT={len(urls)}")
-    print(f"ZAP_SENSITIVE_MARKER_HITS={leak_markers}")
+    print(f"ZAP_SENSITIVE_MARKER_HITS={secret_markers}")
+    print(f"ZAP_COOKIE_CONTROL_MARKER_HITS={cookie_markers}")
     for alert in alerts:
         plugin = alert.get("pluginid")
         name = alert.get("alert")

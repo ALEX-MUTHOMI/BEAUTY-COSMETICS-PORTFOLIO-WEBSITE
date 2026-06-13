@@ -31,6 +31,12 @@ Tests are automatically marked based on their directory path:
 
 ## Partitioned Verification Protocol
 
+The canonical CI strategy is the partitioned matrix documented in
+`docs/testing/CI_TEST_MATRIX.md`. A monolithic `pytest -q` run is best-effort
+local diagnostics only; it is not the primary gate because interrupted long runs
+can leave stale test DB sessions. If that happens, use
+`docs/testing/TEST_DB_LIFECYCLE.md`.
+
 Run these in order. If any partition fails, stop and investigate before continuing.
 Do not run these partitions in parallel against the same Docker Postgres test
 database unless a separate isolated test database strategy is configured.
