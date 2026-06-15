@@ -1,3 +1,7 @@
+/**
+ * @module calendarStrip
+ * Manages the date strip calendar UI for booking flows.
+ */
 import type { CalendarDay, CalendarWeek } from './bookingPublicApi'
 
 /** Default number of offered days shown before "Show more". */
