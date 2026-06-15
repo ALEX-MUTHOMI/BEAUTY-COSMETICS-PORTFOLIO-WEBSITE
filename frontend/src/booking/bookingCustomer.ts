@@ -1,3 +1,7 @@
+/**
+ * @module bookingCustomer
+ * Manages customer data for booking.
+ */
 export interface BookingCustomerInput {
   fullName: string
   email: string
