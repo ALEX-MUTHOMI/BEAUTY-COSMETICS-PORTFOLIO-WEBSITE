@@ -1,3 +1,7 @@
+/**
+ * @module bookingNavigation
+ * Navigation logic for booking steps.
+ */
 import { isUuid } from './bookingApi'
 
 /** Same-app booking status path only — blocks open redirects from API status_url. */
