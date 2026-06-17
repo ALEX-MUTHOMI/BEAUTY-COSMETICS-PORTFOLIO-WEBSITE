@@ -1,4 +1,8 @@
 /**
+ * @module bookCtaTargets
+ * Defines target URLs and sections for CTA buttons.
+ */
+/**
  * Canonical book deep-links for primary CTAs (skip /services catalog hop).
  */
 import { bookHrefForPackageName, bookHrefForTreatment } from './bookingHandoff'
