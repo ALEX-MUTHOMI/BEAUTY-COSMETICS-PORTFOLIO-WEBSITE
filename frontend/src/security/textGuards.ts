@@ -1,3 +1,7 @@
+/**
+ * @module textGuards
+ * Provides validation and sanitization for text input.
+ */
 const UNSAFE_BOOK_TOKEN_CHARS = new Set(['<', '>', '"', "'", '`'])
 
 /** Control chars, whitespace, and delimiter injection markers in decoded handoff tokens. */
