@@ -24,6 +24,9 @@ reports/security/zap/**
 !reports/security/zap/.gitkeep
 !reports/security/zap/**/
 !reports/security/zap/**/.gitkeep
+reports/ci/**
+!reports/ci/
+!reports/ci/.gitkeep
 var/
 media/
 uploads/

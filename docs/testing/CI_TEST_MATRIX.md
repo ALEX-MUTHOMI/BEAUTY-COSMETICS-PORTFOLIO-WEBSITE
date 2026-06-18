@@ -5,6 +5,16 @@ The canonical verification strategy is a partitioned matrix. The monolithic
 because it can exceed Docker Desktop runtime limits and leave stale test DB
 connections when interrupted.
 
+## Lane Overview
+
+| Lane | Purpose | Command |
+| --- | --- | --- |
+| Turbo Pass | Fast local/CI preflight for common regressions | `.\scripts\ci\turbo_pass.ps1` |
+| Standard Backend | Full domain partitions without load/ZAP | `.\scripts\ci\run_ci_matrix.ps1` |
+| Performance | Load and latency with explicit budgets | `.\scripts\ci\run_performance_gate.ps1 -Mode standard` |
+| Passive Security | Bounded ZAP/OpenAPI/Newman passive scans | `.\scripts\ci\run_security_passive_gate.ps1 -Mode api` |
+| Deep/Nightly | Future slow dependency/deep load/security expansion | scheduled CI only |
+
 ## Canonical Gates
 
 Run these as independent CI jobs or clearly separated local gates:
@@ -20,9 +30,9 @@ Run these as independent CI jobs or clearly separated local gates:
 9. `docker compose exec web poetry run pytest tests/integration -q`
 10. `docker compose exec web poetry run pytest bookings/tests -q`
 11. `docker compose exec web poetry run pytest checkout/tests billing/tests -q`
-12. `docker compose exec web poetry run pytest tests/load -q`
-13. `docker compose exec web poetry run pytest tests/latency -q`
-14. Newman acceptance against local Docker.
+12. `docker compose exec web poetry run pytest tests/load -q --durations=25`
+13. `docker compose exec web poetry run pytest tests/latency -q --durations=25`
+14. Docker Newman acceptance via `scripts/ci/run_newman_docker.ps1`.
 15. ZAP passive health/root/OpenAPI/Newman scans.
 16. `black --check .`
 17. `isort --check-only .`
@@ -35,6 +45,9 @@ Run these as independent CI jobs or clearly separated local gates:
 
 Load and latency tests are intentionally separate from fast unit/API/security
 gates. They are part of release confidence but should not starve faster jobs.
+The standard performance lane runs them sequentially. Combined load+latency is
+not canonical because it can exceed local command budgets and obscure which
+partition caused a timeout.
 
 ## Monolithic Pytest Policy
 
@@ -47,3 +60,7 @@ partitions.
 If a partition fails, fix that partition and rerun dependent gates. If an
 interrupted run leaves `test_beauty_db` stale, use
 `docs/testing/TEST_DB_LIFECYCLE.md`.
+
+Generated reports are ignored by Git and may be uploaded as CI artifacts when
+safe. Default CI must not call real Daraja, real email providers, production R2,
+active ZAP, Burp, or real DDoS tooling.

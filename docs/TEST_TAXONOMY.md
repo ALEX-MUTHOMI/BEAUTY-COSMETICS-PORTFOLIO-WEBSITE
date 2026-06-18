@@ -9,10 +9,10 @@
 | `billing/tests/`         | 25    | Ledger lifecycle, financial audit, redaction      | `pytest billing/tests -q`                                  |
 | `tests/api/`             | 3     | Backend API acceptance contract                  | `pytest tests/api -q`                                      |
 | `tests/integration/`     | 33    | Full lifecycle (booking→checkout→billing→receipt) | `pytest tests/integration -q`                              |
-| `tests/security/`        | 80    | Red team (auth, billing, holds, checkout, gallery)| `pytest tests/security -q`                                 |
+| `tests/security/`        | 84    | Red team (auth, billing, holds, checkout, gallery)| `pytest tests/security -q`                                 |
 | `tests/load/`            | 26    | Hold pressure, checkout storm, webhook storm     | `pytest tests/load -vv --durations=25`                     |
 | `tests/latency/`         | 27    | Kenya network latency simulation, timeouts       | `pytest tests/latency -vv --durations=25`                  |
-| `tests/unit/`            | 11    | Auth and user unit tests                         | `pytest tests/unit -q`                                     |
+| `tests/unit/`            | 21    | Auth, tooling, and user unit tests               | `pytest tests/unit -q`                                     |
 | `tests/external/`        | 4     | Daraja sandbox, email provider sandbox           | `pytest tests/external --run-external -q`                  |
 | `tests/postman/`         | —     | Postman collection + environments                | Newman CLI                                                 |
 

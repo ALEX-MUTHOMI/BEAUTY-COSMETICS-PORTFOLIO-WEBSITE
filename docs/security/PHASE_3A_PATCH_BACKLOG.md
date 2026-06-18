@@ -30,6 +30,15 @@ and safe baseline execution. No patches were applied in Phase 3A.
 - Monolithic pytest runtime: the canonical CI gate is the partitioned matrix in `docs/testing/CI_TEST_MATRIX.md`. A monolithic full-suite run remains a best-effort diagnostic path because long-running load/latency/security combinations can exceed local Docker runtime budgets and can leave stale test DB sessions after interrupted runs.
 - Frontend CSP: backend API headers are enforced centrally. Nuxt/browser CSP tightening remains a separate frontend deployment hardening item because inline/runtime assets must be inventoried before enabling a stricter browser policy.
 
+## Phase 3A-P4 Closeout Notes
+
+- Turbo Pass: fast verification is now a first-class lane through `scripts/ci/turbo_pass.ps1`. It runs config, Django, migration, collect-only, targeted security, API/security, unit/integration, Docker Newman, lint/security, secret hygiene, Docker health, and worker ping.
+- Docker Newman: Docker Newman is canonical through `scripts/ci/run_newman_docker.ps1`; host `newman.cmd` is optional and no longer blocks backend verification.
+- Git hygiene parity: git/index-aware checks are owned by `scripts/ci/git_hygiene_host.ps1`; runtime containers remain git-free and continue to run filesystem secret hygiene.
+- Performance budgeting: load and latency are preserved and budgeted through `scripts/ci/run_performance_gate.ps1`. They are not weakened or moved out of the standard performance lane.
+- Passive security: ZAP/OpenAPI/Newman passive scans remain separate through `scripts/ci/run_security_passive_gate.ps1`; active/full scans remain out of default CI.
+- Frontend CSP: policy is documented in `docs/security/FRONTEND_CSP_POLICY.md`. Backend CSP is not represented as complete browser CSP.
+
 ## Deferred But Required Before Production Readiness
 
 - Production-like staging rehearsal.

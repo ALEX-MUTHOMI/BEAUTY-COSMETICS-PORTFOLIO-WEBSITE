@@ -13,7 +13,7 @@ $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $ZapRoot = Join-Path $RepoRoot "reports\security\zap"
 $PostmanRoot = Join-Path $RepoRoot "tests\postman"
 $ZapImage = "ghcr.io/zaproxy/zaproxy:stable"
-$NewmanImage = "postman/newman:latest"
+$NewmanImage = "postman/newman:6.1.3"
 
 function Test-SafeLocalTarget {
     param([string]$Url)
