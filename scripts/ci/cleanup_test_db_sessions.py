@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 from dataclasses import dataclass
-from pathlib import Path6
+from pathlib import Path
 
 from psycopg2 import sql
 
@@ -83,7 +83,8 @@ def _connect(target: TestDatabaseTarget):
 
 
 def terminate_sessions(target: TestDatabaseTarget) -> int:
-    with _connect(target) as connection:
+    connection = _connect(target)
+    try:
         connection.autocommit = True
         with connection.cursor() as cursor:
             cursor.execute(
@@ -103,14 +104,19 @@ def terminate_sessions(target: TestDatabaseTarget) -> int:
                 """,
                 [target.name],
             )
-    return before
+        return before
+    finally:
+        connection.close()
 
 
 def drop_test_database(target: TestDatabaseTarget) -> None:
-    with _connect(target) as connection:
+    connection = _connect(target)
+    try:
         connection.autocommit = True
         with connection.cursor() as cursor:
             cursor.execute(sql.SQL("DROP DATABASE IF EXISTS {}").format(sql.Identifier(target.name)))
+    finally:
+        connection.close()
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:

@@ -4,6 +4,9 @@ param(
     [string]$Target = "",
     [int]$SpiderMinutes = 2,
     [int]$MaxMinutes = 8,
+    [int]$ZapReadySeconds = 300,
+    [int]$PassiveDrainSeconds = 120,
+    [int]$ReportExportSeconds = 90,
     [switch]$StrictExitCodes
 )
 
@@ -14,6 +17,8 @@ $ZapRoot = Join-Path $RepoRoot "reports\security\zap"
 $PostmanRoot = Join-Path $RepoRoot "tests\postman"
 $ZapImage = "ghcr.io/zaproxy/zaproxy:stable"
 $NewmanImage = "postman/newman:6.1.3"
+$ZapNewmanContainer = "beauty_zap_passive_newman"
+$NewmanThroughZapContainer = "beauty_newman_through_zap"
 
 function Test-SafeLocalTarget {
     param([string]$Url)
@@ -39,6 +44,23 @@ function New-ReportDir {
         New-Item -ItemType File -Force -Path $keep | Out-Null
     }
     return $dir
+}
+
+function Remove-ProjectScannerContainer {
+    param([string]$Name)
+    if ([string]::IsNullOrWhiteSpace($Name)) {
+        throw "Refusing to remove scanner container with empty name."
+    }
+    if (!$Name.StartsWith("beauty_")) {
+        throw "Refusing to remove non-project scanner container: $Name"
+    }
+    $existing = & docker ps -a --filter "name=^$Name$" --format "{{.Names}}"
+    if ($existing -contains $Name) {
+        & docker rm -f $Name | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "ZAP_CLEANUP_FAILED"
+        }
+    }
 }
 
 function Complete-ZapExit {
@@ -68,6 +90,15 @@ function Assert-Artifacts {
     Write-Host "ZAP_JSON_EXISTS=$json"
     if (!$html -or !$md -or !$json) {
         throw "ZAP artifact generation failed for $Prefix"
+    }
+    foreach ($path in @(
+        (Join-Path $ReportDir "$Prefix.html"),
+        (Join-Path $ReportDir "$Prefix.md"),
+        (Join-Path $ReportDir "$Prefix.json")
+    )) {
+        if ((Get-Item $path).Length -le 0) {
+            throw "ZAP artifact is empty: $path"
+        }
     }
 }
 
@@ -183,18 +214,47 @@ function Invoke-ZapApiMode {
 }
 
 function Wait-ZapProxy {
-    param([string]$Url)
-    for ($i = 0; $i -lt 90; $i++) {
+    param(
+        [string]$Url,
+        [string]$ContainerName = ""
+    )
+    $deadline = (Get-Date).AddSeconds($ZapReadySeconds)
+    while ((Get-Date) -lt $deadline) {
         try {
             $response = Invoke-WebRequest -Uri "$Url/JSON/core/view/version/" -Method GET -TimeoutSec 5 -UseBasicParsing
             if ($response.StatusCode -eq 200) {
+                Write-Host "ZAP_READY=True"
                 return
             }
         } catch {
             Start-Sleep -Seconds 2
         }
     }
-    throw "ZAP proxy did not become ready in time"
+    if ($ContainerName) {
+        Write-Host "ZAP_READY_DIAGNOSTIC_LOG_TAIL=True"
+        & docker logs --tail=120 $ContainerName 2>$null | ForEach-Object { Write-Host $_ }
+    }
+    throw "ZAP_READY_TIMEOUT"
+}
+
+function Wait-ZapPassiveDrain {
+    param([string]$ProxyApi)
+    $deadline = (Get-Date).AddSeconds($PassiveDrainSeconds)
+    while ((Get-Date) -lt $deadline) {
+        try {
+            $response = Invoke-WebRequest -Uri "$ProxyApi/JSON/pscan/view/recordsToScan/" -Method GET -TimeoutSec 5 -UseBasicParsing
+            $payload = $response.Content | ConvertFrom-Json
+            $remaining = [int]$payload.recordsToScan
+            Write-Host "ZAP_PASSIVE_RECORDS_TO_SCAN=$remaining"
+            if ($remaining -eq 0) {
+                return
+            }
+        } catch {
+            Write-Host "ZAP_PASSIVE_DRAIN_POLL_FAILED=True"
+        }
+        Start-Sleep -Seconds 2
+    }
+    throw "PASSIVE_DRAIN_TIMEOUT"
 }
 
 function Save-ZapProxyReport {
@@ -203,10 +263,10 @@ function Save-ZapProxyReport {
         [string]$ReportDir,
         [string]$Prefix
     )
-    Invoke-WebRequest -Uri "$ProxyApi/OTHER/core/other/htmlreport/" -OutFile (Join-Path $ReportDir "$Prefix.html") -UseBasicParsing
-    Invoke-WebRequest -Uri "$ProxyApi/OTHER/core/other/mdreport/" -OutFile (Join-Path $ReportDir "$Prefix.md") -UseBasicParsing
-    Invoke-WebRequest -Uri "$ProxyApi/OTHER/core/other/jsonreport/" -OutFile (Join-Path $ReportDir "$Prefix.json") -UseBasicParsing
-    Invoke-WebRequest -Uri "$ProxyApi/JSON/core/view/urls/" -OutFile (Join-Path $ReportDir "$Prefix.urls.json") -UseBasicParsing
+    Invoke-WebRequest -Uri "$ProxyApi/OTHER/core/other/htmlreport/" -OutFile (Join-Path $ReportDir "$Prefix.html") -TimeoutSec $ReportExportSeconds -UseBasicParsing
+    Invoke-WebRequest -Uri "$ProxyApi/OTHER/core/other/mdreport/" -OutFile (Join-Path $ReportDir "$Prefix.md") -TimeoutSec $ReportExportSeconds -UseBasicParsing
+    Invoke-WebRequest -Uri "$ProxyApi/OTHER/core/other/jsonreport/" -OutFile (Join-Path $ReportDir "$Prefix.json") -TimeoutSec $ReportExportSeconds -UseBasicParsing
+    Invoke-WebRequest -Uri "$ProxyApi/JSON/core/view/urls/" -OutFile (Join-Path $ReportDir "$Prefix.urls.json") -TimeoutSec $ReportExportSeconds -UseBasicParsing
 }
 
 function Invoke-NewmanThroughZap {
@@ -215,18 +275,29 @@ function Invoke-NewmanThroughZap {
     $proxyPort = 8090
     $proxyApi = "http://localhost:$proxyPort"
     $postmanPath = (Resolve-Path $PostmanRoot).Path
-    $containerName = "beauty_zap_passive_$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())"
+    $zapContainerName = $ZapNewmanContainer
+    $newmanContainerName = $NewmanThroughZapContainer
 
     Write-Host "ZAP_MODE=newman"
     Write-Host "ZAP_PROXY_PORT=$proxyPort"
     Write-Host "ZAP_REPORT_DIR=$reportDir"
+    Write-Host "ZAP_CONTAINER=$zapContainerName"
+    Write-Host "NEWMAN_CONTAINER=$newmanContainerName"
 
-    & docker run -d --rm --name $containerName -p "${proxyPort}:8090" -v "${reportDir}:/zap/wrk/:rw" $ZapImage zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.disablekey=true -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true | Out-Null
+    Remove-ProjectScannerContainer -Name $zapContainerName
+    Remove-ProjectScannerContainer -Name $newmanContainerName
+
+    & docker run -d --name $zapContainerName -p "${proxyPort}:8090" -v "${reportDir}:/zap/wrk/:rw" $ZapImage zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.disablekey=true -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "ZAP_START_FAILED"
+    }
     try {
-        Wait-ZapProxy -Url $proxyApi
+        Wait-ZapProxy -Url $proxyApi -ContainerName $zapContainerName
         $newmanArgs = @(
             "run",
             "--rm",
+            "--name",
+            $newmanContainerName,
             "-e",
             "HTTP_PROXY=http://host.docker.internal:${proxyPort}",
             "-e",
@@ -240,6 +311,10 @@ function Invoke-NewmanThroughZap {
             "/etc/newman/local-docker.postman_environment.json",
             "--env-var",
             "base_url=http://host.docker.internal:8000",
+            "--timeout",
+            "300000",
+            "--timeout-request",
+            "60000",
             "--bail",
             "--reporters",
             "cli,json",
@@ -249,16 +324,17 @@ function Invoke-NewmanThroughZap {
         & docker @newmanArgs | ForEach-Object { Write-Host $_ }
         $newmanExit = $LASTEXITCODE
         Write-Host "NEWMAN_EXIT_CODE=$newmanExit"
-        if ($newmanExit -ne 0) {
-            throw "Newman-through-ZAP failed"
-        }
-        Start-Sleep -Seconds 5
+        Wait-ZapPassiveDrain -ProxyApi $proxyApi
         Save-ZapProxyReport -ProxyApi $proxyApi -ReportDir $reportDir -Prefix $prefix
         Assert-Artifacts -ReportDir $reportDir -Prefix $prefix
         & python (Join-Path $PSScriptRoot "zap_summarize_reports.py") --file (Join-Path $reportDir "$prefix.json") --urls-file (Join-Path $reportDir "$prefix.urls.json") | ForEach-Object { Write-Host $_ }
+        if ($newmanExit -ne 0) {
+            throw "Newman-through-ZAP failed"
+        }
         return 0
     } finally {
-        & docker stop $containerName 2>$null | Out-Null
+        Remove-ProjectScannerContainer -Name $newmanContainerName
+        Remove-ProjectScannerContainer -Name $zapContainerName
     }
 }
 

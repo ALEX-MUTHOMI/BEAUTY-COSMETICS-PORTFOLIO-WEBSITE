@@ -68,7 +68,7 @@ try {
     Invoke-Checked "Docker health" "docker compose ps"
     Invoke-Checked "Worker ping" "docker compose exec -T worker celery -A core inspect ping --timeout=10"
     if ($IncludeZapPassive) {
-        Invoke-Checked "ZAP API passive gate" ".\scripts\ci\run_security_passive_gate.ps1 -Mode api"
+        Invoke-Checked "ZAP Newman passive gate" ".\scripts\ci\run_security_passive_gate.ps1 -Mode newman"
     }
 
     $end = Get-Date

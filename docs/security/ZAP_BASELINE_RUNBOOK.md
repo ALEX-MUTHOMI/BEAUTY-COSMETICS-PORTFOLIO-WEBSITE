@@ -81,8 +81,9 @@ Purpose: OpenAPI route coverage if a schema endpoint exists.
 .\scripts\security\zap_baseline_local.ps1 -Mode api -MaxMinutes 10
 ```
 
-Current status: deferred because no local OpenAPI schema endpoint is configured.
-Do not invent schema coverage in reports until a schema exists.
+Current status: available only when the explicit security-scan profile is
+enabled. Default runtime must keep `/api/schema/` disabled and return `404`
+when the app is not running under the security-scan override.
 
 ### Newman Through ZAP Passive Proxy
 
@@ -105,6 +106,32 @@ reports/security/zap/newman/zap-newman-passive.urls.json
 
 The script runs a temporary local ZAP daemon and Docker Newman through the ZAP
 proxy using fake providers only. It must not be pointed at production.
+
+Lifecycle guarantees:
+
+- pre-cleans only deterministic project-owned scanner containers;
+- starts `beauty_zap_passive_newman`;
+- waits for ZAP API readiness with bounded timeout;
+- runs pinned `postman/newman:6.1.3` as `beauty_newman_through_zap`;
+- preserves Newman `--bail` behavior and the full collection contract;
+- waits for passive scan drain with bounded timeout;
+- exports HTML, Markdown, JSON, and observed URL artifacts;
+- verifies artifacts exist and are non-empty;
+- runs the sensitive marker summary;
+- removes project-owned scanner containers in cleanup.
+
+Measured local Windows/Docker ZAP readiness may exceed 90 seconds on cold start,
+so the readiness cap is 300 seconds. Newman execution, passive drain, and report
+export remain separately bounded.
+
+### All Passive Gate
+
+```powershell
+.\scripts\ci\run_security_passive_gate.ps1 -Mode all-passive
+```
+
+This runs health, root, API schema, and Newman-through-ZAP modes as a separate
+passive security gate. It is intentionally not part of default Turbo Pass.
 
 ## Exit Code Handling
 
@@ -155,3 +182,13 @@ Restore the default profile when finished:
 ```powershell
 docker compose up -d web worker
 ```
+
+After restore, verify:
+
+```powershell
+curl.exe -i -H "X-Forwarded-Proto: https" http://localhost:8000/api/schema/
+docker ps -a --filter "name=zap" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"
+```
+
+Expected: schema route returns `404` in default runtime and no project-owned ZAP
+containers remain.

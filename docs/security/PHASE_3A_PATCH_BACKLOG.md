@@ -39,6 +39,14 @@ and safe baseline execution. No patches were applied in Phase 3A.
 - Passive security: ZAP/OpenAPI/Newman passive scans remain separate through `scripts/ci/run_security_passive_gate.ps1`; active/full scans remain out of default CI.
 - Frontend CSP: policy is documented in `docs/security/FRONTEND_CSP_POLICY.md`. Backend CSP is not represented as complete browser CSP.
 
+## Phase 3A-P4A Closeout Notes
+
+- Newman-through-ZAP lifecycle: stabilized in `scripts/security/zap_baseline_local.ps1` with deterministic project-owned scanner container names, pre-clean, bounded ZAP readiness, bounded passive drain, bounded report export, non-empty artifact checks, and cleanup on success/failure.
+- ZAP startup root cause: the pinned ZAP image can take more than 90 seconds to expose the API on Windows/Docker cold starts while add-ons and local state initialize. The readiness cap is now 300 seconds based on measured local behavior; Newman execution, passive drain, and report export remain separately bounded.
+- Newman integrity: standalone Docker Newman and Newman-through-ZAP both preserve the full acceptance contract of 30 requests, 91 assertions, 0 failures, and `--bail`.
+- Passive security status: `all-passive` now runs health, root, OpenAPI API scan, and Newman-through-ZAP without lingering project-owned scanner containers. Passive warnings remain triage items, not production readiness blockers.
+- Default runtime: OpenAPI schema remains disabled outside the security-scan profile; default `/api/schema/` returns 404 when called with the expected forwarded HTTPS context.
+
 ## Deferred But Required Before Production Readiness
 
 - Production-like staging rehearsal.

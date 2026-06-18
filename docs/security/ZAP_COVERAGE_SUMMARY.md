@@ -7,10 +7,10 @@ security completeness.
 
 | Mode | Target | Scan type | Exit/result | Artifacts | Observed URLs | Alerts |
 | --- | --- | --- | --- | --- | ---: | ---: |
-| Health | `http://host.docker.internal:8000/health/` | Passive baseline | Exit 2, completed with warnings | `reports/security/zap/health/` | 5 | 4 |
-| Root | `http://host.docker.internal:8000/` | Passive baseline | Exit 2, completed with warnings | `reports/security/zap/root/` | 3 | 3 |
-| API schema | N/A | Deferred | No schema endpoint | `reports/security/zap/api/zap-api-baseline.deferred.txt` | 0 | 0 |
-| Newman proxy | Newman workflows through ZAP proxy | Passive observation | Newman exit 0, ZAP report generated | `reports/security/zap/newman/` | 61 | 4 |
+| Health | `http://host.docker.internal:8000/health/` | Passive baseline | Exit 2, completed with warnings | `reports/security/zap/health/` | 4 | 2 |
+| Root | `http://host.docker.internal:8000/` | Passive baseline | Exit 2, completed with warnings | `reports/security/zap/root/` | 3 | 1 |
+| API schema | `http://host.docker.internal:8000/api/schema/` | Safe OpenAPI passive scan | Exit 2, completed with warnings | `reports/security/zap/api/` | 15 | 5 |
+| Newman proxy | Newman workflows through ZAP proxy | Passive observation | Newman exit 0, ZAP report generated | `reports/security/zap/newman/` | 61 | 3 |
 
 ## Coverage Matrix
 
@@ -37,8 +37,8 @@ security completeness.
 
 ## Gaps
 
-- No OpenAPI schema is available, so schema-driven passive API coverage is
-  deferred.
+- OpenAPI schema is available only in the explicit security-scan profile.
+  Default runtime keeps `/api/schema/` disabled and returning `404`.
 - ZAP spidering does not discover authenticated/API workflows without Newman.
 - Newman-through-ZAP observes API workflows, but it does not prove object-level
   authorization correctness.
@@ -47,6 +47,7 @@ security completeness.
 
 ## Security Interpretation
 
-P1 proves the scanner is configured for broader passive coverage and that it can
-observe meaningful application workflows through Newman. It does not prove the
-Beauty app is production-ready or vulnerability-free.
+P4A proves the scanner is configured for broader passive coverage and that it can
+observe meaningful application workflows through Newman without leaving stale
+scanner containers. It does not prove the Beauty app is production-ready or
+vulnerability-free.

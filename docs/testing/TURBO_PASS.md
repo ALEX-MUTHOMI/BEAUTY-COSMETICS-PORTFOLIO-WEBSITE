@@ -40,11 +40,22 @@ Newman through the canonical runner.
 - Docker health;
 - Celery worker ping.
 
+## Optional ZAP Passive Mode
+
+Turbo Pass does not run full `all-passive` by default. The default lane keeps
+Docker Newman standalone because it is faster and deterministic for API contract
+coverage.
+
+`-IncludeZapPassive` runs the bounded Newman-through-ZAP passive workflow, not
+the full health/root/OpenAPI/Newman `all-passive` matrix. Use
+`.\scripts\ci\run_security_passive_gate.ps1 -Mode all-passive` as the separate
+passive security gate.
+
 ## Excluded Checks
 
-Turbo Pass does not run full `tests/load`, full `tests/latency`, ZAP passive
-scans, Daraja sandbox tests, real email provider tests, real storage-provider
-tests, active ZAP, Burp, or DDoS testing.
+Turbo Pass does not run full `tests/load`, full `tests/latency`, full
+all-passive ZAP, Daraja sandbox tests, real email provider tests, real
+storage-provider tests, active ZAP, Burp, or DDoS testing.
 
 ## Runtime Budget
 
@@ -57,4 +68,3 @@ verification.
 
 The script fails fast. It does not hide failures, rewrite exits, delete tests,
 or reduce assertions.
-

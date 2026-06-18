@@ -12,7 +12,7 @@ connections when interrupted.
 | Turbo Pass | Fast local/CI preflight for common regressions | `.\scripts\ci\turbo_pass.ps1` |
 | Standard Backend | Full domain partitions without load/ZAP | `.\scripts\ci\run_ci_matrix.ps1` |
 | Performance | Load and latency with explicit budgets | `.\scripts\ci\run_performance_gate.ps1 -Mode standard` |
-| Passive Security | Bounded ZAP/OpenAPI/Newman passive scans | `.\scripts\ci\run_security_passive_gate.ps1 -Mode api` |
+| Passive Security | Bounded ZAP health/root/OpenAPI/Newman passive scans | `.\scripts\ci\run_security_passive_gate.ps1 -Mode all-passive` |
 | Deep/Nightly | Future slow dependency/deep load/security expansion | scheduled CI only |
 
 ## Canonical Gates
@@ -33,7 +33,7 @@ Run these as independent CI jobs or clearly separated local gates:
 12. `docker compose exec web poetry run pytest tests/load -q --durations=25`
 13. `docker compose exec web poetry run pytest tests/latency -q --durations=25`
 14. Docker Newman acceptance via `scripts/ci/run_newman_docker.ps1`.
-15. ZAP passive health/root/OpenAPI/Newman scans.
+15. ZAP passive health/root/OpenAPI/Newman scans through `scripts/ci/run_security_passive_gate.ps1 -Mode all-passive`.
 16. `black --check .`
 17. `isort --check-only .`
 18. `ruff check .`

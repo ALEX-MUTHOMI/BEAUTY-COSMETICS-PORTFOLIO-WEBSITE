@@ -84,7 +84,7 @@ foreach ($file in $trackedFiles) {
     if ($file -match "^(reports/security/zap|tests/postman/reports)/") {
         continue
     }
-    if ($file -match "^(docs/|tests/)|/tests/|\.example$|^scripts/ci/django_smoke\.sh$") {
+    if ($file -match "^(docs/|tests/)|/tests/|\.example$|^scripts/ci/django_smoke\.sh$|^scripts/ci/git_hygiene_host\.ps1$") {
         continue
     }
     if (!(Test-Path $file -PathType Leaf)) {
