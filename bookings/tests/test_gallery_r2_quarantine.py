@@ -11,4 +11,7 @@ def test_gallery_storage_abstraction_uses_private_quarantine_and_public_variants
     assert storage.exists(key)
     assert key.startswith("gallery/quarantine/")
     assert "client.jpg" not in key
-    assert public_variant_url("gallery/variants/image/mobile.webp") == "/media/gallery/variants/image/mobile.webp"
+    url = public_variant_url("gallery/variants/image/mobile.webp")
+    assert url.startswith("/media/public/")
+    assert url.endswith(".webp")
+    assert "gallery/variants/image/mobile.webp" not in url

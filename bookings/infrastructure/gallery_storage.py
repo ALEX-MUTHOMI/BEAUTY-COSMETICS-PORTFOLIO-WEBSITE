@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 from django.conf import settings
+from django.utils.crypto import salted_hmac
 
 
 class GalleryStorageError(Exception):
@@ -30,7 +31,9 @@ def build_variant_key(image_public_id, variant_type):
 def public_variant_url(storage_key):
     key = _safe_relative_key(storage_key)
     base = getattr(settings, "GALLERY_PUBLIC_BASE_URL", "/media/").rstrip("/") + "/"
-    return base + key
+    suffix = Path(key).suffix or ".webp"
+    public_handle = salted_hmac("gallery-public-variant-url", key).hexdigest()[:32]
+    return f"{base}public/{public_handle}{suffix}"
 
 
 class GalleryObjectStorage:

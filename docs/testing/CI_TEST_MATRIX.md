@@ -96,3 +96,22 @@ Turbo Pass and the standard `tests/api tests/security` matrix. The gate covers:
 No route that accepts object IDs, tokens, owner-like fields, role-like fields,
 status-like fields, or payment-like fields may be added without updating the
 authorization matrix and tests.
+
+## Response Privacy Security Gate
+
+Phase 3C response privacy tests also live in `tests/security` and are covered by
+Turbo Pass plus the standard `tests/api tests/security` matrix. The gate covers:
+
+- booking hold, checkout bridge, and status token response minimization;
+- checkout, billing, webhook, and disabled legacy billing non-reflection;
+- staff booking, staff payment, and audited contact reveal response contracts;
+- public/staff gallery response privacy and opaque public media URLs;
+- malformed, denied, disabled, and unknown-route error response non-leakage;
+- route-aware sensitive field allowlist/denylist helpers.
+
+No public/customer/staff/provider route should be added without updating:
+
+- `docs/security/RESPONSE_PRIVACY_MATRIX.md`
+- `docs/security/API_FIELD_ALLOWLIST_MATRIX.md`
+- `docs/security/SENSITIVE_FIELD_DENYLIST.md`
+- relevant response privacy tests in `tests/security/`
