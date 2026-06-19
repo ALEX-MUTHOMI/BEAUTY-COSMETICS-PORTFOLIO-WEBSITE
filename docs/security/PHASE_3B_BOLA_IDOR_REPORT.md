@@ -163,6 +163,33 @@ Staff scoping decision: active authorized staff have global staff portal read
 access by current product policy. Per-beautician row ownership is deferred until
 the product introduces assignment/branch/resource-specific staff ownership.
 
+## Phase 3B-F Final Closeout Addendum
+
+Phase 3B-F resolved the two remaining execution caveats:
+
+- `bookings/tests` completed as a full partition: 290 tests passed in 612.30s.
+- `scripts/ci/turbo_pass.ps1` completed with `TURBO_PASS_RESULT=passed` after
+  adding safe repo-local Docker config handling for shells that cannot read the
+  host user's Docker credential config.
+
+The five controls remain verified:
+
+- authorization checks are documented for every inventoried object-bearing route
+  group;
+- public identifiers, direct internal identifiers, provider identifiers, ledger
+  identifiers, and storage identifiers have documented handling rules;
+- ABAC is represented through existing actor/resource/context attributes rather
+  than a speculative framework;
+- least privilege and deny-by-default behavior are tested for unknown sensitive
+  routes, disabled legacy billing routes, staff permission boundaries, and
+  customer-owned checkout access;
+- repeatable testing is covered by `tests/security`, API/security partitions,
+  Booking full partition, Docker Newman, Turbo Pass, lint/security, secret
+  hygiene, Docker health, and Celery worker ping.
+
+No critical/high BOLA, IDOR, mass-assignment, role-tampering, ABAC, or
+least-privilege finding remains open for current product policy.
+
 ## Patch Backlog
 
 Patch backlog: `docs/security/PHASE_3B_PATCH_BACKLOG.md`.

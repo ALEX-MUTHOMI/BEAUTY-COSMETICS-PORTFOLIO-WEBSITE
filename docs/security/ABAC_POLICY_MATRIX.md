@@ -86,3 +86,11 @@ Meaning:
 
 ABAC policy is documented and test-backed without adding a speculative generic
 authorization framework.
+
+## Phase 3B-F Verification
+
+Phase 3B-F re-verified the current ABAC policy through targeted authorization,
+staff, role-tampering, mass-assignment, query-tampering, full Booking,
+API/security, and Turbo Pass gates. Current global authorized-staff booking read
+access remains an explicit product policy, not an accidental missing row-scope
+check.

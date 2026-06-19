@@ -36,3 +36,10 @@ Phase 3B follow-up `3B-FU-001` is now covered by
 `tests/security/test_authorization_control_closeout.py::test_disabled_legacy_billing_webhook_returns_410_after_ip_allowlist_accepts_request`.
 The test configures a local allowlisted source and proves the legacy billing
 webhook still returns `410` without reflecting provider identifiers.
+
+## Phase 3B-F Verification
+
+Phase 3B-F re-verified identifier safety with targeted BOLA/IDOR tests, the
+full Booking partition, Docker Newman API acceptance, and Turbo Pass. No public
+contract was expanded to expose internal IDs, provider identifiers, ledger IDs,
+receipt tokens, storage keys, raw phone numbers, or raw email addresses.

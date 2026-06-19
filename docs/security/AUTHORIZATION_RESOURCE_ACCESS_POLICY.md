@@ -61,3 +61,9 @@ status-like fields, or payment-like fields may be added without updating:
 
 All inventoried high-risk protected route groups have documented rules and test
 evidence. Production readiness remains rejected.
+
+## Phase 3B-F Verification
+
+Phase 3B-F re-verified this policy with targeted BOLA/IDOR tests, the full
+`tests/security` partition, API/security tests, full `bookings/tests`, Docker
+Newman, and Turbo Pass. No new runtime authorization change was required.

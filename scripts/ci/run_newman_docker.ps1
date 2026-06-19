@@ -4,6 +4,7 @@ param(
     [string]$Environment = "tests/postman/local-docker.postman_environment.json",
     [string]$Report = "tests/postman/reports/newman-local.json",
     [string]$BaseUrl = "",
+    [string]$DockerConfigPath = "",
     [switch]$VerboseOutput
 )
 
@@ -29,7 +30,41 @@ function Invoke-Checked {
     }
 }
 
+function Initialize-SafeDockerConfig {
+    param(
+        [string]$RepoRoot,
+        [string]$RequestedPath
+    )
+    if ($RequestedPath) {
+        New-Item -ItemType Directory -Force -Path $RequestedPath | Out-Null
+        $env:DOCKER_CONFIG = (Resolve-Path $RequestedPath).Path
+        Write-Host "DOCKER_CONFIG_MODE=explicit"
+        return
+    }
+    if ($env:DOCKER_CONFIG) {
+        Write-Host "DOCKER_CONFIG_MODE=existing"
+        return
+    }
+    $safePath = Join-Path $RepoRoot "reports\ci\docker-config-empty"
+    New-Item -ItemType Directory -Force -Path $safePath | Out-Null
+    $env:DOCKER_CONFIG = $safePath
+    Write-Host "DOCKER_CONFIG_MODE=temporary_empty_local"
+}
+
+function Test-DockerDaemonAccess {
+    docker version --format "{{.Server.Version}}" | Out-Null
+    $exit = $LASTEXITCODE
+    if ($exit -ne 0) {
+        Write-Host "DOCKER_ACCESS_RESULT=failed"
+        Write-Host "DOCKER_ACCESS_DIAGNOSTIC=Unable to reach Docker daemon from this shell. Check Docker Desktop state, Windows docker_engine pipe permissions, and current user access."
+        exit $exit
+    }
+    Write-Host "DOCKER_ACCESS_RESULT=passed"
+}
+
 $RepoRoot = Resolve-RepoRoot
+Initialize-SafeDockerConfig -RepoRoot $RepoRoot -RequestedPath $DockerConfigPath
+Test-DockerDaemonAccess
 $CollectionPath = Resolve-Path (Join-Path $RepoRoot $Collection)
 $EnvironmentPath = Resolve-Path (Join-Path $RepoRoot $Environment)
 $ReportPath = Join-Path $RepoRoot $Report

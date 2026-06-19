@@ -37,3 +37,11 @@ New endpoints must start from deny-by-default. The developer must explicitly
 choose one least-privilege class, document its authorization attributes, and add
 negative tests for anonymous, same-privilege non-owner, role/header tampering,
 and unsafe object/reference guessing where applicable.
+
+## Phase 3B-F Verification
+
+Phase 3B-F re-verified least privilege through targeted five-control tests,
+`tests/security`, API/security, full Booking tests, Docker Newman, and Turbo
+Pass. Unknown sensitive routes, disabled legacy billing routes, unauthorized
+staff access, anonymous protected-object access, and client-side payment/status
+tampering remain deny-by-default.

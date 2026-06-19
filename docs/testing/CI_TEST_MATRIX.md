@@ -55,6 +55,20 @@ partition caused a timeout.
 increase timeouts indefinitely. Use the partitioned matrix and inspect slow
 partitions.
 
+## Booking Partition Runtime
+
+`bookings/tests` is currently a canonical full domain partition, not a skipped
+or reduced lane. Phase 3B-F re-ran it with durations and maxfail diagnostics:
+
+```powershell
+docker compose exec -T web poetry run pytest bookings/tests -q --durations=50 --maxfail=1
+```
+
+Result: 290 tests passed in 612.30s. If a future local machine times this lane
+out, split by the existing file groups for diagnosis only, then preserve the
+full Booking partition in CI unless a documented CI budget decision replaces it
+with a no-omission subpartition matrix.
+
 ## Failure Handling
 
 If a partition fails, fix that partition and rerun dependent gates. If an

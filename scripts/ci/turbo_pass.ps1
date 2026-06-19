@@ -1,6 +1,7 @@
 param(
     [switch]$SkipNewman,
     [switch]$IncludeZapPassive,
+    [string]$DockerConfigPath = "",
     [switch]$VerboseOutput
 )
 
@@ -38,8 +39,30 @@ function Invoke-Checked {
     }
 }
 
+function Initialize-SafeDockerConfig {
+    param(
+        [string]$RepoRoot,
+        [string]$RequestedPath
+    )
+    if ($RequestedPath) {
+        New-Item -ItemType Directory -Force -Path $RequestedPath | Out-Null
+        $env:DOCKER_CONFIG = (Resolve-Path $RequestedPath).Path
+        Write-Host "DOCKER_CONFIG_MODE=explicit"
+        return
+    }
+    if ($env:DOCKER_CONFIG) {
+        Write-Host "DOCKER_CONFIG_MODE=existing"
+        return
+    }
+    $safePath = Join-Path $RepoRoot "reports\ci\docker-config-empty"
+    New-Item -ItemType Directory -Force -Path $safePath | Out-Null
+    $env:DOCKER_CONFIG = $safePath
+    Write-Host "DOCKER_CONFIG_MODE=temporary_empty_local"
+}
+
 Set-Location $RepoRoot
 try {
+    Initialize-SafeDockerConfig -RepoRoot $RepoRoot -RequestedPath $DockerConfigPath
     Add-Summary "# Turbo Pass Summary"
     Add-Summary ""
     Add-Summary "- started_utc=$($start.ToUniversalTime().ToString('o'))"

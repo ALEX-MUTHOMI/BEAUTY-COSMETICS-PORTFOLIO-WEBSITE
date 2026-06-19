@@ -15,11 +15,18 @@ Optional local-only flags:
 ```powershell
 .\scripts\ci\turbo_pass.ps1 -SkipNewman
 .\scripts\ci\turbo_pass.ps1 -IncludeZapPassive
+.\scripts\ci\turbo_pass.ps1 -DockerConfigPath .\reports\ci\docker-config-empty
 .\scripts\ci\turbo_pass.ps1 -VerboseOutput
 ```
 
 `-SkipNewman` is for local developer iteration only. CI should run Docker
 Newman through the canonical runner.
+
+`-DockerConfigPath` is for Windows shells where the current user cannot read the
+default Docker credential config. The script otherwise creates a repo-local
+empty Docker config under `reports/ci/docker-config-empty` when `DOCKER_CONFIG`
+is unset. This avoids credential-file ACL noise but does not hide Docker daemon
+or named-pipe permission failures.
 
 ## Included Checks
 
@@ -69,3 +76,12 @@ verification.
 
 The script fails fast. It does not hide failures, rewrite exits, delete tests,
 or reduce assertions.
+
+If Docker access fails, the expected diagnostic is:
+
+```text
+DOCKER_ACCESS_RESULT=failed
+DOCKER_ACCESS_DIAGNOSTIC=Unable to reach Docker daemon from this shell...
+```
+
+That is a host Docker access issue, not a passing Turbo gate.
