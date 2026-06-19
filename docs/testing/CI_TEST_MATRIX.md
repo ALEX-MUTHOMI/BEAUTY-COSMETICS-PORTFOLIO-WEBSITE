@@ -64,3 +64,21 @@ interrupted run leaves `test_beauty_db` stale, use
 Generated reports are ignored by Git and may be uploaded as CI artifacts when
 safe. Default CI must not call real Daraja, real email providers, production R2,
 active ZAP, Burp, or real DDoS tooling.
+
+## Authorization Security Gate
+
+Phase 3B/3B-C authorization tests live in `tests/security` and are part of both
+Turbo Pass and the standard `tests/api tests/security` matrix. The gate covers:
+
+- customer-to-customer BOLA/IDOR;
+- anonymous protected-object access;
+- staff/non-staff/inactive-staff boundaries;
+- mass assignment of owner/role/status/payment fields;
+- role/header/query tampering;
+- disabled legacy billing route behavior;
+- public/private gallery query widening;
+- deny-by-default for unknown sensitive routes.
+
+No route that accepts object IDs, tokens, owner-like fields, role-like fields,
+status-like fields, or payment-like fields may be added without updating the
+authorization matrix and tests.

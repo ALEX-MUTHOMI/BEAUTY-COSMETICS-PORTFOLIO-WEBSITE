@@ -39,7 +39,7 @@ the expected denial/privacy policy for hostile actors.
 | `/api/checkout/sessions/<checkout_id>/mpesa/stk/` | POST | checkout UUID | path | Customer owner | Customer-scoped selector plus STK throttle | 404 for other customer | amount/provider data/IDs | checkout auth/throttle tests | `test_bola_idor_customer_objects.py` | Critical | covered |
 | `/api/checkout/mpesa/webhook/` | POST | checkout request ID | provider payload | Provider webhook | IP/sandbox callback perimeter, inbox, idempotency, amount/state validation | 202/400/403 safe | raw callback, receipt, provider IDs | webhook tests/security/load | documented existing | Critical | covered existing |
 | `/api/billing/stk-push/` | POST | legacy payment fields | body | none | Disabled legacy route | 410 | submitted provider IDs/ledger IDs | billing tests/Newman | `test_bola_idor_customer_objects.py`, `test_status_payment_tampering.py` | High | covered |
-| `/api/billing/mpesa-webhook/` | POST | legacy provider payload | body | none | Disabled legacy route behind IP permission | 403/410 | provider payload | billing tests | matrix follow-up for explicit 410 with allowed IP | Medium | gap |
+| `/api/billing/mpesa-webhook/` | POST | legacy provider payload | body | none | Disabled legacy route behind IP permission | 403/410 | provider payload | billing tests | `test_authorization_control_closeout.py` | Medium | covered |
 | `/api/staff/auth/login/` | POST | staff email/password | body | Staff account only | Generic login, no customer escalation | 400/429 generic | account existence, password | staff auth tests | matrix only | High | covered existing |
 | `/api/staff/auth/logout/` | POST | session | cookie | Staff session | Logout current session only | generic | session IDs | staff auth tests | matrix only | Medium | covered existing |
 | `/api/staff/auth/me/` | GET | session | cookie | Active staff session | Staff profile only | 403 | staff/customer PII | staff auth tests | anonymous access test | High | covered |
@@ -67,6 +67,6 @@ the expected denial/privacy policy for hostile actors.
   staff booking/payment views, staff gallery upload, customer remembered-device
   token, disabled billing routes.
 - Public-by-design routes were explicitly separated from protected routes.
-- Confirmed Phase 3B gap: legacy billing webhook could use a future explicit
-  allowed-IP test to assert `410` after permission acceptance; current risk is
-  reduced because the route is disabled and IP-gated.
+- Phase 3B-C closes the legacy billing webhook follow-up with an explicit
+  allowed-IP test proving the route still returns `410` after permission
+  preconditions pass.

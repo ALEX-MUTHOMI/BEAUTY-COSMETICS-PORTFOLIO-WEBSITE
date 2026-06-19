@@ -16,8 +16,8 @@ confirmed by the added Phase 3B tests.
 
 | ID | Severity | Area | Risk | Recommended follow-up | Status |
 | --- | --- | --- | --- | --- | --- |
-| 3B-FU-001 | Medium | `/api/billing/mpesa-webhook/` | Permission-gated disabled route should have an explicit allowed-IP regression proving the view still returns 410 once IP allowlist passes. | Add bounded fake-IP test without real provider calls. | deferred |
-| 3B-FU-002 | Medium | Staff booking scope | Staff views are globally scoped for authorized staff by current design. If per-beautician assignment becomes a product rule, add Staff A/Staff B object authorization before release. | Product/security decision required before implementation. | deferred |
+| 3B-FU-001 | Medium | `/api/billing/mpesa-webhook/` | Permission-gated disabled route should have an explicit allowed-IP regression proving the view still returns 410 once IP allowlist passes. | Covered by `tests/security/test_authorization_control_closeout.py::test_disabled_legacy_billing_webhook_returns_410_after_ip_allowlist_accepts_request`. | closed in 3B-C |
+| 3B-FU-002 | Medium | Staff booking scope | Staff views are globally scoped for authorized staff by current design. If per-beautician assignment becomes a product rule, add Staff A/Staff B object authorization before release. | Product policy documented in `docs/security/ABAC_POLICY_MATRIX.md`; covered by `test_staff_booking_access_policy_is_global_for_authorized_staff_and_denies_without_permission`. Future per-staff scoping remains a product-change backlog item. | closed as policy decision / future product backlog |
 | 3B-FU-003 | Medium | Newman negative coverage | Pytest now covers role/header/mass-assignment cases. Add selected negative Newman cases to catch deployment routing/cookie regressions. | Phase 3C/3D API contract expansion. | deferred |
 | 3B-FU-004 | Medium | Response field allowlists | Phase 3B asserts absence of sensitive markers. A formal response allowlist for each public/customer/staff route would tighten future refactors. | Phase 3C response privacy/allowlist. | deferred |
 
@@ -27,3 +27,6 @@ confirmed by the added Phase 3B tests.
 - Any future patch must keep checkout/billing financial truth separated.
 - Any future staff scoping change must be explicit product behavior, not an
   accidental test-only assumption.
+- No route that accepts object IDs, tokens, owner-like fields, role-like fields,
+  status-like fields, or payment-like fields may be added without updating the
+  authorization matrix and negative tests.

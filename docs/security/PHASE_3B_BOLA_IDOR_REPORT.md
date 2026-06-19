@@ -115,12 +115,13 @@ success was created by client-side payload fields.
 
 No confirmed critical/high findings were found by Phase 3B tests.
 
-Medium follow-up items:
+Medium follow-up items after Phase 3B discovery:
 
 - Add explicit allowed-IP regression for disabled legacy billing webhook
-  returning `410`.
+  returning `410` - closed in Phase 3B-C.
 - Decide whether future staff booking views require per-beautician row scoping;
-  current implementation is staff-global by design after permission checks.
+  current implementation is staff-global by design after permission checks -
+  documented in Phase 3B-C.
 - Add selected Newman negative cases for deployment/API contract parity.
 - Build route response allowlists in Phase 3C.
 
@@ -142,9 +143,25 @@ See `docs/security/PHASE_3B_PATCH_BACKLOG.md`.
   real email providers, or real R2.
 - Phase 3B did not prove production readiness.
 - Phase 3B did not change staff global-scope product behavior.
-- Legacy billing webhook needs a tighter explicit disabled-route test after
-  allowlisted IP permission acceptance.
+- Legacy billing webhook disabled-route behavior after allowlisted IP permission
+  acceptance is covered in Phase 3B-C.
 - Newman negative authorization cases remain a follow-up.
+
+## Phase 3B-C Closeout Addendum
+
+Phase 3B-C documents and verifies the five BOLA remediation controls:
+
+- authorization rule on every inventoried route group;
+- indirect reference/identifier policy;
+- ABAC policy matrix without overbuilding a speculative framework;
+- least privilege and deny-by-default route classification;
+- repeatable security testing through `tests/security`, Turbo Pass, Newman,
+  lint/security, host git hygiene, secret hygiene, Docker health, and worker
+  ping.
+
+Staff scoping decision: active authorized staff have global staff portal read
+access by current product policy. Per-beautician row ownership is deferred until
+the product introduces assignment/branch/resource-specific staff ownership.
 
 ## Patch Backlog
 

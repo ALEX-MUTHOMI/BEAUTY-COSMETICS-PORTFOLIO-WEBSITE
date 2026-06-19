@@ -31,7 +31,8 @@ Newman through the canonical runner.
 - pytest collect-only;
 - security headers and OpenAPI safety tests;
 - throttle malformed-body semantics tests;
-- API/security tests;
+- API/security tests, including Phase 3B/3B-C BOLA, IDOR, mass-assignment,
+  role/header/query tampering, and deny-by-default authorization controls;
 - unit/integration tests;
 - Docker Newman acceptance;
 - Black, isort, Ruff, flake8 fatal syntax gate;
