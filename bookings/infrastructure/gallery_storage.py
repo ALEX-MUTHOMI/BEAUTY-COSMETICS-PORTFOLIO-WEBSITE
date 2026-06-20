@@ -1,8 +1,8 @@
 import os
+import uuid
 from pathlib import Path
 
 from django.conf import settings
-from django.utils.crypto import salted_hmac
 
 
 class GalleryStorageError(Exception):
@@ -28,12 +28,24 @@ def build_variant_key(image_public_id, variant_type):
     return f"gallery/variants/{image_public_id}/{variant_type}.webp"
 
 
-def public_variant_url(storage_key):
-    key = _safe_relative_key(storage_key)
+PUBLIC_VARIANT_FORMATS = {"webp", "jpeg", "jpg", "png"}
+
+
+def public_variant_extension(image_format):
+    extension = str(image_format or "").lower().lstrip(".")
+    if extension not in PUBLIC_VARIANT_FORMATS:
+        raise GalleryStorageError("Invalid public gallery format.")
+    return extension
+
+
+def public_variant_url(variant_public_id, image_format):
+    try:
+        public_handle = uuid.UUID(str(variant_public_id))
+    except (TypeError, ValueError, AttributeError) as exc:
+        raise GalleryStorageError("Invalid public gallery handle.") from exc
+    extension = public_variant_extension(image_format)
     base = getattr(settings, "GALLERY_PUBLIC_BASE_URL", "/media/").rstrip("/") + "/"
-    suffix = Path(key).suffix or ".webp"
-    public_handle = salted_hmac("gallery-public-variant-url", key).hexdigest()[:32]
-    return f"{base}public/{public_handle}{suffix}"
+    return f"{base}public/{public_handle}.{extension}"
 
 
 class GalleryObjectStorage:
@@ -64,6 +76,12 @@ class GalleryObjectStorage:
         try:
             with open(self._path(key), "rb") as handle:
                 return handle.read()
+        except OSError as exc:
+            raise GalleryStorageError("Gallery storage read failed.") from exc
+
+    def open(self, key):
+        try:
+            return open(self._path(key), "rb")
         except OSError as exc:
             raise GalleryStorageError("Gallery storage read failed.") from exc
 

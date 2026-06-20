@@ -75,6 +75,15 @@ Forbidden from public and customer responses:
 
 Public gallery responses may expose public optimized variant URLs only.
 
+Public variant URL policy:
+
+- URLs must use random variant identifiers, not a hash, encoding, slug, or
+  derivation of a storage key.
+- The public resolver must enforce `PUBLISHED` image state and `is_public`
+  variant state before reading internal storage.
+- CDN or reverse-proxy configuration must route public handles through the same
+  policy or an equivalent access-controlled mapping.
+
 ## Internal And Debug Fields
 
 Forbidden in external API responses:

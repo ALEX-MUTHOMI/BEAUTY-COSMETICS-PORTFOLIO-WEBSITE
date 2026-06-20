@@ -25,7 +25,7 @@ the response contain only intended fields?
 | `/api/staff/bookings/<id>/` | GET | active staff | staff-only detail | operational booking detail | provider payload, ledger IDs, storage/auth internals | `test_response_privacy_staff.py` | High | Covered |
 | `/api/staff/bookings/<id>/payment/` | GET | permitted staff | staff-only payment summary | redacted payment status/amount/provider availability | ledger IDs, raw provider refs, receipt IDs | `test_response_privacy_staff.py` | High | Covered |
 | `/api/staff/bookings/<id>/contact-access/` | POST | permitted/recently reauth staff | staff-with-context | audited phone/email reveal only | provider/storage/auth/audit internals | `test_response_privacy_staff.py` | Critical | Covered |
-| `/api/gallery/public/*` | GET | anonymous | public gallery | published display fields and opaque public variant URLs | storage keys, private buckets, drafts, EXIF, owner internals | `test_response_privacy_gallery.py` | High | Covered; 3C-HIGH-001 patched |
+| `/api/gallery/public/*`, `/media/public/<variant-uuid>.<format>` | GET | anonymous | public gallery/media | published display fields and random opaque variant UUID URLs | storage keys, private buckets, drafts, EXIF, owner internals | gallery response plus 3C-PV resolver tests | High | Covered; 3C-HIGH-001 closed |
 | `/api/staff/gallery/categories/` | GET | active staff | staff navigation | category/subcategory navigation fields | upload storage internals, hashes, owner internals | `test_response_privacy_gallery.py` | Medium | Covered |
 | Error/denial routes | mixed | anonymous/customer/staff/provider | error/denial | generic `detail`/status | stack traces, object existence leaks, PII, provider/storage internals | `test_response_privacy_errors.py` | High | Covered |
 

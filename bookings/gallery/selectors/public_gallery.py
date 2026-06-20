@@ -17,7 +17,7 @@ def image_public_payload(image):
     variants = {}
     for variant in image.variants.filter(is_public=True).order_by("variant_type"):
         variants[variant.variant_type] = {
-            "url": public_variant_url(variant.storage_key),
+            "url": public_variant_url(variant.public_id, variant.format),
             "width": variant.width,
             "height": variant.height,
             "format": variant.format,

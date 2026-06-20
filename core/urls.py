@@ -19,10 +19,11 @@ from django.conf import settings
 from django.contrib import admin
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
 
+from bookings import gallery_views
 from core.openapi import openapi_schema_view
 from users.views import RequestOTPView, VerifyOTPView
 
@@ -54,6 +55,11 @@ urlpatterns = [
     path("api/legal/", include("bookings.legal_urls")),
     path("api/staff/", include("bookings.staff_urls")),
     path("api/gallery/public/", include("bookings.public_gallery_urls")),
+    re_path(
+        r"^media/public/(?P<public_handle>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\.(?P<extension>webp|jpeg|jpg|png)$",
+        gallery_views.public_gallery_variant,
+        name="public-gallery-variant",
+    ),
 ]
 
 if not settings.DISABLE_DJANGO_ADMIN:

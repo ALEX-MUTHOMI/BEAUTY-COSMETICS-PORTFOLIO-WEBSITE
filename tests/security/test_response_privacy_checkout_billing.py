@@ -102,6 +102,41 @@ def test_checkout_detail_and_cross_customer_denial_do_not_leak_provider_or_ledge
 
 
 @pytest.mark.django_db
+def test_fake_provider_stk_response_is_minimal_and_does_not_expose_phone_or_daraja_identifiers(settings):
+    settings.PAYMENT_PROVIDER_MODE = "fake"
+    customer = _user("phase-3c-stk@example.com", "+254700300004")
+    session = create_checkout_session(
+        customer,
+        Decimal("500.00"),
+        "KES",
+        "Private checkout",
+        "booking",
+        "private-booking-pk",
+        "phase-3c-stk-session",
+    )
+
+    response = _client(customer).post(
+        f"/api/checkout/sessions/{session.id}/mpesa/stk/",
+        {"phone_number": customer.phone_number, "idempotency_key": "phase-3c-stk-attempt"},
+        format="json",
+    )
+
+    assert response.status_code == 202
+    payload = assert_response_excludes_categories(
+        response,
+        categories=(
+            AUTH_KEY_MARKERS,
+            PAYMENT_PROVIDER_KEY_MARKERS,
+            STORAGE_KEY_MARKERS,
+            INTERNAL_DEBUG_KEY_MARKERS,
+        ),
+        forbidden_values={customer.phone_number, "fake_ws_CO", "fake_merchant"},
+        allowed_keys={"attempt_id"},
+    )
+    assert set(payload).issubset({"attempt_id", "status"})
+
+
+@pytest.mark.django_db
 def test_webhook_response_does_not_echo_provider_payload_or_identifiers(settings):
     settings.CHECKOUT_ALLOWED_MPESA_IPS = ["127.0.0.1"]
     payload = {

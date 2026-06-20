@@ -14,7 +14,7 @@ Allowed:
 - catalog/service/package display data needed for selection;
 - legal document publication fields;
 - public gallery display fields;
-- opaque public optimized image variant URL, dimensions, format, and size.
+- random opaque public optimized variant UUID URL, dimensions, format, and size.
 
 Forbidden:
 
@@ -167,7 +167,7 @@ Allowed:
 - public image ID;
 - title and description after sanitization;
 - category/subcategory display fields;
-- opaque public optimized variant URL/dimensions/format/size;
+- random opaque public optimized variant UUID URL/dimensions/format/size;
 - warning/sensitivity flags that are part of public display policy.
 
 Forbidden:
@@ -183,6 +183,7 @@ Forbidden:
 Evidence:
 
 - `tests/security/test_response_privacy_gallery.py`
+- `tests/security/test_public_gallery_variant_url_privacy.py`
 
 ## Error And Denial Responses
 

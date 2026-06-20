@@ -1,6 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Prefetch
-from django.http import JsonResponse
+from django.http import FileResponse, Http404, JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 
 from bookings.gallery.selectors.public_gallery import (
@@ -9,8 +9,9 @@ from bookings.gallery.selectors.public_gallery import (
     get_public_service_gallery,
     get_public_subcategory_gallery,
 )
-from bookings.models import GalleryCategory, GallerySubcategory
+from bookings.models import GalleryCategory, GalleryImage, GalleryImageVariant, GallerySubcategory
 from bookings.services.gallery_images import create_gallery_image_from_upload
+from bookings.services.gallery_storage import GalleryObjectStorage, GalleryStorageError, public_variant_extension
 from bookings.services.staff_auth import GENERIC_SESSION_EXPIRED, enforce_staff_session
 
 
@@ -27,6 +28,10 @@ def _staff_forbidden():
 
 def _safe_validation(status=400):
     return _json({"detail": "Gallery request could not be accepted."}, status=status)
+
+
+def _media_content_type(extension):
+    return {"webp": "image/webp", "jpeg": "image/jpeg", "jpg": "image/jpeg", "png": "image/png"}[extension]
 
 
 def _require_staff(request):
@@ -142,3 +147,42 @@ def public_gallery_subcategory(request, category_slug, subcategory_slug):
         return _json(get_public_subcategory_gallery(category_slug, subcategory_slug))
     except ObjectDoesNotExist:
         return _json({"detail": "Gallery category is unavailable."}, status=404)
+
+
+@require_GET
+def public_gallery_variant(request, public_handle, extension):
+    try:
+        normalized_extension = public_variant_extension(extension)
+    except GalleryStorageError as exc:
+        raise Http404 from exc
+
+    variant = (
+        GalleryImageVariant.objects.select_related("gallery_image")
+        .filter(
+            public_id=public_handle,
+            is_public=True,
+            gallery_image__status=GalleryImage.Status.PUBLISHED,
+        )
+        .first()
+    )
+    if variant is None:
+        raise Http404
+    try:
+        expected_extension = public_variant_extension(variant.format)
+    except GalleryStorageError as exc:
+        raise Http404 from exc
+    if expected_extension != normalized_extension:
+        raise Http404
+
+    try:
+        file_handle = GalleryObjectStorage().open(variant.storage_key)
+    except GalleryStorageError as exc:
+        raise Http404 from exc
+
+    response = FileResponse(file_handle, content_type=_media_content_type(normalized_extension))
+    # Archived media must become unavailable promptly; do not make a revocable
+    # public variant immutable in browser/CDN caches.
+    response["Cache-Control"] = "public, max-age=300"
+    response["X-Content-Type-Options"] = "nosniff"
+    response["Content-Disposition"] = "inline"
+    return response

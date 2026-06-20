@@ -20,7 +20,7 @@
       <div v-else class="carousel" aria-label="Homepage carousel">
         <article v-for="image in featuredImages" :key="image.public_id">
           <img
-            :src="bestVariant(image).url"
+            :src="mediaUrl(bestVariant(image).url)"
             :srcset="srcset(image)"
             :width="bestVariant(image).width"
             :height="bestVariant(image).height"
@@ -39,6 +39,8 @@
 </template>
 
 <script setup lang="ts">
+import { resolvePublicGalleryMediaUrl } from '~/src/gallery/publicMedia'
+
 interface GalleryVariant {
   url: string
   width: number
@@ -74,8 +76,12 @@ function srcset(image: GalleryImage): string {
   return Object.values(image.variants)
     .filter((variant) => variant.url.endsWith('.webp'))
     .sort((a, b) => a.width - b.width)
-    .map((variant) => `${variant.url} ${variant.width}w`)
+    .map((variant) => `${mediaUrl(variant.url)} ${variant.width}w`)
     .join(', ')
+}
+
+function mediaUrl(url: string): string {
+  return resolvePublicGalleryMediaUrl(url, runtimeConfig.public.apiBaseUrl)
 }
 </script>
 

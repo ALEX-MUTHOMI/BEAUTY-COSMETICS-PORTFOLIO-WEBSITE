@@ -103,8 +103,32 @@ Medium:
 Low:
 
 - `3C-LOW-001`: direct STK initiation response privacy can receive a
-  fake-provider-only test in a later phase; existing permissions/throttle tests
-  still cover the route.
+  fake-provider-only response privacy test. Closed in Phase 3C-PV with a test
+  proving the STK response contains only an owner-scoped attempt ID and status.
+
+## Public Gallery Variant URL Privacy Verification
+
+`3C-HIGH-001` was re-verified in Phase 3C-PV and the original HMAC-only URL
+patch was strengthened because it did not provide a controlled media resolver.
+
+- Public gallery URLs now use the existing random `GalleryImageVariant.public_id`
+  UUID, not a storage key or a deterministic transform of one.
+- `public_variant_url()` accepts only a UUID public handle plus a validated image
+  extension; raw storage keys are rejected.
+- `/media/public/<variant-uuid>.<format>` resolves only when the variant is
+  `is_public=True` and its image is `PUBLISHED`.
+- The resolver streams the internal storage object only after that database
+  policy check. Unknown, malformed, archived, draft, quarantined, failed, and
+  non-public variants receive generic `404` responses.
+- Public responses remain stable for a variant, differ for different variants,
+  contain no raw storage path, bucket, original upload, quarantine, or hash.
+- Public media caching is bounded to five minutes; URLs are not marked
+  immutable so archiving can revoke access promptly.
+
+Deployment note: when `GALLERY_PUBLIC_BASE_URL` is absolute, its origin must
+route `/media/public/*` to this resolver or an equivalent policy-enforcing
+media service. A CDN must never map opaque handles directly to private storage
+keys.
 
 ## Verification Plan
 

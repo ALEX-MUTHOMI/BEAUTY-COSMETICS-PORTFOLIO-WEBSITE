@@ -6,6 +6,7 @@ from bookings.infrastructure.gallery_storage import (  # noqa: F811
     GalleryStorageError,
     build_quarantine_key,
     build_variant_key,
+    public_variant_extension,
     public_variant_url,
 )
 
@@ -14,5 +15,6 @@ __all__ = [
     "GalleryStorageError",
     "build_quarantine_key",
     "build_variant_key",
+    "public_variant_extension",
     "public_variant_url",
 ]
