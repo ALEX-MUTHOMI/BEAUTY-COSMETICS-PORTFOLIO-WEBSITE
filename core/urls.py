@@ -24,6 +24,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
 
 from bookings import gallery_views
+from core.throttling import route_throttle
 from core.openapi import openapi_schema_view
 from users.views import RequestOTPView, VerifyOTPView
 
@@ -34,6 +35,7 @@ def health_check(_request):
 
 @ensure_csrf_cookie
 @require_GET
+@route_throttle("csrf_bootstrap")
 def csrf_bootstrap(request):
     response = JsonResponse({"csrf_token": get_token(request)})
     response["Cache-Control"] = "no-store"

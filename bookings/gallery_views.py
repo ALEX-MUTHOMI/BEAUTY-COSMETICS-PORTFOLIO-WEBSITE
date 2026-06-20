@@ -13,6 +13,7 @@ from bookings.models import GalleryCategory, GalleryImage, GalleryImageVariant, 
 from bookings.services.gallery_images import create_gallery_image_from_upload
 from bookings.services.gallery_storage import GalleryObjectStorage, GalleryStorageError, public_variant_extension
 from bookings.services.staff_auth import GENERIC_SESSION_EXPIRED, enforce_staff_session
+from core.throttling import route_throttle
 
 
 def _json(payload, status=200):
@@ -121,11 +122,13 @@ def staff_gallery_image_upload(request):
 
 
 @require_GET
+@route_throttle("public_gallery")
 def public_gallery_homepage(request):
     return _json(get_homepage_gallery())
 
 
 @require_GET
+@route_throttle("public_gallery")
 def public_gallery_category(request, category_slug):
     try:
         return _json(get_public_category_gallery(category_slug))
@@ -134,6 +137,7 @@ def public_gallery_category(request, category_slug):
 
 
 @require_GET
+@route_throttle("public_gallery")
 def public_gallery_service(request, service_slug):
     try:
         return _json(get_public_service_gallery(service_slug))
@@ -142,6 +146,7 @@ def public_gallery_service(request, service_slug):
 
 
 @require_GET
+@route_throttle("public_gallery")
 def public_gallery_subcategory(request, category_slug, subcategory_slug):
     try:
         return _json(get_public_subcategory_gallery(category_slug, subcategory_slug))
@@ -150,6 +155,7 @@ def public_gallery_subcategory(request, category_slug, subcategory_slug):
 
 
 @require_GET
+@route_throttle("media_resolver")
 def public_gallery_variant(request, public_handle, extension):
     try:
         normalized_extension = public_variant_extension(extension)

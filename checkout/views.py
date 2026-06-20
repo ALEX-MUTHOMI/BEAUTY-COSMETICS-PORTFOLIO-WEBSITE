@@ -19,12 +19,13 @@ from checkout.services import (
     initiate_mpesa_stk,
     process_mpesa_callback,
 )
-from checkout.throttles import CheckoutSTKPushThrottle
+from checkout.throttles import CheckoutSessionCreateThrottle, CheckoutSessionDetailThrottle, CheckoutSTKPushThrottle
 from core.middleware.correlation_id import get_correlation_id
 
 
 class CheckoutSessionListCreateView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [CheckoutSessionCreateThrottle]
 
     def post(self, request):
         serializer = CheckoutSessionCreateSerializer(data=request.data)
@@ -46,6 +47,7 @@ class CheckoutSessionListCreateView(APIView):
 
 class CheckoutSessionDetailView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [CheckoutSessionDetailThrottle]
 
     def get(self, request, checkout_id):
         session = get_customer_checkout_or_none(request.user, checkout_id)

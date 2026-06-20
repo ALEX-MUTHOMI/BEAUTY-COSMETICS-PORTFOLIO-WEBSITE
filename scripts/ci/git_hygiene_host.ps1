@@ -41,8 +41,10 @@ function Assert-NotTracked {
 
 Set-Location $RepoRoot
 Write-Host "GIT_HYGIENE_HOST=True"
+Write-Host "[git-hygiene] step 1: working tree and diff checks"
 Invoke-Git -GitArgs @("status", "--short")
 Invoke-Git -GitArgs @("diff", "--check")
+Write-Host "[git-hygiene] step 2: forbidden tracked artifacts"
 Assert-NotTracked -Paths @(
     ".env",
     "db.sqlite3",
@@ -58,6 +60,7 @@ Assert-NotTracked -Paths @(
     "reports/security/zap/newman/zap-newman-passive.json"
 )
 
+Write-Host "[git-hygiene] step 3: generated artifact ignore checks"
 $ignoredArtifacts = @(
     "tests/postman/reports/newman-local.json",
     "tests/postman/reports/newman-through-zap.json",
@@ -78,6 +81,12 @@ $secretPatterns = @(
     "(?i)DEBUG\s*=\s*True"
 )
 
+Write-Host "[git-hygiene] step 4: tracked source and configuration marker scan"
+$textExtensions = @(
+    ".cfg", ".env", ".ini", ".js", ".json", ".mjs", ".ps1", ".py",
+    ".sh", ".toml", ".ts", ".tsx", ".vue", ".yaml", ".yml"
+)
+$textBasenames = @("Dockerfile", "Caddyfile", "Caddyfile.staging", "Procfile")
 $trackedFiles = & git @SafeGit ls-files
 $hits = New-Object System.Collections.Generic.List[string]
 foreach ($file in $trackedFiles) {
@@ -90,10 +99,14 @@ foreach ($file in $trackedFiles) {
     if (!(Test-Path $file -PathType Leaf)) {
         continue
     }
-    $lines = Get-Content -Path $file -ErrorAction SilentlyContinue
-    foreach ($line in $lines) {
+    $item = Get-Item -LiteralPath $file
+    if (($textExtensions -notcontains $item.Extension.ToLowerInvariant()) -and ($textBasenames -notcontains $item.Name)) {
+        continue
+    }
+    Get-Content -LiteralPath $file -ErrorAction SilentlyContinue | ForEach-Object {
+        $line = $_
         if ($line -match "os\.environ|getenv|process\.env|\$\{") {
-            continue
+            return
         }
         foreach ($pattern in $secretPatterns) {
             if ($line -match $pattern) {
@@ -102,12 +115,13 @@ foreach ($file in $trackedFiles) {
             }
         }
         if ($hits.Contains($file)) {
-            break
+            return
         }
     }
 }
 
 $uniqueHits = $hits | Sort-Object -Unique
+Write-Host "[git-hygiene] step 5: summary"
 Write-Host "GIT_SECRET_MARKER_FILE_COUNT=$($uniqueHits.Count)"
 foreach ($file in $uniqueHits) {
     Write-Host "GIT_SECRET_MARKER_FILE=$file"

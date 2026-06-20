@@ -18,6 +18,7 @@ from bookings.services.staff_portal import (
     get_weekly_overview,
     reveal_contact,
 )
+from core.throttling import route_throttle, staff_or_ip_identity
 
 
 def _json(payload, status=200):
@@ -124,6 +125,7 @@ def staff_booking_payment(request, public_booking_id):
 
 
 @require_POST
+@route_throttle("staff_contact_reveal", key_builder=staff_or_ip_identity)
 def staff_booking_contact_access(request, public_booking_id):
     denied = _require_staff_permission(request, "view_staff_contact_details")
     if denied:

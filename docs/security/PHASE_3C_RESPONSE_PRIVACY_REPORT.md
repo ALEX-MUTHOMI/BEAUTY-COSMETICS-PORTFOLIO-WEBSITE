@@ -2,7 +2,7 @@
 
 ## Executive Verdict
 
-`PHASE 3C DISCOVERY ACCEPTED WITH FINDINGS - HIGH STORAGE KEY EXPOSURE PATCHED`
+`PHASE 3C-FINAL-E ACCEPTED — PHASE 3C FULLY CLOSED`
 
 Production readiness: **REJECTED / NOT CLAIMED**.
 
@@ -144,6 +144,48 @@ Phase 3C verification should include:
 - Django check and migration drift;
 - lint/security and secret hygiene;
 - Docker health and worker ping.
+
+## Final Passive Security And Hygiene Closeout
+
+On 2026-06-20, the local-only final closeout ran:
+
+```powershell
+.\scripts\ci\run_security_passive_gate.ps1 -Mode all-passive
+```
+
+- Duration: 502 seconds.
+- Health, root, OpenAPI, and Newman-through-ZAP passive modes completed.
+- Every mode reported `FAIL-NEW=0` and `ZAP_SENSITIVE_MARKER_HITS=0`.
+- HTML, Markdown, and JSON reports were present and non-empty for every mode.
+- Newman-through-ZAP completed 30 requests, 91 assertions, and 0 failures.
+- Project-owned ZAP containers were cleaned up; none remained after the run.
+- The default runtime was restored: Docker services were healthy, Celery returned
+  `pong`, and `/api/schema/` returned `404` when evaluated in its HTTPS request
+  context.
+- Recent web, worker, db, redis, frontend, and frontend-test logs had no
+  traceback, internal-error, storage, provider, token, secret, or PII-value
+  leaks. A worker `email` label was a static marker with no address-shaped
+  value.
+- Generated reports, local `.env`, and local SQLite data remain ignored and
+  untracked. Host Git hygiene returned `GIT_SECRET_MARKER_FILE_COUNT=0`.
+
+The only passive warnings were existing low/informational items: CSRF cookie
+non-HttpOnly policy, expected client/error responses in schema placeholders,
+and cacheability observations. They are non-blocking and contain no sensitive
+marker hit. No active or full ZAP scan was used.
+
+## Phase 3C Closeout
+
+`3C-HIGH-001 CLOSED — public gallery storage-key exposure eliminated and verified.`
+
+The public gallery uses opaque variant UUID handles, its resolver allows only
+published/public variants, and malformed, unknown, private, draft,
+quarantined, failed, or unpublished handles receive generic `404` responses.
+The frontend accepts backend `/media/public/...` paths only and rejects raw
+storage-style or external URLs. Fake-provider direct STK initiation returns
+only `attempt_id` and `status`.
+
+Next planned work: **PHASE 3D — Rate-limit / Abuse / Throttling Inventory**.
 
 ## No Production Readiness Claim
 

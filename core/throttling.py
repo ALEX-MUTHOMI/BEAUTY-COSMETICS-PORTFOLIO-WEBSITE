@@ -1,6 +1,10 @@
+import hashlib
 import logging
 import math
 import time
+from functools import wraps
+
+from django.http import JsonResponse
 
 from rest_framework.exceptions import APIException
 from rest_framework.throttling import BaseThrottle
@@ -96,7 +100,9 @@ class RedisTokenBucketThrottle(BaseThrottle):
             return True
 
         capacity, period = self.parse_rate(rate)
-        ident = self.get_cache_ident(request, view)
+        # Redis keys are operational data too: never place raw IP addresses,
+        # emails, opaque handles, or user identifiers in the key suffix.
+        ident = hashlib.sha256(str(self.get_cache_ident(request, view)).encode("utf-8")).hexdigest()
         key = f"throttle:{self.scope}:{ident}"
         now = time.time()
         refill_rate = capacity / period
@@ -127,3 +133,52 @@ class ThrottleInfrastructureUnavailable(APIException):
     status_code = 503
     default_detail = "Admission control unavailable. Retry later."
     default_code = "admission_control_unavailable"
+
+
+class RouteRateThrottle(RedisTokenBucketThrottle):
+    """A scoped throttle for Django function views that DRF cannot wrap."""
+
+    def __init__(self, scope, key_builder=None):
+        super().__init__()
+        self.scope = scope
+        self.key_builder = key_builder
+
+    def get_cache_ident(self, request, view):
+        if self.key_builder:
+            return self.key_builder(request)
+        return self.get_ident(request)
+
+
+def staff_or_ip_identity(request):
+    user = getattr(request, "user", None)
+    if getattr(user, "is_authenticated", False):
+        return f"staff:{user.pk}"
+    return f"ip:{request.META.get('REMOTE_ADDR', '')}"
+
+
+def route_throttle(scope, key_builder=None):
+    """Return a safe generic admission-control wrapper for function views."""
+
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapped(request, *args, **kwargs):
+            throttle = RouteRateThrottle(scope, key_builder=key_builder)
+            try:
+                allowed = throttle.allow_request(request, view_func)
+            except ThrottleInfrastructureUnavailable:
+                response = JsonResponse({"detail": "Service temporarily unavailable."}, status=503)
+                response["Cache-Control"] = "no-store"
+                response["X-Content-Type-Options"] = "nosniff"
+                return response
+            if not allowed:
+                response = JsonResponse({"detail": "Too many requests. Please try again later."}, status=429)
+                if throttle.wait_seconds:
+                    response["Retry-After"] = str(throttle.wait_seconds)
+                response["Cache-Control"] = "no-store"
+                response["X-Content-Type-Options"] = "nosniff"
+                return response
+            return view_func(request, *args, **kwargs)
+
+        return wrapped
+
+    return decorator

@@ -108,6 +108,7 @@ Forbidden:
 Evidence:
 
 - `tests/security/test_response_privacy_checkout_billing.py`
+- fake-provider direct STK response privacy test (`attempt_id`, `status` only)
 
 ## Provider And Legacy Billing Routes
 
@@ -184,6 +185,13 @@ Evidence:
 
 - `tests/security/test_response_privacy_gallery.py`
 - `tests/security/test_public_gallery_variant_url_privacy.py`
+
+## Phase 3C Final Confirmation
+
+The 2026-06-20 local all-passive closeout reported zero sensitive-marker hits.
+This confirms that the allowlist remains coupled to opaque gallery handles,
+generic media denial responses, and the fake-provider STK response contract;
+it does not authorize provider, storage, or production traffic.
 
 ## Error And Denial Responses
 

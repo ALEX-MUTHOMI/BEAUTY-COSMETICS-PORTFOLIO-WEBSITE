@@ -376,6 +376,16 @@ REST_FRAMEWORK = {
         "otp_request": "5/min",  # Strict email toll spam prevention limit
         "stk_push": "3/min",
         "checkout_stk_push": "3/min",
+        "checkout_create": "10/min",
+        "checkout_detail": "60/min",
+        "csrf_bootstrap": "30/min",
+        "availability": "30/min",
+        "booking_hold": "5/min",
+        "booking_checkout": "8/min",
+        "booking_status": "30/min",
+        "public_gallery": "60/min",
+        "media_resolver": "60/min",
+        "staff_contact_reveal": "6/min",
     },
 }
 

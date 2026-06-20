@@ -107,3 +107,10 @@ Error and denial responses may return a generic safe message or safe error
 code. They must not reveal object ownership, private object existence, internal
 state-machine details, provider identifiers, raw payloads, tokens, PII, storage
 keys, or stack traces.
+
+## Phase 3C Final Verification
+
+The local all-passive closeout on 2026-06-20 reported zero sensitive-marker
+hits across health, root, OpenAPI, and Newman-through-ZAP reports. The final
+recent-log scan found no real sensitive value leakage; one worker `email` label
+had no address-shaped value and was classified as a safe static marker.

@@ -11,6 +11,7 @@ from bookings.services.checkout_contract import BookingCheckoutContractService
 from bookings.services.holds import BookingHoldService
 from bookings.services.legal import POLICY_ACCEPTANCE_TEXT
 from core.middleware.correlation_id import get_correlation_id
+from core.throttling import route_throttle
 
 GENERIC_AVAILABILITY_ERROR = "Availability unavailable."
 GENERIC_HOLD_ERROR = "Booking request could not be accepted."
@@ -88,6 +89,7 @@ def catalog_packages(_request):
 
 
 @require_GET
+@route_throttle("availability")
 def booking_availability(request):
     selection_type = str(request.GET.get("selection_type") or "normal")
     try:
@@ -119,6 +121,7 @@ def booking_availability(request):
 
 
 @require_POST
+@route_throttle("booking_hold")
 def booking_hold_create(request):
     payload = _body(request)
     if _client_price_tampering_present(payload):
@@ -161,6 +164,7 @@ def booking_hold_create(request):
 
 
 @require_POST
+@route_throttle("booking_checkout")
 def booking_checkout_create(request):
     payload = _body(request)
     policy_acceptance = payload.get("policy_acceptance") or {

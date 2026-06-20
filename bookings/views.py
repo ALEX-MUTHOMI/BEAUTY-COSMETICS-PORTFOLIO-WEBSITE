@@ -11,6 +11,7 @@ from bookings.selectors.booking_status import receipt_status as _receipt_status 
 from bookings.selectors.booking_status import reminder_status as _reminder_status  # noqa: F401
 from bookings.selectors.booking_status import reschedule_payload as _reschedule_payload  # noqa: F401
 from bookings.selectors.booking_status import status_payload as _status_payload
+from core.throttling import route_throttle
 
 GENERIC_STATUS_UNAVAILABLE = {"detail": "Booking status is unavailable."}
 
@@ -28,6 +29,7 @@ def _apply_no_store_headers(response):
 
 
 @require_GET
+@route_throttle("booking_status")
 def booking_status(request, public_booking_id):
     try:
         public_id = uuid.UUID(str(public_booking_id))

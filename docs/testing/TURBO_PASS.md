@@ -37,6 +37,7 @@ or named-pipe permission failures.
 - migration drift check;
 - pytest collect-only;
 - security headers and OpenAPI safety tests;
+- Phase 3D deterministic route-throttle and abuse-response privacy tests;
 - throttle malformed-body semantics tests;
 - API/security tests, including Phase 3B/3B-C BOLA, IDOR, mass-assignment,
   role/header/query tampering, and deny-by-default authorization controls;
@@ -85,3 +86,11 @@ DOCKER_ACCESS_DIAGNOSTIC=Unable to reach Docker daemon from this shell...
 ```
 
 That is a host Docker access issue, not a passing Turbo gate.
+
+## Phase 3C-Final-E Record
+
+The immediately preceding Phase 3C closeout sequence reported
+`TURBO_PASS_RESULT=passed` in 699 seconds. The final 2026-06-20 passive gate
+was intentionally run separately and completed in 502 seconds with
+`FAIL-NEW=0`; this does not change Turbo Pass scope or make all-passive a
+default Turbo step.

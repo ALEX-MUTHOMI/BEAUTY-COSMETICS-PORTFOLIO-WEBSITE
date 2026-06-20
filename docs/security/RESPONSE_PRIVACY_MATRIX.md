@@ -17,7 +17,7 @@ the response contain only intended fields?
 | `/api/bookings/status/<public_id>/` | GET | token holder | public/token status | status, schedule, receipt/email/reminder status, next action | phone/email, checkout provider IDs, ledger IDs, token echo beyond booking reference | `test_response_privacy_booking.py` | High | Covered |
 | `/api/checkout/sessions/` | POST | authenticated customer | owner-only checkout | owner checkout ID, status | ledger/provider IDs, raw phone, payload echo | `test_response_privacy_checkout_billing.py` | High | Covered |
 | `/api/checkout/sessions/<id>/` | GET | authenticated owner | owner-only checkout | owner checkout ID, status, amount | provider payload, private booking ID, owner PII | `test_response_privacy_checkout_billing.py` | High | Covered |
-| `/api/checkout/sessions/<id>/mpesa/stk/` | POST | authenticated owner | owner-only payment action | attempt ID/status only | Daraja IDs, receipt, raw phone, token, provider body | checkout tests, denylist policy | High | Covered by existing route tests; direct 3C STK response test deferred to avoid provider side effects |
+| `/api/checkout/sessions/<id>/mpesa/stk/` | POST | authenticated owner | owner-only payment action | attempt ID/status only | Daraja IDs, receipt, raw phone, token, provider body | fake-provider direct response privacy test, checkout tests, denylist policy | High | Covered; fake-provider response is limited to `attempt_id` and `status` |
 | `/api/checkout/mpesa/webhook/` | POST | provider/system | provider callback | generic accepted/malformed status | raw callback, Daraja IDs, receipt, ledger, phone | `test_response_privacy_checkout_billing.py`, `test_response_privacy_errors.py` | Critical | Covered |
 | `/api/billing/stk-push/` | POST | any | disabled | generic 410 detail | payload echo, ledger/provider/payment data | `test_response_privacy_checkout_billing.py` | High | Covered |
 | `/api/billing/mpesa-webhook/` | POST | provider/system | disabled | generic 410 detail | payload echo, provider IDs, phone | `test_response_privacy_checkout_billing.py` | High | Covered |
@@ -31,10 +31,8 @@ the response contain only intended fields?
 
 ## Gaps And Deferred Items
 
-- STK initiation response privacy is covered by existing checkout permission and
-  throttle tests, but Phase 3C did not add a direct STK response test because
-  this discovery phase must not call a real provider. Future fake-provider STK
-  response inspection can be added in Phase 3D without changing provider truth.
+- The direct STK response contract is now verified in fake-provider mode only;
+  it must not be expanded into a real-provider call as part of this matrix.
 - If product policy changes from global staff booking visibility to
   per-beautician or branch scoping, the response matrix and ABAC tests must be
   reopened.

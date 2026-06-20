@@ -115,3 +115,25 @@ No public/customer/staff/provider route should be added without updating:
 - `docs/security/API_FIELD_ALLOWLIST_MATRIX.md`
 - `docs/security/SENSITIVE_FIELD_DENYLIST.md`
 - relevant response privacy tests in `tests/security/`
+
+## Phase 3C-Final-E Closeout Snapshot
+
+Current-session local evidence (2026-06-20): the standalone `all-passive` gate
+completed in 502 seconds with `FAIL-NEW=0`, zero sensitive marker hits,
+non-empty health/root/API/Newman reports, scanner cleanup, and a
+Newman-through-ZAP result of 30 requests, 91 assertions, and 0 failures.
+
+Immediately preceding closeout-sequence evidence: Turbo Pass completed in 699
+seconds; frontend strict type-check and production build passed; partitioned
+security/API, booking, checkout/billing, and unit/integration checks passed;
+payment-load and latency passed in their bounded lanes. These are separate lane
+results, not a monolithic `pytest -q` claim.
+
+## Phase 3D Abuse Controls
+
+`tests/security/test_rate_limit_route_controls.py` is a deterministic Redis
+admission-control lane. It uses test-only one-per-minute scope overrides,
+bounded requests, and clears only the tested throttle scope. It covers generic
+throttle privacy, actor isolation, malformed booking pressure, public
+gallery/media enumeration pressure, staff contact reveal pressure, and explicit
+checkout route scopes.
