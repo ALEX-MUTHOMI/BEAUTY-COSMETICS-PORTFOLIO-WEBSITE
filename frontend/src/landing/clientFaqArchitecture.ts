@@ -1,4 +1,8 @@
 /**
+ * Module: clientFaqArchitecture
+ * FAQ architecture for the client facing landing.
+ */
+/**
  * Client FAQ Architecture — Categorized questions beauty salon clients actually want answered.
  * Provides data structures and category filtering for the interactive FAQ page.
  */
@@ -95,3 +99,4 @@ export function validateClientFaqItems(items: ClientFaqItem[]): boolean {
       item.answer.length > 20,
   )
 }
+
