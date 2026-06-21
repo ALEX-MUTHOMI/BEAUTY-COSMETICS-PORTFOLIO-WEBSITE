@@ -1,3 +1,7 @@
+/**
+ * Module: clientPagesContent
+ * Content structures for client pages.
+ */
 /** Public FAQ / 404 / 503 / Contact / Legal copy — natural, warm, human Kenyan salon copy. */
 
 export const MELLIS_FLOWER_SRC = '/images/flower.png'
@@ -222,3 +226,4 @@ export function collectClientPageCopy(): string[] {
     ...Object.values(BOOKING_STATUS_COPY),
   ]
 }
+
