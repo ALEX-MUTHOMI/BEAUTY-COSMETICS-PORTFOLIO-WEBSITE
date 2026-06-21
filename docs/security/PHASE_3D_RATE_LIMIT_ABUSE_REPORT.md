@@ -2,6 +2,9 @@
 
 Status: **PHASE 3D BLOCKED — TEST MATRIX INCOMPLETE**.
 
+Phase 3X status: **OPEN — SECURITY MATRIX ROOT-CAUSE STABILIZATION REQUIRED**.
+Phase 3E must not start.
+
 The pre-patch inventory identified existing Redis STK/OTP throttles, staff-login
 cooldown, booking/checkout idempotency, transaction locks, generic denials,
 published-only media resolution, and webhook inbox replay protection. It also

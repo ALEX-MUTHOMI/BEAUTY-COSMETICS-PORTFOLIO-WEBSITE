@@ -59,7 +59,7 @@ class MpesaProvider(BaseMpesaProvider):
         value = str(value).strip().strip("\"'")
         prefix = f"{key}="
         if value.startswith(prefix):
-            value = value[len(prefix) :].strip().strip("\"'")
+            value = value[len(prefix) :].strip().strip("\"'")  # noqa: E203
         return value
 
     def _validated_shortcode(self):

@@ -6,6 +6,10 @@
 
 Production readiness: **REJECTED / NOT CLAIMED**.
 
+> Phase 3X hold (2026-06-20): Phase 3C was accepted from completed evidence,
+> but persistent security-matrix instability requires revalidation after the
+> root-cause fix. This is not evidence of a confirmed privacy regression.
+
 ## Scope
 
 Route groups assessed:

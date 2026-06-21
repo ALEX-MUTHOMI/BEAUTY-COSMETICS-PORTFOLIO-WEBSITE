@@ -5,7 +5,6 @@ import time
 from functools import wraps
 
 from django.http import JsonResponse
-
 from rest_framework.exceptions import APIException
 from rest_framework.throttling import BaseThrottle
 

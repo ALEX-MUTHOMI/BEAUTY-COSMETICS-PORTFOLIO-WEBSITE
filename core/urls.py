@@ -24,8 +24,8 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
 
 from bookings import gallery_views
-from core.throttling import route_throttle
 from core.openapi import openapi_schema_view
+from core.throttling import route_throttle
 from users.views import RequestOTPView, VerifyOTPView
 
 
@@ -58,7 +58,8 @@ urlpatterns = [
     path("api/staff/", include("bookings.staff_urls")),
     path("api/gallery/public/", include("bookings.public_gallery_urls")),
     re_path(
-        r"^media/public/(?P<public_handle>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\.(?P<extension>webp|jpeg|jpg|png)$",
+        r"^media/public/(?P<public_handle>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-"
+        r"[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\.(?P<extension>webp|jpeg|jpg|png)$",
         gallery_views.public_gallery_variant,
         name="public-gallery-variant",
     ),

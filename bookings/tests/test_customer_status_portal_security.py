@@ -24,6 +24,12 @@ def test_status_portal_does_not_leak_pii_internal_ids_or_provider_refs(settings,
 
 @pytest.mark.django_db(transaction=True)
 def test_status_portal_polling_is_read_only_and_generic_for_bad_ids(settings, tmp_path):
+    """Prove polling is read-only and bad IDs get generic 404s.
+
+    The booking_status throttle is raised for this durability test only.
+    Production limit remains 30/min (Phase 3D).
+    """
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["booking_status"] = "200/min"
     booking, _session, _ledger = _confirm_paid_booking("status-polling-b5")
     client = Client()
 

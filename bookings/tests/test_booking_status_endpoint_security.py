@@ -25,7 +25,15 @@ def test_booking_status_endpoint_does_not_reflect_xss_or_internal_identifiers(se
 
 
 @pytest.mark.django_db(transaction=True)
-def test_booking_status_endpoint_polling_is_read_only_and_bounded(django_assert_num_queries):
+def test_booking_status_endpoint_polling_is_read_only_and_bounded(
+    django_assert_num_queries, settings
+):
+    """Prove the status endpoint is read-only: 100 GETs must not change updated_at.
+
+    The booking_status throttle is raised for this durability test only.
+    Production limit remains 30/min (Phase 3D).
+    """
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["booking_status"] = "200/min"
     booking, _session, _ledger = _confirm_paid_booking("status-polling")
     client = Client()
 
