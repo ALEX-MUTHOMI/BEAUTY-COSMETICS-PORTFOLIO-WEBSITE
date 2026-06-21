@@ -1,4 +1,8 @@
 /**
+ * Module: homeWorkGallery
+ * Manages the homepage work gallery view.
+ */
+/**
  * Homepage “Our work” masonry — prefer staff-published public gallery,
  * fall back to curated static studio shots when the API is empty or offline.
  *
@@ -205,3 +209,4 @@ export async function fetchHomeWorkGallery(
     clearTimeout(timer)
   }
 }
+
