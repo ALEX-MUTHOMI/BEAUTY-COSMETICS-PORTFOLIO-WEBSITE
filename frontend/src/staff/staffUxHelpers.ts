@@ -1,4 +1,8 @@
 /**
+ * @module staffUxHelpers
+ * UI helpers and utilities for staff interface.
+ */
+/**
  * Consolidated Staff UX Helpers & Status Copy
  * Combines greeting, date, password hints, and friendly status copy.
  */
