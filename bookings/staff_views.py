@@ -18,6 +18,7 @@ from bookings.services.staff_portal import (
     get_weekly_overview,
     reveal_contact,
 )
+from core.abuse import record_abuse_signal
 from core.throttling import route_throttle, staff_or_ip_identity
 
 
@@ -129,8 +130,23 @@ def staff_booking_payment(request, public_booking_id):
 def staff_booking_contact_access(request, public_booking_id):
     denied = _require_staff_permission(request, "view_staff_contact_details")
     if denied:
+        # A non-staff or under-permissioned caller probing a contact endpoint is
+        # materially different from a normal staff workflow. The score is
+        # route-scoped and still returns the same generic 403 for this request.
+        record_abuse_signal(
+            request,
+            scope="staff_contact_reveal",
+            event_type="STAFF_CONTACT_PROBING",
+            points=4,
+        )
         return denied
     if not has_recent_staff_auth(request):
+        record_abuse_signal(
+            request,
+            scope="staff_contact_reveal",
+            event_type="CONTACT_REAUTH_BYPASS_ATTEMPT",
+            points=2,
+        )
         return _recent_reauth_required()
     try:
         payload = reveal_contact(

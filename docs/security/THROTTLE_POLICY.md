@@ -5,6 +5,11 @@ generic `503`; a throttle refusal is a generic `429` with `Retry-After` when a
 wait can be calculated. Raw IPs, users, tokens, and handles are never stored in
 the throttle-key suffix.
 
+Phase 3D-PLUS adds a route-scoped, TTL-bound abuse score and temporary action
+key. A normal request remains one atomic Redis admission decision; only denied
+or suspicious requests affect the abuse score. See
+`ABUSE_ESCALATION_POLICY.md`, `IP_BAN_POLICY.md`, and `BOT_RETRY_POLICY.md`.
+
 DRF class-based throttles use `core.exceptions.api_exception_handler` so their
 response body follows the same generic contract as function-view throttles:
 the numeric retry window is carried only in `Retry-After`, never reflected in
@@ -40,7 +45,7 @@ operational decision; limits must not be increased merely to satisfy tests.
 | latency checkout-detail pressure test | durability override | `checkout_detail=1200/min` | Test-only context | 1,000 owner-scoped checkout reads | production polling limit mutation | isolated |
 | status endpoint security test | enforcement | `booking_status=1/min` | Test-only context | threshold-plus-one poll | missing throttle evidence | covered |
 | checkout-detail route-control test | enforcement | `checkout_detail=1/min` | Test-only context | threshold-plus-one owner poll | missing customer-scope evidence | covered |
-| `conftest.py` | cleanup | `throttle:*`, `otp:*` only | Test runtime | direct Redis test state | cross-test pollution | fail-loud in Docker/CI |
+| `conftest.py` | cleanup | `throttle:*`, `abuse:*`, `otp:*` | Test runtime | direct Redis test state | cross-test pollution | fail-loud in Docker/CI |
 
 The `200/min` value is not a production setting. Each test deep-copies
 `REST_FRAMEWORK`, applies it through `override_settings`, and asserts the normal

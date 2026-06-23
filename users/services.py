@@ -1,6 +1,7 @@
 import logging
 import secrets
 import string
+from functools import lru_cache
 
 import redis
 import requests
@@ -11,13 +12,29 @@ from users.redaction import redact_email
 logger = logging.getLogger(__name__)
 
 
+@lru_cache(maxsize=8)
+def _redis_client(redis_url: str, connect_timeout: float, socket_timeout: float):
+    return redis.Redis.from_url(
+        redis_url,
+        decode_responses=True,
+        socket_connect_timeout=connect_timeout,
+        socket_timeout=socket_timeout,
+        retry_on_timeout=False,
+        health_check_interval=30,
+    )
+
+
 def get_redis_client():
     """
     Establish direct, pooled connection to the Redis Express Lane.
     Bypasses standard Django cache middleware to guarantee high-performance,
     un-cached transactional security for authentication codes.
     """
-    return redis.Redis.from_url(settings.REDIS_URL, decode_responses=True)
+    return _redis_client(
+        settings.REDIS_URL,
+        float(getattr(settings, "REDIS_SOCKET_CONNECT_TIMEOUT_SECONDS", 0.25)),
+        float(getattr(settings, "REDIS_SOCKET_TIMEOUT_SECONDS", 0.5)),
+    )
 
 
 class OTPService:

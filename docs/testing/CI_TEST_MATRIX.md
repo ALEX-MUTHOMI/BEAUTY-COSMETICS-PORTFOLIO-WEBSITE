@@ -143,3 +143,16 @@ Checkout detail additionally verifies a generic DRF `429` body with
 setting after its test-only override. Synthetic 100/1,000-read durability tests
 must never raise runtime rates; their copied test-local settings are documented
 in `docs/security/THROTTLE_POLICY.md`.
+
+## Phase 3D-PLUS Abuse Escalation Controls
+
+`tests/security/test_abuse_escalation.py` verifies invalid booking and checkout
+enumeration scoring, generic `429`/`Retry-After`, ignored-retry escalation,
+expiry, redacted hashed keys/events, and authenticated actor isolation on a
+shared source IP. `tests/security/test_abuse_signal_routes.py` verifies staff
+contact probing, raw non-public media-path classification, rejected webhook
+source classification, and generic fail-closed booking-hold behavior when the
+throttle Redis client is unavailable.
+
+These are bounded Docker tests. They do not call providers, exercise a real
+WAF/CDN, generate uncontrolled load, or prove a production Redis/Celery drill.

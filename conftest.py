@@ -28,7 +28,7 @@ def _flush_redis_throttle_keys():
     consumed token buckets that persisted into subsequent tests, generating 429s
     and cascading timeouts in the broad security suite.
 
-    This fixture deterministically flushes all throttle and OTP keys before and
+    This fixture deterministically flushes throttle, abuse, and OTP keys before and
     after each test. SCAN is used instead of KEYS to avoid blocking Redis.
     """
     _flush_operational_redis_keys()
@@ -45,12 +45,12 @@ def _redis_cleanup_is_required():
 
 
 def _flush_operational_redis_keys():
-    """Flush throttle:* and otp:* keys from direct Redis. Test-only."""
+    """Flush throttle:*, abuse:*, and otp:* keys from direct Redis. Test-only."""
     try:
         from users.services import get_redis_client
 
         client = get_redis_client()
-        for pattern in ("throttle:*", "otp:*"):
+        for pattern in ("throttle:*", "abuse:*", "otp:*"):
             cursor = 0
             while True:
                 cursor, keys = client.scan(cursor, match=pattern, count=200)

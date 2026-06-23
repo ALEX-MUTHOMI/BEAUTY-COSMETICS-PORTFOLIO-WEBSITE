@@ -1,4 +1,3 @@
-import hashlib
 import logging
 import math
 import time
@@ -8,19 +7,67 @@ from django.http import JsonResponse
 from rest_framework.exceptions import APIException
 from rest_framework.throttling import BaseThrottle
 
+from core.abuse import AbuseDecision, abuse_keys, action_event_type, actor_for_request, emit_abuse_event, policy_values
 from core.diagnostics import throttle_event
 from users import services
 
 logger = logging.getLogger(__name__)
 
 TOKEN_BUCKET_LUA = """
-local key = KEYS[1]
+local bucket_key = KEYS[1]
+local score_key = KEYS[2]
+local action_key = KEYS[3]
 local now = tonumber(ARGV[1])
 local capacity = tonumber(ARGV[2])
 local refill_rate = tonumber(ARGV[3])
 local ttl = tonumber(ARGV[4])
+local score_window = tonumber(ARGV[5])
+local cooldown_score = tonumber(ARGV[6])
+local temporary_ban_score = tonumber(ARGV[7])
+local waf_candidate_score = tonumber(ARGV[8])
+local cooldown_seconds = tonumber(ARGV[9])
+local temporary_ban_seconds = tonumber(ARGV[10])
+local waf_candidate_seconds = tonumber(ARGV[11])
+local early_retry_points = tonumber(ARGV[12])
 
-local bucket = redis.call('HMGET', key, 'tokens', 'updated_at')
+local function rank(action)
+  if action == "waf_candidate" then return 3 end
+  if action == "temporary_ban" then return 2 end
+  if action == "cooldown" then return 1 end
+  return 0
+end
+
+local function action_for_score(score)
+  if score >= waf_candidate_score then return "waf_candidate", waf_candidate_seconds end
+  if score >= temporary_ban_score then return "temporary_ban", temporary_ban_seconds end
+  if score >= cooldown_score then return "cooldown", cooldown_seconds end
+  return "normal", 0
+end
+
+local function add_score(points)
+  local score = redis.call("INCRBY", score_key, points)
+  redis.call("EXPIRE", score_key, score_window)
+  return score
+end
+
+-- An existing action means this actor did not honor a previous Retry-After.
+-- This branch returns before any application or database work and needs no
+-- additional Redis round trip.
+local existing_action = redis.call("GET", action_key)
+if existing_action then
+  local score = add_score(early_retry_points)
+  local next_action, next_duration = action_for_score(score)
+  local changed = 0
+  if rank(next_action) > rank(existing_action) then
+    redis.call("SET", action_key, next_action, "EX", next_duration)
+    existing_action = next_action
+    changed = 1
+  end
+  local retry_after = math.max(redis.call("TTL", action_key), 1)
+  return {0, 0, retry_after, score, existing_action, 1, changed}
+end
+
+local bucket = redis.call('HMGET', bucket_key, 'tokens', 'updated_at')
 local tokens = tonumber(bucket[1])
 local updated_at = tonumber(bucket[2])
 
@@ -41,10 +88,25 @@ else
   wait_seconds = math.ceil((1 - tokens) / refill_rate)
 end
 
-redis.call('HSET', key, 'tokens', tokens, 'updated_at', now)
-redis.call('EXPIRE', key, ttl)
-return {allowed, tokens, wait_seconds}
-"""
+redis.call('HSET', bucket_key, 'tokens', tokens, 'updated_at', now)
+redis.call('EXPIRE', bucket_key, ttl)
+
+if allowed == 1 then
+  return {1, tokens, 0, 0, "normal", 0, 0}
+end
+
+-- A regular rate limit event is a small signal. Only repeated events become a
+-- route-scoped cooldown, keeping compliant SPA polling on the cheap path.
+local score = add_score(1)
+local action, action_duration = action_for_score(score)
+local changed = 0
+if action ~= "normal" then
+  redis.call("SET", action_key, action, "EX", action_duration)
+  wait_seconds = math.max(wait_seconds, action_duration)
+  changed = 1
+end
+return {0, tokens, wait_seconds, score, action, 0, changed}
+"""  # nosec B105 - Redis Lua program text, not a credential.
 
 
 class RedisTokenBucketThrottle(BaseThrottle):
@@ -57,6 +119,7 @@ class RedisTokenBucketThrottle(BaseThrottle):
 
     def __init__(self):
         self.wait_seconds = None
+        self.abuse_decision = None
 
     def get_ident(self, request):
         return request.META.get("REMOTE_ADDR", "")
@@ -102,21 +165,44 @@ class RedisTokenBucketThrottle(BaseThrottle):
         capacity, period = self.parse_rate(rate)
         # Redis keys are operational data too: never place raw IP addresses,
         # emails, opaque handles, or user identifiers in the key suffix.
-        ident = hashlib.sha256(str(self.get_cache_ident(request, view)).encode("utf-8")).hexdigest()
+        from hashlib import sha256
+
+        ident = sha256(str(self.get_cache_ident(request, view)).encode("utf-8")).hexdigest()
         key = f"throttle:{self.scope}:{ident}"
+        score_key, action_key = abuse_keys(self.scope, actor_for_request(request))
         now = time.time()
         refill_rate = capacity / period
         ttl = math.ceil(period * 2)
+        (
+            score_window,
+            cooldown_score,
+            temporary_ban_score,
+            waf_candidate_score,
+            cooldown_seconds,
+            temporary_ban_seconds,
+            waf_candidate_seconds,
+            early_retry_points,
+        ) = policy_values()
 
         try:
             result = services.get_redis_client().eval(
                 TOKEN_BUCKET_LUA,
-                1,
+                3,
                 key,
+                score_key,
+                action_key,
                 now,
                 capacity,
                 refill_rate,
                 ttl,
+                score_window,
+                cooldown_score,
+                temporary_ban_score,
+                waf_candidate_score,
+                cooldown_seconds,
+                temporary_ban_seconds,
+                waf_candidate_seconds,
+                early_retry_points,
             )
         except Exception as exc:
             logger.warning("Redis throttle unavailable for scope=%s; failing closed.", self.scope)
@@ -133,6 +219,20 @@ class RedisTokenBucketThrottle(BaseThrottle):
             raise ThrottleInfrastructureUnavailable() from exc
         allowed = int(result[0]) == 1
         self.wait_seconds = int(result[2])
+        self.abuse_decision = AbuseDecision(
+            score=int(result[3]),
+            action=str(result[4]),
+            early_retry=bool(int(result[5])),
+            action_changed=bool(int(result[6])),
+            retry_after=self.wait_seconds,
+        )
+        if self.abuse_decision.action_changed:
+            emit_abuse_event(
+                request,
+                event_type=action_event_type(self.abuse_decision),
+                scope=self.scope,
+                decision=self.abuse_decision,
+            )
         throttle_event(
             request,
             scope=self.scope,
@@ -141,7 +241,11 @@ class RedisTokenBucketThrottle(BaseThrottle):
             tokens_remaining=result[1],
             retry_after=self.wait_seconds,
             redis_status="ok",
-            failure_behavior="limited_429" if not allowed else "allowed",
+            failure_behavior=(
+                "abuse_cooldown_429"
+                if not allowed and self.abuse_decision.action != "normal"
+                else "limited_429" if not allowed else "allowed"
+            ),
         )
         return allowed
 

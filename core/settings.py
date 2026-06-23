@@ -87,6 +87,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.abuse_signals.AbuseSignalMiddleware",
     "core.middleware.diagnostics.RequestDiagnosticsMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -221,6 +222,18 @@ if not DEBUG:
 # REDIS CACHE & MESSAGING SERVER CONNECTION
 # ==============================================================================
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+REDIS_SOCKET_CONNECT_TIMEOUT_SECONDS = float(os.environ.get("REDIS_SOCKET_CONNECT_TIMEOUT_SECONDS", "0.25"))
+REDIS_SOCKET_TIMEOUT_SECONDS = float(os.environ.get("REDIS_SOCKET_TIMEOUT_SECONDS", "0.5"))
+
+# Route-scoped abuse escalation. These values do not alter route rates.
+ABUSE_SCORE_WINDOW_SECONDS = int(os.environ.get("ABUSE_SCORE_WINDOW_SECONDS", "600"))
+ABUSE_COOLDOWN_SCORE = int(os.environ.get("ABUSE_COOLDOWN_SCORE", "4"))
+ABUSE_TEMPORARY_BAN_SCORE = int(os.environ.get("ABUSE_TEMPORARY_BAN_SCORE", "11"))
+ABUSE_WAF_CANDIDATE_SCORE = int(os.environ.get("ABUSE_WAF_CANDIDATE_SCORE", "16"))
+ABUSE_COOLDOWN_SECONDS = int(os.environ.get("ABUSE_COOLDOWN_SECONDS", "300"))
+ABUSE_TEMPORARY_BAN_SECONDS = int(os.environ.get("ABUSE_TEMPORARY_BAN_SECONDS", "900"))
+ABUSE_WAF_CANDIDATE_SECONDS = int(os.environ.get("ABUSE_WAF_CANDIDATE_SECONDS", "3600"))
+ABUSE_EARLY_RETRY_POINTS = int(os.environ.get("ABUSE_EARLY_RETRY_POINTS", "2"))
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", REDIS_URL)
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", REDIS_URL)

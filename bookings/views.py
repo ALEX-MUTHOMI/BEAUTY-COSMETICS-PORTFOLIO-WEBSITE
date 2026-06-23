@@ -11,6 +11,7 @@ from bookings.selectors.booking_status import receipt_status as _receipt_status 
 from bookings.selectors.booking_status import reminder_status as _reminder_status  # noqa: F401
 from bookings.selectors.booking_status import reschedule_payload as _reschedule_payload  # noqa: F401
 from bookings.selectors.booking_status import status_payload as _status_payload
+from core.abuse import record_abuse_signal
 from core.throttling import route_throttle
 
 GENERIC_STATUS_UNAVAILABLE = {"detail": "Booking status is unavailable."}
@@ -34,10 +35,22 @@ def booking_status(request, public_booking_id):
     try:
         public_id = uuid.UUID(str(public_booking_id))
     except (TypeError, ValueError):
+        record_abuse_signal(
+            request,
+            scope="booking_status",
+            event_type="INVALID_STATUS_TOKEN_ENUMERATION",
+            points=1,
+        )
         return _generic_404()
 
     booking = get_public_booking_for_status(public_id)
     if booking is None:
+        record_abuse_signal(
+            request,
+            scope="booking_status",
+            event_type="INVALID_STATUS_TOKEN_ENUMERATION",
+            points=1,
+        )
         return _generic_404()
 
     response = JsonResponse(_status_payload(booking))

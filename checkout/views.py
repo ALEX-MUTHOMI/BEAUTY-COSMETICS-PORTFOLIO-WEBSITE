@@ -20,6 +20,7 @@ from checkout.services import (
     process_mpesa_callback,
 )
 from checkout.throttles import CheckoutSessionCreateThrottle, CheckoutSessionDetailThrottle, CheckoutSTKPushThrottle
+from core.abuse import record_abuse_signal
 from core.middleware.correlation_id import get_correlation_id
 
 
@@ -52,6 +53,12 @@ class CheckoutSessionDetailView(APIView):
     def get(self, request, checkout_id):
         session = get_customer_checkout_or_none(request.user, checkout_id)
         if session is None:
+            record_abuse_signal(
+                request,
+                scope="checkout_detail",
+                event_type="INVALID_CHECKOUT_PROBING",
+                points=2,
+            )
             raise Http404
         return Response(
             {

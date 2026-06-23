@@ -13,6 +13,7 @@ from bookings.models import GalleryCategory, GalleryImage, GalleryImageVariant, 
 from bookings.services.gallery_images import create_gallery_image_from_upload
 from bookings.services.gallery_storage import GalleryObjectStorage, GalleryStorageError, public_variant_extension
 from bookings.services.staff_auth import GENERIC_SESSION_EXPIRED, enforce_staff_session
+from core.abuse import record_abuse_signal
 from core.throttling import route_throttle
 
 
@@ -160,6 +161,12 @@ def public_gallery_variant(request, public_handle, extension):
     try:
         normalized_extension = public_variant_extension(extension)
     except GalleryStorageError as exc:
+        record_abuse_signal(
+            request,
+            scope="media_resolver",
+            event_type="MEDIA_ENUMERATION_ATTEMPT",
+            points=1,
+        )
         raise Http404 from exc
 
     variant = (
@@ -172,12 +179,24 @@ def public_gallery_variant(request, public_handle, extension):
         .first()
     )
     if variant is None:
+        record_abuse_signal(
+            request,
+            scope="media_resolver",
+            event_type="MEDIA_ENUMERATION_ATTEMPT",
+            points=1,
+        )
         raise Http404
     try:
         expected_extension = public_variant_extension(variant.format)
     except GalleryStorageError as exc:
         raise Http404 from exc
     if expected_extension != normalized_extension:
+        record_abuse_signal(
+            request,
+            scope="media_resolver",
+            event_type="MEDIA_ENUMERATION_ATTEMPT",
+            points=1,
+        )
         raise Http404
 
     try:
