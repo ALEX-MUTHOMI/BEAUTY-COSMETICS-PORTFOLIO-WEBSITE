@@ -1,4 +1,8 @@
 /**
+ * Module: agentSeo
+ * SEO utilities and configuration for landing.
+ */
+/**
  * Agent / AEO JSON-LD helpers — citation-friendly schemas for marketing pages.
  * Money-path and staff routes stay noindex; do not emit schemas there.
  */
@@ -85,3 +89,4 @@ export function buildServicesOfferCatalogJsonLd(siteUrl: string) {
     itemListElement: offerItems,
   }
 }
+
