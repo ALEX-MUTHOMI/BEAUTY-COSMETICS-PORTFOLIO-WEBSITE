@@ -21,7 +21,7 @@ confirmed by the added Phase 3B tests.
 | 3B-FU-003 | Medium | Newman negative coverage | Pytest now covers role/header/mass-assignment cases. Add selected negative Newman cases to catch deployment routing/cookie regressions. | Phase 3C/3D API contract expansion. | deferred |
 | 3B-FU-004 | Medium | Response field allowlists | Phase 3B asserts absence of sensitive markers. A formal response allowlist for each public/customer/staff route would tighten future refactors. | Phase 3C response privacy/allowlist. | deferred |
 | 3B-FU-005 | Low | Booking test runtime | Prior `bookings/tests` run timed out under local command budget. | Re-run with durations and maxfail diagnostics; full partition passed in Phase 3B-F. | closed in 3B-F |
-| 3B-FU-006 | Low | Turbo wrapper Docker config | Windows shell could not read `C:\Users\PC\.docker\config.json`, causing wrapper/Docker Newman failure before the gate ran. | Add repo-local empty Docker config fallback when `DOCKER_CONFIG` is unset, plus Docker daemon diagnostic. | closed in 3B-F |
+| 3B-FU-006 | Low | Turbo wrapper Docker config | Windows shell could not read the user-profile Docker config, causing wrapper/Docker Newman failure before the gate ran. | Add repo-local empty Docker config fallback when `DOCKER_CONFIG` is unset, plus Docker daemon diagnostic. | closed in 3B-F |
 
 ## Patch Discipline
 

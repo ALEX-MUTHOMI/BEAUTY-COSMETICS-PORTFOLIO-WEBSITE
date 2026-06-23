@@ -1,11 +1,18 @@
 import copy
+from decimal import Decimal
 
 import pytest
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.test import Client, override_settings
+from rest_framework import status
+from rest_framework.test import APIClient
 
+from checkout.services import create_checkout_session
 from checkout.throttles import CheckoutSessionCreateThrottle, CheckoutSessionDetailThrottle
 from users.services import get_redis_client
+
+User = get_user_model()
 
 
 def _scope_settings(**rates):
@@ -79,6 +86,40 @@ def test_contact_reveal_pressure_is_limited_before_permission_processing():
     assert blocked.status_code == 429
     assert b"phone" not in blocked.content.lower()
     assert b"email" not in blocked.content.lower()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_checkout_detail_throttle_is_customer_scoped_and_restores_production_rate():
+    _clear_scope("checkout_detail")
+    owner = User.objects.create_user(email="checkout-detail-owner@beauty.com", phone_number="+254712780011")
+    attacker = User.objects.create_user(email="checkout-detail-attacker@beauty.com", phone_number="+254712780012")
+    checkout = create_checkout_session(
+        owner,
+        Decimal("100.00"),
+        "KES",
+        "Throttle detail",
+        "booking_candidate",
+        "checkout-detail-pressure",
+        "checkout-detail-pressure-session",
+    )
+    with _scope_settings(checkout_detail="1/min"):
+        owner_client = APIClient()
+        owner_client.defaults["HTTP_X_FORWARDED_PROTO"] = "https"
+        owner_client.force_authenticate(user=owner)
+        attacker_client = APIClient()
+        attacker_client.defaults["HTTP_X_FORWARDED_PROTO"] = "https"
+        attacker_client.force_authenticate(user=attacker)
+
+        first = owner_client.get(f"/api/checkout/sessions/{checkout.id}/")
+        blocked = owner_client.get(f"/api/checkout/sessions/{checkout.id}/")
+        other_actor = attacker_client.get(f"/api/checkout/sessions/{checkout.id}/")
+
+    assert first.status_code == status.HTTP_200_OK
+    assert blocked.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+    assert blocked.json() == {"detail": "Too many requests. Please try again later."}
+    assert "Retry-After" in blocked
+    assert other_actor.status_code == status.HTTP_404_NOT_FOUND
+    assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["checkout_detail"] == "60/min"
 
 
 def test_checkout_route_classes_use_explicit_scopes():

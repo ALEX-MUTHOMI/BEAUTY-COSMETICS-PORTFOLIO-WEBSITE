@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest'
 import {
   buildStablePaymentRetryKey,
   checkoutUiState,
+  DEFAULT_CHECKOUT_RESILIENCE,
   nextPollDelayMs,
+  retryAfterDelayMs,
   shouldPollCheckoutStatus,
 } from './checkoutResilience'
 
@@ -28,5 +30,12 @@ describe('checkout resilience', () => {
   it('uses a stable idempotency key for retries after reload', () => {
     expect(buildStablePaymentRetryKey('checkout-123')).toBe('stk:checkout-123')
     expect(buildStablePaymentRetryKey('checkout-123', 'existing-key')).toBe('existing-key')
+  })
+
+  it('honors a valid API retry hint and falls back safely for malformed hints', () => {
+    expect(nextPollDelayMs('PAYMENT_PENDING', DEFAULT_CHECKOUT_RESILIENCE, '12')).toBe(12000)
+    expect(retryAfterDelayMs('1')).toBe(5000)
+    expect(retryAfterDelayMs('not-a-number')).toBe(5000)
+    expect(nextPollDelayMs('PAID', DEFAULT_CHECKOUT_RESILIENCE, '12')).toBeNull()
   })
 })

@@ -1,5 +1,7 @@
+import copy
+
 import pytest
-from django.test import Client
+from django.test import Client, override_settings
 
 from bookings.tests.test_booking_receipt_foundation import _confirm_paid_booking
 
@@ -29,18 +31,22 @@ def test_status_portal_polling_is_read_only_and_generic_for_bad_ids(settings, tm
     The booking_status throttle is raised for this durability test only.
     Production limit remains 30/min (Phase 3D).
     """
-    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["booking_status"] = "200/min"
-    booking, _session, _ledger = _confirm_paid_booking("status-polling-b5")
-    client = Client()
+    rest_framework = copy.deepcopy(settings.REST_FRAMEWORK)
+    rest_framework["DEFAULT_THROTTLE_RATES"]["booking_status"] = "200/min"
+    with override_settings(REST_FRAMEWORK=rest_framework):
+        booking, _session, _ledger = _confirm_paid_booking("status-polling-b5")
+        client = Client()
 
-    booking.refresh_from_db()
-    before = booking.updated_at
-    for _ in range(100):
-        assert client.get(f"/api/bookings/status/{booking.public_id}/", secure=True).status_code == 200
-    booking.refresh_from_db()
-    assert booking.updated_at == before
+        booking.refresh_from_db()
+        before = booking.updated_at
+        for _ in range(100):
+            assert client.get(f"/api/bookings/status/{booking.public_id}/", secure=True).status_code == 200
+        booking.refresh_from_db()
+        assert booking.updated_at == before
 
-    malformed = client.get("/api/bookings/status/not-a-uuid/", secure=True)
-    missing = client.get("/api/bookings/status/00000000-0000-4000-8000-000000000000/", secure=True)
-    assert malformed.status_code == missing.status_code == 404
-    assert malformed.json() == missing.json()
+        malformed = client.get("/api/bookings/status/not-a-uuid/", secure=True)
+        missing = client.get("/api/bookings/status/00000000-0000-4000-8000-000000000000/", secure=True)
+        assert malformed.status_code == missing.status_code == 404
+        assert malformed.json() == missing.json()
+
+    assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["booking_status"] == "30/min"

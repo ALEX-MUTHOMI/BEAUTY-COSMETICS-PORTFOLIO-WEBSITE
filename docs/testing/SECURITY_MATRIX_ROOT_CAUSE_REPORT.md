@@ -4,6 +4,28 @@
 
 ---
 
+> Phase 3X-RL-CI is open. Do not treat this historical report as current
+> acceptance while the post-push CI truth audit is incomplete.
+
+## Post-push CI Truth Gap - Black Failure
+
+GitHub Actions `Secure Enterprise CI Pipeline` / `lint-security` failed on
+`poetry run black --check .`: the committed
+`bookings/tests/test_booking_status_endpoint_security.py` required formatting.
+Docker Black 25.12.0 reproduced the exact failure. Host Poetry could not run
+Black because its configured Python executable was unavailable, so it was not
+valid passing evidence.
+
+The file was formatted with Docker Black and the same Docker command now passes.
+Prevention: run canonical Docker lint after every final edit, then run
+`git diff --check` and inspect final Git status. Never claim a gate from stale
+output or tooling that did not execute.
+
+Current-tree evidence after the fix: `tests/security` passed 158 tests in
+158.06 seconds; `tests/api tests/security` passed 161 tests in 294.19 seconds.
+These results replace the prior timeout claim for local matrix evidence only;
+GitHub Actions remains unverified until an approved push.
+
 ## Symptoms Observed
 
 | Date Range | Symptom | Command |
@@ -114,6 +136,21 @@ print('Flushed')
 ```
 
 ## Remaining Risks
+
+## Phase 3X-OBS-RL Final Reverification Addendum
+
+The final local matrix found and corrected three adjacent issues without
+weakening runtime policy: synthetic checkout-detail and booking-status latency
+tests exceeded real token buckets; DRF class-based throttles exposed the exact
+retry wait in their JSON body; and Django request warnings could include raw
+path identifiers. The fixes use copied test-only rates, a generic DRF exception
+renderer with `Retry-After`, and route-name-only request logging respectively.
+
+Final local evidence: security 161 tests, load 26 tests, latency 27 tests,
+Newman 30 requests/91 assertions, Turbo Pass, host Git hygiene, canonical
+Bandit, container secret hygiene, healthy Docker services, and a worker ping.
+GitHub Actions remains unverified until an approved push; production readiness
+is not claimed.
 
 | Risk | Severity | Mitigation |
 |------|----------|------------|

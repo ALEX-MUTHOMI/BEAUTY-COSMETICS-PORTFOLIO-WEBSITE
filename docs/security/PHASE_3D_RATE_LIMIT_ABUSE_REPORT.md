@@ -1,5 +1,10 @@
 # Phase 3D Rate-Limit / Abuse Report
 
+> **Current Phase 3X-OBS-RL local status:** Phase 3D is closed with a
+> low/medium frontend follow-up. This supersedes the historical blocked status
+> below. GitHub CI is unverified until an approved push; production readiness
+> remains rejected / not claimed.
+
 Status: **PHASE 3D BLOCKED — TEST MATRIX INCOMPLETE**.
 
 Phase 3X status: **OPEN — SECURITY MATRIX ROOT-CAUSE STABILIZATION REQUIRED**.
@@ -31,3 +36,20 @@ had to be stopped by restarting the local web service. The result is a
 test-runner lifecycle/verification timeout, not an observed abuse-control or
 privacy failure. Do not proceed to Phase 3E until the remaining required
 partitions, hygiene, and operational checks complete.
+
+## Phase 3X-OBS-RL Final Local Evidence
+
+- Fake Redis is scoped to its outage request and restored before mandatory
+  direct-Redis cleanup; Docker/CI cleanup fails loudly when Redis is expected.
+- High-volume booking-status, checkout-detail, and gallery tests use copied,
+  test-only settings and assert production values restore. Runtime values remain
+  `booking_status=30/min`, `checkout_detail=60/min`, and `public_gallery=60/min`.
+- DRF class-based throttle bodies are now generic. `Retry-After` carries the
+  retry delay rather than disclosing the exact token-bucket wait in JSON.
+- Final local evidence passed: security 161 tests, load 26 tests, latency 27
+  tests, Newman 30 requests/91 assertions, Turbo Pass, static checks, Bandit,
+  host Git hygiene, service health, and worker ping.
+
+The remaining product follow-up is a public booking-status SPA caller that
+uses the existing frontend `Retry-After` helper. It is not a reason to weaken
+backend admission control or to claim production readiness.

@@ -137,3 +137,9 @@ bounded requests, and clears only the tested throttle scope. It covers generic
 throttle privacy, actor isolation, malformed booking pressure, public
 gallery/media enumeration pressure, staff contact reveal pressure, and explicit
 checkout route scopes.
+
+Checkout detail additionally verifies a generic DRF `429` body with
+`Retry-After`, actor isolation, and restoration of the production `60/min`
+setting after its test-only override. Synthetic 100/1,000-read durability tests
+must never raise runtime rates; their copied test-local settings are documented
+in `docs/security/THROTTLE_POLICY.md`.

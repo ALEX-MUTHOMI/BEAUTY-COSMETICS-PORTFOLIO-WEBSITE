@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from rest_framework.exceptions import APIException
 from rest_framework.throttling import BaseThrottle
 
+from core.diagnostics import throttle_event
 from users import services
 
 logger = logging.getLogger(__name__)
@@ -119,9 +120,29 @@ class RedisTokenBucketThrottle(BaseThrottle):
             )
         except Exception as exc:
             logger.warning("Redis throttle unavailable for scope=%s; failing closed.", self.scope)
+            throttle_event(
+                request,
+                scope=self.scope,
+                rate=rate,
+                allowed=False,
+                tokens_remaining="",
+                retry_after="",
+                redis_status="unavailable",
+                failure_behavior="fail_closed_503",
+            )
             raise ThrottleInfrastructureUnavailable() from exc
         allowed = int(result[0]) == 1
         self.wait_seconds = int(result[2])
+        throttle_event(
+            request,
+            scope=self.scope,
+            rate=rate,
+            allowed=allowed,
+            tokens_remaining=result[1],
+            retry_after=self.wait_seconds,
+            redis_status="ok",
+            failure_behavior="limited_429" if not allowed else "allowed",
+        )
         return allowed
 
     def wait(self):

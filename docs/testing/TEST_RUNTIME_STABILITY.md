@@ -1,5 +1,15 @@
 # Test Runtime Stability Guide
 
+> Phase 3X-RL-CI is open pending current-tree matrix and GitHub Actions
+> verification.
+
+## Post-push CI Truth Rule
+
+Run Docker Black, isort, Ruff, flake8, and `git diff --check` after all final
+edits. Host Poetry evidence is invalid when its configured interpreter is
+unavailable. A GitHub Actions failure reopens the related closeout until the
+same tree passes locally and CI passes after an approved push.
+
 ## Canonical Test Partitions
 
 | Partition | Command | Expected Duration | Timeout | Shard? |
@@ -22,6 +32,10 @@
 - Uses `SCAN` + `DELETE` for `throttle:*` and `otp:*` patterns
 - **Critical**: `cache.clear()` does NOT clear these keys
 - Any new direct-Redis usage must be added to this fixture
+
+The fixture fails loudly in Docker/CI when Redis is expected. A fake Redis
+outage test must scope its monkeypatch to the request so post-test cleanup uses
+the real client again.
 
 ### When Adding New Redis Key Patterns
 If you add a new feature that writes directly to Redis (not through Django cache):

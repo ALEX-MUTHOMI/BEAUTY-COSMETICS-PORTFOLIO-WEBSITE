@@ -28,17 +28,20 @@ def test_redis_throttle_failure_returns_controlled_rejection(monkeypatch):
         "redis-failure",
         "redis-failure-idem",
     )
-    monkeypatch.setattr("users.services.get_redis_client", lambda: BrokenRedis())
-    client = APIClient()
-    client.force_authenticate(user=customer)
-    client.raise_request_exception = False
-    client.defaults["HTTP_X_FORWARDED_PROTO"] = "https"
-
-    response = client.post(
-        f"/api/checkout/sessions/{session.id}/mpesa/stk/",
-        {"phone_number": customer.phone_number, "idempotency_key": "redis-failure-stk"},
-        format="json",
-        REMOTE_ADDR="198.51.100.21",
-    )
+    with monkeypatch.context() as patched:
+        patched.setattr("users.services.get_redis_client", lambda: BrokenRedis())
+        client = APIClient()
+        client.force_authenticate(user=customer)
+        client.raise_request_exception = False
+        client.defaults["HTTP_X_FORWARDED_PROTO"] = "https"
+        response = client.post(
+            f"/api/checkout/sessions/{session.id}/mpesa/stk/",
+            {"phone_number": customer.phone_number, "idempotency_key": "redis-failure-stk"},
+            format="json",
+            REMOTE_ADDR="198.51.100.21",
+        )
 
     assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert response.json() == {"detail": "Service temporarily unavailable."}
+    assert response.get("Cache-Control") == "no-store"
+    assert response.get("X-Content-Type-Options") == "nosniff"

@@ -2,7 +2,6 @@ import logging
 import uuid
 from contextvars import ContextVar
 
-CORRELATION_ID_HEADER = "HTTP_X_REQUEST_ID"
 correlation_id_var = ContextVar("correlation_id", default=None)
 
 
@@ -32,8 +31,9 @@ class CorrelationIdMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        inbound_id = request.META.get(CORRELATION_ID_HEADER)
-        request_id = set_correlation_id(inbound_id)
+        # A client-controlled request ID must never enter logs, task metadata,
+        # or a response header. Generate a server-side value for every request.
+        request_id = set_correlation_id()
         request.correlation_id = request_id
 
         response = self.get_response(request)

@@ -47,8 +47,24 @@ export function shouldPollCheckoutStatus(uiState: CheckoutUiState): boolean {
 export function nextPollDelayMs(
   uiState: CheckoutUiState,
   config: CheckoutResilienceConfig = DEFAULT_CHECKOUT_RESILIENCE,
+  retryAfterHeader: string | null = null,
 ): number | null {
-  return shouldPollCheckoutStatus(uiState) ? config.pollIntervalMs : null
+  return shouldPollCheckoutStatus(uiState) ? retryAfterDelayMs(retryAfterHeader, config) : null
+}
+
+/**
+ * Honors the API's numeric Retry-After value without allowing malformed
+ * headers to turn a transient rejection into a zero-delay retry loop.
+ */
+export function retryAfterDelayMs(
+  retryAfterHeader: string | null,
+  config: CheckoutResilienceConfig = DEFAULT_CHECKOUT_RESILIENCE,
+): number {
+  const retryAfterSeconds = Number(retryAfterHeader)
+  if (!Number.isFinite(retryAfterSeconds) || retryAfterSeconds <= 0) {
+    return config.pollIntervalMs
+  }
+  return Math.max(config.pollIntervalMs, Math.ceil(retryAfterSeconds * 1000))
 }
 
 export function buildStablePaymentRetryKey(checkoutId: string, existingKey?: string): string {

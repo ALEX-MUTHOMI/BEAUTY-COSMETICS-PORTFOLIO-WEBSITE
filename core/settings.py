@@ -87,6 +87,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.diagnostics.RequestDiagnosticsMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -366,6 +367,7 @@ GALLERY_PROCESSING_TIMEOUT_SECONDS = int(os.environ.get("GALLERY_PROCESSING_TIME
 # DJANGO REST FRAMEWORK CONFIGURATIONS
 # ==============================================================================
 REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "core.exceptions.api_exception_handler",
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
@@ -389,6 +391,11 @@ REST_FRAMEWORK = {
     },
 }
 
+# Opt-in local/test observability. Never enable this by default in production.
+BEAUTY_DIAGNOSTIC_TRACE = os.environ.get("BEAUTY_DIAGNOSTIC_TRACE", "false").lower() in {"1", "true", "yes"} and (
+    DEBUG or os.environ.get("CI", "").lower() in {"1", "true", "yes"}
+)
+
 ENABLE_OPENAPI_SCHEMA = os.environ.get("ENABLE_OPENAPI_SCHEMA", "False").lower() in (
     "true",
     "1",
@@ -407,6 +414,9 @@ LOGGING = {
         "correlation_id": {
             "()": "core.middleware.correlation_id.CorrelationIdFilter",
         },
+        "redact_request_path": {
+            "()": "core.logging_filters.RequestPathRedactionFilter",
+        },
     },
     "formatters": {
         "structured": {
@@ -416,7 +426,7 @@ LOGGING = {
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "filters": ["correlation_id"],
+            "filters": ["correlation_id", "redact_request_path"],
             "formatter": "structured",
         },
     },

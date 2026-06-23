@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 
@@ -34,6 +36,14 @@ def _flush_redis_throttle_keys():
     _flush_operational_redis_keys()
 
 
+def _redis_cleanup_is_required():
+    from django.conf import settings
+
+    redis_url = str(getattr(settings, "REDIS_URL", ""))
+    ci_enabled = os.environ.get("CI", "").lower() in {"1", "true", "yes"}
+    return ci_enabled or "@redis:" in redis_url or "//redis:" in redis_url
+
+
 def _flush_operational_redis_keys():
     """Flush throttle:* and otp:* keys from direct Redis. Test-only."""
     try:
@@ -46,10 +56,11 @@ def _flush_operational_redis_keys():
                 cursor, keys = client.scan(cursor, match=pattern, count=200)
                 if keys:
                     client.delete(*keys)
-                if cursor == 0:
+                if int(cursor) == 0:
                     break
-    except Exception:
-        pass  # Redis unavailable in non-Docker environments; safe to skip.
+    except Exception as exc:
+        if _redis_cleanup_is_required():
+            pytest.fail(f"Required Redis test cleanup failed: {type(exc).__name__}")
 
 
 def pytest_addoption(parser):
