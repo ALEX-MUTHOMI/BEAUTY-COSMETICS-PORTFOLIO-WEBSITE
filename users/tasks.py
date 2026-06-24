@@ -26,6 +26,13 @@ def send_express_otp_email(email: str, otp: str, correlation_id: str = None) -> 
     - Explicitly routed to the 'express_auth' queue to guarantee sub-10-second delivery boundaries.
     - Retries automatically on failure (e.g. SMTP connectivity drops).
     """
+    redacted_email = _redact_email(email)
+    if getattr(settings, "EMAIL_PROVIDER", "fake").strip().lower() == "fake":
+        # Local/CI fake mode must be fast and non-networked. The task boundary
+        # remains exercised without turning an OTP test into SMTP retries.
+        logger.info("[+] Fake OTP email dispatch accepted for: %s", redacted_email)
+        return True
+
     subject = "Your Secure Booking Verification Code"
     message = (
         f"Hello,\n\n"
@@ -39,7 +46,6 @@ def send_express_otp_email(email: str, otp: str, correlation_id: str = None) -> 
     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "security@beautycosmetics.com")
 
     try:
-        redacted_email = _redact_email(email)
         logger.info(
             "[+] Dispatching OTP email task for: %s correlation_id=%s...",
             redacted_email,

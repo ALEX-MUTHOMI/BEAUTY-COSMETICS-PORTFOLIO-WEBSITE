@@ -3,11 +3,13 @@ from unittest.mock import patch
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from core.celery import app as celery_app
 from users.services import OTPService
+from users.tasks import send_express_otp_email
 
 User = get_user_model()
 
@@ -45,7 +47,12 @@ class MockRedis:
     def ttl(self, key):
         return self.ttls.get(key, -1)
 
-    def eval(self, _script, _key_count, key, now, capacity, refill_rate, ttl):
+    def eval(self, _script, key_count, *keys_and_args):
+        """Emulate the bounded Redis token-bucket contract used at runtime."""
+        keys = keys_and_args[:key_count]
+        args = keys_and_args[key_count:]
+        key = keys[0]
+        now, capacity, refill_rate, ttl = args[:4]
         bucket_key = f"bucket:{key}"
         bucket = self.store.get(bucket_key)
         now = float(now)
@@ -65,7 +72,47 @@ class MockRedis:
             wait_seconds = int((1 - tokens) / refill_rate) + 1
         self.store[bucket_key] = (tokens, now)
         self.ttls[bucket_key] = int(ttl)
-        return [allowed, tokens, wait_seconds]
+
+        if key_count == 1:
+            return [allowed, tokens, wait_seconds]
+
+        score_key, action_key = keys[1:]
+        (
+            score_window,
+            cooldown_score,
+            temporary_ban_score,
+            waf_score,
+            cooldown_seconds,
+            ban_seconds,
+            waf_seconds,
+            early_retry,
+        ) = args[4:]
+        action = self.store.get(action_key, "normal")
+        if action != "normal":
+            score = int(self.store.get(score_key, 0)) + int(early_retry)
+            self.store[score_key] = score
+            self.ttls[score_key] = int(score_window)
+            return [0, 0, max(self.ttl(action_key), 1), score, action, 1, 0]
+
+        if allowed:
+            return [1, tokens, 0, 0, "normal", 0, 0]
+
+        score = int(self.store.get(score_key, 0)) + 1
+        self.store[score_key] = score
+        self.ttls[score_key] = int(score_window)
+        next_action = "normal"
+        action_ttl = 0
+        if score >= int(waf_score):
+            next_action, action_ttl = "waf_candidate", int(waf_seconds)
+        elif score >= int(temporary_ban_score):
+            next_action, action_ttl = "temporary_ban", int(ban_seconds)
+        elif score >= int(cooldown_score):
+            next_action, action_ttl = "cooldown", int(cooldown_seconds)
+        if next_action != "normal":
+            self.store[action_key] = next_action
+            self.ttls[action_key] = action_ttl
+            wait_seconds = max(wait_seconds, action_ttl)
+        return [0, tokens, wait_seconds, score, next_action, 0, int(next_action != "normal")]
 
 
 @pytest.fixture(autouse=True)
@@ -154,6 +201,12 @@ class TestPasswordlessAuthSuite:
 
         # Attempt 2: Replay attack utilizing the same token must fail instantly
         assert OTPService.verify_otp(email, otp) is False
+
+    @override_settings(EMAIL_PROVIDER="fake")
+    @patch("users.tasks.send_mail")
+    def test_fake_otp_dispatch_is_fast_and_non_networked(self, mocked_send_mail):
+        assert send_express_otp_email.run("local@example.test", "123456") is True
+        mocked_send_mail.assert_not_called()
 
     # --------------------------------------------------------------------------
     # 3. RATE LIMITING THROTTLING TEST
