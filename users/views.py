@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from users.redaction import redact_email
 from users.serializers import OTPRequestSerializer, OTPVerifySerializer
 from users.services import OTPService
-from users.tasks import send_express_otp_email
+from users.tasks import build_express_otp_delivery_payload, send_express_otp_email
 from users.throttles import OTPAnonRateThrottle
 
 logger = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ class RequestOTPView(APIView):
         otp = OTPService.generate_otp(email)
 
         # 4. Dispatch Celery Task to High-Priority Queue
-        send_express_otp_email.delay(email, otp)
+        send_express_otp_email.delay(build_express_otp_delivery_payload(email, otp))
 
         return Response(
             {"message": "Verification code dispatched successfully."},

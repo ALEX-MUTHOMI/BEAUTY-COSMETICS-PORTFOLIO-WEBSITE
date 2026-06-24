@@ -36,3 +36,11 @@ operator who can revert the rule. Escalation to an IP/ASN rule requires review
 of shared-IP impact, customer-support impact, provider webhook impact, and a
 rollback test. Edge rules must not consume raw values from application logs or
 disclose a denial reason.
+
+## Redis-pressure boundary
+
+Edge controls must reduce the number of abusive requests that reach
+Django/Redis. Redis is an internal admission-control dependency, not a
+volumetric bot shield; it must not be expected to absorb distributed abuse on
+its own. Real WAF/CDN deployment, monitoring, and rollback validation remain a
+staging/production follow-up.

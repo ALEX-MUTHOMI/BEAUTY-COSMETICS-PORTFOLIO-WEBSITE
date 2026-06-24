@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import logging
 import secrets
 import string
@@ -43,20 +45,48 @@ class OTPService:
     and Cloudflare Turnstile bot mitigation challenges.
     """
 
+    OTP_TTL_SECONDS = 300
+
+    @staticmethod
+    def _normalized_email(email: str) -> str:
+        """Return the stable identity representation used only inside HMAC input."""
+        return str(email or "").strip().casefold()
+
+    @classmethod
+    def redis_key(cls, email: str) -> str:
+        """Return a versioned OTP namespace without embedding recipient PII."""
+        digest = hmac.new(
+            settings.SECRET_KEY.encode("utf-8"),
+            f"express-otp-key:v1:{cls._normalized_email(email)}".encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+        return f"otp:express:v1:{digest}"
+
+    @classmethod
+    def _code_digest(cls, email: str, code: str) -> str:
+        """Store a verifier rather than a recoverable OTP value in Redis."""
+        return hmac.new(
+            settings.SECRET_KEY.encode("utf-8"),
+            f"express-otp-code:v1:{cls._normalized_email(email)}:{code}".encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+
     @staticmethod
     def generate_otp(email: str) -> str:
         """
         Generates a cryptographically secure 6-digit OTP and persists it in Redis.
         - Uses secrets module for CSPRNG validation.
-        - Stores in Redis as 'otp:{email}' with a strict 300-second TTL.
+        - Stores a recipient-bound HMAC verifier under a non-PII key with a
+          strict 300-second TTL.
         """
         otp = "".join(secrets.choice(string.digits) for _ in range(6))
 
         client = get_redis_client()
-        key = f"otp:{email}"
+        key = OTPService.redis_key(email)
 
-        # Save OTP to Redis with strict 300-second expiration
-        client.set(key, otp, ex=300)
+        # Save only a verifier. Redis keys and values must not expose recipient
+        # PII or a reusable OTP if inspected by an authorized operator.
+        client.set(key, OTPService._code_digest(email, otp), ex=OTPService.OTP_TTL_SECONDS)
         logger.info("[+] Secure OTP generated and cached for email: %s", redact_email(email))
         return otp
 
@@ -68,14 +98,14 @@ class OTPService:
           the Redis key is deleted IMMEDIATELY, neutralizing replay attack vectors.
         """
         client = get_redis_client()
-        key = f"otp:{email}"
+        key = OTPService.redis_key(email)
 
-        cached_otp = client.get(key)
-        if not cached_otp:
+        cached_verifier = client.get(key)
+        if not cached_verifier:
             logger.warning("[-] OTP verification failed: Token expired or not found for %s", redact_email(email))
             return False
 
-        if cached_otp == code:
+        if hmac.compare_digest(cached_verifier, OTPService._code_digest(email, code)):
             # Replay Protection: Instant key deletion
             client.delete(key)
             logger.info("[+] OTP verified successfully and key destroyed for %s", redact_email(email))

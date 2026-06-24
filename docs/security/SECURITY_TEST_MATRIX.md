@@ -35,3 +35,16 @@
 - Response field allowlist scanning for public booking, status, checkout, gallery, and staff payment routes.
 - Stable passive ZAP baseline with triaged findings.
 - CI log scanner after security/load/integration gates.
+
+## Redis release gates
+
+| Gate | Purpose |
+| --- | --- |
+| Lua contract test | Detects key, argument, and result-shape drift. |
+| Fake Redis contract test | Keeps the OTP test double aligned with the current Lua boundary. |
+| OTP encrypted-state test | Prevents raw recipient and OTP values in Redis keys/values. |
+| OTP encrypted-delivery test | Prevents raw recipient and OTP values in Celery task arguments. |
+| Fake-provider task test | Prevents SMTP/network activity in fake mode. |
+| Redis-unavailable route test | Confirms protected routes fail closed with generic 503. |
+| Abuse TTL and normal-admission tests | Prevent permanent actions and unnecessary normal-traffic abuse writes. |
+| Bounded cleanup test | Prevents unsafe `KEYS` or database-wide Redis cleanup. |

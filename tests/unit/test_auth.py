@@ -8,8 +8,9 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from core.celery import app as celery_app
+from core.throttling import TOKEN_BUCKET_LUA
 from users.services import OTPService
-from users.tasks import send_express_otp_email
+from users.tasks import build_express_otp_delivery_payload, send_express_otp_email
 
 User = get_user_model()
 
@@ -49,8 +50,12 @@ class MockRedis:
 
     def eval(self, _script, key_count, *keys_and_args):
         """Emulate the bounded Redis token-bucket contract used at runtime."""
+        if key_count != 3:
+            raise AssertionError("Redis token-bucket contract requires three keys.")
         keys = keys_and_args[:key_count]
         args = keys_and_args[key_count:]
+        if len(args) != 12:
+            raise AssertionError("Redis token-bucket contract requires twelve arguments.")
         key = keys[0]
         now, capacity, refill_rate, ttl = args[:4]
         bucket_key = f"bucket:{key}"
@@ -172,11 +177,13 @@ class TestPasswordlessAuthSuite:
         otp = OTPService.generate_otp(email)
 
         client = mock_redis_backend
-        key = f"otp:{email}"
+        key = OTPService.redis_key(email)
 
         # Assert key initially exists with valid TTL
         assert client.exists(key) == 1
         assert 290 <= client.ttl(key) <= 300
+        assert email not in key
+        assert client.get(key) != otp
 
         # Simulate 301-second delay by manually deleting the key (equivalent to TTL expiry)
         client.delete(key)
@@ -184,6 +191,16 @@ class TestPasswordlessAuthSuite:
         # Attempt verification on expired token
         is_verified = OTPService.verify_otp(email, otp)
         assert is_verified is False
+
+    def test_otp_redis_state_is_recipient_hmaced_and_code_is_not_recoverable(self, mock_redis_backend):
+        email = "redis-privacy@example.test"
+        otp = OTPService.generate_otp(email)
+        key = OTPService.redis_key(email)
+
+        assert key.startswith("otp:express:v1:")
+        assert email not in key
+        assert mock_redis_backend.get(key) != otp
+        assert len(mock_redis_backend.get(key)) == 64
 
     # --------------------------------------------------------------------------
     # 2. REPLAY ATTACK PREVENTION TEST
@@ -205,8 +222,58 @@ class TestPasswordlessAuthSuite:
     @override_settings(EMAIL_PROVIDER="fake")
     @patch("users.tasks.send_mail")
     def test_fake_otp_dispatch_is_fast_and_non_networked(self, mocked_send_mail):
-        assert send_express_otp_email.run("local@example.test", "123456") is True
+        payload = build_express_otp_delivery_payload("local@example.test", "123456")
+        assert "local@example.test" not in payload
+        assert "123456" not in payload
+        assert send_express_otp_email.run(payload) is True
         mocked_send_mail.assert_not_called()
+
+    @override_settings(EMAIL_PROVIDER="fake")
+    @patch("users.tasks.send_mail")
+    def test_tampered_otp_delivery_payload_is_rejected_without_network(self, mocked_send_mail):
+        assert send_express_otp_email.run("invalid-encrypted-payload") is False
+        mocked_send_mail.assert_not_called()
+
+    @patch("users.views.send_express_otp_email.delay")
+    def test_otp_request_enqueues_only_an_encrypted_delivery_payload(self, mocked_delay, api_client):
+        email = "broker-privacy@example.test"
+
+        response = api_client.post(
+            "/api/auth/request-otp/",
+            {"email": email, "turnstile_token": "CF_CLEARANCE_TEST_TOKEN"},
+            REMOTE_ADDR="203.0.113.31",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        payload = mocked_delay.call_args.args[0]
+        assert email not in payload
+        assert len(payload) > 64
+
+    def test_fake_redis_lua_contract_requires_current_key_argument_and_result_shape(self, mock_redis_backend):
+        result = mock_redis_backend.eval(
+            TOKEN_BUCKET_LUA,
+            3,
+            "throttle:test:actor",
+            "abuse:score:test:actor",
+            "abuse:action:test:actor",
+            1.0,
+            2,
+            1.0,
+            120,
+            600,
+            4,
+            11,
+            16,
+            300,
+            900,
+            3600,
+            2,
+        )
+
+        assert "KEYS[3]" in TOKEN_BUCKET_LUA
+        assert 'return {1, tokens, 0, 0, "normal", 0, 0}' in TOKEN_BUCKET_LUA
+        assert len(result) == 7
+        assert result[0] == 1
 
     # --------------------------------------------------------------------------
     # 3. RATE LIMITING THROTTLING TEST
