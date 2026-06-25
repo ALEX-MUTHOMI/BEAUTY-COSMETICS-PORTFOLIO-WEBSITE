@@ -1,3 +1,7 @@
+/**
+ * @module botGuard
+ * Bot detection and mitigation.
+ */
 export interface ClickGate {
   canRun(key: string, now?: number): boolean
   finish(key: string): void
