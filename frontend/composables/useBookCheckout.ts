@@ -1,3 +1,7 @@
+/**
+ * @module useBookCheckout
+ * Composable for managing the checkout stage of booking.
+ */
 import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
 import { createClickGate } from '~/src/staff/botGuard'
 import { ensureBookingCsrfToken } from '~/src/booking/bookingCsrf'
