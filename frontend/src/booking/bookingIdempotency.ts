@@ -1,3 +1,7 @@
+/**
+ * @module bookingIdempotency
+ * Helpers for enforcing idempotency during booking submissions.
+ */
 import { stableActionKey } from '../staff/botGuard'
 
 const IDEMPOTENCY_MAX_LENGTH = 128
