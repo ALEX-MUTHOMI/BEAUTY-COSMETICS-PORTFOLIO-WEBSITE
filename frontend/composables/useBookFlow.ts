@@ -1,3 +1,7 @@
+/**
+ * @module useBookFlow
+ * Core composable for coordinating the entire booking flow.
+ */
 import { computed, ref, watch, type Ref } from 'vue'
 import type { ResolvedBookHandoff } from '~/src/landing/bookingHandoff'
 import { BookingRequestGovernor, GENERIC_BOOKING_THROTTLE_ERROR } from '~/src/booking/bookingRequestGovernor'
