@@ -1,4 +1,8 @@
 /**
+ * Module: rememberDevice
+ * Functions for recognizing returning devices.
+ */
+/**
  * Returning-client device cookie APIs — never store plaintext email in localStorage.
  */
 import { bookingApiBase } from './bookingCsrf'
@@ -166,3 +170,4 @@ export async function createHoldFromRememberedDevice(
   }
   return { data: result.data }
 }
+
