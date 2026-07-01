@@ -1,3 +1,7 @@
+/**
+ * Module: bookingCatalogApi
+ * Catalog and service list retrieval API.
+ */
 import { slugifyCatalogName } from '@/landing/bookingCatalog'
 import { GENERIC_BOOKING_API_ERROR, isUuid, publicBookingGet, safeApiText } from './bookingApi'
 
@@ -105,3 +109,4 @@ export function findPackageByPlanSlug(
     packages.find((pkg) => slugifyCatalogName(pkg.name) === planSlug) ?? null
   )
 }
+
