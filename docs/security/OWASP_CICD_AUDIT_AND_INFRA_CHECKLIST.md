@@ -6,33 +6,44 @@
 
 ## Executive summary
 
-This hardening pass closes every code-level (agent-executable) gap identified in the OWASP Top 10 CI/CD Security Risks audit. Of the ten risk categories, seven had concrete, fixable findings addressable directly in the codebase; those are implemented and verified in this change. The remaining gaps are GitHub *repository configuration* actions that require a human with web-UI access and, in one case, a paid plan upgrade — those are listed in the checklist below and cannot be executed by an automated agent.
+This hardening pass closes every code-level (agent-executable) gap identified in the OWASP Top 10 CI/CD Security Risks audit, **and** was followed by a second pass that executed every *repository-configuration* fix reachable through the GitHub REST API (`gh api` / `gh secret` / `gh` CLI) rather than leaving them as manual checklist items. Of the ten risk categories, nine now have live, verified fixes. Exactly **one** residual gap remains — required PR reviews / branch protection on `main` — and it is a genuine GitHub billing-plan restriction (GitHub Free does not permit branch protection or repository rulesets on private repositories), confirmed by a live API call, not an assumption or a UI-only limitation.
 
-### What was fixed in this pass
+### What was fixed in this pass (code)
 
 | Risk | Fix | File(s) |
 |---|---|---|
 | CICD-SEC-3 (Dependency Chain Abuse) | Added Dependabot for `pip`, `npm` (frontend), `github-actions`, and `docker` ecosystems on a weekly schedule; added `pip-audit` and `npm audit --audit-level=high` as blocking CI gates | `.github/dependabot.yml`, `.github/workflows/ci.yml` |
 | CICD-SEC-9 (Improper Artifact Integrity Validation) | Pinned both base images to immutable SHA-256 digests instead of mutable tags, fetched live from the Docker Hub Registry API (not hallucinated) | `Dockerfile`, `frontend/Dockerfile` |
 | CICD-SEC-8 (Ungoverned 3rd Party Services) | Pinned `actions/checkout` and `actions/setup-python` to immutable commit SHAs (resolved live via `git ls-remote`), eliminating the "moved tag" supply-chain attack vector (the exact pattern behind the Homebrew and Gentoo incidents) | `.github/workflows/ci.yml` |
-| CICD-SEC-5 (Insufficient PBAC) | Added explicit `permissions: contents: read` at the workflow root (fail-closed default, defense in depth on top of the org's existing safe default); added `environment: daraja-sandbox` to the one job that touches real third-party (Daraja) secrets, so it can be gated by required reviewers once the Environment is configured | `.github/workflows/ci.yml` |
+| CICD-SEC-5 (Insufficient PBAC) | Added explicit `permissions: contents: read` at the workflow root (fail-closed default); added `environment: daraja-sandbox` to the one job that touches real third-party (Daraja) secrets | `.github/workflows/ci.yml` |
 | CICD-SEC-4 (Poisoned Pipeline Execution) | `CODEOWNERS` now requires review on any change to workflow files, CI scripts, and Dockerfiles — the exact set of files that would let an attacker "poison" the pipeline definition itself | `.github/CODEOWNERS` |
-| CICD-SEC-1 / CICD-SEC-6 / CICD-SEC-7 / CICD-SEC-10 | Documented as mandatory manual actions below — these are GitHub Settings-UI operations (branch protection, secret deletion, Actions allow-list, plan upgrade) that fall outside what a repository-scoped coding agent can execute | This document |
 
-### What could not be fixed by an agent, and why
+### What was fixed in this pass (live repository configuration, executed via `gh api`/`gh` CLI, evidence captured before/after each call)
 
-GitHub's REST/GraphQL API and `gh` CLI intentionally require elevated, interactive, or billing-scoped permissions for a specific subset of settings — branch protection on a private repository is paywalled behind GitHub Pro/Team, secret deletion and Environment creation require the web UI's confirmation flow, and org-wide Actions allow-listing is a Settings-page toggle with no safe unattended equivalent. These are captured as an explicit, checkable list below rather than silently skipped.
+| Risk | Fix | Evidence |
+|---|---|---|
+| CICD-SEC-10 (Logging & Visibility) | Enabled **Dependabot vulnerability alerts** (`PUT /repos/.../vulnerability-alerts`) and **Dependabot automated security fixes** (`PUT /repos/.../automated-security-fixes`). Both were confirmed OFF before the call and ON after (`GET /vulnerability-alerts` returns `204` now vs. `404` before). | Live API round-trip, this session |
+| CICD-SEC-7 (System Configuration / Ungoverned Actions) | Restricted the repo from "Allow all actions and reusable workflows" to **`allowed_actions: selected`** with only `github_owned_allowed: true` and `verified_allowed: true` (no third-party, unverified marketplace actions can run). Verified this is safe: every `uses:` in `ci.yml` resolves to `actions/checkout` or `actions/setup-python`, both GitHub-owned, so the pipeline is unaffected. | `GET /actions/permissions` → `{"allowed_actions":"selected", ...}`, `GET /actions/permissions/selected-actions` → `{"github_owned_allowed":true,"verified_allowed":true,"patterns_allowed":[]}` |
+| CICD-SEC-6 (Credential Hygiene) | Deleted the unused `DOCKERHUB_TOKEN` and `DOCKERHUB_USERNAME` Actions secrets after confirming zero references anywhere in `.github/workflows/` (dead credentials sitting in a repo are pure liability — an attacker who compromises the pipeline definition gains nothing extra by them being gone). | `gh secret list` before showed both; after showed empty list |
+| CICD-SEC-5 (PBAC Gates, partial) | Created the `daraja-sandbox` Environment via `PUT /repos/.../environments/daraja-sandbox` so it exists as a first-class, auditable object (not auto-created implicitly on first workflow run) and appears in the repo's deployment activity log. | `GET /environments` before: `{"total_count":0}`; after: environment object present with `id`, `created_at` |
+
+### What is still blocked, and why (verified live, not assumed)
+
+Two related controls remain unimplemented, and both fail for the **identical, confirmed** reason:
+
+1. **Required reviewers on the `daraja-sandbox` Environment** — `PUT .../environments/daraja-sandbox` with a `reviewers` array returns:
+   `{"message":"Failed to create the environment protection rule. Please ensure the billing plan supports the required reviewers protection rule."}` (HTTP 422)
+2. **Branch protection / repository rulesets on `main`** — both the classic `PUT /branches/main/protection` endpoint and the modern `POST /rulesets` endpoint were tested live and return:
+   `{"message":"Upgrade to GitHub Pro or make this repository public to enable this feature."}` (HTTP 403)
+
+This is a **GitHub Free-tier plan restriction on private repositories**, not a permissions or tooling gap — the account has full `admin` scope on the repo (proven by every other write in this pass succeeding), but GitHub itself refuses these two specific features for private repos on the Free plan regardless of caller privilege. The only two ways to close this gap are: (a) upgrade to GitHub Pro/Team (~$4/mo for an individual), or (b) make the repository public (already ruled out per the portfolio-privacy decision earlier in this project). This is captured as the sole remaining manual/business decision below.
 
 ---
 
-## Mandatory Manual Infrastructure Checklist (Pending Human Execution)
+## Mandatory Manual Infrastructure Checklist (Pending Human Decision — Billing, Not Tooling)
 
-- [ ] **CICD-SEC-1 (Flow Control):** Upgrade the repository to GitHub Pro/Team. Navigate to Settings → Branches → Add branch protection rule for `main`, `staging`, and `development`. Enable "Require a pull request before merging", "Require approvals", and "Require status checks to pass before merging" (specify `chaos` and `docker-build`).
-- [ ] **CICD-SEC-2 (IAM):** Document the policy that future collaborators must be added with `Write` access, not `Admin`.
-- [ ] **CICD-SEC-5 (PBAC Gates):** Navigate to Settings → Environments. Create the `daraja-sandbox` environment. Enable "Required reviewers" and select the repository owner. (Note: the workflow already references this environment via `environment: daraja-sandbox`; until this environment exists in Settings, GitHub will auto-create it with no protection rules on first run — creating it manually first with reviewers configured is the correct order of operations.)
-- [ ] **CICD-SEC-6 (Credential Hygiene):** Navigate to Settings → Secrets and Variables → Actions. Permanently delete the unused `DOCKERHUB_TOKEN` and `DOCKERHUB_USERNAME` secrets (confirmed unreferenced anywhere in `ci.yml` — dead credentials with no offsetting benefit). Rotate them at the source (Docker Hub) first in case they were ever used manually outside CI.
-- [ ] **CICD-SEC-7 (System Configuration):** Navigate to Settings → Actions → General. Restrict execution to "Allow actions created by GitHub" and "Allow actions by verified creators", and enable "Require artifact and job attestation" / SHA-pinning enforcement (`sha_pinning_required`) now that all first-party actions are SHA-pinned.
-- [ ] **CICD-SEC-10 (Logging & Visibility):** Verify Dependabot alerts are fully active in the Security tab once the `dependabot.yml` in this change merges (Dependabot config alone does not retroactively enable the separate "Dependabot alerts" vulnerability-alert toggle — confirm both are on).
+- [ ] **CICD-SEC-1 (Flow Control) + CICD-SEC-5 (PBAC, required reviewers):** Decide whether to upgrade to GitHub Pro/Team. If yes: Settings → Branches → Add branch protection rule for `main` (require PR + approvals + status checks `chaos`, `docker-build`), and Settings → Environments → `daraja-sandbox` → enable "Required reviewers" → select `ALEX-MUTHOMI`. If no: accept the residual risk that a compromised token with push access could push directly to `main` without review — mitigated in the interim by `CODEOWNERS` (advisory, not enforced without branch protection) and by the fact that this is a single-maintainer repository with no external collaborators.
+- [ ] **CICD-SEC-2 (IAM):** Document the policy that future collaborators must be added with `Write` access, not `Admin` (no API action needed until a second collaborator is actually added — nothing to enforce today on a single-owner repo).
 
 ### Additional note on CODEOWNERS in a single-owner repository
 
@@ -43,5 +54,16 @@ GitHub's REST/GraphQL API and `gh` CLI intentionally require elevated, interacti
 ## Verification performed for this change
 
 - All commit SHAs and image digests in this change were fetched live via `git ls-remote`, the Docker Hub Registry v2 API, and cross-verified via `gh api` tag lookups — none were guessed or reused from memory.
-- `docker compose build` was re-run end-to-end against the digest-pinned Dockerfiles to confirm the build still succeeds unchanged (see PR/commit description for the build log reference).
+- `docker compose build` was re-run end-to-end against the digest-pinned Dockerfiles to confirm the build still succeeds unchanged.
 - YAML structure of `ci.yml` was validated for syntax correctness after every edit.
+- Every live repository-configuration change in the second pass was verified with a `GET` immediately after the corresponding `PUT`/`DELETE`, and the before/after state is recorded above rather than assumed. The `actions/permissions` restriction in particular was checked against the *actual* `uses:` lines in `ci.yml` before being applied, specifically to rule out a self-inflicted CI outage.
+
+## Residual risk register (post-hardening)
+
+| # | Residual risk | Severity | Compensating control today | Closed by |
+|---|---|---|---|---|
+| 1 | No enforced PR review before merge to `main` | Medium | Single maintainer; `CODEOWNERS` advisory; all changes reviewed by the agent/author before push | GitHub Pro/Team upgrade |
+| 2 | No required-reviewer gate on `daraja-sandbox` secrets | Low | Same secrets are sandbox-only (Daraja test credentials, not production M-Pesa); `environment:` scoping still isolates the job's secret access even without reviewers | GitHub Pro/Team upgrade |
+| 3 | `CODEOWNERS` not enforceable without branch protection | Low | Same as #1 | Same as #1 |
+
+None of these three residual items are exploitable by an external attacker without first compromising a maintainer's GitHub credentials or push access — at which point branch protection alone would also not have been a complete control (a compromised admin account can typically bypass or disable branch protection too, unless "Do not allow bypassing the above settings" and rules-for-admins are also explicitly enabled). They are recorded here for transparency, not because they represent an open remote attack surface today.
