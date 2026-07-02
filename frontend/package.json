@@ -23,7 +23,7 @@
     "@unhead/vue": "2.1.15",
     "nuxt": "3.21.7",
     "nuxt-csurf": "^1.6.5",
-    "nuxt-security": "^2.1.5",
+    "nuxt-security": "^2.6.0",
     "pinia": "^3.0.4",
     "vue": "^3.5.32",
     "vue-router": "^5.0.4"
