@@ -1,4 +1,6 @@
-FROM node:22-alpine AS builder
+# Digest-pinned base image (CICD-SEC-9: Improper Artifact Integrity Validation).
+# Verify/refresh via: docker manifest inspect node:22-alpine
+FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS builder
 
 WORKDIR /app
 
@@ -9,7 +11,9 @@ RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
 
-FROM node:22-alpine AS runner
+# Digest-pinned base image (CICD-SEC-9: Improper Artifact Integrity Validation).
+# Verify/refresh via: docker manifest inspect node:22-alpine
+FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS runner
 
 ENV NODE_ENV=production \
     NITRO_HOST=0.0.0.0 \

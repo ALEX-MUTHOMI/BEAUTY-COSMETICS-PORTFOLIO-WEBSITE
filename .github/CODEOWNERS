@@ -1,0 +1,14 @@
+# CICD-SEC-1 / CICD-SEC-4: require explicit review on changes to CI/CD
+# pipeline definitions and CI-executed scripts, since these files control
+# what code runs with pipeline-level privileges (Poisoned Pipeline Execution
+# surface). GitHub only enforces this once branch protection + "Require
+# review from Code Owners" is enabled on the target branch (see
+# docs/security/OWASP_CICD_AUDIT_AND_INFRA_CHECKLIST.md).
+
+/.github/workflows/  @ALEX-MUTHOMI
+/.github/dependabot.yml  @ALEX-MUTHOMI
+/.github/CODEOWNERS  @ALEX-MUTHOMI
+/scripts/ci/  @ALEX-MUTHOMI
+/Dockerfile  @ALEX-MUTHOMI
+/frontend/Dockerfile  @ALEX-MUTHOMI
+/docker-compose*.yml  @ALEX-MUTHOMI
