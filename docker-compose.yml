@@ -519,6 +519,16 @@ services:
       - CUSTOMER_ACTION_SESSION_TTL_MINUTES=${CUSTOMER_ACTION_SESSION_TTL_MINUTES:-15}
       - BOOKING_REMINDER_2H_ENABLED=${BOOKING_REMINDER_2H_ENABLED:-false}
       - BOOKING_REMINDER_MAX_ATTEMPTS=${BOOKING_REMINDER_MAX_ATTEMPTS:-3}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A core inspect ping -d celery@$$HOSTNAME --timeout=10 | grep -q OK",
+        ]
+      interval: 30s
+      timeout: 15s
+      start_period: 30s
+      retries: 5
     depends_on:
       db:
         condition: service_healthy
@@ -571,6 +581,16 @@ services:
       - GALLERY_PUBLIC_SUBCATEGORY_LIMIT=${GALLERY_PUBLIC_SUBCATEGORY_LIMIT:-10}
       - GALLERY_PUBLIC_SENSITIVE_LIMIT=${GALLERY_PUBLIC_SENSITIVE_LIMIT:-6}
       - GALLERY_PROCESSING_TIMEOUT_SECONDS=${GALLERY_PROCESSING_TIMEOUT_SECONDS:-15}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A core inspect ping -d celery@$$HOSTNAME --timeout=10 | grep -q OK",
+        ]
+      interval: 30s
+      timeout: 15s
+      start_period: 30s
+      retries: 5
     depends_on:
       db:
         condition: service_healthy
