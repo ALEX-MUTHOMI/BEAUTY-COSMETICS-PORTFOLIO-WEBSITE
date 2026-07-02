@@ -18,7 +18,7 @@ User = get_user_model()
 
 @pytest.fixture
 def customer():
-    return User.objects.create_user(email="ledger-lifecycle@beauty.com", phone_number="+254712100001")
+    return User.objects.create_user(email="ledger-lifecycle@aesthetic-os.test", phone_number="+254712100001")
 
 
 def pending_ledger(customer, provider_reference):

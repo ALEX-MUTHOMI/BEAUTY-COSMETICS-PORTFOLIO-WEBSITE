@@ -6,5 +6,5 @@
 import StaffSettingsSecurity from '../../../src/staff/StaffSettingsSecurity.vue'
 
 definePageMeta({ middleware: ['staff-auth'] })
-useHead({ title: 'Staff Settings | Beauty Portal', meta: [{ name: 'robots', content: 'noindex,nofollow' }] })
+useHead({ title: 'Staff Settings | AestheticOS Portal', meta: [{ name: 'robots', content: 'noindex,nofollow' }] })
 </script>

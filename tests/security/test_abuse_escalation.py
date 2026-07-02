@@ -126,8 +126,8 @@ def test_expired_cooldown_and_authenticated_actor_isolation_are_preserved():
         assert client.get(f"/api/bookings/status/{booking.public_id}/", secure=True).status_code == status.HTTP_200_OK
 
     _clear_scope("checkout_detail")
-    owner = User.objects.create_user(email="abuse-owner@beauty.test", phone_number="+254712781001")
-    other = User.objects.create_user(email="abuse-other@beauty.test", phone_number="+254712781002")
+    owner = User.objects.create_user(email="abuse-owner@aesthetic-os.test", phone_number="+254712781001")
+    other = User.objects.create_user(email="abuse-other@aesthetic-os.test", phone_number="+254712781002")
     checkout = create_checkout_session(
         owner,
         Decimal("100.00"),

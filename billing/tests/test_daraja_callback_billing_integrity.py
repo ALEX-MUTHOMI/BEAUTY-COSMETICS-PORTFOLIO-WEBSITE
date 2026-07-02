@@ -21,7 +21,7 @@ def _success_event():
 
 @pytest.mark.django_db(transaction=True)
 def test_daraja_success_creates_one_immutable_ledger_audit_and_settlement():
-    customer = User.objects.create_user(email="billing-daraja-shape@beauty.com", phone_number="+254712770002")
+    customer = User.objects.create_user(email="billing-daraja-shape@aesthetic-os.test", phone_number="+254712770002")
     session = create_checkout_session(
         customer,
         Decimal("100.00"),

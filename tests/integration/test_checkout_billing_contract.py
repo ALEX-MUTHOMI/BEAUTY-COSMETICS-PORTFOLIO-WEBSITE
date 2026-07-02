@@ -16,7 +16,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_checkout_success_creates_single_ledger_audit_and_settlement():
-    customer = User.objects.create_user(email="contract-success@beauty.com", phone_number="+254712300001")
+    customer = User.objects.create_user(email="contract-success@aesthetic-os.test", phone_number="+254712300001")
     session = create_checkout_session(
         customer,
         Decimal("2600.00"),

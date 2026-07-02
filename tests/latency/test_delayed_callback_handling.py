@@ -18,7 +18,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_delayed_callback_marks_paid_if_checkout_not_expired():
-    customer = User.objects.create_user(email="delayed-paid@beauty.com", phone_number="+254712730004")
+    customer = User.objects.create_user(email="delayed-paid@aesthetic-os.test", phone_number="+254712730004")
     session = create_checkout_session(
         customer,
         Decimal("150.00"),
@@ -49,7 +49,7 @@ def test_delayed_callback_marks_paid_if_checkout_not_expired():
 
 @pytest.mark.django_db(transaction=True)
 def test_delayed_callback_after_expiry_cannot_mark_paid():
-    customer = User.objects.create_user(email="delayed-expired@beauty.com", phone_number="+254712730005")
+    customer = User.objects.create_user(email="delayed-expired@aesthetic-os.test", phone_number="+254712730005")
     session = create_checkout_session(
         customer,
         Decimal("150.00"),

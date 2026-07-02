@@ -21,7 +21,7 @@ def clear_throttle_keys():
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.load
 def test_one_thousand_stk_initiation_attempts_are_admitted_or_throttled_safely():
-    customer = User.objects.create_user(email="admission@beauty.com", phone_number="+254712620003")
+    customer = User.objects.create_user(email="admission@aesthetic-os.test", phone_number="+254712620003")
     session = create_checkout_session(
         customer,
         Decimal("100.00"),

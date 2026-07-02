@@ -52,7 +52,7 @@ def create_stk_checkout(customer, amount=Decimal("2400.00")):
 
 @pytest.mark.django_db(transaction=True)
 def test_parallel_mpesa_callbacks_credit_checkout_once():
-    customer = User.objects.create_user(email="chaos-callback@beauty.com", phone_number="+254712345679")
+    customer = User.objects.create_user(email="chaos-callback@aesthetic-os.test", phone_number="+254712345679")
     session, attempt = create_stk_checkout(customer)
     payload = {
         "CheckoutRequestID": attempt.provider_request_id,
@@ -88,7 +88,7 @@ def test_parallel_mpesa_callbacks_credit_checkout_once():
 
 @pytest.mark.django_db(transaction=True)
 def test_auth_otp_and_checkout_callback_do_not_deadlock():
-    customer = User.objects.create_user(email="chaos-auth@beauty.com", phone_number="+254712345680")
+    customer = User.objects.create_user(email="chaos-auth@aesthetic-os.test", phone_number="+254712345680")
     session, attempt = create_stk_checkout(customer, Decimal("750.00"))
     payload = {
         "CheckoutRequestID": attempt.provider_request_id,
@@ -139,7 +139,7 @@ def test_checkout_webhook_rejects_x_forwarded_for_spoofing(settings):
 
 @pytest.mark.django_db(transaction=True)
 def test_checkout_stk_token_bucket_blocks_fourth_burst_request():
-    customer = User.objects.create_user(email="chaos-throttle@beauty.com", phone_number="+254712345681")
+    customer = User.objects.create_user(email="chaos-throttle@aesthetic-os.test", phone_number="+254712345681")
     session = create_checkout_session(
         customer,
         Decimal("1200.00"),

@@ -6,7 +6,7 @@ Never clean development, staging, production, or manually curated data.
 ## Known Failure Mode
 
 Interrupted monolithic pytest runs can leave connections open against
-`test_beauty_db`. A later test run may fail with:
+`test_aesthetic_os_db`. A later test run may fail with:
 
 - duplicate test database creation;
 - database already exists;

@@ -4,12 +4,12 @@ services:
   # ============================================================================
   toxiproxy:
     image: ghcr.io/shopify/toxiproxy:2.9.0
-    container_name: beauty_toxiproxy
+    container_name: aesthetic_os_toxiproxy
     # Expose administrative control port and proxy entrypoints to the internal network
     ports:
       - "127.0.0.1:8474:8474"   # Admin Management API (HTTP)
     networks:
-      - beauty_isolated_net
+      - aesthetic_os_isolated_net
     security_opt:
       - no-new-privileges:true
     # Ensure dependencies are healthy before running proxy
@@ -34,7 +34,7 @@ services:
       - POSTGRES_HOST=toxiproxy
       - POSTGRES_PORT=54320
       # Redirect Django Redis cache/queue traffic to Toxiproxy proxy entrypoint (port 63790)
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@toxiproxy:63790/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@toxiproxy:63790/0
     depends_on:
       - toxiproxy
 
@@ -44,6 +44,6 @@ services:
       - POSTGRES_HOST=toxiproxy
       - POSTGRES_PORT=54320
       # Redirect Celery worker Redis traffic to Toxiproxy proxy entrypoint (port 63790)
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@toxiproxy:63790/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@toxiproxy:63790/0
     depends_on:
       - toxiproxy

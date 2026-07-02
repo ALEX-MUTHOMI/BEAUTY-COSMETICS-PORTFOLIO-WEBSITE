@@ -12,7 +12,7 @@ User = get_user_model()
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.load
 def test_one_thousand_checkout_session_creation_attempts_do_not_crash():
-    customer = User.objects.create_user(email="load-checkout@beauty.com", phone_number="+254712620001")
+    customer = User.objects.create_user(email="load-checkout@aesthetic-os.test", phone_number="+254712620001")
 
     statuses = [
         create_checkout_session(

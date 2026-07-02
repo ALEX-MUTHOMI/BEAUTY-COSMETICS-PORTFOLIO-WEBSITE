@@ -169,7 +169,7 @@ def _safe_route_inventory_paths() -> dict[str, Any]:
 
 
 def build_safe_openapi_schema() -> dict[str, Any]:
-    generator = SchemaGenerator(title="Beauty API", patterns=_flatten_patterns(get_resolver().url_patterns))
+    generator = SchemaGenerator(title="AestheticOS API", patterns=_flatten_patterns(get_resolver().url_patterns))
     schema = copy.deepcopy(generator.get_schema(request=None, public=True))
     paths = schema.get("paths", {})
     schema["paths"] = {
@@ -179,7 +179,7 @@ def build_safe_openapi_schema() -> dict[str, Any]:
         {path: ops for path, ops in _safe_route_inventory_paths().items() if path not in schema["paths"]}
     )
     schema["info"] = {
-        "title": "Beauty API",
+        "title": "AestheticOS API",
         "version": "security-scan",
         "description": "Sanitized API schema for passive security scanning and contract verification.",
     }

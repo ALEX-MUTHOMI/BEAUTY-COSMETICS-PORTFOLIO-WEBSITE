@@ -17,7 +17,7 @@ User = get_user_model()
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.load
 def test_one_thousand_duplicate_callbacks_for_one_checkout_credit_once():
-    customer = User.objects.create_user(email="webhook-storm@beauty.com", phone_number="+254712620002")
+    customer = User.objects.create_user(email="webhook-storm@aesthetic-os.test", phone_number="+254712620002")
     session = create_checkout_session(
         customer,
         Decimal("100.00"),

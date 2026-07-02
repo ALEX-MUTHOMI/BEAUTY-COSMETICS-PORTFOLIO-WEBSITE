@@ -18,8 +18,8 @@ def test_status_polling_pressure_is_customer_scoped_and_stable():
     rest_framework = copy.deepcopy(settings.REST_FRAMEWORK)
     rest_framework["DEFAULT_THROTTLE_RATES"]["checkout_detail"] = "1200/min"
     with override_settings(REST_FRAMEWORK=rest_framework):
-        owner = User.objects.create_user(email="poll-owner@beauty.com", phone_number="+254712780001")
-        attacker = User.objects.create_user(email="poll-attacker@beauty.com", phone_number="+254712780002")
+        owner = User.objects.create_user(email="poll-owner@aesthetic-os.test", phone_number="+254712780001")
+        attacker = User.objects.create_user(email="poll-attacker@aesthetic-os.test", phone_number="+254712780002")
         session = create_checkout_session(
             owner,
             Decimal("100.00"),

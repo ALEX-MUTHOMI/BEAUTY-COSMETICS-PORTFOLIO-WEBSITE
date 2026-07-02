@@ -20,7 +20,7 @@ const csrfToken = useCookie<string>('csrftoken', {
 })
 
 useHead({
-  title: 'Staff Sign In | Beauty Portal',
+  title: 'Staff Sign In | AestheticOS Portal',
   meta: [
     {
       name: 'robots',

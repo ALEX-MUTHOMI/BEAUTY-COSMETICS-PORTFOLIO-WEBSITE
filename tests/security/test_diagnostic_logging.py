@@ -7,7 +7,7 @@ from django.test import Client, override_settings
 
 
 @pytest.mark.django_db
-@override_settings(BEAUTY_DIAGNOSTIC_TRACE=True)
+@override_settings(AESTHETIC_OS_DIAGNOSTIC_TRACE=True)
 def test_diagnostic_request_and_throttle_events_are_redacted(caplog):
     rest_framework = copy.deepcopy(settings.REST_FRAMEWORK)
     rest_framework["DEFAULT_THROTTLE_RATES"]["csrf_bootstrap"] = "1/min"

@@ -12,7 +12,7 @@ User = get_user_model()
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.load
 def test_one_thousand_successful_checkout_outcomes_create_one_ledger_each():
-    customer = User.objects.create_user(email="ledger-storm@beauty.com", phone_number="+254712610002")
+    customer = User.objects.create_user(email="ledger-storm@aesthetic-os.test", phone_number="+254712610002")
 
     for index in range(1000):
         record_successful_checkout_payment(

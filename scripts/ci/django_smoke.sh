@@ -16,16 +16,16 @@ echo "[*] Booting Django Production Smoke Tests..."
 export DEBUG="False"
 export DJANGO_SETTINGS_MODULE="core.settings"
 export SECRET_KEY="production-secure-smoke-test-key-must-be-long-and-random-xyz-987654321-abc-12345" # nosec
-export ALLOWED_HOSTS="localhost,127.0.0.1,testserver,api.beautycosmetics.com"
-export CORS_ALLOWED_ORIGINS="https://beautycosmetics.com,https://admin.beautycosmetics.com"
+export ALLOWED_HOSTS="localhost,127.0.0.1,testserver,api.aesthetic-os.example.com"
+export CORS_ALLOWED_ORIGINS="https://aesthetic-os.example.com,https://admin.aesthetic-os.example.com"
 
 # Set fallback database connections (routed through Toxiproxy if running resilience profile)
-export POSTGRES_DB="${POSTGRES_DB:-beauty_db}"
-export POSTGRES_USER="${POSTGRES_USER:-beauty_user}"
-export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-beauty_secure_password}"
+export POSTGRES_DB="${POSTGRES_DB:-aesthetic_os_db}"
+export POSTGRES_USER="${POSTGRES_USER:-aesthetic_os_user}"
+export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-aesthetic_os_secure_password}"
 export POSTGRES_HOST="${POSTGRES_HOST:-localhost}"
 export POSTGRES_PORT="${POSTGRES_PORT:-5432}"
-export REDIS_URL="${REDIS_URL:-redis://:beauty_redis_secure_password@localhost:6379/0}"
+export REDIS_URL="${REDIS_URL:-redis://:aesthetic_os_redis_secure_password@localhost:6379/0}"
 
 echo "[*] Target settings configured. Running system validations..."
 

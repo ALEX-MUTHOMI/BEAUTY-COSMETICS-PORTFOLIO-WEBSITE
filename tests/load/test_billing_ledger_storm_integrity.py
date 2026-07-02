@@ -12,7 +12,7 @@ User = get_user_model()
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.load
 def test_one_thousand_mixed_checkout_outcomes_only_credit_successful_valid_payments():
-    customer = User.objects.create_user(email="billing-load@beauty.com", phone_number="+254712620004")
+    customer = User.objects.create_user(email="billing-load@aesthetic-os.test", phone_number="+254712620004")
 
     for index in range(1000):
         if index % 2 == 0:

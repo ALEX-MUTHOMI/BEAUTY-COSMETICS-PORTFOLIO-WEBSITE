@@ -16,10 +16,10 @@ on:
         default: "false"
 
 env:
-  POSTGRES_DB: beauty_ci
-  POSTGRES_USER: beauty_ci
-  POSTGRES_PASSWORD: beauty_ci_password
-  REDIS_PASSWORD: beauty_ci_redis_password
+  POSTGRES_DB: aesthetic_os_ci
+  POSTGRES_USER: aesthetic_os_ci
+  POSTGRES_PASSWORD: aesthetic_os_ci_password
+  REDIS_PASSWORD: aesthetic_os_ci_redis_password
   SECRET_KEY: django-insecure-ci-placeholder-key-32-chars
   DEBUG: "False"
   SECURE_SSL_REDIRECT: "False"
@@ -106,9 +106,9 @@ jobs:
       - name: Wait for Docker health
         run: |
           for i in {1..30}; do
-            WEB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_web_app 2>/dev/null || echo starting)
-            DB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_postgres_db 2>/dev/null || echo starting)
-            REDIS_STATUS=$(docker inspect --format='{{.State.Health.Status}}' beauty_redis 2>/dev/null || echo starting)
+            WEB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' aesthetic_os_web_app 2>/dev/null || echo starting)
+            DB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' aesthetic_os_postgres_db 2>/dev/null || echo starting)
+            REDIS_STATUS=$(docker inspect --format='{{.State.Health.Status}}' aesthetic_os_redis 2>/dev/null || echo starting)
             if [ "$WEB_STATUS" = healthy ] && [ "$DB_STATUS" = healthy ] && [ "$REDIS_STATUS" = healthy ]; then
               exit 0
             fi
@@ -296,7 +296,7 @@ jobs:
       - frontend-test
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t beauty-portfolio-prod:latest .
+      - run: docker build -t aesthetic-os-prod:latest .
       - run: docker compose config -q
 
   daraja-sandbox-contract:

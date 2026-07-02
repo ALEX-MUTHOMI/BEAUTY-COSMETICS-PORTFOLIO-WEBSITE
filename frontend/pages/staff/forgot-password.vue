@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-useHead({ title: 'Staff Password Recovery | Beauty Portal', meta: [{ name: 'robots', content: 'noindex,nofollow' }] })
+useHead({ title: 'Staff Password Recovery | AestheticOS Portal', meta: [{ name: 'robots', content: 'noindex,nofollow' }] })
 </script>
 
 <style scoped>

@@ -30,7 +30,7 @@ class TimeoutOnceProvider(FakeMpesaProvider):
 
 @pytest.mark.django_db(transaction=True)
 def test_retry_after_provider_timeout_does_not_double_credit():
-    customer = User.objects.create_user(email="timeout-replay@beauty.com", phone_number="+254712740003")
+    customer = User.objects.create_user(email="timeout-replay@aesthetic-os.test", phone_number="+254712740003")
     session = create_checkout_session(
         customer,
         Decimal("170.00"),

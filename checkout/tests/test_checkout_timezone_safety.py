@@ -17,7 +17,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_checkout_expiry_is_timezone_aware_utc():
-    customer = User.objects.create_user(email="tz-checkout@beauty.com", phone_number="+254712700001")
+    customer = User.objects.create_user(email="tz-checkout@aesthetic-os.test", phone_number="+254712700001")
 
     session = create_checkout_session(
         customer,
@@ -36,7 +36,7 @@ def test_checkout_expiry_is_timezone_aware_utc():
 
 @pytest.mark.django_db(transaction=True)
 def test_callback_provider_timestamp_cannot_revive_expired_checkout():
-    customer = User.objects.create_user(email="tz-expired@beauty.com", phone_number="+254712700002")
+    customer = User.objects.create_user(email="tz-expired@aesthetic-os.test", phone_number="+254712700002")
     session = create_checkout_session(
         customer,
         Decimal("50.00"),
@@ -68,7 +68,7 @@ def test_callback_provider_timestamp_cannot_revive_expired_checkout():
 
 @pytest.mark.django_db(transaction=True)
 def test_many_timezone_metadata_checkouts_keep_consistent_expiry():
-    customer = User.objects.create_user(email="tz-storm@beauty.com", phone_number="+254712700003")
+    customer = User.objects.create_user(email="tz-storm@aesthetic-os.test", phone_number="+254712700003")
     zones = ["UTC", "Africa/Nairobi", "America/New_York", "Asia/Tokyo"]
     sessions = [
         create_checkout_session(

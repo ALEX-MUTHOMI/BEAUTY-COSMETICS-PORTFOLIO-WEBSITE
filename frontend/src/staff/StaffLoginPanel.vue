@@ -2,11 +2,11 @@
   <section class="staff-login" aria-labelledby="staff-login-title">
     <div class="staff-login__brand">
       <div class="staff-login__brand-top">
-        <div class="staff-login__seal" aria-hidden="true">BC</div>
+        <div class="staff-login__seal" aria-hidden="true">AO</div>
         <StaffThemeToggle />
       </div>
       <p class="staff-login__eyebrow">Private studio operations</p>
-      <h1 id="staff-login-title">Your beauty desk, ready before the first client arrives.</h1>
+      <h1 id="staff-login-title">Your studio desk, ready before the first client arrives.</h1>
       <p class="staff-login__intro">
         Secure staff access for appointments, payments, reschedules, and short-lived contact
         reveal. Customer remembered-device access cannot enter this portal.

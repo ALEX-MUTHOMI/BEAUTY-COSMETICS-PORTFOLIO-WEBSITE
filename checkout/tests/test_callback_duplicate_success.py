@@ -16,7 +16,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_duplicate_success_callback_is_idempotent_after_checkout_paid():
-    customer = User.objects.create_user(email="duplicate-success-a2@beauty.com", phone_number="+254712600008")
+    customer = User.objects.create_user(email="duplicate-success-a2@aesthetic-os.test", phone_number="+254712600008")
     session = create_checkout_session(
         customer,
         Decimal("1000.00"),

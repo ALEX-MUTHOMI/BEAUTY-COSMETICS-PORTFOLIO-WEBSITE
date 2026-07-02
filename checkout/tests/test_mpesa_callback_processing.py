@@ -17,7 +17,7 @@ User = get_user_model()
 
 @pytest.fixture
 def stk_session():
-    customer = User.objects.create_user(email="callback@beauty.com", phone_number="+254712200004")
+    customer = User.objects.create_user(email="callback@aesthetic-os.test", phone_number="+254712200004")
     session = create_checkout_session(
         customer,
         Decimal("2100.00"),

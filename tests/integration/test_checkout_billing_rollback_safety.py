@@ -18,7 +18,7 @@ User = get_user_model()
 def test_checkout_billing_rollback_does_not_leave_paid_checkout_without_ledger(
     monkeypatch,
 ):
-    customer = User.objects.create_user(email="rollback-pressure@beauty.com", phone_number="+254712640002")
+    customer = User.objects.create_user(email="rollback-pressure@aesthetic-os.test", phone_number="+254712640002")
     session = create_checkout_session(
         customer,
         Decimal("100.00"),

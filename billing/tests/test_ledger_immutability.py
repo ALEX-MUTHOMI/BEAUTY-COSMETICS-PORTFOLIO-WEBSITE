@@ -12,7 +12,7 @@ User = get_user_model()
 
 @pytest.fixture
 def ledger():
-    customer = User.objects.create_user(email="immutability@beauty.com", phone_number="+254712100002")
+    customer = User.objects.create_user(email="immutability@aesthetic-os.test", phone_number="+254712100002")
     return create_pending_ledger_transaction(
         customer=customer,
         amount=Decimal("900.00"),

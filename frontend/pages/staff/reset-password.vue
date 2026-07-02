@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-useHead({ title: 'Reset Staff Password | Beauty Portal', meta: [{ name: 'robots', content: 'noindex,nofollow' }] })
+useHead({ title: 'Reset Staff Password | AestheticOS Portal', meta: [{ name: 'robots', content: 'noindex,nofollow' }] })
 </script>
 
 <style scoped>

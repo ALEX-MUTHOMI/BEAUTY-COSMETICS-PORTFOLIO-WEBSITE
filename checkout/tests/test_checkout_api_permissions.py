@@ -24,8 +24,8 @@ def test_unauthenticated_checkout_creation_rejected():
 
 @pytest.mark.django_db
 def test_customer_can_only_access_own_checkout():
-    owner = User.objects.create_user(email="owner@beauty.com", phone_number="+254712200007")
-    attacker = User.objects.create_user(email="attacker@beauty.com", phone_number="+254712200008")
+    owner = User.objects.create_user(email="owner@aesthetic-os.test", phone_number="+254712200007")
+    attacker = User.objects.create_user(email="attacker@aesthetic-os.test", phone_number="+254712200008")
     session = create_checkout_session(
         owner,
         Decimal("1000.00"),
@@ -45,7 +45,7 @@ def test_customer_can_only_access_own_checkout():
 
 @pytest.mark.django_db
 def test_missing_idempotency_key_rejected_for_checkout_creation():
-    customer = User.objects.create_user(email="missing-idem@beauty.com", phone_number="+254712200009")
+    customer = User.objects.create_user(email="missing-idem@aesthetic-os.test", phone_number="+254712200009")
     client = secure_client()
     client.force_authenticate(user=customer)
 

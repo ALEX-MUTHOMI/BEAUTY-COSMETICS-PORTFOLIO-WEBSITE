@@ -1,6 +1,6 @@
 param(
     [string]$Image = "postman/newman:6.1.3",
-    [string]$Collection = "tests/postman/beauty_backend_acceptance.postman_collection.json",
+    [string]$Collection = "tests/postman/aesthetic_os_backend_acceptance.postman_collection.json",
     [string]$Environment = "tests/postman/local-docker.postman_environment.json",
     [string]$Report = "tests/postman/reports/newman-local.json",
     [string]$BaseUrl = "",

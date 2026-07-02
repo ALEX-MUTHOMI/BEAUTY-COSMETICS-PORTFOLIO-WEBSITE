@@ -120,9 +120,9 @@ if os.environ.get("POSTGRES_HOST"):
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("POSTGRES_DB", "beauty_db"),
-            "USER": os.environ.get("POSTGRES_USER", "beauty_user"),
-            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "beauty_secure_password"),
+            "NAME": os.environ.get("POSTGRES_DB", "aesthetic_os_db"),
+            "USER": os.environ.get("POSTGRES_USER", "aesthetic_os_user"),
+            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "aesthetic_os_secure_password"),
             "HOST": os.environ.get("POSTGRES_HOST", "db"),
             "PORT": os.environ.get("POSTGRES_PORT", "5432"),
         }
@@ -283,7 +283,7 @@ DARAJA_BASE_URL = os.environ.get("DARAJA_BASE_URL", "https://sandbox.safaricom.c
 DARAJA_TOKEN_CACHE_TTL_SECONDS = int(os.environ.get("DARAJA_TOKEN_CACHE_TTL_SECONDS", "3300"))
 DARAJA_CALLBACK_URL = os.environ.get(
     "DARAJA_CALLBACK_URL",
-    "https://api.beautycosmetics.com/api/checkout/mpesa/webhook/",
+    "https://api.aesthetic-os.example.com/api/checkout/mpesa/webhook/",
 )
 PII_HASH_PEPPER = os.environ.get("PII_HASH_PEPPER", "")
 PII_ENCRYPTION_KEY = os.environ.get("PII_ENCRYPTION_KEY", "")
@@ -300,7 +300,7 @@ PAYMENT_STATUS_POLL_INTERVAL_SECONDS = int(os.environ.get("PAYMENT_STATUS_POLL_I
 PAYMENT_STATUS_MAX_WAIT_SECONDS = int(os.environ.get("PAYMENT_STATUS_MAX_WAIT_SECONDS", "300"))
 
 EMAIL_PROVIDER = os.environ.get("EMAIL_PROVIDER", "fake")
-EMAIL_FROM_ADDRESS = os.environ.get("EMAIL_FROM_ADDRESS", "Beauty SaaS <no-reply@example.test>")
+EMAIL_FROM_ADDRESS = os.environ.get("EMAIL_FROM_ADDRESS", "AestheticOS <no-reply@example.test>")
 EMAIL_REPLY_TO_ADDRESS = os.environ.get("EMAIL_REPLY_TO_ADDRESS", "support@example.test")
 EMAIL_PROVIDER_API_KEY = os.environ.get("EMAIL_PROVIDER_API_KEY", "")
 EMAIL_PROVIDER_BASE_URL = os.environ.get("EMAIL_PROVIDER_BASE_URL", "")
@@ -405,7 +405,7 @@ REST_FRAMEWORK = {
 }
 
 # Opt-in local/test observability. Never enable this by default in production.
-BEAUTY_DIAGNOSTIC_TRACE = os.environ.get("BEAUTY_DIAGNOSTIC_TRACE", "false").lower() in {"1", "true", "yes"} and (
+AESTHETIC_OS_DIAGNOSTIC_TRACE = os.environ.get("AESTHETIC_OS_DIAGNOSTIC_TRACE", "false").lower() in {"1", "true", "yes"} and (
     DEBUG or os.environ.get("CI", "").lower() in {"1", "true", "yes"}
 )
 

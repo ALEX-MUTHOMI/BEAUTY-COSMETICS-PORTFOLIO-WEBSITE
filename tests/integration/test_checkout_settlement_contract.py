@@ -15,7 +15,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_successful_checkout_creates_pending_settlement_contract():
-    customer = User.objects.create_user(email="settlement-contract@beauty.com", phone_number="+254712300005")
+    customer = User.objects.create_user(email="settlement-contract@aesthetic-os.test", phone_number="+254712300005")
     session = create_checkout_session(
         customer,
         Decimal("2800.00"),

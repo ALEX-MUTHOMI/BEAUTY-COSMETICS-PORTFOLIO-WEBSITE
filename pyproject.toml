@@ -1,7 +1,7 @@
 [project]
-name = "beauty-cosmetics-portfolio-website"
+name = "aesthetic-os"
 version = "0.1.0"
-description = ""
+description = "AestheticOS — spa & beauty booking operating system"
 authors = [
     {name = "ALEX-MUTHOMI",email = "alexmuthomi64@outlook.com"}
 ]

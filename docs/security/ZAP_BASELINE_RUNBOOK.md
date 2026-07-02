@@ -110,9 +110,9 @@ proxy using fake providers only. It must not be pointed at production.
 Lifecycle guarantees:
 
 - pre-cleans only deterministic project-owned scanner containers;
-- starts `beauty_zap_passive_newman`;
+- starts `aesthetic_os_zap_passive_newman`;
 - waits for ZAP API readiness with bounded timeout;
-- runs pinned `postman/newman:6.1.3` as `beauty_newman_through_zap`;
+- runs pinned `postman/newman:6.1.3` as `aesthetic_os_newman_through_zap`;
 - preserves Newman `--bail` behavior and the full collection contract;
 - waits for passive scan drain with bounded timeout;
 - exports HTML, Markdown, JSON, and observed URL artifacts;
@@ -172,7 +172,7 @@ docker compose exec web poetry run python manage.py check
 docker compose exec web poetry run python manage.py makemigrations --check --dry-run
 docker compose exec web poetry run pytest --collect-only -q
 docker compose exec web poetry run pytest tests/api tests/security -q
-newman.cmd run tests\postman\beauty_backend_acceptance.postman_collection.json -e tests\postman\local-docker.postman_environment.json --bail
+newman.cmd run tests\postman\aesthetic_os_backend_acceptance.postman_collection.json -e tests\postman\local-docker.postman_environment.json --bail
 ```
 
 If host Newman is unavailable, use Docker Newman and document the fallback.

@@ -21,7 +21,7 @@ def test_create_user_requires_valid_kenyan_phone():
     Valid formats include: 07XXXXXXXX, 01XXXXXXXX, +2547XXXXXXXX, etc.
     """
     # Test Case A: Create user with invalid phone number format
-    user = User(email="test_invalid_phone@beauty.com", phone_number="123456")  # Clearly invalid format
+    user = User(email="test_invalid_phone@aesthetic-os.test", phone_number="123456")  # Clearly invalid format
     user.set_password("SecurePassword123!")
 
     # In Django, validators run during model clean verification
@@ -29,7 +29,7 @@ def test_create_user_requires_valid_kenyan_phone():
         user.full_clean()
 
     # Test Case B: Verify a correct Kenyan number passes clean verification
-    valid_user = User(email="test_valid_phone@beauty.com", phone_number="+254712345678")
+    valid_user = User(email="test_valid_phone@aesthetic-os.test", phone_number="+254712345678")
     valid_user.set_password("SecurePassword123!")
     valid_user.full_clean()  # Should not raise any exception
 
@@ -41,7 +41,7 @@ def test_user_password_uses_argon2():
     guaranteeing production-grade cryptographic boundaries instead of default PBKDF2.
     """
     user = User.objects.create_user(
-        email="argon2_test@beauty.com",
+        email="argon2_test@aesthetic-os.test",
         phone_number="0712345678",
         password="SecurePassword123!",
     )
@@ -58,7 +58,7 @@ def test_auditmixin_automatic_timestamps():
     - is_deleted soft-delete field defaults to False.
     """
     user = User.objects.create_user(
-        email="audit_test@beauty.com",
+        email="audit_test@aesthetic-os.test",
         phone_number="0712345678",
         password="SecurePassword123!",
     )
@@ -78,7 +78,7 @@ def test_gdpr_anonymization_destroys_pii():
     - Renders the password unusable.
     - Preserves UUID to keep database foreign keys valid.
     """
-    original_email = "gdpr_client@beauty.com"
+    original_email = "gdpr_client@aesthetic-os.test"
     original_phone = "+254712345678"
 
     user = User.objects.create_user(email=original_email, phone_number=original_phone, password="SecurePassword123!")
@@ -113,12 +113,12 @@ def test_soft_deleted_users_excluded_from_active_queries():
     to prevent accidental active business lookup, but can be retrieved via audit managers.
     """
     user1 = User.objects.create_user(
-        email="active_user@beauty.com",
+        email="active_user@aesthetic-os.test",
         phone_number="0711111111",
         password="SecurePassword123!",
     )
     user2 = User.objects.create_user(
-        email="deleted_user@beauty.com",
+        email="deleted_user@aesthetic-os.test",
         phone_number="0722222222",
         password="SecurePassword123!",
     )

@@ -9,7 +9,7 @@ if ($UseHostNewman) {
     $hostNewman = Get-Command "newman.cmd" -ErrorAction SilentlyContinue
     if ($hostNewman) {
         Write-Host "NEWMAN_RUNNER=host"
-        & newman.cmd run tests\postman\beauty_backend_acceptance.postman_collection.json `
+        & newman.cmd run tests\postman\aesthetic_os_backend_acceptance.postman_collection.json `
             -e tests\postman\local-docker.postman_environment.json `
             --bail `
             --reporters cli,json `

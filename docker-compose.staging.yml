@@ -1,5 +1,5 @@
 networks:
-  beauty_staging_net:
+  aesthetic_os_staging_net:
     driver: bridge
 
 volumes:
@@ -17,7 +17,7 @@ volumes:
 services:
   reverse-proxy:
     image: caddy:2-alpine
-    container_name: beauty_staging_reverse_proxy
+    container_name: aesthetic_os_staging_reverse_proxy
     restart: unless-stopped
     env_file:
       - path: .env.staging.example
@@ -35,7 +35,7 @@ services:
       web:
         condition: service_healthy
     networks:
-      - beauty_staging_net
+      - aesthetic_os_staging_net
     security_opt:
       - no-new-privileges:true
     read_only: true
@@ -45,7 +45,7 @@ services:
 
   db:
     image: postgres:16-alpine
-    container_name: beauty_staging_postgres_db
+    container_name: aesthetic_os_staging_postgres_db
     command:
       [
         "postgres",
@@ -65,7 +65,7 @@ services:
     expose:
       - "5432"
     networks:
-      - beauty_staging_net
+      - aesthetic_os_staging_net
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -81,7 +81,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: beauty_staging_redis
+    container_name: aesthetic_os_staging_redis
     command: sh -c 'redis-server --requirepass "$$REDIS_PASSWORD"'
     restart: unless-stopped
     env_file:
@@ -92,7 +92,7 @@ services:
     expose:
       - "6379"
     networks:
-      - beauty_staging_net
+      - aesthetic_os_staging_net
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -105,8 +105,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: beauty_web_app_staging:latest
-    container_name: beauty_staging_web_app
+    image: aesthetic_os_web_app_staging:latest
+    container_name: aesthetic_os_staging_web_app
     command: >
       sh -c 'export REDIS_URL="redis://:$$REDIS_PASSWORD@redis:6379/0";
       export CELERY_BROKER_URL="$$REDIS_URL";
@@ -136,7 +136,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - beauty_staging_net
+      - aesthetic_os_staging_net
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -151,8 +151,8 @@ services:
       start_period: 20s
 
   worker:
-    image: beauty_web_app_staging:latest
-    container_name: beauty_staging_celery_worker
+    image: aesthetic_os_web_app_staging:latest
+    container_name: aesthetic_os_staging_celery_worker
     command: >
       sh -c 'export REDIS_URL="redis://:$$REDIS_PASSWORD@redis:6379/0";
       export CELERY_BROKER_URL="$$REDIS_URL";
@@ -178,7 +178,7 @@ services:
       web:
         condition: service_healthy
     networks:
-      - beauty_staging_net
+      - aesthetic_os_staging_net
     security_opt:
       - no-new-privileges:true
     healthcheck:

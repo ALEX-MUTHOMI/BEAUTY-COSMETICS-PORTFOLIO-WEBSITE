@@ -17,8 +17,8 @@ $ZapRoot = Join-Path $RepoRoot "reports\security\zap"
 $PostmanRoot = Join-Path $RepoRoot "tests\postman"
 $ZapImage = "ghcr.io/zaproxy/zaproxy:stable"
 $NewmanImage = "postman/newman:6.1.3"
-$ZapNewmanContainer = "beauty_zap_passive_newman"
-$NewmanThroughZapContainer = "beauty_newman_through_zap"
+$ZapNewmanContainer = "aesthetic_os_zap_passive_newman"
+$NewmanThroughZapContainer = "aesthetic_os_newman_through_zap"
 
 function Test-SafeLocalTarget {
     param([string]$Url)
@@ -51,7 +51,7 @@ function Remove-ProjectScannerContainer {
     if ([string]::IsNullOrWhiteSpace($Name)) {
         throw "Refusing to remove scanner container with empty name."
     }
-    if (!$Name.StartsWith("beauty_")) {
+    if (!$Name.StartsWith("aesthetic_os_")) {
         throw "Refusing to remove non-project scanner container: $Name"
     }
     $existing = & docker ps -a --filter "name=^$Name$" --format "{{.Names}}"
@@ -306,7 +306,7 @@ function Invoke-NewmanThroughZap {
             "${postmanPath}:/etc/newman",
             $NewmanImage,
             "run",
-            "/etc/newman/beauty_backend_acceptance.postman_collection.json",
+            "/etc/newman/aesthetic_os_backend_acceptance.postman_collection.json",
             "-e",
             "/etc/newman/local-docker.postman_environment.json",
             "--env-var",

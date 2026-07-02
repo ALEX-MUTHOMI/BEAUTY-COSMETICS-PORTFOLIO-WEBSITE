@@ -1,4 +1,4 @@
-# Test Taxonomy — Beauty SaaS Backend
+# Test Taxonomy — AestheticOS Backend
 
 ## Test Organization
 

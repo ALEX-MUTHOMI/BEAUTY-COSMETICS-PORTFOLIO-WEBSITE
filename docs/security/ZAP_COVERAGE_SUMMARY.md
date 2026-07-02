@@ -49,5 +49,5 @@ security completeness.
 
 P4A proves the scanner is configured for broader passive coverage and that it can
 observe meaningful application workflows through Newman without leaving stale
-scanner containers. It does not prove the Beauty app is production-ready or
+scanner containers. It does not prove the AestheticOS app is production-ready or
 vulnerability-free.

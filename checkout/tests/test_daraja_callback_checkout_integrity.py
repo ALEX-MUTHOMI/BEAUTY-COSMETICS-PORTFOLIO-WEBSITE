@@ -38,7 +38,7 @@ def _daraja_callback(checkout_request_id, result_code, amount=None):
 
 
 def _session_with_real_shape_attempt(status=CheckoutSession.Status.STK_SENT):
-    customer = User.objects.create_user(email="real-shape-checkout@beauty.com", phone_number="+254712770001")
+    customer = User.objects.create_user(email="real-shape-checkout@aesthetic-os.test", phone_number="+254712770001")
     session = create_checkout_session(
         customer,
         Decimal("100.00"),

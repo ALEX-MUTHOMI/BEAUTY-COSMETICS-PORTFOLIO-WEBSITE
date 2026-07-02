@@ -19,7 +19,7 @@ def test_resend_provider_external_delivery_is_opt_in(settings):
     result = get_email_provider().send_email(
         to_hash="external-test-recipient-hash",
         to_redacted="external-recipient-redacted",
-        subject="Beauty SaaS receipt delivery sandbox test",
+        subject="AestheticOS receipt delivery sandbox test",
         html="<p>Sandbox delivery test.</p>",
         text="Sandbox delivery test.",
         attachments=[],

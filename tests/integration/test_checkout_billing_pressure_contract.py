@@ -18,7 +18,7 @@ User = get_user_model()
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.load
 def test_checkout_billing_contract_under_many_valid_callbacks():
-    customer = User.objects.create_user(email="contract-pressure@beauty.com", phone_number="+254712640001")
+    customer = User.objects.create_user(email="contract-pressure@aesthetic-os.test", phone_number="+254712640001")
     payloads = []
     for index in range(100):
         session = create_checkout_session(

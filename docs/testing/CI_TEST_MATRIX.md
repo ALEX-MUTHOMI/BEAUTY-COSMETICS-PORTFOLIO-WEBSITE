@@ -72,7 +72,7 @@ with a no-omission subpartition matrix.
 ## Failure Handling
 
 If a partition fails, fix that partition and rerun dependent gates. If an
-interrupted run leaves `test_beauty_db` stale, use
+interrupted run leaves `test_aesthetic_os_db` stale, use
 `docs/testing/TEST_DB_LIFECYCLE.md`.
 
 Generated reports are ignored by Git and may be uploaded as CI artifacts when

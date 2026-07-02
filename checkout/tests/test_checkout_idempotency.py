@@ -11,7 +11,7 @@ User = get_user_model()
 
 @pytest.fixture
 def customer():
-    return User.objects.create_user(email="checkout-idem@beauty.com", phone_number="+254712200002")
+    return User.objects.create_user(email="checkout-idem@aesthetic-os.test", phone_number="+254712200002")
 
 
 @pytest.mark.django_db(transaction=True)

@@ -171,7 +171,7 @@ class TestPasswordlessAuthSuite:
         Verify that OTPs expire exactly as defined by the Redis TTL parameters.
         Simulates a 301-second delay by explicitly removing/expiring the Redis key.
         """
-        email = "ttl_expiry_test@beauty.com"
+        email = "ttl_expiry_test@aesthetic-os.test"
 
         # Generate OTP (cached in Redis with 300s TTL)
         otp = OTPService.generate_otp(email)
@@ -210,7 +210,7 @@ class TestPasswordlessAuthSuite:
         Enforce absolute protection against token reuse.
         Attempting to verify the exact same correct OTP twice must fail on the second attempt.
         """
-        email = "replay_attack_test@beauty.com"
+        email = "replay_attack_test@aesthetic-os.test"
         otp = OTPService.generate_otp(email)
 
         # Attempt 1: Successful verification
@@ -283,7 +283,7 @@ class TestPasswordlessAuthSuite:
         Verify that AnonRateThrottle restricts request frequency to mitigate email toll fraud.
         Enforces strict response status code 429 when rate limits are breached.
         """
-        email = "throttle_test@beauty.com"
+        email = "throttle_test@aesthetic-os.test"
         url = "/api/auth/request-otp/"
 
         # Clean rate limit caches for test isolation
@@ -315,7 +315,7 @@ class TestPasswordlessAuthSuite:
         Ensure that soft-deleted/anonymized email accounts are completely blocked from auth operations.
         Any attempt to request or verify an OTP for a soft-deleted email must return a 400 Bad Request.
         """
-        email = "soft_deleted_auth_test@beauty.com"
+        email = "soft_deleted_auth_test@aesthetic-os.test"
         user = User.objects.create_user(email=email)
 
         # Execute GDPR Anonymization (soft-delete)
@@ -348,7 +348,7 @@ class TestPasswordlessAuthSuite:
         """
         # Test Case A: Missing Turnstile token in payload
         url = "/api/auth/request-otp/"
-        response_missing_token = api_client.post(url, {"email": "malformed_test@beauty.com"})
+        response_missing_token = api_client.post(url, {"email": "malformed_test@aesthetic-os.test"})
         assert response_missing_token.status_code == status.HTTP_400_BAD_REQUEST
         assert "turnstile_token" in response_missing_token.data
 
@@ -364,7 +364,7 @@ class TestPasswordlessAuthSuite:
             response_rejected_token = api_client.post(
                 url,
                 {
-                    "email": "turnstile_fail@beauty.com",
+                    "email": "turnstile_fail@aesthetic-os.test",
                     "turnstile_token": "INVALID_TOKEN",
                 },
             )

@@ -71,7 +71,7 @@ export default defineNuxtConfig({
   // Global application header and metadata registrations
   app: {
     head: {
-      title: 'Premium Beauty & Cosmetics Portfolio | Booking Platform',
+      title: 'AestheticOS | Spa & Beauty Booking Platform',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },

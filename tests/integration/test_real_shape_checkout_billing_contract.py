@@ -19,7 +19,7 @@ FIXTURE_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "daraja"
     ["stk_failure_callback.json", "stk_cancelled_callback.json", "stk_timeout_callback.json"],
 )
 def test_failed_cancelled_or_timeout_real_shape_callback_does_not_credit(fixture_name):
-    customer = User.objects.create_user(email=f"{fixture_name}@beauty.com", phone_number="+254712770003")
+    customer = User.objects.create_user(email=f"{fixture_name}@aesthetic-os.test", phone_number="+254712770003")
     session = create_checkout_session(
         customer,
         Decimal("100.00"),

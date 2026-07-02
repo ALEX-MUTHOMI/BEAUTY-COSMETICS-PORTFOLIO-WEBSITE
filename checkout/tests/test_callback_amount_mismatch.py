@@ -17,7 +17,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_callback_amount_mismatch_is_rejected_without_ledger_success():
-    customer = User.objects.create_user(email="mismatch-a2@beauty.com", phone_number="+254712600005")
+    customer = User.objects.create_user(email="mismatch-a2@aesthetic-os.test", phone_number="+254712600005")
     session = create_checkout_session(
         customer,
         Decimal("1000.00"),

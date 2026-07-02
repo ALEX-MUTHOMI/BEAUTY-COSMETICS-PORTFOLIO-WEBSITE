@@ -1,10 +1,10 @@
 <template>
   <main class="shell">
     <section class="hero">
-      <p class="eyebrow">Premium Beauty Portfolio</p>
+      <p class="eyebrow">AestheticOS</p>
       <h1>Polished looks, safely published.</h1>
       <p class="lede">
-        Browse featured beauty work prepared through a secure image pipeline. Originals stay private;
+        Browse featured aesthetic work prepared through a secure image pipeline. Originals stay private;
         visitors only see optimized website-ready images.
       </p>
       <a class="cta" :href="runtimeConfig.public.apiBaseUrl + '/health/'">Check API Health</a>

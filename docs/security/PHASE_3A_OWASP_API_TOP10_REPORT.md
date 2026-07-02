@@ -132,7 +132,7 @@ Out of scope:
 | Logs/secrets | security tests, secret hygiene, log scan | Partial/Strong | Add CI log scanner after integration/load jobs. |
 | ZAP passive headers/config | ZAP health/root/API/Newman workflows | Stronger after 3A-P | Keep passive scans bounded; do not run active scans by default. |
 
-## Beauty-Specific Security Questions
+## AestheticOS-Specific Security Questions
 
 ### A. Can a public user access private booking/customer data?
 

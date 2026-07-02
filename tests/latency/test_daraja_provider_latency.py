@@ -19,7 +19,7 @@ class TimeoutProvider:
 
 @pytest.mark.django_db(transaction=True)
 def test_provider_timeout_returns_controlled_response_without_credit(monkeypatch):
-    customer = User.objects.create_user(email="provider-timeout@beauty.com", phone_number="+254712730002")
+    customer = User.objects.create_user(email="provider-timeout@aesthetic-os.test", phone_number="+254712730002")
     session = create_checkout_session(
         customer,
         Decimal("130.00"),

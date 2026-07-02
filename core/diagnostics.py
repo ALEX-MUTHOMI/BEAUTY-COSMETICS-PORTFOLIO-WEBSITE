@@ -16,7 +16,7 @@ def _hash(value: object) -> str:
 
 
 def enabled() -> bool:
-    return bool(getattr(settings, "BEAUTY_DIAGNOSTIC_TRACE", False))
+    return bool(getattr(settings, "AESTHETIC_OS_DIAGNOSTIC_TRACE", False))
 
 
 def actor_metadata(request) -> dict[str, str]:

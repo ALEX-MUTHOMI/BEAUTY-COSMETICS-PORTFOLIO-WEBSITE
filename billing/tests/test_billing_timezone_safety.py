@@ -12,7 +12,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_ledger_and_audit_timestamps_are_timezone_aware():
-    customer = User.objects.create_user(email="billing-tz@beauty.com", phone_number="+254712710001")
+    customer = User.objects.create_user(email="billing-tz@aesthetic-os.test", phone_number="+254712710001")
 
     ledger, created = record_successful_checkout_payment(
         customer=customer,

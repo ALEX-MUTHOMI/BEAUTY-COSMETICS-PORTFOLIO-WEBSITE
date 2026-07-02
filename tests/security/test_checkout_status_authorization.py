@@ -12,8 +12,8 @@ User = get_user_model()
 
 @pytest.mark.django_db
 def test_attacker_cannot_poll_another_users_checkout_status():
-    owner = User.objects.create_user(email="status-owner@beauty.com", phone_number="+254712740001")
-    attacker = User.objects.create_user(email="status-attacker@beauty.com", phone_number="+254712740002")
+    owner = User.objects.create_user(email="status-owner@aesthetic-os.test", phone_number="+254712740001")
+    attacker = User.objects.create_user(email="status-attacker@aesthetic-os.test", phone_number="+254712740002")
     session = create_checkout_session(
         owner,
         Decimal("160.00"),

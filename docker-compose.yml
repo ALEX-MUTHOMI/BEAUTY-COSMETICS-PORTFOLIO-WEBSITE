@@ -1,8 +1,8 @@
 networks:
-  beauty_isolated_net:
+  aesthetic_os_isolated_net:
     driver: bridge
     internal: false # Allows web/worker outbound integration APIs while keeping services isolated on the Docker network.
-    name: beauty_isolated_network
+    name: aesthetic_os_isolated_network
 
 volumes:
   postgres_data:
@@ -20,7 +20,7 @@ services:
   # ============================================================================
   db:
     image: postgres:16-alpine
-    container_name: beauty_postgres_db
+    container_name: aesthetic_os_postgres_db
     command:
       [
         "postgres",
@@ -30,22 +30,22 @@ services:
         "log_error_verbosity=terse",
       ]
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-beauty_db}
-      POSTGRES_USER: ${POSTGRES_USER:-beauty_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-beauty_secure_password}
+      POSTGRES_DB: ${POSTGRES_DB:-aesthetic_os_db}
+      POSTGRES_USER: ${POSTGRES_USER:-aesthetic_os_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aesthetic_os_secure_password}
     volumes:
       - postgres_data:/var/lib/postgresql/data:rw
     expose:
       - "5432"
     networks:
-      - beauty_isolated_net
+      - aesthetic_os_isolated_net
     security_opt:
       - no-new-privileges:true
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U $${POSTGRES_USER:-beauty_user} -d $${POSTGRES_DB:-beauty_db}",
+          "pg_isready -U $${POSTGRES_USER:-aesthetic_os_user} -d $${POSTGRES_DB:-aesthetic_os_db}",
         ]
       interval: 5s
       timeout: 5s
@@ -63,12 +63,12 @@ services:
   # ============================================================================
   redis:
     image: redis:7-alpine
-    container_name: beauty_redis
-    command: redis-server --requirepass ${REDIS_PASSWORD:-beauty_redis_secure_password}
+    container_name: aesthetic_os_redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}
     expose:
       - "6379"
     networks:
-      - beauty_isolated_net
+      - aesthetic_os_isolated_net
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -77,7 +77,7 @@ services:
           "CMD",
           "redis-cli",
           "-a",
-          "${REDIS_PASSWORD:-beauty_redis_secure_password}",
+          "${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}",
           "ping",
         ]
       interval: 5s
@@ -97,8 +97,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: beauty_web_app:latest
-    container_name: beauty_web_app
+    image: aesthetic_os_web_app:latest
+    container_name: aesthetic_os_web_app
     command: gunicorn --bind 0.0.0.0:8000 --workers 3 core.wsgi:application
     volumes:
       - .:/app:rw
@@ -126,18 +126,18 @@ services:
       # ------------------------------------------------------------------------
       # Database
       # ------------------------------------------------------------------------
-      - POSTGRES_DB=${POSTGRES_DB:-beauty_db}
-      - POSTGRES_USER=${POSTGRES_USER:-beauty_user}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-beauty_secure_password}
+      - POSTGRES_DB=${POSTGRES_DB:-aesthetic_os_db}
+      - POSTGRES_USER=${POSTGRES_USER:-aesthetic_os_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-aesthetic_os_secure_password}
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
 
       # ------------------------------------------------------------------------
       # Redis / Celery
       # ------------------------------------------------------------------------
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
 
       # ------------------------------------------------------------------------
       # Browser / proxy safety
@@ -193,7 +193,7 @@ services:
       # Default remains fake. Real provider tests are opt-in only.
       # ------------------------------------------------------------------------
       - EMAIL_PROVIDER=${EMAIL_PROVIDER:-fake}
-      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS:-Beauty SaaS <no-reply@example.test>}
+      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS:-AestheticOS <no-reply@example.test>}
       - EMAIL_REPLY_TO_ADDRESS=${EMAIL_REPLY_TO_ADDRESS:-support@example.test}
       - EMAIL_PROVIDER_API_KEY=${EMAIL_PROVIDER_API_KEY:-}
       - EMAIL_PROVIDER_BASE_URL=${EMAIL_PROVIDER_BASE_URL:-}
@@ -247,7 +247,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - beauty_isolated_net
+      - aesthetic_os_isolated_net
     security_opt:
       - no-new-privileges:true
     deploy:
@@ -264,8 +264,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: beauty_nuxt_frontend:latest
-    container_name: beauty_nuxt_frontend
+    image: aesthetic_os_nuxt_frontend:latest
+    container_name: aesthetic_os_nuxt_frontend
     ports:
       - "3000:3000"
     environment:
@@ -283,7 +283,7 @@ services:
     depends_on:
       - web
     networks:
-      - beauty_isolated_net
+      - aesthetic_os_isolated_net
     security_opt:
       - no-new-privileges:true
     deploy:
@@ -301,8 +301,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       target: builder
-    image: beauty_nuxt_frontend_test:latest
-    container_name: beauty_nuxt_frontend_test
+    image: aesthetic_os_nuxt_frontend_test:latest
+    container_name: aesthetic_os_nuxt_frontend_test
     command: tail -f /dev/null
     environment:
       - NODE_ENV=test
@@ -310,7 +310,7 @@ services:
       - NUXT_PUBLIC_STAFF_GOOGLE_ENABLED=${NUXT_PUBLIC_STAFF_GOOGLE_ENABLED:-false}
       - NUXT_PUBLIC_STAFF_APPLE_ENABLED=${NUXT_PUBLIC_STAFF_APPLE_ENABLED:-false}
     networks:
-      - beauty_isolated_net
+      - aesthetic_os_isolated_net
     security_opt:
       - no-new-privileges:true
     profiles:
@@ -320,8 +320,8 @@ services:
   # 5. CELERY WORKER SERVICE
   # ============================================================================
   worker:
-    image: beauty_web_app:latest
-    container_name: beauty_celery_worker
+    image: aesthetic_os_web_app:latest
+    container_name: aesthetic_os_celery_worker
     command: celery -A core worker --loglevel=info -Q celery,express_auth,billing,dlq_billing
     volumes:
       - .:/app:rw
@@ -346,18 +346,18 @@ services:
       # ------------------------------------------------------------------------
       # Database
       # ------------------------------------------------------------------------
-      - POSTGRES_DB=${POSTGRES_DB:-beauty_db}
-      - POSTGRES_USER=${POSTGRES_USER:-beauty_user}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-beauty_secure_password}
+      - POSTGRES_DB=${POSTGRES_DB:-aesthetic_os_db}
+      - POSTGRES_USER=${POSTGRES_USER:-aesthetic_os_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-aesthetic_os_secure_password}
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
 
       # ------------------------------------------------------------------------
       # Redis / Celery
       # ------------------------------------------------------------------------
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
 
       # ------------------------------------------------------------------------
       # Browser / proxy safety
@@ -409,7 +409,7 @@ services:
       # Transactional email / receipt delivery
       # ------------------------------------------------------------------------
       - EMAIL_PROVIDER=${EMAIL_PROVIDER:-fake}
-      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS:-Beauty SaaS <no-reply@example.test>}
+      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS:-AestheticOS <no-reply@example.test>}
       - EMAIL_REPLY_TO_ADDRESS=${EMAIL_REPLY_TO_ADDRESS:-support@example.test}
       - EMAIL_PROVIDER_API_KEY=${EMAIL_PROVIDER_API_KEY:-}
       - EMAIL_PROVIDER_BASE_URL=${EMAIL_PROVIDER_BASE_URL:-}
@@ -448,7 +448,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - beauty_isolated_net
+      - aesthetic_os_isolated_net
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -469,8 +469,8 @@ services:
     restart: unless-stopped
 
   notification-worker:
-    image: beauty_web_app:latest
-    container_name: beauty_receipt_notification_worker
+    image: aesthetic_os_web_app:latest
+    container_name: aesthetic_os_receipt_notification_worker
     command: celery -A core worker --loglevel=info -Q receipts --concurrency=${RECEIPT_WORKER_CONCURRENCY:-2}
     volumes:
       - .:/app:rw
@@ -484,16 +484,16 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - PII_HASH_PEPPER=${PII_HASH_PEPPER:-local-test-pii-hash-pepper-change-me}
       - PII_ENCRYPTION_KEY=${PII_ENCRYPTION_KEY:-local-test-pii-encryption-key-change-me}
-      - POSTGRES_DB=${POSTGRES_DB:-beauty_db}
-      - POSTGRES_USER=${POSTGRES_USER:-beauty_user}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-beauty_secure_password}
+      - POSTGRES_DB=${POSTGRES_DB:-aesthetic_os_db}
+      - POSTGRES_USER=${POSTGRES_USER:-aesthetic_os_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-aesthetic_os_secure_password}
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
       - EMAIL_PROVIDER=${EMAIL_PROVIDER:-fake}
-      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS:-Beauty SaaS <no-reply@example.test>}
+      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS:-AestheticOS <no-reply@example.test>}
       - EMAIL_REPLY_TO_ADDRESS=${EMAIL_REPLY_TO_ADDRESS:-support@example.test}
       - EMAIL_PROVIDER_API_KEY=${EMAIL_PROVIDER_API_KEY:-}
       - EMAIL_PROVIDER_BASE_URL=${EMAIL_PROVIDER_BASE_URL:-}
@@ -525,15 +525,15 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - beauty_isolated_net
+      - aesthetic_os_isolated_net
     security_opt:
       - no-new-privileges:true
     profiles:
       - receipts
 
   gallery-worker:
-    image: beauty_web_app:latest
-    container_name: beauty_gallery_worker
+    image: aesthetic_os_web_app:latest
+    container_name: aesthetic_os_gallery_worker
     command: celery -A core worker --loglevel=info -Q gallery --concurrency=${GALLERY_WORKER_CONCURRENCY:-1}
     volumes:
       - .:/app:rw
@@ -547,14 +547,14 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - PII_HASH_PEPPER=${PII_HASH_PEPPER:-local-test-pii-hash-pepper-change-me}
       - PII_ENCRYPTION_KEY=${PII_ENCRYPTION_KEY:-local-test-pii-encryption-key-change-me}
-      - POSTGRES_DB=${POSTGRES_DB:-beauty_db}
-      - POSTGRES_USER=${POSTGRES_USER:-beauty_user}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-beauty_secure_password}
+      - POSTGRES_DB=${POSTGRES_DB:-aesthetic_os_db}
+      - POSTGRES_USER=${POSTGRES_USER:-aesthetic_os_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-aesthetic_os_secure_password}
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-beauty_redis_secure_password}@redis:6379/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
       - PYTEST_CACHE_DIR=${PYTEST_CACHE_DIR:-/app/var/pytest-cache}
       - GALLERY_STORAGE_ROOT=${GALLERY_STORAGE_ROOT:-/app/var/gallery-storage}
       - GALLERY_PUBLIC_BASE_URL=${GALLERY_PUBLIC_BASE_URL:-/media/}
@@ -577,7 +577,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - beauty_isolated_net
+      - aesthetic_os_isolated_net
     security_opt:
       - no-new-privileges:true
     profiles:

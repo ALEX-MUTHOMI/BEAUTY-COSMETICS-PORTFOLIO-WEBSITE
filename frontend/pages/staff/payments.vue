@@ -6,5 +6,5 @@
 import StaffPaymentsWorkspace from '../../src/staff/StaffPaymentsWorkspace.vue'
 
 definePageMeta({ middleware: ['staff-auth'] })
-useHead({ title: 'Staff Payments | Beauty Portal', meta: [{ name: 'robots', content: 'noindex,nofollow' }] })
+useHead({ title: 'Staff Payments | AestheticOS Portal', meta: [{ name: 'robots', content: 'noindex,nofollow' }] })
 </script>

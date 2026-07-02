@@ -1,7 +1,7 @@
 <template>
   <div class="staff-shell">
     <aside class="staff-shell__sidebar" aria-label="Staff portal navigation">
-      <p class="staff-shell__brand">Beauty Studio</p>
+      <p class="staff-shell__brand">AestheticOS</p>
       <nav>
         <NuxtLink v-for="item in navItems" :key="item.path" :to="item.path">
           <span aria-hidden="true">{{ item.icon }}</span>

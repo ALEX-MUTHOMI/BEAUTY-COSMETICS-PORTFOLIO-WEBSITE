@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "9cb79448-5447-4db1-9f9c-beautybackend",
-    "name": "Beauty Backend API Acceptance",
-    "description": "External-client API acceptance for Beauty SaaS backend. Uses fake/local providers only and asserts routing, CSRF, permissions, response shape, lifecycle, and security-negative behavior.",
+    "name": "AestheticOS Backend API Acceptance",
+    "description": "External-client API acceptance for AestheticOS backend. Uses fake/local providers only and asserts routing, CSRF, permissions, response shape, lifecycle, and security-negative behavior.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [

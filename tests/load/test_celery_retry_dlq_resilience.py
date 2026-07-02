@@ -16,7 +16,7 @@ User = get_user_model()
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.load
 def test_callback_processing_exception_persists_failed_inbox_state(monkeypatch):
-    customer = User.objects.create_user(email="callback-failure@beauty.com", phone_number="+254712620006")
+    customer = User.objects.create_user(email="callback-failure@aesthetic-os.test", phone_number="+254712620006")
     session = create_checkout_session(
         customer,
         Decimal("100.00"),

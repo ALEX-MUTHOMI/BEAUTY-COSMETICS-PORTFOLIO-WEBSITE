@@ -81,7 +81,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, AuditMixin):
         - Preserves the primary key (UUID) to keep M-Pesa ledger transactions consistent.
         """
         random_suffix = uuid.uuid4().hex[:12]
-        self.email = f"anonymized-{random_suffix}@forgotten.beauty.com"
+        self.email = f"anonymized-{random_suffix}@forgotten.aesthetic-os.test"
         self.phone_number = "+254000000000"  # Safe dummy Kenyan non-routable format
         self.is_active = False
         self.is_deleted = True

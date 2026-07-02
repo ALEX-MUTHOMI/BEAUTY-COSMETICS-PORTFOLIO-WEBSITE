@@ -16,7 +16,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_expired_checkout_cannot_be_paid_by_callback():
-    customer = User.objects.create_user(email="expired-a2@beauty.com", phone_number="+254712600006")
+    customer = User.objects.create_user(email="expired-a2@aesthetic-os.test", phone_number="+254712600006")
     session = create_checkout_session(
         customer,
         Decimal("1000.00"),

@@ -74,9 +74,9 @@ def send_express_otp_email(encrypted_payload: str, correlation_id: str | None = 
         f"For security, never share this code with anyone.\n\n"
         f"If you did not request this code, please ignore this email.\n\n"
         f"Regards,\n"
-        f"Beauty Portfolio & Booking Team"
+        f"AestheticOS Team"
     )
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "security@beautycosmetics.com")
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "security@aesthetic-os.example.com")
 
     try:
         logger.info(

@@ -91,8 +91,8 @@ def test_contact_reveal_pressure_is_limited_before_permission_processing():
 @pytest.mark.django_db(transaction=True)
 def test_checkout_detail_throttle_is_customer_scoped_and_restores_production_rate():
     _clear_scope("checkout_detail")
-    owner = User.objects.create_user(email="checkout-detail-owner@beauty.com", phone_number="+254712780011")
-    attacker = User.objects.create_user(email="checkout-detail-attacker@beauty.com", phone_number="+254712780012")
+    owner = User.objects.create_user(email="checkout-detail-owner@aesthetic-os.test", phone_number="+254712780011")
+    attacker = User.objects.create_user(email="checkout-detail-attacker@aesthetic-os.test", phone_number="+254712780012")
     checkout = create_checkout_session(
         owner,
         Decimal("100.00"),

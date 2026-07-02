@@ -12,7 +12,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_due_checkout_sessions_expire_without_touching_paid_sessions():
-    customer = User.objects.create_user(email="expiry@beauty.com", phone_number="+254712200005")
+    customer = User.objects.create_user(email="expiry@aesthetic-os.test", phone_number="+254712200005")
     expired = create_checkout_session(
         customer,
         Decimal("300.00"),

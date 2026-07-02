@@ -52,7 +52,7 @@ class TestRedTeamSecurityVerification:
         Defense: The system must enforce multi-factor OTPAnonRateThrottle (5/hour),
         blocking the injection and returning HTTP 429 Too Many Requests.
         """
-        email = "toll_fraud_victim@beauty.com"
+        email = "toll_fraud_victim@aesthetic-os.test"
         url = "/api/auth/request-otp/"
 
         # Reset linter/throttle cache to ensure a clean state
@@ -88,7 +88,7 @@ class TestRedTeamSecurityVerification:
         Defense: The system must enforce Instant Key Destruction in Redis on first validation,
         meaning the second attempt must return HTTP 400 Bad Request.
         """
-        email = "replay_target@beauty.com"
+        email = "replay_target@aesthetic-os.test"
 
         # Generate a valid OTP through the secure service layer
         otp = OTPService.generate_otp(email)
@@ -116,7 +116,7 @@ class TestRedTeamSecurityVerification:
         Defense: The system must enforce the soft-deletion security boundary. Requesting
         an OTP for an anonymized email must return HTTP 400 Bad Request to safely reject it.
         """
-        original_email = "zombie_target@beauty.com"
+        original_email = "zombie_target@aesthetic-os.test"
         user = User.objects.create_user(email=original_email)
 
         # Anonymize/Soft-Delete the user under GDPR rules

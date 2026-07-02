@@ -6,5 +6,5 @@
 import StaffDashboard from '../../src/staff/StaffDashboard.vue'
 
 definePageMeta({ middleware: ['staff-auth'] })
-useHead({ title: 'Staff Dashboard | Beauty Portal', meta: [{ name: 'robots', content: 'noindex,nofollow' }] })
+useHead({ title: 'Staff Dashboard | AestheticOS Portal', meta: [{ name: 'robots', content: 'noindex,nofollow' }] })
 </script>

@@ -1,6 +1,6 @@
 # Logging and Diagnostics Policy
 
-`BEAUTY_DIAGNOSTIC_TRACE` is disabled by default and is enabled only for local
+`AESTHETIC_OS_DIAGNOSTIC_TRACE` is disabled by default and is enabled only for local
 debugging or CI when explicitly set. It is not enabled by production defaults.
 
 When enabled, request diagnostics record a route name, method, status family,

@@ -19,8 +19,8 @@ def _configure_sandbox(monkeypatch):
     monkeypatch.setenv("DARAJA_SHORTCODE", "174379")
     monkeypatch.setenv("DARAJA_PASSKEY", "passkey-test")
     monkeypatch.setenv("DARAJA_CALLBACK_URL", "https://callback.example.test/mpesa/")
-    monkeypatch.setenv("DARAJA_ACCOUNT_REFERENCE", "BEAUTYTEST")
-    monkeypatch.setenv("DARAJA_TRANSACTION_DESC", "Beauty SaaS test")
+    monkeypatch.setenv("DARAJA_ACCOUNT_REFERENCE", "AESTHETICTEST")
+    monkeypatch.setenv("DARAJA_TRANSACTION_DESC", "AestheticOS test")
     monkeypatch.setenv("DARAJA_TEST_MSISDN", "254712345678")
 
 
@@ -31,8 +31,8 @@ def test_real_daraja_adapter_builds_official_stk_payload(monkeypatch, caplog):
     payload = provider.build_stk_push_payload(
         phone_number="254712345678",
         amount=Decimal("10.00"),
-        account_reference="BEAUTYTEST",
-        description="Beauty SaaS test",
+        account_reference="AESTHETICTEST",
+        description="AestheticOS test",
         callback_url="https://callback.example.test/mpesa/",
     )
 
@@ -45,8 +45,8 @@ def test_real_daraja_adapter_builds_official_stk_payload(monkeypatch, caplog):
     assert payload["PartyB"] == "174379"
     assert payload["PhoneNumber"] == "254712345678"
     assert payload["CallBackURL"] == "https://callback.example.test/mpesa/"
-    assert payload["AccountReference"] == "BEAUTYTEST"
-    assert payload["TransactionDesc"] == "Beauty SaaS test"
+    assert payload["AccountReference"] == "AESTHETICTEST"
+    assert payload["TransactionDesc"] == "AestheticOS test"
     assert "254712345678" not in caplog.text
     assert "passkey-test" not in caplog.text
 
@@ -61,7 +61,7 @@ def test_real_daraja_payload_callback_url_is_clean_https_and_matches_env_host(mo
     payload = MpesaProvider().build_stk_push_payload(
         phone_number="0712345678",
         amount=Decimal("10.99"),
-        account_reference="BEAUTYTEST-LONG-REFERENCE",
+        account_reference="AESTHETICTEST-LONG-REFERENCE",
         description="x" * 200,
         callback_url="DARAJA_CALLBACK_URL=https://beauty-checkout.trycloudflare.com/api/checkout/mpesa/webhook/",
     )
@@ -81,8 +81,8 @@ def test_real_daraja_payload_rejects_malformed_callback_url(monkeypatch):
         MpesaProvider().build_stk_push_payload(
             phone_number="254712345678",
             amount=Decimal("10.00"),
-            account_reference="BEAUTYTEST",
-            description="Beauty SaaS test",
+            account_reference="AESTHETICTEST",
+            description="AestheticOS test",
             callback_url="http://localhost:8000/api/checkout/mpesa/webhook/",
         )
 
@@ -94,8 +94,8 @@ def test_real_daraja_payload_rejects_callback_host_mismatch(monkeypatch):
         MpesaProvider().build_stk_push_payload(
             phone_number="254712345678",
             amount=Decimal("10.00"),
-            account_reference="BEAUTYTEST",
-            description="Beauty SaaS test",
+            account_reference="AESTHETICTEST",
+            description="AestheticOS test",
             callback_url="https://attacker.example.test/api/checkout/mpesa/webhook/",
         )
 
@@ -106,25 +106,25 @@ def test_real_daraja_payload_rejects_invalid_phone_amount_shortcode_and_passkey(
 
     with pytest.raises(CheckoutValidationError):
         provider.build_stk_push_payload(
-            "not-a-phone", Decimal("10.00"), "BEAUTYTEST", "desc", "https://callback.example.test/mpesa/"
+            "not-a-phone", Decimal("10.00"), "AESTHETICTEST", "desc", "https://callback.example.test/mpesa/"
         )
 
     with pytest.raises(ProviderUnavailable, match="amount"):
         provider.build_stk_push_payload(
-            "254712345678", Decimal("0.00"), "BEAUTYTEST", "desc", "https://callback.example.test/mpesa/"
+            "254712345678", Decimal("0.00"), "AESTHETICTEST", "desc", "https://callback.example.test/mpesa/"
         )
 
     monkeypatch.setenv("DARAJA_SHORTCODE", "shortcode")
     with pytest.raises(ProviderUnavailable, match="SHORTCODE"):
         provider.build_stk_push_payload(
-            "254712345678", Decimal("10.00"), "BEAUTYTEST", "desc", "https://callback.example.test/mpesa/"
+            "254712345678", Decimal("10.00"), "AESTHETICTEST", "desc", "https://callback.example.test/mpesa/"
         )
 
     monkeypatch.setenv("DARAJA_SHORTCODE", "174379")
     monkeypatch.setenv("DARAJA_PASSKEY", "short")
     with pytest.raises(ProviderUnavailable, match="PASSKEY"):
         provider.build_stk_push_payload(
-            "254712345678", Decimal("10.00"), "BEAUTYTEST", "desc", "https://callback.example.test/mpesa/"
+            "254712345678", Decimal("10.00"), "AESTHETICTEST", "desc", "https://callback.example.test/mpesa/"
         )
 
 
@@ -196,8 +196,8 @@ def test_stk_http_400_body_is_normalized_into_safe_redacted_diagnostic(monkeypat
         provider.initiate_stk_push(
             phone_number="254712345678",
             amount=Decimal("10.00"),
-            account_reference="BEAUTYTEST",
-            description="Beauty SaaS test",
+            account_reference="AESTHETICTEST",
+            description="AestheticOS test",
             callback_url="https://callback.example.test/mpesa/",
             idempotency_key="idem",
         )

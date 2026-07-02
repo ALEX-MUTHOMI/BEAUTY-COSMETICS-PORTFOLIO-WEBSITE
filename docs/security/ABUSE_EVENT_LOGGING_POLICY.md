@@ -2,7 +2,7 @@
 
 Abuse events are small structured warning records emitted only when a temporary
 route action is created or escalated. Diagnostics remain separately opt-in with
-`BEAUTY_DIAGNOSTIC_TRACE`.
+`AESTHETIC_OS_DIAGNOSTIC_TRACE`.
 
 Allowed fields are event type, route name, actor type/hash, throttle scope,
 action, retry duration, score, status family, Redis status, and correlation-ID

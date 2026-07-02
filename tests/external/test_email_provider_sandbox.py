@@ -28,7 +28,7 @@ def test_external_email_provider_sandbox_opt_in(settings):
     result = provider.send_email(
         to_hash="external-test-recipient",
         to_redacted="e***@example.test",
-        subject="Beauty SaaS receipt delivery test",
+        subject="AestheticOS receipt delivery test",
         html="<p>Provider contract test.</p>",
         text="Provider contract test.",
         attachments=[],
