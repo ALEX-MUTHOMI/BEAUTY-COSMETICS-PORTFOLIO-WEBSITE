@@ -55,7 +55,7 @@ def test_real_daraja_payload_callback_url_is_clean_https_and_matches_env_host(mo
     _configure_sandbox(monkeypatch)
     monkeypatch.setenv(
         "DARAJA_CALLBACK_URL",
-        "DARAJA_CALLBACK_URL=https://beauty-checkout.trycloudflare.com/api/checkout/mpesa/webhook/",
+        "DARAJA_CALLBACK_URL=https://aesthetic-os-checkout.trycloudflare.com/api/checkout/mpesa/webhook/",
     )
 
     payload = MpesaProvider().build_stk_push_payload(
@@ -63,10 +63,10 @@ def test_real_daraja_payload_callback_url_is_clean_https_and_matches_env_host(mo
         amount=Decimal("10.99"),
         account_reference="AESTHETICTEST-LONG-REFERENCE",
         description="x" * 200,
-        callback_url="DARAJA_CALLBACK_URL=https://beauty-checkout.trycloudflare.com/api/checkout/mpesa/webhook/",
+        callback_url="DARAJA_CALLBACK_URL=https://aesthetic-os-checkout.trycloudflare.com/api/checkout/mpesa/webhook/",
     )
 
-    assert payload["CallBackURL"] == "https://beauty-checkout.trycloudflare.com/api/checkout/mpesa/webhook/"
+    assert payload["CallBackURL"] == "https://aesthetic-os-checkout.trycloudflare.com/api/checkout/mpesa/webhook/"
     assert payload["PartyA"] == "254712345678"
     assert payload["PhoneNumber"] == "254712345678"
     assert payload["Amount"] == 10

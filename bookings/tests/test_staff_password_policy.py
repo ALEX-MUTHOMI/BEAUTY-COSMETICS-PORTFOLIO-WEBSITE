@@ -17,7 +17,7 @@ def test_staff_password_policy_rejects_weak_common_or_derived_passwords(password
     from bookings.services.staff_auth import validate_staff_password
 
     with pytest.raises(ValueError):
-        validate_staff_password(password, email="staff-auth@example.com", display_name="Beauty Business")
+        validate_staff_password(password, email="staff-auth@example.com", display_name="AestheticOS")
 
 
 @pytest.mark.django_db

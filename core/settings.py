@@ -405,9 +405,11 @@ REST_FRAMEWORK = {
 }
 
 # Opt-in local/test observability. Never enable this by default in production.
-AESTHETIC_OS_DIAGNOSTIC_TRACE = os.environ.get("AESTHETIC_OS_DIAGNOSTIC_TRACE", "false").lower() in {"1", "true", "yes"} and (
-    DEBUG or os.environ.get("CI", "").lower() in {"1", "true", "yes"}
-)
+AESTHETIC_OS_DIAGNOSTIC_TRACE = os.environ.get("AESTHETIC_OS_DIAGNOSTIC_TRACE", "false").lower() in {
+    "1",
+    "true",
+    "yes",
+} and (DEBUG or os.environ.get("CI", "").lower() in {"1", "true", "yes"})
 
 ENABLE_OPENAPI_SCHEMA = os.environ.get("ENABLE_OPENAPI_SCHEMA", "False").lower() in (
     "true",

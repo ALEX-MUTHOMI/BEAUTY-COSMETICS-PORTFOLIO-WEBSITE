@@ -94,7 +94,7 @@ def _redis():
     return get_redis_client()
 
 
-def validate_staff_password(password, *, email="", display_name="", business_name="Beauty Business"):
+def validate_staff_password(password, *, email="", display_name="", business_name="AestheticOS"):
     password = str(password or "")
     if len(password) < 15:
         raise ValueError("Staff password must be at least 15 characters.")

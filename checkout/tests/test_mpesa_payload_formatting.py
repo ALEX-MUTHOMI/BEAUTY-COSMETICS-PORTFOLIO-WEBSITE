@@ -11,7 +11,7 @@ def test_create_stk_push_payload_with_normalized_kenyan_msisdn():
         phone_number="0712200003",
         amount=Decimal("1999.00"),
         account_reference="checkout-001",
-        description="Beauty checkout",
+        description="AestheticOS checkout",
         callback_url="https://example.test/mpesa/",
     )
 
