@@ -389,6 +389,7 @@ REST_FRAMEWORK = {
         "anon": "100/day",
         "user": "1000/day",
         "otp_request": "5/min",  # Strict email toll spam prevention limit
+        "otp_verify": "10/min",  # Bounds brute-force guesses against a 1M-value OTP space
         "stk_push": "3/min",
         "checkout_stk_push": "3/min",
         "checkout_create": "10/min",

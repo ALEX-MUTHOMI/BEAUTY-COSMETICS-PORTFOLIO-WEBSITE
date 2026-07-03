@@ -12,6 +12,7 @@ from bookings.services.holds import BookingHoldService
 from bookings.services.legal import POLICY_ACCEPTANCE_TEXT
 from core.middleware.correlation_id import get_correlation_id
 from core.throttling import route_throttle
+from users.services import get_redis_client
 
 GENERIC_AVAILABILITY_ERROR = "Availability unavailable."
 GENERIC_HOLD_ERROR = "Booking request could not be accepted."
@@ -41,6 +42,16 @@ def _body(request):
         return {}
 
 
+def _get_redis_client_safe():
+    # Hold creation must never fail because the circuit-breaker signal is
+    # unavailable; BookingHoldService/_safe_counter already treat a missing
+    # or misbehaving client as a no-op / fail-safe LOCKDOWN read.
+    try:
+        return get_redis_client()
+    except Exception:
+        return None
+
+
 def _request_context(request, payload=None):
     payload = payload or {}
     return {
@@ -48,6 +59,7 @@ def _request_context(request, payload=None):
         "ip": request.META.get("REMOTE_ADDR", ""),
         "user_agent": request.META.get("HTTP_USER_AGENT", ""),
         "policy_acceptance": payload.get("policy_acceptance"),
+        "redis_client": _get_redis_client_safe(),
     }
 
 

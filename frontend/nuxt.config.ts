@@ -76,17 +76,12 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: 'Discover premium cosmetics and secure instant aesthetic bookings with Safaricom M-Pesa express integration.' }
-      ],
-      script: [
-        // Injection fallback for Cloudflare Turnstile bot verification challenge API
-        {
-          src: 'https://challenges.cloudflare.com/turnstile/v0/api.js',
-          async: true,
-          defer: true
-        }
       ]
+      // Turnstile's challenge script is injected once by the `turnstile.addScript`
+      // option above. A second manual <script> tag here previously duplicated
+      // that load on every page.
     }
   },
 
-  devtools: { enabled: true }
+  devtools: { enabled: process.env.NODE_ENV !== 'production' }
 })

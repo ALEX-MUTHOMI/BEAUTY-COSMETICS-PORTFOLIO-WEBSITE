@@ -9,7 +9,7 @@ from users.redaction import redact_email
 from users.serializers import OTPRequestSerializer, OTPVerifySerializer
 from users.services import OTPService
 from users.tasks import build_express_otp_delivery_payload, send_express_otp_email
-from users.throttles import OTPAnonRateThrottle
+from users.throttles import OTPAnonRateThrottle, OTPVerifyRateThrottle
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -67,7 +67,11 @@ class VerifyOTPView(APIView):
     API Perimeter: Validate OTP and Authenticate User.
     - Replay Attack Mitigation: Instantly destroys the token in Redis on validation.
     - Friction-free Onboarding: Auto-registers new users on verification.
+    - Rate Throttling: IP+email scoped OTPVerifyRateThrottle bounds guess velocity;
+      OTPService also locks out the code after MAX_VERIFY_ATTEMPTS wrong guesses.
     """
+
+    throttle_classes = [OTPVerifyRateThrottle]
 
     def post(self, request, *args, **kwargs):
         serializer = OTPVerifySerializer(data=request.data)

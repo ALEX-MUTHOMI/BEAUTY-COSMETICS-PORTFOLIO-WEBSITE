@@ -57,6 +57,12 @@ def create_checkout_session(
             "expires_at": timezone.now() + timezone.timedelta(minutes=15),
         },
     )
+    # Idempotency keys are client-supplied and globally unique at the DB level.
+    # Without this check, a colliding/predictable key from another actor would
+    # silently hand back (or "claim") a checkout session owned by a different
+    # customer instead of failing loudly.
+    if session.customer_id != customer.id:
+        raise CheckoutValidationError("Idempotency key already in use.")
     return session
 
 
@@ -85,6 +91,8 @@ def initiate_mpesa_stk(session_id, phone_number, idempotency_key, provider=None)
             raise CheckoutStateError("Cannot initiate STK for a terminal checkout.")
         existing = CheckoutAttempt.objects.filter(idempotency_key=idempotency_key).first()
         if existing:
+            if existing.checkout_session_id != session.id:
+                raise CheckoutValidationError("Idempotency key already in use.")
             return existing
         if session.status == CheckoutSession.Status.CREATED:
             transition_checkout(session, CheckoutSession.Status.PAYMENT_PENDING)

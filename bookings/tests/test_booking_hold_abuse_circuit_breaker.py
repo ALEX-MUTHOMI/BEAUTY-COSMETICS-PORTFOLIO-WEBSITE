@@ -21,6 +21,11 @@ class FakeRedis:
     def expire(self, key, ttl):
         self.expiries[key] = ttl
 
+    def get(self, key):
+        # Mirrors a real Redis client: values are always returned as strings.
+        value = self.values.get(key)
+        return None if value is None else str(value)
+
 
 class BrokenRedis:
     def incr(self, _key):
@@ -43,7 +48,7 @@ def _starts():
 def test_hold_attempt_counters_have_ttl_and_abuse_mode_shortens_hold_ttl():
     service, resource, _customer = create_service_resource_customer()
     BookingPolicy.objects.create(default_hold_minutes=10, abuse_hold_minutes=3)
-    redis = FakeRedis({"booking:holds_created:10m": 20, "booking:holds_confirmed:10m": 0})
+    redis = FakeRedis({"booking:holds:created:10m": 20, "booking:holds:confirmed:10m": 0})
 
     result = _service().create_hold(
         service_public_id=service.id,

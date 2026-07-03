@@ -31,15 +31,21 @@ class CheckoutSessionListCreateView(APIView):
     def post(self, request):
         serializer = CheckoutSessionCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        session = create_checkout_session(
-            customer=request.user,
-            amount=serializer.validated_data["amount"],
-            currency=serializer.validated_data["currency"],
-            description=serializer.validated_data["description"],
-            purchasable_type=serializer.validated_data["purchasable_type"],
-            purchasable_id=serializer.validated_data["purchasable_id"],
-            idempotency_key=serializer.validated_data["idempotency_key"],
-        )
+        try:
+            session = create_checkout_session(
+                customer=request.user,
+                amount=serializer.validated_data["amount"],
+                currency=serializer.validated_data["currency"],
+                description=serializer.validated_data["description"],
+                purchasable_type=serializer.validated_data["purchasable_type"],
+                purchasable_id=serializer.validated_data["purchasable_id"],
+                idempotency_key=serializer.validated_data["idempotency_key"],
+            )
+        except CheckoutValidationError:
+            return Response(
+                {"detail": "Idempotency key already in use."},
+                status=status.HTTP_409_CONFLICT,
+            )
         return Response(
             {"id": str(session.id), "status": session.status},
             status=status.HTTP_201_CREATED,
@@ -89,6 +95,11 @@ class CheckoutMpesaSTKView(APIView):
             return Response(
                 {"detail": "Payment provider temporarily unavailable."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except CheckoutValidationError:
+            return Response(
+                {"detail": "Idempotency key already in use."},
+                status=status.HTTP_409_CONFLICT,
             )
         return Response(
             {"attempt_id": str(attempt.id), "status": attempt.status},

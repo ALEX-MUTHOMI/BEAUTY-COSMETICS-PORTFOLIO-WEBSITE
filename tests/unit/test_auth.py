@@ -48,6 +48,17 @@ class MockRedis:
     def ttl(self, key):
         return self.ttls.get(key, -1)
 
+    def incr(self, key):
+        value = int(self.store.get(key, 0)) + 1
+        self.store[key] = str(value)
+        return value
+
+    def expire(self, key, seconds):
+        if key in self.store:
+            self.ttls[key] = int(seconds)
+            return 1
+        return 0
+
     def eval(self, _script, key_count, *keys_and_args):
         """Emulate the bounded Redis token-bucket contract used at runtime."""
         if key_count != 3:

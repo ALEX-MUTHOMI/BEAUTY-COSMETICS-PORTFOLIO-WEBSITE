@@ -7,6 +7,14 @@ class BookingCircuitBreaker:
         ABUSE = "abuse"
         LOCKDOWN = "lockdown"
 
+    # These must match the counter keys actually written by
+    # bookings.services.holds._safe_counter (and the confirmation-side
+    # counter incremented on booking confirmation). A prior mismatch here
+    # ("holds_created" vs "holds:created") meant this breaker always read
+    # zero and never escalated in production.
+    CREATED_KEY = "booking:holds:created:10m"
+    CONFIRMED_KEY = "booking:holds:confirmed:10m"
+
     def __init__(self, redis_client=None, window_seconds=600):
         self.redis = redis_client
         self.window_seconds = window_seconds
@@ -21,12 +29,11 @@ class BookingCircuitBreaker:
     def mode_for_context(self):
         # PostgreSQL aggregate scans are intentionally avoided on this path;
         # the booking perimeter needs a cheap fail-safe signal during attack.
+        # A real Redis client (or any spec-compliant test double) must be
+        # read via .get(); never rely on internal client attributes.
         try:
-            if not hasattr(self.redis, "values"):
-                self.redis.incr("booking:circuit_breaker:healthcheck")
-                self.redis.expire("booking:circuit_breaker:healthcheck", 5)
-            created = int(getattr(self.redis, "values", {}).get("booking:holds_created:10m", 0))
-            confirmed = int(getattr(self.redis, "values", {}).get("booking:holds_confirmed:10m", 0))
+            created = int(self.redis.get(self.CREATED_KEY) or 0)
+            confirmed = int(self.redis.get(self.CONFIRMED_KEY) or 0)
         except Exception:
             return self.Mode.LOCKDOWN
         if created >= 20 and confirmed == 0:
