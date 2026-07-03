@@ -1,4 +1,8 @@
 /**
+ * Module: privacyRightsApi
+ * Handles GDPR/CCPA privacy rights interactions.
+ */
+/**
  * Privacy rights + published data map — thin Django client (ticket id only, no PII echo).
  */
 import { bookingApiBase, ensureBookingCsrfToken } from './bookingCsrf'
@@ -97,3 +101,4 @@ export async function submitPrivacyRightsRequest(
   }
   return { data: result.data }
 }
+
