@@ -1,4 +1,8 @@
 /**
+ * Module: appPagesAudit
+ * Audit logging for application landing pages.
+ */
+/**
  * Application Pages Audit & Integrity System
  * Validates route definitions, critical component trees, and CSS token conformance.
  */
@@ -54,3 +58,4 @@ export function validateAllRoutesAudit(routes: PageRouteAudit[]): boolean {
     (route) => route.path.length > 0 && route.title.length > 0 && route.isResponsive,
   )
 }
+
