@@ -47,28 +47,31 @@ export default defineNuxtConfig({
 
   // 3. Strict Security Headers auditing (mitigating XSS, Clickjacking, and injection vectors)
   security: {
+    nonce: true,
     headers: {
       contentSecurityPolicy: {
         'script-src': [
           "'self'",
-          "https://challenges.cloudflare.com/turnstile/", // Cloudflare Challenge Script
-          "https://static.cloudflareinsights.com"
+          "'strict-dynamic'",
+          "'nonce-{{nonce}}'",
+          'https://challenges.cloudflare.com/turnstile/',
+          'https://static.cloudflareinsights.com',
         ],
         'frame-src': [
           "'self'",
-          "https://challenges.cloudflare.com/turnstile/" // Cloudflare Challenge Frame
-        ]
+          'https://challenges.cloudflare.com/turnstile/',
+        ],
       },
       crossOriginEmbedderPolicy: 'unsafe-none',
       crossOriginOpenerPolicy: 'same-origin',
       xFrameOptions: 'DENY',
       xContentTypeOptions: 'nosniff',
-      referrerPolicy: 'no-referrer-when-downgrade'
+      referrerPolicy: 'no-referrer-when-downgrade',
     },
     rateLimiter: {
       tokensPerInterval: 150,
-      interval: 'hour'
-    }
+      interval: 'hour',
+    },
   },
 
   // Global application header and metadata registrations

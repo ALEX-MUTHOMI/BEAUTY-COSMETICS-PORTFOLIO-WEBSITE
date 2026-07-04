@@ -42,14 +42,14 @@
     <!-- Welcome -->
     <section id="welcome" class="welcome">
       <div class="welcome__inner">
-        <ScrollReveal variant="left" class="welcome__media-wrap">
+        <ScrollReveal variant="left" class="welcome__media-wrap" immediate>
           <div class="welcome__media">
             <div class="welcome__accent" aria-hidden="true" />
             <img src="/images/welcome.jpg" alt="Client receiving a facial treatment" class="welcome__photo" loading="lazy" />
             <img src="/images/flower.png" alt="" class="welcome__flower" aria-hidden="true" loading="lazy" />
           </div>
         </ScrollReveal>
-        <ScrollReveal variant="right" :delay="120">
+        <ScrollReveal variant="right" :delay="120" immediate>
           <div class="welcome__copy">
             <p class="label">Get to know us</p>
             <h2>Welcome to Shee Aesthetics</h2>
@@ -81,7 +81,7 @@
 
     <!-- Services -->
     <section id="services" class="services">
-      <ScrollReveal variant="fade">
+      <ScrollReveal variant="fade" immediate>
         <header class="section-head">
           <p class="label">Our Treatments</p>
           <h2>What We're Offering</h2>
@@ -170,24 +170,9 @@
           <h2>Full Packages — Tue &amp; Wed Only</h2>
         </header>
       </ScrollReveal>
-      <div v-if="packages.length" class="packages__grid">
+      <div class="packages__grid">
         <ScrollReveal
           v-for="(pkg, index) in packages"
-          :key="pkg.public_id"
-          variant="up"
-          :delay="index * 90"
-        >
-          <article class="package-card">
-            <h3>{{ pkg.name }}</h3>
-            <p>{{ pkg.description || 'A full-day package covering facials, waxing, massage and makeup.' }}</p>
-            <p class="package-card__price">{{ formatPrice(pkg.price, pkg.currency) }} · {{ formatDuration(pkg.duration_minutes) }}</p>
-            <SiteButton to="/book" variant="primary">Book Now</SiteButton>
-          </article>
-        </ScrollReveal>
-      </div>
-      <div v-else class="packages__grid">
-        <ScrollReveal
-          v-for="(pkg, index) in fallbackPackages"
           :key="pkg.name"
           variant="up"
           :delay="index * 90"
@@ -328,29 +313,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-
-interface PublicPackage {
-  public_id: string
-  name: string
-  description: string
-  duration_minutes: number
-  price: string
-  currency: string
-}
-
-const runtimeConfig = useRuntimeConfig()
-
-const { data: packagesData } = await useFetch<{ packages: PublicPackage[] }>(
-  `${runtimeConfig.public.apiBaseUrl}/api/bookings/catalog/packages/`,
-  {
-    server: false,
-    lazy: true,
-    default: () => ({ packages: [] }),
-  },
-)
-
-const packages = computed(() => packagesData.value?.packages || [])
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 
 const heroSlides = [
   { image: '/images/hero-1.jpg', eyebrow: 'Ideal place to unwind', title: 'Spa Beauty' },
@@ -359,7 +322,7 @@ const heroSlides = [
 ]
 
 const activeSlide = ref(0)
-const heroReady = ref(false)
+const heroReady = ref(true)
 let timer: ReturnType<typeof setInterval> | null = null
 
 function goToSlide(index: number) {
@@ -441,7 +404,7 @@ const steps = [
   { title: 'Done', text: 'Settle your bill, book your next visit if you want, and leave feeling refreshed.' },
 ]
 
-const fallbackPackages = [
+const packages = [
   { name: 'Classic Full Package', text: 'Facial, waxing, massage and makeup — one full day.', price: 'From KES 12,000' },
   { name: 'Glow Package', text: 'Brightening facial, brow wax and soft glam makeup.', price: 'From KES 8,500' },
   { name: 'Relax Package', text: 'Deep tissue massage, back wax and express facial.', price: 'From KES 7,000' },
@@ -491,20 +454,6 @@ const blogPosts = [
     image: '/images/blog-3.jpg',
   },
 ]
-
-function formatDuration(minutes: number): string {
-  const hours = Math.floor(minutes / 60)
-  const remainder = minutes % 60
-  if (!hours) return `${remainder} min`
-  if (!remainder) return `${hours}h`
-  return `${hours}h ${remainder}m`
-}
-
-function formatPrice(price: string, currency: string): string {
-  const amount = Number.parseFloat(price)
-  if (Number.isNaN(amount)) return `${currency} ${price}`
-  return new Intl.NumberFormat('en-KE', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount)
-}
 
 definePageMeta({ layout: 'landing' })
 

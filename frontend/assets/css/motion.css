@@ -1,6 +1,11 @@
-/* Scroll reveal + page motion utilities */
+/* Scroll reveal — content is visible without JS; motion only after hydration */
 
-.reveal {
+html:not(.site-motion) .reveal {
+  opacity: 1;
+  transform: none;
+}
+
+html.site-motion .reveal {
   opacity: 0;
   transform: translateY(28px);
   transition:
@@ -10,44 +15,48 @@
   will-change: opacity, transform;
 }
 
-.reveal--visible {
+html.site-motion .reveal--visible {
   opacity: 1;
   transform: translateY(0);
 }
 
-.reveal--left {
+html.site-motion .reveal--left {
   transform: translateX(-32px);
 }
 
-.reveal--left.reveal--visible {
+html.site-motion .reveal--left.reveal--visible {
   transform: translateX(0);
 }
 
-.reveal--right {
+html.site-motion .reveal--right {
   transform: translateX(32px);
 }
 
-.reveal--right.reveal--visible {
+html.site-motion .reveal--right.reveal--visible {
   transform: translateX(0);
 }
 
-.reveal--scale {
+html.site-motion .reveal--scale {
   transform: scale(0.96);
 }
 
-.reveal--scale.reveal--visible {
+html.site-motion .reveal--scale.reveal--visible {
   transform: scale(1);
 }
 
-.reveal--fade {
+html.site-motion .reveal--fade {
   transform: none;
 }
 
+html.is-loading {
+  overflow: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .reveal,
-  .reveal--left,
-  .reveal--right,
-  .reveal--scale {
+  html.site-motion .reveal,
+  html.site-motion .reveal--left,
+  html.site-motion .reveal--right,
+  html.site-motion .reveal--scale {
     opacity: 1;
     transform: none;
     transition: none;
