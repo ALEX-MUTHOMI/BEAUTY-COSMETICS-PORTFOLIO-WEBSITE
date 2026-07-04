@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   ssr: true,
 
   // Mellis theme design tokens shared across the public site
-  css: ['~/assets/css/tokens.css'],
+  css: ['~/assets/css/tokens.css', '~/assets/css/motion.css'],
 
   // Runtime environment configuration parameters
   runtimeConfig: {

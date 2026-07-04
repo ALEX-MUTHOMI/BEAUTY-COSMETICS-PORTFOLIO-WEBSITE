@@ -40,9 +40,15 @@ const variantClass = computed(() => `site-btn--${props.variant}`)
   text-decoration: none;
   cursor: pointer;
   transition:
-    background-color 0.2s var(--ease-story),
-    color 0.2s var(--ease-story),
-    border-color 0.2s var(--ease-story);
+    background-color 0.3s var(--ease-story),
+    color 0.3s var(--ease-story),
+    border-color 0.3s var(--ease-story),
+    transform 0.3s var(--ease-story),
+    box-shadow 0.3s var(--ease-story);
+}
+
+.site-btn:hover {
+  transform: translateY(-2px);
 }
 
 .site-btn--primary {

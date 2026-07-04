@@ -1,5 +1,6 @@
 <template>
   <div class="landing-shell">
+    <SiteLoader />
     <SiteHeader />
     <slot />
     <SiteFooter />
