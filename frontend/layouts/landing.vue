@@ -1,6 +1,8 @@
 <template>
   <div class="landing-shell">
-    <SiteLoader />
+    <ClientOnly>
+      <SiteLoader />
+    </ClientOnly>
     <SiteHeader />
     <slot />
     <SiteFooter />

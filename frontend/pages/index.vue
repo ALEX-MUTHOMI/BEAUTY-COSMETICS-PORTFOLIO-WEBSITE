@@ -343,7 +343,11 @@ const runtimeConfig = useRuntimeConfig()
 
 const { data: packagesData } = await useFetch<{ packages: PublicPackage[] }>(
   `${runtimeConfig.public.apiBaseUrl}/api/bookings/catalog/packages/`,
-  { default: () => ({ packages: [] }) },
+  {
+    server: false,
+    lazy: true,
+    default: () => ({ packages: [] }),
+  },
 )
 
 const packages = computed(() => packagesData.value?.packages || [])

@@ -25,9 +25,6 @@ const props = withDefaults(
   {
     assets: () => [
       '/images/hero-1.jpg',
-      '/images/hero-2.jpg',
-      '/images/hero-3.jpg',
-      '/images/welcome.jpg',
       '/images/logo-mark.png',
     ],
   },
@@ -35,25 +32,38 @@ const props = withDefaults(
 
 const loading = ref(true)
 
-function preload(src: string): Promise<void> {
-  return new Promise((resolve) => {
-    const img = new Image()
-    img.onload = () => resolve()
-    img.onerror = () => resolve()
-    img.src = src
-  })
-}
-
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-onMounted(async () => {
-  const started = Date.now()
-  await Promise.all([...props.assets.map(preload), wait(900)])
-  const elapsed = Date.now() - started
-  if (elapsed < 600) await wait(600 - elapsed)
-  loading.value = false
+function preload(src: string, timeoutMs = 4000): Promise<void> {
+  return Promise.race([
+    new Promise<void>((resolve) => {
+      const img = new Image()
+      const finish = () => resolve()
+      img.addEventListener('load', finish, { once: true })
+      img.addEventListener('error', finish, { once: true })
+      img.src = src
+      if (img.complete) finish()
+    }),
+    wait(timeoutMs),
+  ])
+}
+
+onMounted(() => {
+  const dismiss = () => {
+    loading.value = false
+  }
+
+  // Never block the page longer than 2 seconds.
+  const hardTimeout = setTimeout(dismiss, 2000)
+
+  Promise.all([wait(500), ...props.assets.map((src) => preload(src))])
+    .catch(() => undefined)
+    .finally(() => {
+      clearTimeout(hardTimeout)
+      dismiss()
+    })
 })
 </script>
 
@@ -124,6 +134,7 @@ onMounted(async () => {
 .loader-fade-leave-to {
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
 }
 
 @keyframes loader-pulse {
