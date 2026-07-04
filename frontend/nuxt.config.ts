@@ -1,12 +1,19 @@
 // ==============================================================================
 // Enterprise Nuxt 3 SSR and Security Configuration
 // ==============================================================================
+import { fileURLToPath } from 'node:url'
+
 export default defineNuxtConfig({
   // Enforce Server-Side Rendering (SSR) for optimal SEO crawlability and index ranking
   ssr: true,
 
   // Mellis theme design tokens shared across the public site
   css: ['~/assets/css/tokens.css', '~/assets/css/motion.css'],
+
+  // Match tsconfig `@/*` → `src/*` for shared landing modules and tests
+  alias: {
+    '@': fileURLToPath(new URL('./src', import.meta.url)),
+  },
 
   // Runtime environment configuration parameters
   runtimeConfig: {

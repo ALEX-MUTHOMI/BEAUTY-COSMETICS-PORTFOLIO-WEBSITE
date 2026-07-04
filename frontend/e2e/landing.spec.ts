@@ -30,6 +30,21 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.getByRole('heading', { name: 'Welcome to Shee Aesthetics', level: 2 })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible()
 
+    // Brand lockup: logo mark beside wordmark (header instance)
+    const logoLink = page.getByRole('banner').getByRole('link', { name: /Shee Aesthetics home/i })
+    await expect(logoLink).toBeVisible()
+    await expect(logoLink.locator('img.shee-logo__mark')).toBeVisible()
+    await expect(logoLink.locator('.shee-logo__name')).toHaveText('Shee')
+
+    // Package days sold as must-book offer
+    const packageDays = page.locator('.package-days')
+    await packageDays.scrollIntoViewIfNeeded()
+    await expect(page.getByRole('heading', { name: /Book Your Full Package Day/i })).toBeVisible()
+    await expect(packageDays.getByText('Tuesday', { exact: true })).toBeVisible()
+    await expect(packageDays.getByText('Wednesday', { exact: true })).toBeVisible()
+    await expect(page.getByText(/Most booked/i)).toBeVisible()
+    await expect(page.getByText(/Deep cleansing facial/i).first()).toBeVisible()
+
     // No CSP violations in console
     const cspViolations = consoleErrors.filter((e) =>
       /content security policy|refused to execute|refused to load/i.test(e),

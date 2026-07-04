@@ -18,10 +18,11 @@
           />
           <div class="hero__overlay" />
           <div class="hero__content" :class="{ 'hero__content--in': activeSlide === index && heroReady }">
-            <img src="/images/logo-mark.png" alt="" class="hero__mark" width="68" height="68" />
+            <SheeLogo to="/" variant="hero" size="lg" class="hero__brand" />
             <p class="hero__eyebrow">{{ slide.eyebrow }}</p>
             <h1 class="hero__title">{{ slide.title }}</h1>
-            <SiteButton to="/book" variant="primary">Discover More</SiteButton>
+            <p v-if="slide.subtitle" class="hero__subtitle">{{ slide.subtitle }}</p>
+            <SiteButton to="/#packages" variant="primary">{{ slide.cta }}</SiteButton>
           </div>
         </article>
       </div>
@@ -58,22 +59,23 @@
               Appointments are private, therapists are trained, and every service is done in a clean treatment room.
             </p>
             <div class="welcome__offers">
-              <article>
+              <article class="welcome__offer welcome__offer--package">
+                <span class="welcome__offer-badge">Must book</span>
                 <img src="/images/icon-offer.png" alt="" width="46" height="46" />
                 <div>
-                  <h3>Tuesday &amp; Wednesday Packages</h3>
-                  <p>Full packages only — facials, waxing, massage and makeup in one visit.</p>
+                  <h3>Tuesday &amp; Wednesday — Full Packages</h3>
+                  <p>Our two package-only days. Facial, waxing, massage and makeup in one visit. Slots are limited — book early.</p>
                 </div>
               </article>
-              <article>
+              <article class="welcome__offer">
                 <img src="/images/icon-gift.png" alt="" width="48" height="48" />
                 <div>
                   <h3>Single Treatments</h3>
-                  <p>Book one service at a time on Mon, Thu, Fri and Sat.</p>
+                  <p>One service at a time on Mon, Thu, Fri and Sat when you only need a facial, wax, massage or makeup session.</p>
                 </div>
               </article>
             </div>
-            <SiteButton to="/#services" variant="primary">Discover More</SiteButton>
+            <SiteButton to="/#packages" variant="primary">View Package Days</SiteButton>
           </div>
         </ScrollReveal>
       </div>
@@ -162,12 +164,29 @@
       </div>
     </section>
 
+    <!-- Package days sell -->
+    <section class="package-days" aria-labelledby="package-days-heading">
+      <ScrollReveal variant="fade">
+        <div class="package-days__inner">
+          <p class="label">Limited — 2 days only</p>
+          <h2 id="package-days-heading">{{ packageDayHeadline }}</h2>
+          <p class="package-days__lead">{{ packageDaySubhead }}</p>
+          <p class="package-days__urgency">{{ packageDayUrgency }}</p>
+          <div class="package-days__chips" role="list">
+            <span v-for="day in packageDays" :key="day" role="listitem">{{ day }}</span>
+          </div>
+          <SiteButton to="/book" variant="primary">Reserve Your Package Day</SiteButton>
+        </div>
+      </ScrollReveal>
+    </section>
+
     <!-- Packages -->
     <section id="packages" class="packages">
       <ScrollReveal variant="fade">
         <header class="section-head">
           <p class="label">Pricing Plans</p>
-          <h2>Full Packages — Tue &amp; Wed Only</h2>
+          <h2>Choose Your Full Package — Tue &amp; Wed</h2>
+          <p class="section-head__sub">Every plan below is available on package days only. Pick the visit that matches your occasion.</p>
         </header>
       </ScrollReveal>
       <div class="packages__grid">
@@ -177,12 +196,14 @@
           variant="up"
           :delay="index * 90"
         >
-          <article class="package-card">
-            <h3>{{ pkg.name }}</h3>
-            <p>{{ pkg.text }}</p>
-            <p class="package-card__price">{{ pkg.price }}</p>
-            <SiteButton to="/book" variant="primary">Book Now</SiteButton>
-          </article>
+          <MellisPackageCard
+            :name="pkg.name"
+            :text="pkg.text"
+            :price="pkg.price"
+            :includes="pkg.includes"
+            :featured="pkg.featured"
+            :badge="pkg.badge"
+          />
         </ScrollReveal>
       </div>
     </section>
@@ -314,11 +335,38 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
+import {
+  PACKAGE_DAYS,
+  packageDayHeadline,
+  packageDaySubhead,
+  packageDayUrgency,
+  packages,
+} from '@/landing/landingContent'
+
+const packageDays = PACKAGE_DAYS
 
 const heroSlides = [
-  { image: '/images/hero-1.jpg', eyebrow: 'Ideal place to unwind', title: 'Spa Beauty' },
-  { image: '/images/hero-2.jpg', eyebrow: 'Ideal place to unwind', title: 'Spa Beauty' },
-  { image: '/images/hero-3.jpg', eyebrow: 'Ideal place to unwind', title: 'Spa Beauty' },
+  {
+    image: '/images/hero-1.jpg',
+    eyebrow: 'Tue & Wed — full packages only',
+    title: 'Your Full Glow Day',
+    subtitle: 'Facial, waxing, massage and makeup in one private visit.',
+    cta: 'Book Package Day',
+  },
+  {
+    image: '/images/hero-2.jpg',
+    eyebrow: 'Shee Aesthetics',
+    title: 'Spa Beauty',
+    subtitle: 'Reserved treatment rooms. Trained therapists. No rush.',
+    cta: 'See Packages',
+  },
+  {
+    image: '/images/hero-3.jpg',
+    eyebrow: 'Limited weekly slots',
+    title: 'Treat Yourself',
+    subtitle: 'Package days fill fast — secure Tuesday or Wednesday early.',
+    cta: 'Reserve Now',
+  },
 ]
 
 const activeSlide = ref(0)
@@ -399,15 +447,9 @@ const stats = [
 ]
 
 const steps = [
-  { title: 'Book', text: 'Pick your date online or call us. Singles Mon, Thu–Sat. Packages Tue & Wed.' },
-  { title: 'Treatment', text: 'Arrive a few minutes early. Your therapist explains the steps before starting.' },
-  { title: 'Done', text: 'Settle your bill, book your next visit if you want, and leave feeling refreshed.' },
-]
-
-const packages = [
-  { name: 'Classic Full Package', text: 'Facial, waxing, massage and makeup — one full day.', price: 'From KES 12,000' },
-  { name: 'Glow Package', text: 'Brightening facial, brow wax and soft glam makeup.', price: 'From KES 8,500' },
-  { name: 'Relax Package', text: 'Deep tissue massage, back wax and express facial.', price: 'From KES 7,000' },
+  { title: 'Book', text: 'Choose Tuesday or Wednesday and pick your full package online or by phone.' },
+  { title: 'Treatment', text: 'Arrive a few minutes early. Your therapist walks you through each step in your private room.' },
+  { title: 'Done', text: 'Leave with facials, waxing, massage and makeup complete — ready for your week or event.' },
 ]
 
 const reviews = [
@@ -575,9 +617,8 @@ useHead({
   transform: translateY(0);
 }
 
-.hero__mark {
-  margin-bottom: 1.25rem;
-  filter: brightness(0) invert(1);
+.hero__brand {
+  margin-bottom: 1rem;
   animation: hero-float 4s ease-in-out infinite;
 }
 
@@ -589,12 +630,19 @@ useHead({
 }
 
 .hero__title {
-  margin: 0 0 2rem;
+  margin: 0 0 0.75rem;
   font-family: var(--font-script);
   font-size: clamp(3.5rem, 10vw, 8rem);
   font-weight: 400;
   line-height: 1;
   color: #fff;
+}
+
+.hero__subtitle {
+  max-width: 36ch;
+  margin: 0 0 1.75rem;
+  font: 400 1rem/1.65 var(--font-body);
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .hero__pager {
@@ -729,6 +777,29 @@ useHead({
   transition: transform 0.35s var(--ease-story);
 }
 
+.welcome__offer {
+  position: relative;
+}
+
+.welcome__offer--package {
+  padding: 1.15rem;
+  background: var(--color-cream);
+  border: 1px solid rgba(222, 150, 141, 0.35);
+  border-left: 3px solid var(--color-rose);
+}
+
+.welcome__offer-badge {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.75rem;
+  padding: 0.2rem 0.55rem;
+  background: var(--color-rose);
+  color: #fff;
+  font: 600 0.62rem var(--font-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .welcome__offers article:hover {
   transform: translateX(4px);
 }
@@ -763,17 +834,21 @@ useHead({
 .service-card {
   position: relative;
   background: #fff;
+  border: 1px solid var(--color-line);
+  border-top: 3px solid var(--color-rose);
   box-shadow: var(--shadow-card);
   padding: 2.75rem 1.5rem 2rem;
   text-align: center;
   height: 100%;
   transition:
     transform 0.4s var(--ease-story),
-    box-shadow 0.4s var(--ease-story);
+    box-shadow 0.4s var(--ease-story),
+    border-top-color 0.35s;
 }
 
 .service-card:hover {
   transform: translateY(-8px);
+  border-top-color: var(--color-rose-dark);
   box-shadow: 0 20px 50px rgba(39, 37, 42, 0.12);
 }
 
@@ -893,14 +968,20 @@ useHead({
   background: #fff;
   padding: 2rem 1.25rem;
   text-align: center;
+  border: 1px solid var(--color-line);
+  border-top: 3px solid var(--color-rose);
   box-shadow: var(--shadow-card);
   height: 100%;
-  transition: transform 0.4s var(--ease-story), box-shadow 0.4s;
+  transition:
+    transform 0.4s var(--ease-story),
+    box-shadow 0.4s,
+    border-top-color 0.35s;
 }
 
 .stat-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 40px rgba(39, 37, 42, 0.1);
+  transform: translateY(-8px);
+  border-top-color: var(--color-rose-dark);
+  box-shadow: 0 20px 48px rgba(39, 37, 42, 0.12);
 }
 
 .stat-card img {
@@ -973,10 +1054,62 @@ useHead({
   color: var(--color-muted);
 }
 
+/* Package days sell band */
+.package-days {
+  padding: clamp(3.5rem, 7vh, 5rem) 1.5rem;
+  background: linear-gradient(135deg, var(--color-rose-soft) 0%, var(--color-cream) 55%, #fff 100%);
+  border-top: 1px solid rgba(222, 150, 141, 0.2);
+  border-bottom: 1px solid rgba(222, 150, 141, 0.2);
+}
+
+.package-days__inner {
+  width: min(720px, 100%);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.package-days__inner h2 {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 4vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.package-days__lead {
+  margin: 0 0 1rem;
+  font: 400 1rem/1.75 var(--font-body);
+  color: var(--color-muted);
+}
+
+.package-days__urgency {
+  margin: 0 0 1.5rem;
+  font: 600 0.92rem/1.6 var(--font-body);
+  color: var(--color-ink);
+}
+
+.package-days__chips {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+}
+
+.package-days__chips span {
+  padding: 0.5rem 1.25rem;
+  border: 1px solid var(--color-rose);
+  background: #fff;
+  font: 600 0.75rem var(--font-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-rose-dark);
+}
+
 /* Packages */
 .packages {
   padding: clamp(4rem, 8vh, 6rem) 1.5rem;
-  background: var(--color-cream);
+  background: var(--color-paper);
 }
 
 .packages__grid {
@@ -984,40 +1117,9 @@ useHead({
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-}
-
-.package-card {
-  background: #fff;
-  padding: 2.25rem 2rem;
-  box-shadow: var(--shadow-card);
-  text-align: center;
-  height: 100%;
-  transition: transform 0.4s var(--ease-story), box-shadow 0.4s;
-}
-
-.package-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 18px 45px rgba(39, 37, 42, 0.1);
-}
-
-.package-card h3 {
-  margin: 0 0 0.85rem;
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.package-card p {
-  margin: 0 0 1rem;
-  font: 400 0.92rem/1.6 var(--font-body);
-  color: var(--color-muted);
-}
-
-.package-card__price {
-  margin: 0 0 1.5rem !important;
-  font: 600 0.95rem var(--font-body) !important;
-  color: var(--color-rose) !important;
+  gap: 1.75rem;
+  align-items: stretch;
+  padding-top: 0.5rem;
 }
 
 /* Reviews */
@@ -1036,15 +1138,22 @@ useHead({
 .review-card {
   margin: 0;
   padding: 2.25rem 2rem;
-  background: var(--color-cream);
+  background: #fff;
+  border: 1px solid var(--color-line);
+  border-top: 3px solid var(--color-rose);
+  box-shadow: var(--shadow-card);
   position: relative;
   height: 100%;
-  transition: transform 0.4s var(--ease-story), box-shadow 0.4s;
+  transition:
+    transform 0.4s var(--ease-story),
+    box-shadow 0.4s,
+    border-top-color 0.35s;
 }
 
 .review-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(39, 37, 42, 0.08);
+  transform: translateY(-8px);
+  border-top-color: var(--color-rose-dark);
+  box-shadow: 0 20px 48px rgba(39, 37, 42, 0.12);
 }
 
 .review-card__quote {
@@ -1218,11 +1327,20 @@ useHead({
 
 .blog-card {
   height: 100%;
-  transition: transform 0.4s var(--ease-story);
+  background: #fff;
+  border: 1px solid var(--color-line);
+  border-top: 3px solid var(--color-rose);
+  box-shadow: var(--shadow-card);
+  transition:
+    transform 0.4s var(--ease-story),
+    box-shadow 0.4s,
+    border-top-color 0.35s;
 }
 
 .blog-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-8px);
+  border-top-color: var(--color-rose-dark);
+  box-shadow: 0 20px 48px rgba(39, 37, 42, 0.12);
 }
 
 .blog-card__image {
@@ -1243,7 +1361,7 @@ useHead({
 }
 
 .blog-card__body {
-  padding: 1.5rem 0 0;
+  padding: 1.5rem 1.25rem 1.75rem;
 }
 
 .blog-card h3 {
@@ -1311,7 +1429,7 @@ useHead({
   .hero__slide,
   .hero__bg,
   .hero__content,
-  .hero__mark,
+  .hero__brand,
   .cta__photo img,
   .service-card,
   .stat-card,
