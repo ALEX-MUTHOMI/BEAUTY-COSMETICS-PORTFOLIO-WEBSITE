@@ -10,11 +10,16 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 
+useHead({
+  htmlAttrs: {
+    class: 'is-loading',
+  },
+})
+
 onMounted(() => {
   document.documentElement.classList.add('site-motion')
-  document.documentElement.classList.add('is-loading')
 
-  // If the loader never mounts (blocked JS), still allow interaction after 5s.
+  // If the loader never dismisses (blocked JS), still allow interaction after 5s.
   setTimeout(() => {
     document.documentElement.classList.add('site-ready')
     document.documentElement.classList.remove('is-loading')

@@ -8,7 +8,7 @@ export default defineNuxtConfig({
   ssr: true,
 
   // Mellis theme design tokens shared across the public site
-  css: ['~/assets/css/tokens.css', '~/assets/css/motion.css'],
+  css: ['~/assets/css/tokens.css', '~/assets/css/motion.css', '~/assets/css/loader.css'],
 
   // Match tsconfig `@/*` → `src/*` for shared landing modules and tests
   alias: {

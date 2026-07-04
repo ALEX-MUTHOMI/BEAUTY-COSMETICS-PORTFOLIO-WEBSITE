@@ -1,0 +1,13 @@
+/* SSR-safe loader gate — no font/page flash before SiteLoader hydrates */
+
+html.is-loading {
+  overflow: hidden;
+}
+
+html.is-loading .landing-shell > :not(.site-loader) {
+  visibility: hidden;
+}
+
+html.is-loading .site-loader {
+  visibility: visible;
+}

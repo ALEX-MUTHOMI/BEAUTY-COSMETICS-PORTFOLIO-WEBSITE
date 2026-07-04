@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import {
   PACKAGE_DAYS,
+  SINGLE_DAYS_LABEL,
   assertSafeDisplayText,
+  heroSlides,
   isPackageDay,
   packageDayHeadline,
   packageDayUrgency,
   packages,
+  singleTreatments,
   validateLandingPackages,
+  validateTreatmentCards,
 } from './landingContent'
 
 describe('landingContent', () => {
@@ -18,11 +22,20 @@ describe('landingContent', () => {
     expect(isPackageDay('Saturday')).toBe(false)
   })
 
-  it('uses must-book urgency copy for package days', () => {
-    expect(packageDayHeadline.toLowerCase()).toContain('book')
-    expect(packageDayUrgency.toLowerCase()).toMatch(/tue|tuesday/)
-    expect(packageDayUrgency.toLowerCase()).toMatch(/wed|wednesday/)
-    expect(packageDayUrgency.toLowerCase()).toMatch(/fill|book/)
+  it('uses clear marketing copy for package days without filler jargon', () => {
+    expect(packageDayHeadline.toLowerCase()).toContain('package')
+    expect(packageDayUrgency.toLowerCase()).toMatch(/tue|tuesday|package/)
+    expect(packageDayUrgency).not.toMatch(/experience|journey|unlock/i)
+  })
+
+  it('keeps hero slides short and Mellis-style — no brand in the carousel', () => {
+    expect(heroSlides).toHaveLength(3)
+    expect(heroSlides[0]?.title).toBe('Spa Beauty')
+    expect(heroSlides[0]?.eyebrow).toMatch(/unwind/i)
+    heroSlides.forEach((slide) => {
+      expect(slide.title.length).toBeLessThan(30)
+      expect(slide.eyebrow).not.toMatch(/shee aesthetics/i)
+    })
   })
 
   it('defines Mellis-style packages with feature lists and a featured plan', () => {
@@ -30,6 +43,12 @@ describe('landingContent', () => {
     const featured = packages.find((p) => p.featured)
     expect(featured?.badge).toBeTruthy()
     expect(featured?.includes.length).toBeGreaterThanOrEqual(4)
+  })
+
+  it('offers single treatments on non-package days', () => {
+    expect(singleTreatments.length).toBeGreaterThanOrEqual(4)
+    expect(singleTreatments.every((t) => t.daysLabel === SINGLE_DAYS_LABEL)).toBe(true)
+    expect(validateTreatmentCards(singleTreatments)).toBe(true)
   })
 
   it('rejects unsafe display strings (XSS guard for future CMS copy)', () => {

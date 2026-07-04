@@ -4,28 +4,38 @@
     :class="{ 'mellis-card--featured': featured }"
   >
     <p v-if="badge" class="mellis-card__badge">{{ badge }}</p>
-    <p class="mellis-card__days">Tue &amp; Wed only</p>
+    <p v-if="daysLabel" class="mellis-card__days">{{ daysLabel }}</p>
     <h3 class="mellis-card__title">{{ name }}</h3>
     <p class="mellis-card__price">{{ price }}</p>
     <p class="mellis-card__text">{{ text }}</p>
-    <ul class="mellis-card__includes">
+    <ul class="mellis-card__includes" aria-label="What's included">
       <li v-for="item in includes" :key="item">{{ item }}</li>
     </ul>
-    <SiteButton to="/book" :variant="featured ? 'primary' : 'outline'">
-      Book Package Day
+    <SiteButton :to="ctaTo" :variant="featured ? 'primary' : 'outline'">
+      {{ ctaLabel }}
     </SiteButton>
   </article>
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  name: string
-  text: string
-  price: string
-  includes: string[]
-  featured?: boolean
-  badge?: string
-}>()
+withDefaults(
+  defineProps<{
+    name: string
+    text: string
+    price: string
+    includes: string[]
+    featured?: boolean
+    badge?: string
+    daysLabel?: string
+    ctaLabel?: string
+    ctaTo?: string
+  }>(),
+  {
+    daysLabel: 'Tue & Wed only',
+    ctaLabel: 'Book Now',
+    ctaTo: '/book',
+  },
+)
 </script>
 
 <style scoped>
@@ -45,6 +55,16 @@ defineProps<{
     transform 0.4s var(--ease-story),
     box-shadow 0.4s var(--ease-story),
     border-color 0.35s;
+}
+
+.mellis-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 6c-5 11-14 13-14 22a14 14 0 0 0 28 0c0-9-9-11-14-22z' fill='%23de968d'/%3E%3C/svg%3E");
+  background-size: 72px;
 }
 
 .mellis-card:hover {
@@ -72,6 +92,7 @@ defineProps<{
   letter-spacing: 0.14em;
   text-transform: uppercase;
   white-space: nowrap;
+  z-index: 1;
 }
 
 .mellis-card__days {
@@ -114,7 +135,7 @@ defineProps<{
 
 .mellis-card__includes li {
   position: relative;
-  padding: 0.4rem 0 0.4rem 1.35rem;
+  padding: 0.45rem 0 0.45rem 1.5rem;
   font: 500 0.86rem var(--font-body);
   color: var(--color-ink);
   border-bottom: 1px solid rgba(39, 37, 42, 0.06);
@@ -125,14 +146,12 @@ defineProps<{
 }
 
 .mellis-card__includes li::before {
-  content: '';
+  content: '✓';
   position: absolute;
   left: 0;
-  top: 50%;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-rose);
-  transform: translateY(-50%);
+  top: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-rose);
 }
 </style>

@@ -1,24 +1,22 @@
 <template>
-  <ClientOnly>
-    <Transition name="loader-fade">
-      <div
-        v-if="visible"
-        class="site-loader"
-        role="status"
-        aria-live="polite"
-        aria-label="Loading Shee Aesthetics"
-      >
-        <div class="site-loader__panel">
-          <div class="site-loader__ring" aria-hidden="true">
-            <span />
-          </div>
-          <img src="/images/logo-mark.png" alt="" class="site-loader__mark" width="80" height="80" />
-          <p class="site-loader__brand">Shee Aesthetics</p>
-          <p class="site-loader__text">Loading experience…</p>
+  <Transition name="loader-fade">
+    <div
+      v-if="visible"
+      class="site-loader"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading Shee Aesthetics"
+    >
+      <div class="site-loader__panel">
+        <div class="site-loader__ring" aria-hidden="true">
+          <span />
         </div>
+        <img src="/images/logo-mark.png" alt="" class="site-loader__mark" width="80" height="80" />
+        <p class="site-loader__brand">Shee Aesthetics</p>
+        <p class="site-loader__text">Loading…</p>
       </div>
-    </Transition>
-  </ClientOnly>
+    </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
@@ -121,15 +119,15 @@ onMounted(() => {
 
 .site-loader__brand {
   margin: 0;
-  font: 700 1.15rem var(--font-body);
-  letter-spacing: 0.2em;
+  font: 700 1.05rem system-ui, -apple-system, 'Segoe UI', sans-serif;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-ink);
 }
 
 .site-loader__text {
   margin: 0;
-  font: 500 0.78rem var(--font-body);
+  font: 500 0.78rem system-ui, -apple-system, 'Segoe UI', sans-serif;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-muted);

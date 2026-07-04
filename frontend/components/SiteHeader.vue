@@ -22,6 +22,7 @@
           <NuxtLink to="/">Home</NuxtLink>
           <NuxtLink to="/#services">Our Services</NuxtLink>
           <NuxtLink to="/#packages">Packages</NuxtLink>
+          <NuxtLink to="/#singles">Singles</NuxtLink>
           <NuxtLink to="/#gallery">Gallery</NuxtLink>
           <NuxtLink to="/#contact">Contact</NuxtLink>
         </nav>
@@ -47,6 +48,7 @@
       <NuxtLink to="/" @click="menuOpen = false">Home</NuxtLink>
       <NuxtLink to="/#services" @click="menuOpen = false">Our Services</NuxtLink>
       <NuxtLink to="/#packages" @click="menuOpen = false">Packages</NuxtLink>
+      <NuxtLink to="/#singles" @click="menuOpen = false">Singles</NuxtLink>
       <NuxtLink to="/#gallery" @click="menuOpen = false">Gallery</NuxtLink>
       <NuxtLink to="/#contact" @click="menuOpen = false">Contact</NuxtLink>
       <SiteButton to="/book" variant="primary">Book Now</SiteButton>

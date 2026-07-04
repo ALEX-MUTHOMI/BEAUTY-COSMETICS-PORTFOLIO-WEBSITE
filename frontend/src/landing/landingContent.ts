@@ -5,17 +5,57 @@ export interface LandingPackage {
   includes: string[]
   featured?: boolean
   badge?: string
+  daysLabel?: string
+  ctaLabel?: string
+}
+
+export interface HeroSlide {
+  image: string
+  eyebrow: string
+  title: string
+  subtitle?: string
+  cta: string
+  ctaTo: string
 }
 
 export const PACKAGE_DAYS = ['Tuesday', 'Wednesday'] as const
 
-export const packageDayHeadline = 'Book Your Full Package Day'
+export const SINGLE_DAYS_LABEL = 'Mon · Thu – Sat'
+
+/** Mellis-style hero — short eyebrow + script headline, no brand in the slider */
+export const heroSlides: HeroSlide[] = [
+  {
+    image: '/images/hero-1.jpg',
+    eyebrow: 'Ideal place to unwind',
+    title: 'Spa Beauty',
+    cta: 'Discover More',
+    ctaTo: '/#welcome',
+  },
+  {
+    image: '/images/hero-2.jpg',
+    eyebrow: 'Tuesday & Wednesday',
+    title: 'Full Package Days',
+    subtitle: 'One visit — facial, waxing, massage and makeup.',
+    cta: 'See Packages',
+    ctaTo: '/#packages',
+  },
+  {
+    image: '/images/hero-3.jpg',
+    eyebrow: 'Mon · Thu – Sat',
+    title: 'Treat Yourself',
+    subtitle: 'A facial, wax, massage or makeup when you only need one.',
+    cta: 'View Singles',
+    ctaTo: '/#singles',
+  },
+]
+
+export const packageDayHeadline = 'Full Package Days'
 
 export const packageDaySubhead =
-  'Tuesdays and Wednesdays are reserved for full packages only — facial, waxing, massage and makeup in one private visit. Limited slots each week.'
+  'Tuesdays and Wednesdays are for clients who want the full Shee visit — every treatment in one private room, without rushing between appointments.'
 
 export const packageDayUrgency =
-  'These two days fill fast. If you want the full Shee experience, book Tue or Wed — singles are Mon, Thu–Sat.'
+  'We keep these days for packages only. Slots are limited each week.'
 
 export function isPackageDay(day: string): boolean {
   return PACKAGE_DAYS.some((d) => d.toLowerCase() === day.toLowerCase())
@@ -24,22 +64,26 @@ export function isPackageDay(day: string): boolean {
 export const packages: LandingPackage[] = [
   {
     name: 'Classic Full Package',
-    text: 'Our signature full-day ritual — arrive once, leave fully done.',
+    text: 'Our most booked visit — arrive once, leave with skin, body and makeup done.',
     price: 'From KES 12,000',
     badge: 'Most booked',
     featured: true,
+    daysLabel: 'Tue & Wed only',
+    ctaLabel: 'Book Package Day',
     includes: [
       'Deep cleansing facial',
       'Full body waxing',
-      '60-min massage',
+      '60-minute massage',
       'Event-ready makeup',
       'Private treatment room',
     ],
   },
   {
     name: 'Glow Package',
-    text: 'Brighten, shape and glam — perfect before an event.',
+    text: 'For events and photos — brighten skin, shape brows and finish with soft glam.',
     price: 'From KES 8,500',
+    daysLabel: 'Tue & Wed only',
+    ctaLabel: 'Book Package Day',
     includes: [
       'Brightening facial',
       'Brow shaping & wax',
@@ -49,8 +93,10 @@ export const packages: LandingPackage[] = [
   },
   {
     name: 'Relax Package',
-    text: 'Release tension and refresh — massage-led with express facial.',
+    text: 'When you need to switch off — massage-led with wax and an express facial.',
     price: 'From KES 7,000',
+    daysLabel: 'Tue & Wed only',
+    ctaLabel: 'Book Package Day',
     includes: [
       'Deep tissue massage',
       'Back & shoulder wax',
@@ -60,15 +106,64 @@ export const packages: LandingPackage[] = [
   },
 ]
 
+export const singleTreatments: LandingPackage[] = [
+  {
+    name: 'Facial',
+    text: '60 minutes tailored to your skin.',
+    price: 'From KES 2,500',
+    daysLabel: SINGLE_DAYS_LABEL,
+    ctaLabel: 'Book Facial',
+    includes: ['Skin consultation', 'Cleanse & exfoliation', 'Mask & moisturise'],
+  },
+  {
+    name: 'Massage',
+    text: 'Swedish or deep tissue — back, neck and shoulders.',
+    price: 'From KES 3,000',
+    daysLabel: SINGLE_DAYS_LABEL,
+    ctaLabel: 'Book Massage',
+    includes: ['30 or 60-minute session', 'Aromatherapy oils', 'Pressure to suit you'],
+  },
+  {
+    name: 'Waxing',
+    text: 'Face or body — hot wax, neat finish.',
+    price: 'From KES 1,200',
+    daysLabel: SINGLE_DAYS_LABEL,
+    ctaLabel: 'Book Waxing',
+    includes: ['Brows, underarms or legs', 'After-care advice', 'Sensitive-skin options'],
+  },
+  {
+    name: 'Makeup',
+    text: 'Everyday polish or full glam for your occasion.',
+    price: 'From KES 4,000',
+    daysLabel: SINGLE_DAYS_LABEL,
+    ctaLabel: 'Book Makeup',
+    includes: ['Skin prep', 'Lash-friendly products', 'Touch-up tips'],
+  },
+]
+
+export const bookingSteps = [
+  {
+    title: 'Book',
+    text: 'Choose your day online or call us. Full packages Tue & Wed; single treatments Mon and Thu–Sat.',
+  },
+  {
+    title: 'Arrive',
+    text: 'Come a few minutes early. Your therapist talks you through each step before starting.',
+  },
+  {
+    title: 'Leave refreshed',
+    text: 'Walk out with one treatment done — or the full package finished in a single visit.',
+  },
+]
+
 /** Reject copy that could break out of text nodes if ever user-sourced later. */
 export function assertSafeDisplayText(value: string): boolean {
   return !/[<>]/.test(value) && !/javascript:/i.test(value)
 }
 
-export function validateLandingPackages(list: LandingPackage[]): boolean {
+export function validateTreatmentCards(list: LandingPackage[]): boolean {
   return (
-    list.length >= 3 &&
-    list.some((p) => p.featured) &&
+    list.length >= 1 &&
     list.every(
       (p) =>
         p.includes.length >= 3 &&
@@ -76,5 +171,13 @@ export function validateLandingPackages(list: LandingPackage[]): boolean {
         assertSafeDisplayText(p.text) &&
         p.includes.every(assertSafeDisplayText),
     )
+  )
+}
+
+export function validateLandingPackages(list: LandingPackage[]): boolean {
+  return (
+    list.length >= 3 &&
+    list.some((p) => p.featured) &&
+    validateTreatmentCards(list)
   )
 }

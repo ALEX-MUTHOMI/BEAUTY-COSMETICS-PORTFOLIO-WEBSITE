@@ -18,11 +18,10 @@
           />
           <div class="hero__overlay" />
           <div class="hero__content" :class="{ 'hero__content--in': activeSlide === index && heroReady }">
-            <SheeLogo to="/" variant="hero" size="lg" class="hero__brand" />
             <p class="hero__eyebrow">{{ slide.eyebrow }}</p>
             <h1 class="hero__title">{{ slide.title }}</h1>
             <p v-if="slide.subtitle" class="hero__subtitle">{{ slide.subtitle }}</p>
-            <SiteButton to="/#packages" variant="primary">{{ slide.cta }}</SiteButton>
+            <SiteButton :to="slide.ctaTo" variant="primary">{{ slide.cta }}</SiteButton>
           </div>
         </article>
       </div>
@@ -55,27 +54,30 @@
             <p class="label">Get to know us</p>
             <h2>Welcome to Shee Aesthetics</h2>
             <p class="welcome__text">
-              Shee Aesthetics is a beauty therapy studio offering facials, waxing, massage, and makeup.
-              Appointments are private, therapists are trained, and every service is done in a clean treatment room.
+              A private beauty studio in Parklands. Facials, waxing, massage and makeup —
+              one calm room, trained therapists, and time for each client.
             </p>
             <div class="welcome__offers">
               <article class="welcome__offer welcome__offer--package">
-                <span class="welcome__offer-badge">Must book</span>
+                <span class="welcome__offer-badge">Tue &amp; Wed</span>
                 <img src="/images/icon-offer.png" alt="" width="46" height="46" />
                 <div>
-                  <h3>Tuesday &amp; Wednesday — Full Packages</h3>
-                  <p>Our two package-only days. Facial, waxing, massage and makeup in one visit. Slots are limited — book early.</p>
+                  <h3>Full Package Days</h3>
+                  <p>Facial, waxing, massage and makeup in one visit. Best if you want everything done before an event or a busy week.</p>
                 </div>
               </article>
               <article class="welcome__offer">
                 <img src="/images/icon-gift.png" alt="" width="48" height="48" />
                 <div>
                   <h3>Single Treatments</h3>
-                  <p>One service at a time on Mon, Thu, Fri and Sat when you only need a facial, wax, massage or makeup session.</p>
+                  <p>One service at a time on Mon, Thu, Fri and Sat — when you only need a facial, wax, massage or makeup session.</p>
                 </div>
               </article>
             </div>
-            <SiteButton to="/#packages" variant="primary">View Package Days</SiteButton>
+            <div class="welcome__actions">
+              <SiteButton to="/#packages" variant="primary">Full Packages</SiteButton>
+              <SiteButton to="/#singles" variant="outline">Single Treatments</SiteButton>
+            </div>
           </div>
         </ScrollReveal>
       </div>
@@ -116,7 +118,7 @@
         <ScrollReveal variant="left">
           <div class="more__copy">
             <p class="label">What else we do</p>
-            <h2>Get an Incredible Spa Experience at Shee Aesthetics</h2>
+            <h2>Your Spa Visit, Your Way</h2>
             <ul class="more__list">
               <li v-for="item in serviceList" :key="item">{{ item }}</li>
             </ul>
@@ -168,7 +170,7 @@
     <section class="package-days" aria-labelledby="package-days-heading">
       <ScrollReveal variant="fade">
         <div class="package-days__inner">
-          <p class="label">Limited — 2 days only</p>
+          <p class="label">Tuesday &amp; Wednesday</p>
           <h2 id="package-days-heading">{{ packageDayHeadline }}</h2>
           <p class="package-days__lead">{{ packageDaySubhead }}</p>
           <p class="package-days__urgency">{{ packageDayUrgency }}</p>
@@ -185,8 +187,8 @@
       <ScrollReveal variant="fade">
         <header class="section-head">
           <p class="label">Pricing Plans</p>
-          <h2>Choose Your Full Package — Tue &amp; Wed</h2>
-          <p class="section-head__sub">Every plan below is available on package days only. Pick the visit that matches your occasion.</p>
+          <h2>Full Packages — Tuesday &amp; Wednesday</h2>
+          <p class="section-head__sub">Three ways to spend your package day. Every option includes multiple treatments in one private visit.</p>
         </header>
       </ScrollReveal>
       <div class="packages__grid">
@@ -203,6 +205,36 @@
             :includes="pkg.includes"
             :featured="pkg.featured"
             :badge="pkg.badge"
+            :days-label="pkg.daysLabel"
+            :cta-label="pkg.ctaLabel"
+          />
+        </ScrollReveal>
+      </div>
+    </section>
+
+    <!-- Single treatments -->
+    <section id="singles" class="packages packages--singles">
+      <ScrollReveal variant="fade">
+        <header class="section-head">
+          <p class="label">Single Treatments</p>
+          <h2>Book One Service at a Time</h2>
+          <p class="section-head__sub">Available Monday and Thursday through Saturday. Pick the treatment you need today.</p>
+        </header>
+      </ScrollReveal>
+      <div class="packages__grid packages__grid--singles">
+        <ScrollReveal
+          v-for="(treatment, index) in singleTreatments"
+          :key="treatment.name"
+          variant="up"
+          :delay="index * 80"
+        >
+          <MellisPackageCard
+            :name="treatment.name"
+            :text="treatment.text"
+            :price="treatment.price"
+            :includes="treatment.includes"
+            :days-label="treatment.daysLabel"
+            :cta-label="treatment.ctaLabel"
           />
         </ScrollReveal>
       </div>
@@ -337,37 +369,17 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   PACKAGE_DAYS,
+  bookingSteps,
+  heroSlides,
   packageDayHeadline,
   packageDaySubhead,
   packageDayUrgency,
   packages,
+  singleTreatments,
 } from '@/landing/landingContent'
 
 const packageDays = PACKAGE_DAYS
-
-const heroSlides = [
-  {
-    image: '/images/hero-1.jpg',
-    eyebrow: 'Tue & Wed — full packages only',
-    title: 'Your Full Glow Day',
-    subtitle: 'Facial, waxing, massage and makeup in one private visit.',
-    cta: 'Book Package Day',
-  },
-  {
-    image: '/images/hero-2.jpg',
-    eyebrow: 'Shee Aesthetics',
-    title: 'Spa Beauty',
-    subtitle: 'Reserved treatment rooms. Trained therapists. No rush.',
-    cta: 'See Packages',
-  },
-  {
-    image: '/images/hero-3.jpg',
-    eyebrow: 'Limited weekly slots',
-    title: 'Treat Yourself',
-    subtitle: 'Package days fill fast — secure Tuesday or Wednesday early.',
-    cta: 'Reserve Now',
-  },
-]
+const steps = bookingSteps
 
 const activeSlide = ref(0)
 const heroReady = ref(true)
@@ -444,12 +456,6 @@ const stats = [
   { value: '4', label: 'Core Services', icon: '/images/icon-counter-2.png' },
   { value: '500+', label: 'Happy Clients', icon: '/images/icon-counter-3.png' },
   { value: '6', label: 'Days Open Weekly', icon: '/images/icon-counter-4.png' },
-]
-
-const steps = [
-  { title: 'Book', text: 'Choose Tuesday or Wednesday and pick your full package online or by phone.' },
-  { title: 'Treatment', text: 'Arrive a few minutes early. Your therapist walks you through each step in your private room.' },
-  { title: 'Done', text: 'Leave with facials, waxing, massage and makeup complete — ready for your week or event.' },
 ]
 
 const reviews = [
@@ -617,11 +623,6 @@ useHead({
   transform: translateY(0);
 }
 
-.hero__brand {
-  margin-bottom: 1rem;
-  animation: hero-float 4s ease-in-out infinite;
-}
-
 .hero__eyebrow {
   margin: 0 0 0.5rem;
   font: 600 0.85rem var(--font-body);
@@ -677,16 +678,6 @@ useHead({
 .hero__pager-dot--active {
   background: var(--color-rose) !important;
   border-color: var(--color-rose) !important;
-}
-
-@keyframes hero-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
 }
 
 /* Welcome */
@@ -815,6 +806,13 @@ useHead({
   margin: 0;
   font: 400 0.88rem/1.55 var(--font-body);
   color: var(--color-muted);
+}
+
+.welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.25rem;
 }
 
 /* Services */
@@ -1122,6 +1120,14 @@ useHead({
   padding-top: 0.5rem;
 }
 
+.packages--singles {
+  background: var(--color-cream);
+}
+
+.packages__grid--singles {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 /* Reviews */
 .reviews {
   padding: clamp(4rem, 8vh, 6rem) 1.5rem;
@@ -1403,6 +1409,7 @@ useHead({
 /* Responsive */
 @media (max-width: 1024px) {
   .services__grid { grid-template-columns: repeat(2, 1fr); }
+  .packages__grid--singles { grid-template-columns: repeat(2, 1fr); }
   .gallery__grid { grid-template-columns: repeat(3, 1fr); }
 }
 
@@ -1416,6 +1423,7 @@ useHead({
 
   .services__grid,
   .packages__grid,
+  .packages__grid--singles,
   .reviews__grid,
   .blog__grid,
   .steps__grid { grid-template-columns: 1fr; }
@@ -1429,7 +1437,6 @@ useHead({
   .hero__slide,
   .hero__bg,
   .hero__content,
-  .hero__brand,
   .cta__photo img,
   .service-card,
   .stat-card,
