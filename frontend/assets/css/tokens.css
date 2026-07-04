@@ -1,0 +1,57 @@
+/* Mellis theme tokens — Shee Aesthetics public site */
+
+@import '@fontsource/manrope/400.css';
+@import '@fontsource/manrope/500.css';
+@import '@fontsource/manrope/600.css';
+@import '@fontsource/manrope/700.css';
+
+@import '@fontsource/parisienne/400.css';
+
+@import '@fontsource/libre-baskerville/400.css';
+@import '@fontsource/libre-baskerville/700.css';
+
+:root {
+  --color-ink: #27272a;
+  --color-deep: #3d3a42;
+  --color-muted: #89858d;
+  --color-cream: #fcf5f5;
+  --color-paper: #ffffff;
+  --color-rose: #de968d;
+  --color-rose-dark: #c97f76;
+  --color-rose-soft: #f5e8e6;
+  --color-line: rgba(39, 37, 42, 0.1);
+  --color-footer: #27252a;
+  --color-overlay: rgba(39, 37, 42, 0.55);
+
+  --color-bg: var(--color-paper);
+  --color-surface: var(--color-paper);
+  --color-text: var(--color-ink);
+  --color-text-muted: var(--color-muted);
+  --color-accent: var(--color-rose);
+  --color-accent-strong: var(--color-rose-dark);
+  --color-sand: var(--color-cream);
+  --color-sage: var(--color-rose);
+  --color-sage-soft: var(--color-rose-soft);
+  --color-clay: var(--color-rose);
+
+  --font-script: 'Parisienne', cursive;
+  --font-display: 'Libre Baskerville', Georgia, serif;
+  --font-body: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2.5rem;
+  --space-xl: 4rem;
+  --space-2xl: 6rem;
+
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-pill: 0;
+
+  --shadow-card: 0 0 40px rgba(39, 37, 42, 0.06);
+  --ease-story: cubic-bezier(0.22, 1, 0.36, 1);
+  --container: min(1170px, 100% - 3rem);
+}

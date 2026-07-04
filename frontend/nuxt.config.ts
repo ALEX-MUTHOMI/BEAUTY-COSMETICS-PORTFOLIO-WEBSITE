@@ -5,6 +5,9 @@ export default defineNuxtConfig({
   // Enforce Server-Side Rendering (SSR) for optimal SEO crawlability and index ranking
   ssr: true,
 
+  // Mellis theme design tokens shared across the public site
+  css: ['~/assets/css/tokens.css'],
+
   // Runtime environment configuration parameters
   runtimeConfig: {
     // Keys exposed only on the server-side context
@@ -71,12 +74,16 @@ export default defineNuxtConfig({
   // Global application header and metadata registrations
   app: {
     head: {
-      title: 'AestheticOS | Spa & Beauty Booking Platform',
+      title: 'Shee Aesthetics | Facials, Waxing, Massage & Makeup',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'Discover premium cosmetics and secure instant aesthetic bookings with Safaricom M-Pesa express integration.' }
-      ]
+        {
+          name: 'description',
+          content:
+            'Shee Aesthetics — facials, waxing, massage and makeup. Full packages Tue & Wed. Single treatments Mon, Thu–Sat.',
+        },
+      ],
       // Turnstile's challenge script is injected once by the `turnstile.addScript`
       // option above. A second manual <script> tag here previously duplicated
       // that load on every page.

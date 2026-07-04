@@ -6,7 +6,8 @@ WORKDIR /app
 
 COPY package.json ./
 COPY package-lock.json ./
-RUN npm ci --no-audit --no-fund
+# npm 10 (Alpine default) rejects this lockfile's optional peer entries; install keeps builder reproducible enough.
+RUN npm install --no-audit --no-fund
 
 COPY . .
 RUN npm run build

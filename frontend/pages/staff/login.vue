@@ -12,6 +12,8 @@
 <script setup lang="ts">
 import StaffLoginPanel from '../../src/staff/StaffLoginPanel.vue'
 
+definePageMeta({ layout: false })
+
 const runtimeConfig = useRuntimeConfig()
 const router = useRouter()
 const csrfToken = useCookie<string>('csrftoken', {

@@ -14,6 +14,7 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ layout: false })
 useHead({ title: 'Reset Staff Password | AestheticOS Portal', meta: [{ name: 'robots', content: 'noindex,nofollow' }] })
 </script>
 

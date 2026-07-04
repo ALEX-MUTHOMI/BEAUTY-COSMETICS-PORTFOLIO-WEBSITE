@@ -1,12 +1,15 @@
 <template>
-  <NuxtPage />
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>
 
 <style>
-:root {
-  color: #24170f;
-  background: #f7eadb;
-  font-family: "Fraunces", Georgia, serif;
+html {
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-family: var(--font-body);
+  scroll-behavior: smooth;
 }
 
 body {
@@ -15,5 +18,18 @@ body {
 
 * {
   box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+a {
+  color: inherit;
 }
 </style>
