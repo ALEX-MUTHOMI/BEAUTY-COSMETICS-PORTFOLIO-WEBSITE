@@ -1,12 +1,14 @@
 <template>
   <NuxtLink :to="to" class="shee-logo" :class="logoClasses" aria-label="Shee Aesthetics home">
-    <img
-      src="/images/logo-mark.png"
-      alt=""
-      class="shee-logo__mark"
-      :width="markSize"
-      :height="markSize"
-    />
+    <span class="shee-logo__mark-wrap" aria-hidden="true">
+      <img
+        src="/images/logo-mark.png"
+        alt=""
+        class="shee-logo__mark"
+        :width="markSize"
+        :height="markSize"
+      />
+    </span>
     <span class="shee-logo__text">
       <span class="shee-logo__name">Shee</span>
       <span class="shee-logo__tag">Aesthetics</span>
@@ -26,7 +28,7 @@ const props = withDefaults(
   { to: '/', variant: 'default', size: 'md' },
 )
 
-const markSize = computed(() => (props.size === 'lg' ? 64 : 54))
+const markSize = computed(() => (props.size === 'lg' ? 34 : 30))
 
 const logoClasses = computed(() => [
   props.variant !== 'default' ? `shee-logo--${props.variant}` : '',
@@ -38,14 +40,38 @@ const logoClasses = computed(() => [
 .shee-logo {
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.85rem;
   text-decoration: none;
   color: var(--color-ink);
+  flex-shrink: 0;
+}
+
+.shee-logo__mark-wrap {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--color-rose);
+  box-shadow: 0 4px 14px rgba(222, 150, 141, 0.35);
 }
 
 .shee-logo__mark {
-  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.shee-logo--lg .shee-logo__mark-wrap {
+  width: 64px;
+  height: 64px;
+}
+
+.shee-logo--lg .shee-logo__mark {
+  width: 36px;
+  height: 36px;
 }
 
 .shee-logo__text {
@@ -91,7 +117,10 @@ const logoClasses = computed(() => [
   color: rgba(255, 255, 255, 0.78);
 }
 
-.shee-logo--hero .shee-logo__mark {
-  filter: brightness(0) invert(1);
+.shee-logo--light .shee-logo__mark-wrap,
+.shee-logo--hero .shee-logo__mark-wrap {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: none;
 }
 </style>

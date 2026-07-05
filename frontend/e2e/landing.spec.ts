@@ -33,6 +33,7 @@ test.describe('Shee Aesthetics landing page', () => {
     // Brand lockup: logo mark beside wordmark (header instance)
     const logoLink = page.getByRole('banner').getByRole('link', { name: /Shee Aesthetics home/i })
     await expect(logoLink).toBeVisible()
+    await expect(logoLink.locator('.shee-logo__mark-wrap')).toBeVisible()
     await expect(logoLink.locator('img.shee-logo__mark')).toBeVisible()
     await expect(logoLink.locator('.shee-logo__name')).toHaveText('Shee')
 

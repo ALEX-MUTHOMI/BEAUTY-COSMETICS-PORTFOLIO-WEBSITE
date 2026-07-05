@@ -45,7 +45,7 @@
         <ScrollReveal variant="left" class="welcome__media-wrap" immediate>
           <div class="welcome__media">
             <div class="welcome__accent" aria-hidden="true" />
-            <img src="/images/welcome.jpg" alt="Client receiving a facial treatment" class="welcome__photo" loading="lazy" />
+            <img src="/images/welcome.jpg" alt="Skincare products arranged in the treatment room" class="welcome__photo" loading="lazy" />
             <img src="/images/flower.png" alt="" class="welcome__flower" aria-hidden="true" loading="lazy" />
           </div>
         </ScrollReveal>
@@ -180,7 +180,7 @@
             <div class="review-card__stars" aria-label="5 out of 5 stars">★★★★★</div>
             <p>{{ review.text }}</p>
             <footer>
-              <img :src="review.photo" :alt="review.name" class="review-card__photo" loading="lazy" />
+              <span class="review-card__avatar" aria-hidden="true">{{ review.initials }}</span>
               <div>
                 <cite>{{ review.name }}</cite>
                 <span>Customer</span>
@@ -431,18 +431,18 @@ const stats = [
 const reviews = [
   {
     name: 'Wanjiku M.',
+    initials: 'WM',
     text: 'I come every month for a facial. My skin has improved and the room is always clean and quiet.',
-    photo: '/images/testimonial-1.jpg',
   },
   {
     name: 'Sharon O.',
+    initials: 'SO',
     text: 'Had my makeup done for a wedding. It stayed on all day and looked good in every photo.',
-    photo: '/images/testimonial-2.jpg',
   },
   {
     name: 'Diana K.',
+    initials: 'DK',
     text: 'The Saturday massage is something I look forward to each week. Easy to book and always on time.',
-    photo: '/images/testimonial-3.jpg',
   },
 ]
 
@@ -973,11 +973,17 @@ useHead({
   gap: 0.85rem;
 }
 
-.review-card__photo {
+.review-card__avatar {
+  display: grid;
+  place-items: center;
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  object-fit: cover;
+  background: var(--color-rose);
+  color: #fff;
+  font: 600 0.8rem var(--font-body);
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
 }
 
 .review-card cite {
