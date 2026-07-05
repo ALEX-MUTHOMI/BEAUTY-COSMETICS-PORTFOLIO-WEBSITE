@@ -4,8 +4,8 @@
       <div class="site-footer__brand">
         <SheeLogo variant="light" to="/" />
         <p class="site-footer__address">
-          Ring Road Parklands<br />
-          Nairobi, Kenya
+          {{ LANDING_ADDRESS_LINES[0] }}<br />
+          {{ LANDING_ADDRESS_LINES[1] }}
         </p>
       </div>
 
@@ -14,7 +14,7 @@
         <NuxtLink to="/#welcome">About</NuxtLink>
         <NuxtLink to="/#services">Our Services</NuxtLink>
         <NuxtLink to="/#packages">Packages</NuxtLink>
-        <NuxtLink to="/book">Book Now</NuxtLink>
+        <NuxtLink to="/book">{{ LANDING_PRIMARY_CTA }}</NuxtLink>
       </div>
 
       <div class="site-footer__col">
@@ -31,7 +31,7 @@
         <p class="site-footer__heading">Booking</p>
         <p class="site-footer__note">Appointments are confirmed after online payment only. No phone bookings.</p>
         <a href="mailto:bookings@sheeaesthetics.co.ke">bookings@sheeaesthetics.co.ke</a>
-        <NuxtLink to="/book">Book Now</NuxtLink>
+        <NuxtLink to="/book">{{ LANDING_PRIMARY_CTA }}</NuxtLink>
         <NuxtLink to="/staff/login">Staff login</NuxtLink>
       </div>
     </div>
@@ -39,15 +39,17 @@
     <div class="site-footer__bottom">
       <p>&copy; {{ year }} Shee Aesthetics. All rights reserved.</p>
       <div class="site-footer__legal">
-        <a href="#">Terms of Use</a>
+        <a href="/privacy">Privacy Policy</a>
         <span>/</span>
-        <a href="#">Privacy Policy</a>
+        <a href="/terms">Terms of Use</a>
       </div>
     </div>
   </footer>
 </template>
 
 <script setup lang="ts">
+import { LANDING_ADDRESS_LINES, LANDING_PRIMARY_CTA } from '@/landing/landingContent'
+
 const year = new Date().getFullYear()
 </script>
 

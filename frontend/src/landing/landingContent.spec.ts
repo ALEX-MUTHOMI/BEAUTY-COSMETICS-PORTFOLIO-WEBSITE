@@ -29,24 +29,28 @@ describe('landingContent', () => {
     expect(packageDayUrgency).not.toMatch(/experience|journey|unlock/i)
   })
 
-  it('defines Mellis flow steps with circle images', () => {
+  it('defines booking flow steps with circle images', () => {
     expect(flowSteps).toHaveLength(3)
-    expect(flowSteps[0]?.title).toBe('Meeting')
-    expect(flowSteps[1]?.title).toBe('Treatment')
-    expect(flowSteps[2]?.title).toBe('Finalizing')
+    expect(flowSteps[0]?.title).toBe('Choose online')
+    expect(flowSteps[1]?.title).toBe('Your treatment')
+    expect(flowSteps[2]?.title).toBe('Leave glowing')
     flowSteps.forEach((step) => {
       expect(step.image).toMatch(/^\/images\/step-/)
       expect(step.num).toMatch(/^\d{2}$/)
     })
   })
 
-  it('maps hero slides to spa, massage, and makeup imagery', () => {
+  it('maps hero slides to spa, massage, and makeup with accessible alt text', () => {
     expect(heroSlides[0]?.image).toBe('/images/hero-1.jpg')
     expect(heroSlides[1]?.image).toBe('/images/hero-2.jpg')
     expect(heroSlides[2]?.image).toBe('/images/hero-3.jpg')
     expect(heroSlides[0]?.title).toBe('Spa Beauty')
     expect(heroSlides[1]?.title).toBe('Massage')
     expect(heroSlides[2]?.title).toBe('Makeup')
+    heroSlides.forEach((slide) => {
+      expect(slide.alt.length).toBeGreaterThan(10)
+      expect(slide.ctaTo).toBe('/book')
+    })
   })
 
   it('defines Mellis-style packages with feature lists and a featured plan', () => {

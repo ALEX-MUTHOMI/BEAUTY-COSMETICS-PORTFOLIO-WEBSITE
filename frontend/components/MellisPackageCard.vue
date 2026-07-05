@@ -18,6 +18,8 @@
 </template>
 
 <script setup lang="ts">
+import { LANDING_PRIMARY_CTA } from '@/landing/landingContent'
+
 withDefaults(
   defineProps<{
     name: string
@@ -32,7 +34,7 @@ withDefaults(
   }>(),
   {
     daysLabel: 'Tue & Wed only',
-    ctaLabel: 'Book Now',
+    ctaLabel: LANDING_PRIMARY_CTA,
     ctaTo: '/book',
   },
 )
@@ -46,11 +48,14 @@ withDefaults(
   align-items: center;
   text-align: center;
   height: 100%;
-  padding: 2rem 1.35rem 1.85rem;
+  width: 100%;
+  min-width: 0;
+  padding: 2rem 1.25rem 1.75rem;
   background: #fff;
   border: 1px solid var(--color-line);
   border-top: 3px solid var(--color-rose);
   box-shadow: var(--shadow-card);
+  overflow: visible;
   transition:
     transform 0.4s var(--ease-story),
     box-shadow 0.4s var(--ease-story),
@@ -77,6 +82,45 @@ withDefaults(
   background: var(--color-cream);
   border-top-width: 4px;
   box-shadow: 0 18px 42px rgba(222, 150, 141, 0.18);
+  margin-top: 0.75rem;
+}
+
+.mellis-card :deep(.site-btn) {
+  width: 100%;
+  max-width: 14rem;
+}
+
+@media (max-width: 767px) {
+  .mellis-card {
+    padding: 2.15rem 1.15rem 1.65rem;
+  }
+
+  .mellis-card--featured {
+    padding-top: 2.35rem;
+  }
+
+  .mellis-card__title {
+    font-size: 1.2rem;
+  }
+
+  .mellis-card__price {
+    font-size: 1.5rem;
+  }
+
+  .mellis-card__text {
+    max-width: none;
+    font-size: 0.88rem;
+  }
+
+  .mellis-card__includes li {
+    font-size: 0.84rem;
+    padding-left: 1.35rem;
+  }
+
+  .mellis-card :deep(.site-btn) {
+    max-width: none;
+    margin-top: auto;
+  }
 }
 
 @media (min-width: 768px) {

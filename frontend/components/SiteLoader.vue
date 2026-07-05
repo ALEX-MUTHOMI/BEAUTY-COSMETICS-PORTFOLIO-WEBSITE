@@ -28,7 +28,7 @@ const props = withDefaults(
     assets?: string[]
   }>(),
   {
-    minDuration: 2400,
+    minDuration: 450,
     assets: () => ['/images/hero-1.jpg', '/images/logo-mark.png'],
   },
 )
@@ -39,7 +39,7 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-function preload(src: string, timeoutMs = 4000): Promise<void> {
+function preload(src: string, timeoutMs = 1800): Promise<void> {
   return Promise.race([
     new Promise<void>((resolve) => {
       const img = new Image()
@@ -55,7 +55,7 @@ function preload(src: string, timeoutMs = 4000): Promise<void> {
 
 onMounted(() => {
   const started = Date.now()
-  const maxWait = props.minDuration + 1500
+  const maxWait = props.minDuration + 900
 
   const dismiss = () => {
     visible.value = false
@@ -135,8 +135,8 @@ onMounted(() => {
 
 .loader-fade-leave-active {
   transition:
-    opacity 0.65s var(--ease-story, ease),
-    visibility 0.65s;
+    opacity 0.3s var(--ease-story, ease),
+    visibility 0.3s;
 }
 
 .loader-fade-leave-to {

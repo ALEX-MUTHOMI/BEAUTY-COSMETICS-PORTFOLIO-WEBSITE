@@ -6,30 +6,27 @@ $outDir = Join-Path $PSScriptRoot '..\public\images' | Resolve-Path
 $headers = @{ 'User-Agent' = 'SheeAesthetics-ImageSync/2.0' }
 
 $images = @{
-  # Hero carousel: 1=spa room, 2=massage, 3=makeup model
-  'hero-1.jpg'          = 'https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=1920'
+  # Hero carousel: 1=spa room, 2=massage, 3=makeup application
+  'hero-1.jpg'          = 'https://images.pexels.com/photos/3997999/pexels-photo-3997999.jpeg?auto=compress&cs=tinysrgb&w=1920'
   'hero-2.jpg'          = 'https://images.pexels.com/photos/3757942/pexels-photo-3757942.jpeg?auto=compress&cs=tinysrgb&w=1920'
-  'hero-3.jpg'          = 'https://images.pexels.com/photos/3373719/pexels-photo-3373719.jpeg?auto=compress&cs=tinysrgb&w=1920'
-  # Welcome mirror — warm spa candles & stones
+  'hero-3.jpg'          = 'https://images.pexels.com/photos/2533266/pexels-photo-2533266.jpeg?auto=compress&cs=tinysrgb&w=1920'
   'welcome.jpg'         = 'https://images.pexels.com/photos/3997999/pexels-photo-3997999.jpeg?auto=compress&cs=tinysrgb&w=800'
   'more-bg.jpg'         = 'https://images.pexels.com/photos/3757952/pexels-photo-3757952.jpeg?auto=compress&cs=tinysrgb&w=1920'
-  'step-meeting.jpg'    = 'https://images.pexels.com/photos/3847656/pexels-photo-3847656.jpeg?auto=compress&cs=tinysrgb&w=600'
+  # Steps: consultation, treatment, glowing finish
+  'step-meeting.jpg'    = 'https://images.pexels.com/photos/6476582/pexels-photo-6476582.jpeg?auto=compress&cs=tinysrgb&w=600'
   'step-treatment.jpg'  = 'https://images.pexels.com/photos/3757942/pexels-photo-3757942.jpeg?auto=compress&cs=tinysrgb&w=600'
-  'step-finalizing.jpg' = 'https://images.pexels.com/photos/3997999/pexels-photo-3997999.jpeg?auto=compress&cs=tinysrgb&w=600'
+  'step-finalizing.jpg' = 'https://images.pexels.com/photos/3018845/pexels-photo-3018845.jpeg?auto=compress&cs=tinysrgb&w=600'
   'service-facial.jpg'  = 'https://images.pexels.com/photos/3018845/pexels-photo-3018845.jpeg?auto=compress&cs=tinysrgb&w=800'
   'service-massage.jpg' = 'https://images.pexels.com/photos/3757942/pexels-photo-3757942.jpeg?auto=compress&cs=tinysrgb&w=800'
   'service-waxing.jpg'  = 'https://images.pexels.com/photos/3992209/pexels-photo-3992209.jpeg?auto=compress&cs=tinysrgb&w=800'
-  'service-makeup.jpg'  = 'https://images.pexels.com/photos/3373719/pexels-photo-3373719.jpeg?auto=compress&cs=tinysrgb&w=800'
-  'cta-bg.jpg'          = 'https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=1920'
-  'gallery-1.jpg'       = 'https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=800'
+  'service-makeup.jpg'  = 'https://images.pexels.com/photos/2533266/pexels-photo-2533266.jpeg?auto=compress&cs=tinysrgb&w=800'
+  'cta-bg.jpg'          = 'https://images.pexels.com/photos/3997999/pexels-photo-3997999.jpeg?auto=compress&cs=tinysrgb&w=1920'
+  'gallery-1.jpg'       = 'https://images.pexels.com/photos/3997999/pexels-photo-3997999.jpeg?auto=compress&cs=tinysrgb&w=800'
   'gallery-2.jpg'       = 'https://images.pexels.com/photos/3757942/pexels-photo-3757942.jpeg?auto=compress&cs=tinysrgb&w=800'
-  'gallery-3.jpg'       = 'https://images.pexels.com/photos/3373719/pexels-photo-3373719.jpeg?auto=compress&cs=tinysrgb&w=800'
+  'gallery-3.jpg'       = 'https://images.pexels.com/photos/2533266/pexels-photo-2533266.jpeg?auto=compress&cs=tinysrgb&w=800'
   'gallery-4.jpg'       = 'https://images.pexels.com/photos/3757952/pexels-photo-3757952.jpeg?auto=compress&cs=tinysrgb&w=800'
-  'gallery-5.jpg'       = 'https://images.pexels.com/photos/3997999/pexels-photo-3997999.jpeg?auto=compress&cs=tinysrgb&w=800'
-  'gallery-6.jpg'       = 'https://images.pexels.com/photos/3018845/pexels-photo-3018845.jpeg?auto=compress&cs=tinysrgb&w=800'
-  'blog-1.jpg'          = 'https://images.pexels.com/photos/3018845/pexels-photo-3018845.jpeg?auto=compress&cs=tinysrgb&w=900'
-  'blog-2.jpg'          = 'https://images.pexels.com/photos/3373719/pexels-photo-3373719.jpeg?auto=compress&cs=tinysrgb&w=900'
-  'blog-3.jpg'          = 'https://images.pexels.com/photos/3757942/pexels-photo-3757942.jpeg?auto=compress&cs=tinysrgb&w=900'
+  'gallery-5.jpg'       = 'https://images.pexels.com/photos/3018845/pexels-photo-3018845.jpeg?auto=compress&cs=tinysrgb&w=800'
+  'gallery-6.jpg'       = 'https://images.pexels.com/photos/3992877/pexels-photo-3992877.jpeg?auto=compress&cs=tinysrgb&w=800'
 }
 
 $ok = 0

@@ -12,7 +12,6 @@ test.describe('Shee Aesthetics landing page', () => {
 
     await page.goto(BASE_URL, { waitUntil: 'networkidle' })
 
-    // Vue must hydrate — Nuxt bootstrap present
     const hydrated = await page.evaluate(() => {
       return {
         hasNuxt: typeof window.__NUXT__ !== 'undefined',
@@ -22,31 +21,26 @@ test.describe('Shee Aesthetics landing page', () => {
     expect(hydrated.hasNuxt, 'window.__NUXT__ missing — inline bootstrap blocked').toBe(true)
     expect(hydrated.vueApp, 'Vue app not mounted — client bundle failed').toBe(true)
 
-    // Loader must not block the page indefinitely
-    await expect(page.locator('.site-loader')).toHaveCount(0, { timeout: 8000 })
+    await expect(page.locator('.site-loader')).toHaveCount(0, { timeout: 5000 })
 
-    // Core Mellis sections visible
     await expect(page.getByRole('heading', { name: 'Spa Beauty', level: 1 })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Welcome to Shee Aesthetics', level: 2 })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Your hour to unwind', level: 2 })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible()
 
-    // Brand lockup: logo mark beside wordmark (header instance)
     const logoLink = page.getByRole('banner').getByRole('link', { name: /Shee Aesthetics home/i })
     await expect(logoLink).toBeVisible()
     await expect(logoLink.locator('.shee-logo__mark-wrap')).toBeVisible()
     await expect(logoLink.locator('img.shee-logo__mark')).toBeVisible()
     await expect(logoLink.locator('.shee-logo__name')).toHaveText('Shee')
 
-    // Mellis flow + package cards at bottom
-    await expect(page.getByRole('heading', { name: 'Meeting', level: 3 })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'What We\'re Offering', level: 2 })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Choose online', level: 3 })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Facials, waxing, massage/i, level: 2 })).toBeVisible()
 
     await page.locator('#packages').scrollIntoViewIfNeeded()
-    await expect(page.getByRole('heading', { name: /Full Packages, Tuesday/i })).toBeVisible()
-    await expect(page.getByRole('heading', { name: /Book One Service at a Time/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Full visits, Tuesday/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /One service at a time/i })).toBeVisible()
     await expect(page.locator('.mellis-card__badge', { hasText: 'Most booked' })).toBeVisible()
 
-    // No CSP violations in console
     const cspViolations = consoleErrors.filter((e) =>
       /content security policy|refused to execute|refused to load/i.test(e),
     )
@@ -57,9 +51,9 @@ test.describe('Shee Aesthetics landing page', () => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto(BASE_URL, { waitUntil: 'networkidle' })
 
-    await expect(page.locator('.site-loader')).toHaveCount(0, { timeout: 8000 })
+    await expect(page.locator('.site-loader')).toHaveCount(0, { timeout: 5000 })
     await expect(page.locator('.mobile-book-bar')).toBeVisible()
-    await expect(page.locator('.mobile-book-bar').getByRole('link', { name: /Book Now/i })).toBeVisible()
+    await expect(page.locator('.mobile-book-bar').getByRole('link', { name: /Book your visit/i })).toBeVisible()
 
     const servicesGrid = page.locator('.services__grid')
     await servicesGrid.scrollIntoViewIfNeeded()

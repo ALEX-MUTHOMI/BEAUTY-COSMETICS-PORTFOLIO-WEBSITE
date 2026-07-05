@@ -11,6 +11,7 @@ export interface LandingPackage {
 
 export interface HeroSlide {
   image: string
+  alt: string
   eyebrow: string
   title: string
   subtitle?: string
@@ -25,56 +26,65 @@ export interface FlowStep {
   image: string
 }
 
+export const LANDING_PRIMARY_CTA = 'Book your visit'
+
+export const LANDING_INSTAGRAM_URL = 'https://www.instagram.com/shee_aesthetics/'
+
+export const LANDING_LOCATION_LABEL = 'Meru Town, Meru County'
+
+export const LANDING_ADDRESS_LINES = ['Meru Town', 'Meru County, Kenya'] as const
+
 export const PACKAGE_DAYS = ['Tuesday', 'Wednesday'] as const
 
 export const SINGLE_DAYS_LABEL = 'Mon · Thu – Sat'
 
-/** Mellis Home 01 hero — script headline, eyebrow, Discover More */
 export const heroSlides: HeroSlide[] = [
   {
     image: '/images/hero-1.jpg',
-    eyebrow: 'Ideal place to unwind',
+    alt: 'Spa treatment room with warm candlelight and towels',
+    eyebrow: LANDING_LOCATION_LABEL,
     title: 'Spa Beauty',
-    subtitle: 'Private treatment rooms in Parklands',
-    cta: 'Discover More',
-    ctaTo: '/#welcome',
+    subtitle: 'Private rooms for facials, waxing, massage and makeup',
+    cta: LANDING_PRIMARY_CTA,
+    ctaTo: '/book',
   },
   {
     image: '/images/hero-2.jpg',
-    eyebrow: 'Ideal place to unwind',
+    alt: 'Therapist performing a relaxing back massage',
+    eyebrow: 'Unwind properly',
     title: 'Massage',
-    subtitle: 'Swedish and deep tissue to release tension',
-    cta: 'Discover More',
-    ctaTo: '/#services',
+    subtitle: 'Swedish and deep tissue for back, neck and shoulders',
+    cta: LANDING_PRIMARY_CTA,
+    ctaTo: '/book',
   },
   {
     image: '/images/hero-3.jpg',
-    eyebrow: 'Ideal place to unwind',
+    alt: 'Makeup artist applying lipstick during a glam session',
+    eyebrow: 'Look your best',
     title: 'Makeup',
-    subtitle: 'Everyday glam and full event makeup',
-    cta: 'Discover More',
-    ctaTo: '/#singles',
+    subtitle: 'Everyday polish and full glam for events',
+    cta: LANDING_PRIMARY_CTA,
+    ctaTo: '/book',
   },
 ]
 
-/** Mellis flow copy — short paragraphs under each step */
 export const flowSteps: FlowStep[] = [
   {
     num: '01',
-    title: 'Meeting',
-    text: 'Choose your date and treatments online, then pay by M-Pesa to lock in your slot.',
+    title: 'Choose online',
+    text: 'Pick your date, package or single treatment, and complete checkout to hold your slot.',
     image: '/images/step-meeting.jpg',
   },
   {
     num: '02',
-    title: 'Treatment',
-    text: 'Arrive a few minutes early. Your therapist explains each step before your facial, wax, massage or makeup.',
+    title: 'Your treatment',
+    text: 'Arrive a few minutes early. Your therapist walks you through each step in a private room.',
     image: '/images/step-treatment.jpg',
   },
   {
     num: '03',
-    title: 'Finalizing',
-    text: 'Your appointment is confirmed once payment is received. Receipt is sent to your email.',
+    title: 'Leave glowing',
+    text: 'Your booking is confirmed once payment clears. A receipt lands in your inbox.',
     image: '/images/step-finalizing.jpg',
   },
 ]
@@ -99,7 +109,7 @@ export const packages: LandingPackage[] = [
     badge: 'Most booked',
     featured: true,
     daysLabel: 'Tue & Wed only',
-    ctaLabel: 'Book Now',
+    ctaLabel: LANDING_PRIMARY_CTA,
     includes: [
       'Deep cleansing facial',
       'Full body waxing',
@@ -113,7 +123,7 @@ export const packages: LandingPackage[] = [
     text: 'For events and photos. Brighten skin, shape brows and finish with soft glam.',
     price: 'From KES 8,500',
     daysLabel: 'Tue & Wed only',
-    ctaLabel: 'Book Now',
+    ctaLabel: LANDING_PRIMARY_CTA,
     includes: [
       'Brightening facial',
       'Brow shaping & wax',
@@ -126,7 +136,7 @@ export const packages: LandingPackage[] = [
     text: 'When you need to switch off. Massage-led with wax and an express facial.',
     price: 'From KES 7,000',
     daysLabel: 'Tue & Wed only',
-    ctaLabel: 'Book Now',
+    ctaLabel: LANDING_PRIMARY_CTA,
     includes: [
       'Deep tissue massage',
       'Back & shoulder wax',
@@ -142,7 +152,7 @@ export const singleTreatments: LandingPackage[] = [
     text: '60 minutes tailored to your skin.',
     price: 'From KES 2,500',
     daysLabel: SINGLE_DAYS_LABEL,
-    ctaLabel: 'Book Now',
+    ctaLabel: LANDING_PRIMARY_CTA,
     includes: ['Skin consultation', 'Cleanse & exfoliation', 'Mask & moisturise'],
   },
   {
@@ -150,7 +160,7 @@ export const singleTreatments: LandingPackage[] = [
     text: 'Swedish or deep tissue. Back, neck and shoulders.',
     price: 'From KES 3,000',
     daysLabel: SINGLE_DAYS_LABEL,
-    ctaLabel: 'Book Now',
+    ctaLabel: LANDING_PRIMARY_CTA,
     includes: ['30 or 60-minute session', 'Aromatherapy oils', 'Pressure to suit you'],
   },
   {
@@ -158,7 +168,7 @@ export const singleTreatments: LandingPackage[] = [
     text: 'Face or body. Hot wax, neat finish.',
     price: 'From KES 1,200',
     daysLabel: SINGLE_DAYS_LABEL,
-    ctaLabel: 'Book Now',
+    ctaLabel: LANDING_PRIMARY_CTA,
     includes: ['Brows, underarms or legs', 'After-care advice', 'Sensitive-skin options'],
   },
   {
@@ -166,7 +176,7 @@ export const singleTreatments: LandingPackage[] = [
     text: 'Everyday polish or full glam for your occasion.',
     price: 'From KES 4,000',
     daysLabel: SINGLE_DAYS_LABEL,
-    ctaLabel: 'Book Now',
+    ctaLabel: LANDING_PRIMARY_CTA,
     includes: ['Skin prep', 'Lash-friendly products', 'Touch-up tips'],
   },
 ]

@@ -1,5 +1,5 @@
 <template>
-  <header class="site-header">
+  <header class="site-header" :class="{ 'site-header--menu-open': menuOpen }">
     <div class="site-header__top">
       <div class="site-header__top-inner">
         <div class="site-header__contact">
@@ -7,9 +7,9 @@
           <NuxtLink to="/book" class="site-header__policy">Pay online to book</NuxtLink>
         </div>
         <div class="site-header__social" aria-label="Social links">
-          <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm10 2H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-5 3.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11zm0 2a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm5.75-3.25a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5z"/></svg></a>
-          <a href="#" aria-label="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 9V7.5c0-.83.67-1.5 1.5-1.5H16V3h-2.5C11.57 3 10 4.57 10 6.5V9H8v3h2v9h3v-9h2.5l.5-3H13z"/></svg></a>
-          <a href="#" aria-label="Pinterest"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-3.17 17.45c-.08-.72-.15-1.83.03-2.62.17-.72 1.1-4.57 1.1-4.57s-.28-.56-.28-1.39c0-1.3.75-2.27 1.69-2.27.8 0 1.18.6 1.18 1.32 0 .8-.51 2-.78 3.11-.22.93.47 1.69 1.39 1.69 1.67 0 2.95-1.76 2.95-4.3 0-2.25-1.62-3.82-3.93-3.82-2.68 0-4.25 2.01-4.25 4.09 0 .81.31 1.68.7 2.15a.3.3 0 0 1 .07.28l-.27 1.08c-.04.18-.14.22-.33.13-1.24-.58-2.02-2.4-2.02-3.87 0-3.15 2.29-6.04 6.61-6.04 3.47 0 6.17 2.47 6.17 5.77 0 3.45-2.17 6.22-5.19 6.22-1.01 0-1.97-.53-2.3-1.15l-.63 2.4c-.23.88-.85 1.98-1.27 2.65A9 9 0 1 0 12 3z"/></svg></a>
+          <a :href="LANDING_INSTAGRAM_URL" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm10 2H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-5 3.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11zm0 2a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm5.75-3.25a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5z"/></svg>
+          </a>
         </div>
       </div>
     </div>
@@ -28,38 +28,78 @@
         </nav>
 
         <div class="site-header__actions">
-          <SiteButton to="/book" variant="primary">Book Now</SiteButton>
+          <SiteButton to="/book" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
         </div>
 
         <button
           class="site-header__menu-toggle"
           type="button"
+          :class="{ 'site-header__menu-toggle--open': menuOpen }"
           :aria-expanded="menuOpen"
           aria-controls="site-header-mobile-nav"
-          aria-label="Toggle menu"
+          :aria-label="menuOpen ? 'Close menu' : 'Open menu'"
           @click="menuOpen = !menuOpen"
         >
-          <span /><span /><span />
+          <span class="site-header__menu-line" />
+          <span class="site-header__menu-line" />
+          <span class="site-header__menu-line" />
         </button>
       </div>
     </div>
 
-    <div v-if="menuOpen" id="site-header-mobile-nav" class="site-header__mobile-nav">
-      <NuxtLink to="/" @click="menuOpen = false">Home</NuxtLink>
-      <NuxtLink to="/#services" @click="menuOpen = false">Our Services</NuxtLink>
-      <NuxtLink to="/#packages" @click="menuOpen = false">Packages</NuxtLink>
-      <NuxtLink to="/#singles" @click="menuOpen = false">Singles</NuxtLink>
-      <NuxtLink to="/#gallery" @click="menuOpen = false">Gallery</NuxtLink>
-      <NuxtLink to="/#contact" @click="menuOpen = false">Contact</NuxtLink>
-      <SiteButton to="/book" variant="primary">Book Now</SiteButton>
-    </div>
+    <Teleport to="body">
+      <Transition name="menu-fade">
+        <div
+          v-if="menuOpen"
+          class="site-header__backdrop"
+          aria-hidden="true"
+          @click="menuOpen = false"
+        />
+      </Transition>
+      <Transition name="menu-slide">
+        <nav
+          v-if="menuOpen"
+          id="site-header-mobile-nav"
+          class="site-header__drawer"
+          aria-label="Mobile"
+        >
+          <p class="site-header__drawer-label">{{ LANDING_LOCATION_LABEL }}</p>
+          <NuxtLink to="/" @click="closeMenu">Home</NuxtLink>
+          <NuxtLink to="/#services" @click="closeMenu">Services</NuxtLink>
+          <NuxtLink to="/#packages" @click="closeMenu">Packages</NuxtLink>
+          <NuxtLink to="/#singles" @click="closeMenu">Singles</NuxtLink>
+          <NuxtLink to="/#gallery" @click="closeMenu">Gallery</NuxtLink>
+          <NuxtLink to="/#contact" @click="closeMenu">Contact</NuxtLink>
+          <SiteButton to="/book" variant="primary" class="site-header__drawer-cta" @click="closeMenu">
+            {{ LANDING_PRIMARY_CTA }}
+          </SiteButton>
+        </nav>
+      </Transition>
+    </Teleport>
   </header>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onUnmounted, ref, watch } from 'vue'
+import {
+  LANDING_INSTAGRAM_URL,
+  LANDING_LOCATION_LABEL,
+  LANDING_PRIMARY_CTA,
+} from '@/landing/landingContent'
 
 const menuOpen = ref(false)
+
+function closeMenu() {
+  menuOpen.value = false
+}
+
+watch(menuOpen, (open) => {
+  document.body.style.overflow = open ? 'hidden' : ''
+})
+
+onUnmounted(() => {
+  document.body.style.overflow = ''
+})
 </script>
 
 <style scoped>
@@ -68,6 +108,10 @@ const menuOpen = ref(false)
   top: 0;
   z-index: 50;
   background: var(--color-paper);
+}
+
+.site-header--menu-open {
+  z-index: 60;
 }
 
 .site-header__top {
@@ -126,7 +170,7 @@ const menuOpen = ref(false)
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.85rem 1rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--color-line);
 }
 
@@ -160,37 +204,120 @@ const menuOpen = ref(false)
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   gap: 5px;
-  background: none;
-  border: none;
+  margin-left: auto;
   min-width: 44px;
   min-height: 44px;
-  padding: 0.4rem;
+  padding: 0.5rem;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-cream);
   cursor: pointer;
-  margin-left: auto;
   -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color 0.25s,
+    background-color 0.25s;
 }
 
-.site-header__menu-toggle span {
-  width: 24px;
+.site-header__menu-toggle--open {
+  border-color: var(--color-rose-soft);
+  background: #fff;
+}
+
+.site-header__menu-line {
+  display: block;
+  width: 18px;
   height: 2px;
+  border-radius: 1px;
   background: var(--color-ink);
+  transition:
+    transform 0.3s var(--ease-story),
+    opacity 0.3s var(--ease-story),
+    width 0.3s var(--ease-story);
 }
 
-.site-header__mobile-nav {
+.site-header__menu-toggle--open .site-header__menu-line:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.site-header__menu-toggle--open .site-header__menu-line:nth-child(2) {
+  opacity: 0;
+  width: 0;
+}
+
+.site-header__menu-toggle--open .site-header__menu-line:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.site-header__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: rgba(39, 37, 42, 0.35);
+  backdrop-filter: blur(2px);
+}
+
+.site-header__drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 56;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-  padding: 0 1rem 1.25rem;
-  border-bottom: 1px solid var(--color-line);
+  gap: 0;
+  width: min(18rem, 86vw);
+  height: 100dvh;
+  padding: calc(4.75rem + env(safe-area-inset-top, 0px)) 1.5rem 1.5rem;
+  background: var(--color-paper);
+  border-left: 1px solid var(--color-line);
+  box-shadow: -12px 0 40px rgba(39, 37, 42, 0.1);
 }
 
-.site-header__mobile-nav a {
-  text-decoration: none;
-  font: 600 0.8rem var(--font-body);
-  letter-spacing: 0.12em;
+.site-header__drawer-label {
+  margin: 0 0 1.25rem;
+  font: 600 0.68rem var(--font-body);
+  letter-spacing: 0.18em;
   text-transform: uppercase;
+  color: var(--color-rose);
+}
+
+.site-header__drawer a {
+  padding: 0.85rem 0;
+  border-bottom: 1px solid rgba(39, 37, 42, 0.06);
+  text-decoration: none;
+  font: 500 0.95rem var(--font-body);
   color: var(--color-ink);
+  transition: color 0.2s;
+}
+
+.site-header__drawer a:hover {
+  color: var(--color-rose);
+}
+
+.site-header__drawer-cta {
+  width: 100%;
+  margin-top: auto;
+}
+
+.menu-fade-enter-active,
+.menu-fade-leave-active {
+  transition: opacity 0.28s ease;
+}
+
+.menu-fade-enter-from,
+.menu-fade-leave-to {
+  opacity: 0;
+}
+
+.menu-slide-enter-active,
+.menu-slide-leave-active {
+  transition: transform 0.32s var(--ease-story);
+}
+
+.menu-slide-enter-from,
+.menu-slide-leave-to {
+  transform: translateX(100%);
 }
 
 @media (min-width: 960px) {
@@ -198,12 +325,21 @@ const menuOpen = ref(false)
   .site-header__nav,
   .site-header__actions { display: flex; }
   .site-header__menu-toggle { display: none; }
-  .site-header__mobile-nav { display: none; }
 }
 
 @media (max-width: 959px) {
   .site-header__top { display: none; }
   .site-header__nav,
   .site-header__actions { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header__menu-line,
+  .menu-fade-enter-active,
+  .menu-fade-leave-active,
+  .menu-slide-enter-active,
+  .menu-slide-leave-active {
+    transition: none;
+  }
 }
 </style>

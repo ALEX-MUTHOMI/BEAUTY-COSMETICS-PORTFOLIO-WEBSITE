@@ -8,11 +8,13 @@
     </div>
     <h3 class="mellis-service__title">{{ name }}</h3>
     <p class="mellis-service__text">{{ text }}</p>
-    <SiteButton to="/book" variant="text">Book Now</SiteButton>
+    <SiteButton to="/book" variant="text">{{ LANDING_PRIMARY_CTA }}</SiteButton>
   </article>
 </template>
 
 <script setup lang="ts">
+import { LANDING_PRIMARY_CTA } from '@/landing/landingContent'
+
 defineProps<{
   name: string
   text: string

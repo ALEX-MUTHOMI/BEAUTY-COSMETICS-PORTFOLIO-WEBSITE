@@ -6,13 +6,13 @@
     <SiteFooter />
 
     <aside class="mobile-book-bar" aria-label="Quick booking">
-      <SiteButton to="/book" variant="primary" class="mobile-book-bar__cta">Book Now</SiteButton>
+      <SiteButton to="/book" variant="primary" class="mobile-book-bar__cta">{{ LANDING_PRIMARY_CTA }}</SiteButton>
     </aside>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { LANDING_PRIMARY_CTA } from '@/landing/landingContent'
 
 useHead({
   htmlAttrs: {
@@ -21,15 +21,6 @@ useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
   ],
-})
-
-onMounted(() => {
-  document.documentElement.classList.add('site-motion')
-
-  setTimeout(() => {
-    document.documentElement.classList.add('site-ready')
-    document.documentElement.classList.remove('is-loading')
-  }, 5000)
 })
 </script>
 

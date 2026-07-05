@@ -11,7 +11,7 @@
         >
           <img
             :src="slide.image"
-            alt=""
+            :alt="slide.alt"
             class="hero__bg"
             :class="{ 'hero__bg--zoom': activeSlide === index }"
             fetchpriority="high"
@@ -25,16 +25,16 @@
           </div>
         </article>
       </div>
-      <ol class="hero__pager">
+      <ol class="hero__pager" aria-label="Hero slides">
         <li v-for="(_, index) in heroSlides" :key="index">
           <button
             type="button"
+            class="hero__pager-dot"
             :class="{ 'hero__pager-dot--active': activeSlide === index }"
             :aria-label="`Go to slide ${index + 1}`"
+            :aria-current="activeSlide === index ? 'true' : undefined"
             @click="goToSlide(index)"
-          >
-            {{ index + 1 }}
-          </button>
+          />
         </li>
       </ol>
     </section>
@@ -52,31 +52,31 @@
         </ScrollReveal>
         <ScrollReveal variant="right" :delay="120" immediate>
           <div class="welcome__copy">
-            <p class="label">Get to know us</p>
-            <h2>Welcome to Shee Aesthetics</h2>
+            <p class="label">{{ LANDING_LOCATION_LABEL }}</p>
+            <h2>Your hour to unwind</h2>
             <p class="welcome__text">
-              Shee Aesthetics is a beauty therapy studio offering facials, waxing, massage, and makeup.
-              Book online and pay by M-Pesa to confirm. We do not take appointments by phone.
+              A private studio for facials, waxing, massage and makeup. Soft light, clean rooms,
+              and therapists who take their time with every client.
             </p>
             <div class="welcome__offers">
               <NuxtLink to="/#packages" class="welcome__offer-btn">
                 <img src="/images/icon-offer.png" alt="" width="46" height="46" />
                 <div>
-                  <h3>Special Offer</h3>
-                  <p>Full packages on Tuesday and Wednesday. Facial, waxing, massage and makeup in one visit.</p>
-                  <span class="welcome__offer-action">View packages</span>
+                  <h3>Full glow days</h3>
+                  <p>Tuesday and Wednesday. Facial, waxing, massage and makeup in one relaxed visit.</p>
+                  <span class="welcome__offer-action">See packages</span>
                 </div>
               </NuxtLink>
               <NuxtLink to="/#singles" class="welcome__offer-btn">
                 <img src="/images/icon-gift.png" alt="" width="48" height="48" />
                 <div>
-                  <h3>Single Treatments</h3>
-                  <p>Book one service on Mon, Thu, Fri and Sat when you only need a single session.</p>
-                  <span class="welcome__offer-action">View singles</span>
+                  <h3>Single sessions</h3>
+                  <p>Monday and Thursday through Saturday when you only need one treatment today.</p>
+                  <span class="welcome__offer-action">See singles</span>
                 </div>
               </NuxtLink>
             </div>
-            <SiteButton to="/#services" variant="primary">Discover More</SiteButton>
+            <SiteButton to="/book" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
           </div>
         </ScrollReveal>
       </div>
@@ -86,8 +86,8 @@
     <section id="services" class="services">
       <ScrollReveal variant="fade" immediate>
         <header class="section-head">
-          <p class="label">Our Treatments</p>
-          <h2>What We're Offering</h2>
+          <p class="label">Our treatments</p>
+          <h2>Facials, waxing, massage &amp; makeup</h2>
         </header>
       </ScrollReveal>
       <div class="services__grid">
@@ -111,9 +111,9 @@
     <section id="packages" class="packages">
       <ScrollReveal variant="fade">
         <header class="section-head">
-          <p class="label">Pricing Plans</p>
-          <h2>Full Packages, Tuesday &amp; Wednesday</h2>
-          <p class="section-head__sub">Package days only. Facial, waxing, massage and makeup in one private visit.</p>
+          <p class="label">Package days</p>
+          <h2>Full visits, Tuesday &amp; Wednesday</h2>
+          <p class="section-head__sub">One private room. Every treatment done while you unwind.</p>
         </header>
       </ScrollReveal>
       <div class="packages__grid">
@@ -141,9 +141,9 @@
     <section id="singles" class="packages packages--singles">
       <ScrollReveal variant="fade">
         <header class="section-head">
-          <p class="label">Single Treatments</p>
-          <h2>Book One Service at a Time</h2>
-          <p class="section-head__sub">Mon, Thu–Sat. Pick a facial, wax, massage or makeup when you only need one.</p>
+          <p class="label">Single treatments</p>
+          <h2>One service at a time</h2>
+          <p class="section-head__sub">Mon, Thu–Sat. Pick a facial, wax, massage or makeup when that is all you need.</p>
         </header>
       </ScrollReveal>
       <div class="packages__grid packages__grid--singles">
@@ -169,8 +169,8 @@
     <section class="steps">
       <ScrollReveal variant="fade">
         <header class="section-head">
-          <p class="label">3 easy steps</p>
-          <h2>How It Works?</h2>
+          <p class="label">How booking works</p>
+          <h2>Three simple steps</h2>
         </header>
       </ScrollReveal>
       <div class="steps__flow">
@@ -199,13 +199,13 @@
       <div class="more__inner">
         <ScrollReveal variant="left">
           <div class="more__panel">
-            <p class="label">What else we do</p>
-            <h2>Get an Incredible Spa Experience at Shee Aesthetics</h2>
+            <p class="label">The studio</p>
+            <h2>Everything you need in one calm visit</h2>
             <ul class="more__list">
               <li v-for="item in serviceList" :key="item">{{ item }}</li>
             </ul>
-            <SiteButton to="/book" variant="primary" class="more__cta">Just Book</SiteButton>
-            <p class="more__hint">Prices are listed above. You pay at checkout to confirm.</p>
+            <SiteButton to="/book" variant="primary" class="more__cta">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+            <p class="more__hint">Prices are listed above. Pay at checkout to confirm your slot.</p>
           </div>
         </ScrollReveal>
         <div class="more__stats">
@@ -229,9 +229,9 @@
     <section class="reviews">
       <ScrollReveal variant="fade">
         <header class="section-head">
-          <p class="label">Customer Reviews</p>
-          <h2>What They're Talking About Shee Aesthetics</h2>
-          <p class="section-head__sub">Feedback from clients who book facials, waxing, massage and makeup with us.</p>
+          <p class="label">Client stories</p>
+          <h2>What our clients say</h2>
+          <p class="section-head__sub">Visits from Meru Town and across the county. Facials, waxing, massage and makeup.</p>
         </header>
       </ScrollReveal>
       <div class="reviews__grid">
@@ -261,7 +261,7 @@
     <section id="gallery" class="gallery">
       <ScrollReveal variant="fade">
         <header class="section-head section-head--light">
-          <p class="label">Follow us on Instagram</p>
+          <p class="label">On Instagram</p>
           <h2>@shee_aesthetics</h2>
         </header>
       </ScrollReveal>
@@ -272,7 +272,13 @@
           variant="scale"
           :delay="index * 60"
         >
-          <a href="#" class="gallery__item">
+          <a
+            :href="LANDING_INSTAGRAM_URL"
+            class="gallery__item"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="View on Instagram"
+          >
             <img :src="img" alt="Shee Aesthetics studio photo" loading="lazy" />
           </a>
         </ScrollReveal>
@@ -288,8 +294,8 @@
       <div class="cta__inner">
         <ScrollReveal variant="left">
           <div class="cta__book">
-            <h2>Our Spa Center is the True Splendor</h2>
-            <SiteButton to="/book" variant="primary">Book Now</SiteButton>
+            <h2>Ready when you are</h2>
+            <SiteButton to="/book" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
           </div>
         </ScrollReveal>
         <ScrollReveal variant="right" :delay="120">
@@ -318,35 +324,6 @@
         </ScrollReveal>
       </div>
     </section>
-
-    <!-- Blog -->
-    <section class="blog">
-      <ScrollReveal variant="fade">
-        <header class="section-head">
-          <p class="label">Blog Posts</p>
-          <h2>Latest News &amp; Articles</h2>
-        </header>
-      </ScrollReveal>
-      <div class="blog__grid">
-        <ScrollReveal
-          v-for="(post, index) in blogPosts"
-          :key="post.title"
-          variant="up"
-          :delay="index * 90"
-        >
-          <article class="blog-card">
-            <a href="#" class="blog-card__image">
-              <img :src="post.image" :alt="post.title" loading="lazy" />
-            </a>
-            <div class="blog-card__body">
-              <h3><a href="#">{{ post.title }}</a></h3>
-              <p>{{ post.excerpt }}</p>
-              <a href="#" class="blog-card__link">Read More</a>
-            </div>
-          </article>
-        </ScrollReveal>
-      </div>
-    </section>
   </main>
 </template>
 
@@ -355,6 +332,9 @@ import { onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   flowSteps,
   heroSlides,
+  LANDING_INSTAGRAM_URL,
+  LANDING_LOCATION_LABEL,
+  LANDING_PRIMARY_CTA,
   packages,
   singleTreatments,
 } from '@/landing/landingContent'
@@ -447,10 +427,10 @@ const serviceList = [
 ]
 
 const stats = [
-  { value: '5+', label: 'Years Experience', icon: '/images/icon-counter-1.png' },
-  { value: '4', label: 'Core Services', icon: '/images/icon-counter-2.png' },
-  { value: '500+', label: 'Happy Clients', icon: '/images/icon-counter-3.png' },
-  { value: '6', label: 'Days Open Weekly', icon: '/images/icon-counter-4.png' },
+  { value: '4', label: 'Treatments in one studio', icon: '/images/icon-counter-2.png' },
+  { value: '2', label: 'Days for full packages', icon: '/images/icon-counter-4.png' },
+  { value: '6', label: 'Days open weekly', icon: '/images/icon-counter-1.png' },
+  { value: 'M-Pesa', label: 'Pay at checkout', icon: '/images/icon-counter-3.png' },
 ]
 
 const reviews = [
@@ -480,24 +460,6 @@ const galleryImages = [
   '/images/gallery-6.jpg',
 ]
 
-const blogPosts = [
-  {
-    title: 'How to prepare for your first facial',
-    excerpt: 'What to do before your appointment and what to expect during a 60-minute facial.',
-    image: '/images/blog-1.jpg',
-  },
-  {
-    title: '5 tips for long-lasting event makeup',
-    excerpt: 'Simple steps to keep your makeup fresh from morning through to the end of the night.',
-    image: '/images/blog-2.jpg',
-  },
-  {
-    title: 'Why we only do full packages on Tue & Wed',
-    excerpt: 'How blocking two days for packages gives every client enough time and attention.',
-    image: '/images/blog-3.jpg',
-  },
-]
-
 definePageMeta({ layout: 'landing' })
 
 useHead({
@@ -505,7 +467,7 @@ useHead({
   meta: [
     {
       name: 'description',
-      content: 'Shee Aesthetics. Facials, waxing, massage and makeup. Full packages Tue and Wed. Single treatments Mon, Thu to Sat.',
+      content: 'Beauty studio in Meru Town. Facials, waxing, massage and makeup. Full packages Tue and Wed. Singles Mon, Thu to Sat.',
     },
   ],
 })
@@ -553,13 +515,27 @@ useHead({
   color: #fff;
 }
 
-/* Hero — mobile-first */
+/* Hero — mobile-first, edge-to-edge */
 .hero {
   position: relative;
-  height: min(72svh, 520px);
-  min-height: 420px;
+  width: 100%;
+  height: min(88svh, 680px);
+  min-height: 460px;
   overflow: hidden;
   touch-action: pan-y;
+  background: var(--color-ink);
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(3rem, 12vw, 5rem);
+  background: linear-gradient(to bottom, transparent, var(--color-paper));
+  z-index: 2;
+  pointer-events: none;
 }
 
 .hero__track {
@@ -596,22 +572,23 @@ useHead({
 .hero__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(39, 37, 42, 0.35), rgba(39, 37, 42, 0.55));
+  background:
+    linear-gradient(180deg, rgba(39, 37, 42, 0.42) 0%, rgba(39, 37, 42, 0.28) 45%, rgba(39, 37, 42, 0.62) 100%);
 }
 
 .hero__content {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   text-align: center;
-  padding: 1.5rem 1.25rem 3.5rem;
+  padding: 1.5rem 1.25rem clamp(3.5rem, 10vw, 4.5rem);
   color: #fff;
   opacity: 0;
-  transform: translateY(24px);
+  transform: translateY(16px);
   transition:
     opacity 0.9s var(--ease-story) 0.15s,
     transform 0.9s var(--ease-story) 0.15s;
@@ -647,42 +624,58 @@ useHead({
 
 .hero__pager {
   position: absolute;
-  bottom: 2rem;
+  bottom: clamp(1.25rem, 4vw, 2rem);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.45rem;
   list-style: none;
   margin: 0;
-  padding: 0;
-  z-index: 3;
+  padding: 0.35rem 0.65rem;
+  z-index: 4;
+  border-radius: 999px;
+  background: rgba(39, 37, 42, 0.22);
+  backdrop-filter: blur(6px);
 }
 
-.hero__pager button {
-  width: 44px;
-  height: 44px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  background: transparent;
-  color: #fff;
-  font: 600 0.8rem var(--font-body);
+.hero__pager-dot {
+  display: block;
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.3s, border-color 0.3s, transform 0.3s;
+  transition:
+    width 0.35s var(--ease-story),
+    background-color 0.35s var(--ease-story),
+    transform 0.35s var(--ease-story);
 }
 
-.hero__pager button:hover {
-  transform: translateY(-2px);
-  border-color: #fff;
+.hero__pager-dot:hover {
+  transform: scale(1.15);
+  background: rgba(255, 255, 255, 0.75);
 }
 
 .hero__pager-dot--active {
+  width: 1.35rem;
   background: var(--color-rose) !important;
-  border-color: var(--color-rose) !important;
 }
 
 /* Welcome — mobile-first single column */
 .welcome {
   padding: clamp(3rem, 8vh, 6.5rem) 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 767px) {
+  .welcome {
+    padding-top: clamp(1.75rem, 5vh, 2.5rem);
+  }
 }
 
 .welcome__inner {
@@ -948,7 +941,7 @@ useHead({
 
 .stat-card__num {
   display: block;
-  font: 700 2.5rem/1 var(--font-display);
+  font: 700 clamp(1.35rem, 4vw, 2.25rem)/1.1 var(--font-display);
   color: var(--color-ink);
 }
 
@@ -992,9 +985,13 @@ useHead({
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.25rem;
+  gap: 1.5rem;
   align-items: stretch;
-  padding-top: 0.5rem;
+  padding-top: 1.25rem;
+}
+
+.packages__grid > * {
+  min-width: 0;
 }
 
 .packages--singles {
@@ -1003,6 +1000,11 @@ useHead({
 
 .packages__grid--singles {
   grid-template-columns: 1fr;
+  padding-top: 1.25rem;
+}
+
+.packages__grid--singles > * {
+  min-width: 0;
 }
 
 /* Reviews */
@@ -1194,85 +1196,6 @@ useHead({
   }
 }
 
-/* Blog */
-.blog {
-  padding: clamp(2.5rem, 7vh, 5rem) 1rem clamp(2rem, 4vh, 3rem);
-}
-
-.blog__grid {
-  width: var(--container);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.25rem;
-}
-
-.blog-card {
-  height: 100%;
-  transition: transform 0.4s var(--ease-story);
-}
-
-.blog-card:hover {
-  transform: translateY(-6px);
-}
-
-.blog-card__image {
-  display: block;
-  overflow: hidden;
-}
-
-.blog-card__image img {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.55s var(--ease-story);
-}
-
-.blog-card:hover .blog-card__image img {
-  transform: scale(1.06);
-}
-
-.blog-card__body {
-  padding: 1.5rem 0 0;
-}
-
-.blog-card h3 {
-  margin: 0 0 0.75rem;
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-  font-weight: 700;
-}
-
-.blog-card h3 a {
-  text-decoration: none;
-  color: var(--color-ink);
-  transition: color 0.25s;
-}
-
-.blog-card h3 a:hover {
-  color: var(--color-rose);
-}
-
-.blog-card p {
-  margin: 0 0 1rem;
-  font: 400 0.9rem/1.65 var(--font-body);
-  color: var(--color-muted);
-}
-
-.blog-card__link {
-  font: 600 0.78rem var(--font-body);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-decoration: none;
-  color: var(--color-rose);
-  transition: letter-spacing 0.25s;
-}
-
-.blog-card__link:hover {
-  letter-spacing: 0.16em;
-}
-
 /* Tablet and up — progressive enhancement */
 @media (min-width: 640px) {
   .welcome__offers {
@@ -1297,6 +1220,7 @@ useHead({
   }
 
   .hero__content {
+    justify-content: center;
     padding: 2rem 1.5rem 4rem;
   }
 
@@ -1341,7 +1265,6 @@ useHead({
 
   .packages__grid,
   .packages__grid--singles {
-    grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
   }
 
@@ -1352,11 +1275,6 @@ useHead({
 
   .review-card {
     padding: 2rem 1.75rem;
-  }
-
-  .blog__grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
   }
 
   .more__inner {
@@ -1427,10 +1345,6 @@ useHead({
   .gallery__grid {
     grid-template-columns: repeat(6, 1fr);
   }
-
-  .blog__grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1440,8 +1354,7 @@ useHead({
   .cta__photo img,
   .stat-card,
   .package-card,
-  .review-card,
-  .blog-card {
+  .review-card {
     animation: none !important;
     transition: none !important;
   }
