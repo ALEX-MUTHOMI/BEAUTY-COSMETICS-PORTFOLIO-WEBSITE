@@ -23,6 +23,7 @@ export default defineNuxtConfig({
     // Keys exposed on both client and server contexts
     public: {
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://sheeaesthetics.co.ke',
       staffAppleEnabled: process.env.NUXT_PUBLIC_STAFF_APPLE_ENABLED === 'true',
       staffGoogleEnabled: process.env.NUXT_PUBLIC_STAFF_GOOGLE_ENABLED === 'true',
       turnstileSiteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY || '1x0000000000000000000000000000000AA',

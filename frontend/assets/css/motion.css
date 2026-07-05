@@ -9,10 +9,9 @@ html.site-motion .reveal {
   opacity: 0;
   transform: translateY(28px);
   transition:
-    opacity 0.75s var(--ease-story, cubic-bezier(0.22, 1, 0.36, 1)),
-    transform 0.75s var(--ease-story, cubic-bezier(0.22, 1, 0.36, 1));
+    opacity 0.45s var(--ease-story, cubic-bezier(0.22, 1, 0.36, 1)),
+    transform 0.45s var(--ease-story, cubic-bezier(0.22, 1, 0.36, 1));
   transition-delay: var(--reveal-delay, 0ms);
-  will-change: opacity, transform;
 }
 
 html.site-motion .reveal--visible {

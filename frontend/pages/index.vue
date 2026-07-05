@@ -10,10 +10,15 @@
           :class="{ 'hero__slide--active': activeSlide === index }"
         >
           <img
+            v-if="heroLoadedSlides.has(index)"
             :src="slide.image"
             :alt="slide.alt"
             class="hero__bg"
-            fetchpriority="high"
+            :loading="index === 0 ? 'eager' : 'lazy'"
+            :fetchpriority="index === 0 ? 'high' : 'auto'"
+            decoding="async"
+            width="1400"
+            height="788"
           />
           <div class="hero__overlay" />
         </article>
@@ -39,18 +44,17 @@
     </section>
 
     <!-- Welcome -->
-    <section id="welcome" class="welcome">
+    <section id="welcome" class="welcome home-section">
       <div class="welcome__inner">
-        <ScrollReveal variant="left" class="welcome__media-wrap" immediate>
+        <div class="welcome__media-wrap">
           <div class="welcome__media">
             <div class="welcome__mirror" aria-hidden="true">
-              <img src="/images/welcome.jpg" alt="Spa treatment room with candles and warm lighting" class="welcome__photo" loading="lazy" />
+              <img src="/images/welcome.jpg" alt="Spa treatment room with candles and warm lighting" class="welcome__photo" loading="lazy" decoding="async" width="800" height="800" />
             </div>
-            <img src="/images/flower.png" alt="" class="welcome__flower" aria-hidden="true" loading="lazy" />
+            <img src="/images/flower.png" alt="" class="welcome__flower" aria-hidden="true" loading="lazy" decoding="async" width="100" height="100" />
           </div>
-        </ScrollReveal>
-        <ScrollReveal variant="right" :delay="120" immediate>
-          <div class="welcome__copy">
+        </div>
+        <div class="welcome__copy">
             <p class="label">{{ LANDING_LOCATION_LABEL }}</p>
             <h2>Your hour to unwind</h2>
             <p class="welcome__text">
@@ -77,127 +81,97 @@
             </div>
             <SiteButton to="/book" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
           </div>
-        </ScrollReveal>
       </div>
     </section>
 
     <!-- Services -->
-    <section id="services" class="services">
-      <ScrollReveal variant="fade" immediate>
-        <header class="section-head">
-          <p class="label">Our treatments</p>
-          <h2>Facials, waxing, massage &amp; makeup</h2>
-        </header>
-      </ScrollReveal>
+    <section id="services" class="services home-section">
+      <header class="section-head">
+        <p class="label">Our treatments</p>
+        <h2>Facials, waxing, massage &amp; makeup</h2>
+      </header>
       <div class="services__grid">
-        <ScrollReveal
-          v-for="(service, index) in services"
+        <MellisServiceCard
+          v-for="service in services"
           :key="service.name"
-          variant="up"
-          :delay="index * 90"
-        >
-          <MellisServiceCard
-            :name="service.name"
-            :text="service.text"
-            :image="service.image"
-            :icon="service.icon"
-          />
-        </ScrollReveal>
+          :name="service.name"
+          :text="service.text"
+          :image="service.image"
+          :icon="service.icon"
+        />
       </div>
     </section>
 
     <!-- Full packages — after services for mobile booking flow -->
-    <section id="packages" class="packages">
-      <ScrollReveal variant="fade">
-        <header class="section-head">
-          <p class="label">Package days</p>
-          <h2>Full visits, Tuesday &amp; Wednesday</h2>
-          <p class="section-head__sub">One private room. Every treatment done while you unwind.</p>
-        </header>
-      </ScrollReveal>
+    <section id="packages" class="packages home-section">
+      <header class="section-head">
+        <p class="label">Package days</p>
+        <h2>Full visits, Tuesday &amp; Wednesday</h2>
+        <p class="section-head__sub">One private room. Every treatment done while you unwind.</p>
+      </header>
       <div class="packages__grid">
-        <ScrollReveal
-          v-for="(pkg, index) in packages"
+        <MellisPackageCard
+          v-for="pkg in packages"
           :key="pkg.name"
-          variant="up"
-          :delay="index * 90"
-        >
-          <MellisPackageCard
-            :name="pkg.name"
-            :text="pkg.text"
-            :price="pkg.price"
-            :includes="pkg.includes"
-            :featured="pkg.featured"
-            :badge="pkg.badge"
-            :days-label="pkg.daysLabel"
-            :cta-label="pkg.ctaLabel"
-          />
-        </ScrollReveal>
+          :name="pkg.name"
+          :text="pkg.text"
+          :price="pkg.price"
+          :includes="pkg.includes"
+          :featured="pkg.featured"
+          :badge="pkg.badge"
+          :days-label="pkg.daysLabel"
+          :cta-label="pkg.ctaLabel"
+        />
       </div>
     </section>
 
     <!-- Single treatments -->
-    <section id="singles" class="packages packages--singles">
-      <ScrollReveal variant="fade">
-        <header class="section-head">
-          <p class="label">Single treatments</p>
-          <h2>One service at a time</h2>
-          <p class="section-head__sub">Mon, Thu–Sat. Pick a facial, wax, massage or makeup when that is all you need.</p>
-        </header>
-      </ScrollReveal>
+    <section id="singles" class="packages packages--singles home-section">
+      <header class="section-head">
+        <p class="label">Single treatments</p>
+        <h2>One service at a time</h2>
+        <p class="section-head__sub">Mon, Thu–Sat. Pick a facial, wax, massage or makeup when that is all you need.</p>
+      </header>
       <div class="packages__grid packages__grid--singles">
-        <ScrollReveal
-          v-for="(treatment, index) in singleTreatments"
+        <MellisPackageCard
+          v-for="treatment in singleTreatments"
           :key="treatment.name"
-          variant="up"
-          :delay="index * 80"
-        >
-          <MellisPackageCard
-            :name="treatment.name"
-            :text="treatment.text"
-            :price="treatment.price"
-            :includes="treatment.includes"
-            :days-label="treatment.daysLabel"
-            :cta-label="treatment.ctaLabel"
-          />
-        </ScrollReveal>
+          :name="treatment.name"
+          :text="treatment.text"
+          :price="treatment.price"
+          :includes="treatment.includes"
+          :days-label="treatment.daysLabel"
+          :cta-label="treatment.ctaLabel"
+        />
       </div>
     </section>
 
     <!-- How it works — Mellis flow -->
-    <section class="steps">
-      <ScrollReveal variant="fade">
-        <header class="section-head">
-          <p class="label">How booking works</p>
-          <h2>Three simple steps</h2>
-        </header>
-      </ScrollReveal>
+    <section class="steps home-section">
+      <header class="section-head">
+        <p class="label">How booking works</p>
+        <h2>Three simple steps</h2>
+      </header>
       <div class="steps__flow">
-        <ScrollReveal
-          v-for="(step, index) in flowSteps"
+        <MellisFlowStep
+          v-for="step in flowSteps"
           :key="step.title"
-          variant="up"
-          :delay="index * 100"
-        >
-          <MellisFlowStep
-            :num="step.num"
-            :title="step.title"
-            :text="step.text"
-            :image="step.image"
-          />
-        </ScrollReveal>
+          :num="step.num"
+          :title="step.title"
+          :text="step.text"
+          :image="step.image"
+        />
       </div>
     </section>
 
     <!-- More we do -->
-    <section class="more">
+    <section class="more home-section">
       <div class="more__bg" aria-hidden="true">
-        <img src="/images/more-bg.jpg" alt="" loading="lazy" />
+        <img src="/images/more-bg.jpg" alt="" loading="lazy" decoding="async" width="1280" height="720" />
         <div class="more__bg-overlay" />
       </div>
       <div class="more__inner">
-        <ScrollReveal variant="left">
-          <div class="more__panel">
+        <div class="more__panel">
             <p class="label">The studio</p>
             <h2>Everything you need in one calm visit</h2>
             <ul class="more__list">
@@ -206,96 +180,72 @@
             <SiteButton to="/book" variant="primary" class="more__cta">{{ LANDING_PRIMARY_CTA }}</SiteButton>
             <p class="more__hint">Prices are listed above. Pay at checkout to confirm your slot.</p>
           </div>
-        </ScrollReveal>
         <div class="more__stats">
-          <ScrollReveal
-            v-for="(stat, index) in stats"
-            :key="stat.label"
-            variant="scale"
-            :delay="index * 80"
-          >
-            <article class="stat-card">
-              <img :src="stat.icon" alt="" width="48" height="48" loading="lazy" />
-              <span class="stat-card__num">{{ stat.value }}</span>
-              <span class="stat-card__label">{{ stat.label }}</span>
-            </article>
-          </ScrollReveal>
+          <article v-for="stat in stats" :key="stat.label" class="stat-card">
+            <img :src="stat.icon" alt="" width="48" height="48" loading="lazy" decoding="async" />
+            <span class="stat-card__num">{{ stat.value }}</span>
+            <span class="stat-card__label">{{ stat.label }}</span>
+          </article>
         </div>
       </div>
     </section>
 
     <!-- Testimonials -->
-    <section class="reviews">
-      <ScrollReveal variant="fade">
-        <header class="section-head">
-          <p class="label">Client stories</p>
-          <h2>What our clients say</h2>
-          <p class="section-head__sub">Visits from Meru Town and across the county. Facials, waxing, massage and makeup.</p>
-        </header>
-      </ScrollReveal>
+    <section class="reviews home-section">
+      <header class="section-head">
+        <p class="label">Client stories</p>
+        <h2>What our clients say</h2>
+        <p class="section-head__sub">Visits from Meru Town and across the county. Facials, waxing, massage and makeup.</p>
+      </header>
       <div class="reviews__grid">
-        <ScrollReveal
-          v-for="(review, index) in reviews"
-          :key="review.name"
-          variant="up"
-          :delay="index * 100"
-        >
-          <blockquote class="review-card">
-            <img src="/images/quote.png" alt="" class="review-card__quote" aria-hidden="true" />
-            <div class="review-card__stars" aria-label="5 out of 5 stars">★★★★★</div>
-            <p>{{ review.text }}</p>
-            <footer>
-              <span class="review-card__avatar" aria-hidden="true">{{ review.initials }}</span>
-              <div>
-                <cite>{{ review.name }}</cite>
-                <span>Customer</span>
-              </div>
-            </footer>
-          </blockquote>
-        </ScrollReveal>
+        <blockquote v-for="review in reviews" :key="review.name" class="review-card">
+          <img src="/images/quote.png" alt="" class="review-card__quote" aria-hidden="true" loading="lazy" decoding="async" />
+          <div class="review-card__stars" aria-label="5 out of 5 stars">★★★★★</div>
+          <p>{{ review.text }}</p>
+          <footer>
+            <span class="review-card__avatar" aria-hidden="true">{{ review.initials }}</span>
+            <div>
+              <cite>{{ review.name }}</cite>
+              <span>Customer</span>
+            </div>
+          </footer>
+        </blockquote>
       </div>
     </section>
 
     <!-- Gallery -->
-    <section id="gallery" class="gallery">
-      <ScrollReveal variant="fade">
-        <header class="section-head section-head--light">
-          <p class="label">On Instagram</p>
-          <h2>@shee_aesthetics</h2>
-        </header>
-      </ScrollReveal>
-      <div class="gallery__marquee" aria-label="Studio photos">
-        <div class="gallery__track">
-          <a
-            v-for="(img, index) in galleryMarqueeImages"
-            :key="`${img}-${index}`"
-            :href="LANDING_INSTAGRAM_URL"
-            class="gallery__item"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="View on Instagram"
-          >
-            <img :src="img" alt="" loading="lazy" />
-          </a>
-        </div>
+    <section id="gallery" class="gallery home-section">
+      <header class="section-head section-head--light">
+        <p class="label">On Instagram</p>
+        <h2>@shee_aesthetics</h2>
+      </header>
+      <div class="gallery__grid" aria-label="Studio photos">
+        <a
+          v-for="(img, index) in galleryImages"
+          :key="img"
+          :href="LANDING_INSTAGRAM_URL"
+          class="gallery__item"
+          target="_blank"
+          rel="noopener noreferrer"
+          :aria-label="`View studio photo ${index + 1} on Instagram`"
+        >
+          <img :src="img" alt="" loading="lazy" decoding="async" width="400" height="400" />
+        </a>
       </div>
     </section>
 
     <!-- Hours CTA -->
-    <section class="cta">
+    <section id="contact" class="cta home-section">
       <div class="cta__photo">
-        <img src="/images/cta-bg.jpg" alt="" loading="lazy" />
+        <img src="/images/cta-bg.jpg" alt="" loading="lazy" decoding="async" width="1280" height="720" />
         <div class="cta__overlay" />
       </div>
       <div class="cta__inner">
-        <ScrollReveal variant="left">
-          <div class="cta__book">
-            <h2>Ready when you are</h2>
-            <SiteButton to="/book" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
-          </div>
-        </ScrollReveal>
-        <ScrollReveal variant="right" :delay="120">
-          <div class="cta__hours">
+        <div class="cta__book">
+          <h2>Ready when you are</h2>
+          <SiteButton to="/book" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+        </div>
+        <div class="cta__hours">
             <img src="/images/icon-clock.png" alt="" width="40" height="40" />
             <p class="label">Opening Hours</p>
             <div class="cta__hours-grid">
@@ -317,14 +267,13 @@
               </div>
             </div>
           </div>
-        </ScrollReveal>
       </div>
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import {
   flowSteps,
   heroSlides,
@@ -334,12 +283,17 @@ import {
   packages,
   singleTreatments,
 } from '@/landing/landingContent'
+import { useLandingSeo } from '@/landing/useLandingSeo'
 
 const activeSlide = ref(0)
-let timer: ReturnType<typeof setInterval> | null = null
+const heroLoadedSlides = ref(new Set<number>([0]))
 let heroTouchStartX = 0
 
 const currentHero = computed(() => heroSlides[activeSlide.value] ?? heroSlides[0]!)
+
+function markHeroSlideLoaded(index: number) {
+  heroLoadedSlides.value = new Set([...heroLoadedSlides.value, index])
+}
 
 function onHeroTouchStart(e: TouchEvent) {
   heroTouchStartX = e.changedTouches[0]?.clientX ?? 0
@@ -350,31 +304,26 @@ function onHeroTouchEnd(e: TouchEvent) {
   const delta = heroTouchStartX - endX
   if (Math.abs(delta) < 48) return
   if (delta > 0) {
-    activeSlide.value = (activeSlide.value + 1) % heroSlides.length
+    goToSlide((activeSlide.value + 1) % heroSlides.length)
   } else {
-    activeSlide.value = (activeSlide.value - 1 + heroSlides.length) % heroSlides.length
+    goToSlide((activeSlide.value - 1 + heroSlides.length) % heroSlides.length)
   }
-  resetTimer()
 }
 
 function goToSlide(index: number) {
   activeSlide.value = index
-  resetTimer()
-}
-
-function resetTimer() {
-  if (timer) clearInterval(timer)
-  timer = setInterval(() => {
-    activeSlide.value = (activeSlide.value + 1) % heroSlides.length
-  }, 5000)
+  markHeroSlideLoaded(index)
 }
 
 onMounted(() => {
-  resetTimer()
-})
-
-onUnmounted(() => {
-  if (timer) clearInterval(timer)
+  const preloadRest = () => {
+    heroSlides.forEach((_, index) => markHeroSlideLoaded(index))
+  }
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(preloadRest, { timeout: 5000 })
+  } else {
+    setTimeout(preloadRest, 2500)
+  }
 })
 
 const services = [
@@ -449,19 +398,9 @@ const galleryImages = [
   '/images/gallery-6.jpg',
 ]
 
-const galleryMarqueeImages = computed(() => [...galleryImages, ...galleryImages])
-
 definePageMeta({ layout: 'landing' })
 
-useHead({
-  title: 'Shee Aesthetics | Facials, Waxing, Massage & Makeup',
-  meta: [
-    {
-      name: 'description',
-      content: 'Beauty studio in Meru Town. Facials, waxing, massage and makeup. Full packages Tue and Wed. Singles Mon, Thu to Sat.',
-    },
-  ],
-})
+useLandingSeo()
 </script>
 
 <style scoped>
@@ -469,6 +408,11 @@ useHead({
   background: var(--color-paper);
   margin: 0;
   padding: 0;
+}
+
+.home-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 480px;
 }
 
 .label {
@@ -539,7 +483,7 @@ useHead({
   inset: 0;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.5s ease, visibility 0.5s;
+  transition: opacity 0.35s ease, visibility 0.35s;
 }
 
 .hero__slide--active {
@@ -629,14 +573,10 @@ useHead({
   background: rgba(255, 255, 255, 0.45);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition:
-    width 0.35s var(--ease-story),
-    background-color 0.35s var(--ease-story),
-    transform 0.35s var(--ease-story);
+  transition: width 0.2s ease, background-color 0.2s ease;
 }
 
 .hero__pager-dot:hover {
-  transform: scale(1.15);
   background: rgba(255, 255, 255, 0.75);
 }
 
@@ -742,17 +682,18 @@ useHead({
   text-decoration: none;
   color: inherit;
   cursor: pointer;
-  transition:
-    transform 0.35s var(--ease-story),
-    border-color 0.35s,
-    box-shadow 0.35s;
   -webkit-tap-highlight-color: transparent;
 }
 
-.welcome__offer-btn:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-rose);
-  box-shadow: 0 10px 28px rgba(39, 37, 42, 0.08);
+@media (hover: hover) {
+  .welcome__offer-btn {
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .welcome__offer-btn:hover {
+    border-color: var(--color-rose);
+    box-shadow: 0 10px 28px rgba(39, 37, 42, 0.08);
+  }
 }
 
 .welcome__offer-btn:focus-visible {
@@ -1064,40 +1005,28 @@ useHead({
   color: var(--color-muted);
 }
 
-/* Gallery — infinite marquee */
+/* Gallery — static grid (no infinite scroll animation) */
 .gallery {
   padding: clamp(4rem, 8vh, 6rem) 0;
   background: var(--color-footer);
-  overflow: hidden;
 }
 
 .gallery .section-head {
   padding: 0 1.5rem;
 }
 
-.gallery__marquee {
-  margin-top: 2rem;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
-}
-
-.gallery__track {
-  display: flex;
+.gallery__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
-  width: max-content;
-  padding-inline: 0.75rem;
-  animation: gallery-marquee 50s linear infinite;
-}
-
-.gallery__marquee:hover .gallery__track {
-  animation-play-state: paused;
+  width: var(--container);
+  max-width: 100%;
+  margin: 2rem auto 0;
+  padding: 0 1rem;
 }
 
 .gallery__item {
   display: block;
-  flex: 0 0 auto;
-  width: clamp(148px, 32vw, 210px);
   aspect-ratio: 1;
   overflow: hidden;
   border-radius: 2px;
@@ -1110,12 +1039,16 @@ useHead({
   display: block;
 }
 
-@keyframes gallery-marquee {
-  from {
-    transform: translateX(0);
+@media (min-width: 768px) {
+  .gallery__grid {
+    grid-template-columns: repeat(3, 1fr);
   }
-  to {
-    transform: translateX(-50%);
+}
+
+@media (min-width: 1024px) {
+  .gallery__grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
   }
 }
 
@@ -1135,8 +1068,6 @@ useHead({
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1.05);
-  animation: cta-kenburns 18s ease-in-out infinite alternate;
 }
 
 .cta__overlay {
@@ -1188,15 +1119,6 @@ useHead({
   margin: 0;
   font: 400 0.88rem var(--font-body);
   color: rgba(255, 255, 255, 0.75);
-}
-
-@keyframes cta-kenburns {
-  from {
-    transform: scale(1.05);
-  }
-  to {
-    transform: scale(1.12);
-  }
 }
 
 /* Tablet and up — progressive enhancement */
@@ -1346,17 +1268,11 @@ useHead({
   .hero__slide,
   .hero__bg,
   .hero__content,
-  .gallery__track,
-  .cta__photo img,
   .stat-card,
   .package-card,
   .review-card {
     animation: none !important;
     transition: none !important;
-  }
-
-  .hero__bg {
-    transform: none;
   }
 }
 </style>
