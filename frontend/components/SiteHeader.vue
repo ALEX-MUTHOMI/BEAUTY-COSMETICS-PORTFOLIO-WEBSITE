@@ -16,7 +16,7 @@
 
     <div class="site-header__main">
       <div class="site-header__main-inner">
-        <SheeLogo />
+        <SheeLogo class="site-header__logo" />
 
         <nav class="site-header__nav" aria-label="Primary">
           <NuxtLink to="/">Home</NuxtLink>
@@ -53,7 +53,7 @@
           v-if="menuOpen"
           class="site-header__backdrop"
           aria-hidden="true"
-          @click="menuOpen = false"
+          @click="closeMenu"
         />
       </Transition>
       <Transition name="menu-slide">
@@ -63,13 +63,29 @@
           class="site-header__drawer"
           aria-label="Mobile"
         >
-          <p class="site-header__drawer-label">{{ LANDING_LOCATION_LABEL }}</p>
-          <NuxtLink to="/" @click="closeMenu">Home</NuxtLink>
-          <NuxtLink to="/#services" @click="closeMenu">Services</NuxtLink>
-          <NuxtLink to="/#packages" @click="closeMenu">Packages</NuxtLink>
-          <NuxtLink to="/#singles" @click="closeMenu">Singles</NuxtLink>
-          <NuxtLink to="/#gallery" @click="closeMenu">Gallery</NuxtLink>
-          <NuxtLink to="/#contact" @click="closeMenu">Contact</NuxtLink>
+          <button
+            type="button"
+            class="site-header__drawer-close"
+            aria-label="Close menu"
+            @click="closeMenu"
+          >
+            <span aria-hidden="true" />
+          </button>
+
+          <div class="site-header__drawer-brand">
+            <SheeLogo size="md" @click="closeMenu" />
+            <p class="site-header__drawer-label">{{ LANDING_LOCATION_LABEL }}</p>
+          </div>
+
+          <div class="site-header__drawer-links">
+            <NuxtLink to="/" @click="closeMenu">Home</NuxtLink>
+            <NuxtLink to="/#services" @click="closeMenu">Services</NuxtLink>
+            <NuxtLink to="/#packages" @click="closeMenu">Packages</NuxtLink>
+            <NuxtLink to="/#singles" @click="closeMenu">Singles</NuxtLink>
+            <NuxtLink to="/#gallery" @click="closeMenu">Gallery</NuxtLink>
+            <NuxtLink to="/#contact" @click="closeMenu">Contact</NuxtLink>
+          </div>
+
           <SiteButton to="/book" variant="primary" class="site-header__drawer-cta" @click="closeMenu">
             {{ LANDING_PRIMARY_CTA }}
           </SiteButton>
@@ -166,18 +182,66 @@ onUnmounted(() => {
   fill: currentColor;
 }
 
+.site-header--menu-open .site-header__menu-toggle {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .site-header__main-inner {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: none;
+  padding:
+    0.65rem max(1rem, env(safe-area-inset-right, 0px))
+    0.65rem max(1rem, env(safe-area-inset-left, 0px));
   border-bottom: 1px solid var(--color-line);
+}
+
+.site-header__logo {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+@media (max-width: 959px) {
+  .site-header__logo :deep(.shee-logo) {
+    gap: 0.65rem;
+  }
+
+  .site-header__logo :deep(.shee-logo__mark-wrap) {
+    width: 44px;
+    height: 44px;
+  }
+
+  .site-header__logo :deep(.shee-logo__mark) {
+    width: 26px;
+    height: 26px;
+  }
+
+  .site-header__logo :deep(.shee-logo__name) {
+    font-size: 1.65rem;
+  }
+
+  .site-header__logo :deep(.shee-logo__tag) {
+    font-size: 0.62rem;
+    letter-spacing: 0.28em;
+  }
 }
 
 @media (min-width: 768px) {
   .site-header__main-inner {
+    width: var(--container);
+    max-width: var(--container);
+    margin: 0 auto;
     gap: 2rem;
     padding: 1.15rem 0;
+  }
+}
+
+@media (min-width: 960px) {
+  .site-header__logo {
+    flex: 0 0 auto;
   }
 }
 
@@ -206,10 +270,11 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   gap: 5px;
+  flex-shrink: 0;
   margin-left: auto;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0.5rem;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0.65rem;
   border: 1px solid var(--color-line);
   border-radius: 999px;
   background: var(--color-cream);
@@ -217,7 +282,8 @@ onUnmounted(() => {
   -webkit-tap-highlight-color: transparent;
   transition:
     border-color 0.25s,
-    background-color 0.25s;
+    background-color 0.25s,
+    visibility 0.2s;
 }
 
 .site-header__menu-toggle--open {
@@ -254,55 +320,126 @@ onUnmounted(() => {
   position: fixed;
   inset: 0;
   z-index: 55;
-  background: rgba(39, 37, 42, 0.35);
-  backdrop-filter: blur(2px);
+  background: rgba(39, 37, 42, 0.4);
 }
 
 .site-header__drawer {
   position: fixed;
-  top: 0;
-  right: 0;
-  z-index: 56;
+  inset: 0;
+  z-index: 70;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  width: min(18rem, 86vw);
+  width: 100%;
+  max-width: none;
   height: 100dvh;
-  padding: calc(4.75rem + env(safe-area-inset-top, 0px)) 1.5rem 1.5rem;
+  padding:
+    calc(1.5rem + env(safe-area-inset-top, 0px))
+    max(1.5rem, env(safe-area-inset-right, 0px))
+    calc(2rem + env(safe-area-inset-bottom, 0px))
+    max(1.5rem, env(safe-area-inset-left, 0px));
   background: var(--color-paper);
-  border-left: 1px solid var(--color-line);
-  box-shadow: -12px 0 40px rgba(39, 37, 42, 0.1);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.site-header__drawer-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 0.5rem;
+  margin-bottom: 2.25rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--color-line);
+  text-align: center;
+}
+
+.site-header__drawer-close {
+  position: absolute;
+  top: calc(1rem + env(safe-area-inset-top, 0px));
+  right: max(1rem, env(safe-area-inset-right, 0px));
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--color-line);
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.site-header__drawer-close span {
+  position: relative;
+  width: 16px;
+  height: 16px;
+}
+
+.site-header__drawer-close span::before,
+.site-header__drawer-close span::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--color-ink);
+  border-radius: 1px;
+}
+
+.site-header__drawer-close span::before {
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.site-header__drawer-close span::after {
+  transform: translateY(-50%) rotate(-45deg);
 }
 
 .site-header__drawer-label {
-  margin: 0 0 1.25rem;
-  font: 600 0.68rem var(--font-body);
-  letter-spacing: 0.18em;
+  margin: 0;
+  font: 600 0.72rem var(--font-body);
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--color-rose);
 }
 
-.site-header__drawer a {
-  padding: 0.85rem 0;
-  border-bottom: 1px solid rgba(39, 37, 42, 0.06);
-  text-decoration: none;
-  font: 500 0.95rem var(--font-body);
-  color: var(--color-ink);
-  transition: color 0.2s;
+.site-header__drawer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
 }
 
-.site-header__drawer a:hover {
+.site-header__drawer-links a {
+  display: flex;
+  align-items: center;
+  min-height: 3rem;
+  padding: 0.85rem 0.25rem;
+  border-bottom: 1px solid rgba(39, 37, 42, 0.06);
+  text-decoration: none;
+  font: 500 1.125rem var(--font-body);
+  letter-spacing: 0.02em;
+  color: var(--color-ink);
+  transition: color 0.2s, padding-left 0.2s;
+}
+
+.site-header__drawer-links a:hover,
+.site-header__drawer-links a:focus-visible {
   color: var(--color-rose);
+  padding-left: 0.35rem;
 }
 
 .site-header__drawer-cta {
   width: 100%;
   margin-top: auto;
+  padding-top: 1.75rem;
 }
 
 .menu-fade-enter-active,
 .menu-fade-leave-active {
-  transition: opacity 0.28s ease;
+  transition: opacity 0.25s ease;
 }
 
 .menu-fade-enter-from,
@@ -312,12 +449,15 @@ onUnmounted(() => {
 
 .menu-slide-enter-active,
 .menu-slide-leave-active {
-  transition: transform 0.32s var(--ease-story);
+  transition:
+    transform 0.3s var(--ease-story),
+    opacity 0.3s ease;
 }
 
 .menu-slide-enter-from,
 .menu-slide-leave-to {
-  transform: translateX(100%);
+  transform: translateY(12px);
+  opacity: 0;
 }
 
 @media (min-width: 960px) {
@@ -331,6 +471,24 @@ onUnmounted(() => {
   .site-header__top { display: none; }
   .site-header__nav,
   .site-header__actions { display: none; }
+
+  .site-header__backdrop {
+    z-index: 65;
+  }
+}
+
+@media (min-width: 960px) {
+  .site-header__drawer {
+    inset: auto 0 0 auto;
+    width: min(100%, 26rem);
+    box-shadow: -16px 0 48px rgba(39, 37, 42, 0.12);
+  }
+
+  .menu-slide-enter-from,
+  .menu-slide-leave-to {
+    transform: translateX(100%);
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -338,7 +496,8 @@ onUnmounted(() => {
   .menu-fade-enter-active,
   .menu-fade-leave-active,
   .menu-slide-enter-active,
-  .menu-slide-leave-active {
+  .menu-slide-leave-active,
+  .site-header__drawer-links a {
     transition: none;
   }
 }

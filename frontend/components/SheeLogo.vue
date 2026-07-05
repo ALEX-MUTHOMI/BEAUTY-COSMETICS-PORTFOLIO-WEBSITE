@@ -23,16 +23,20 @@ const props = withDefaults(
   defineProps<{
     to?: string
     variant?: 'default' | 'light' | 'hero'
-    size?: 'md' | 'lg'
+    size?: 'sm' | 'md' | 'lg'
   }>(),
   { to: '/', variant: 'default', size: 'md' },
 )
 
-const markSize = computed(() => (props.size === 'lg' ? 34 : 30))
+const markSize = computed(() => {
+  if (props.size === 'lg') return 36
+  if (props.size === 'sm') return 26
+  return 30
+})
 
 const logoClasses = computed(() => [
   props.variant !== 'default' ? `shee-logo--${props.variant}` : '',
-  props.size === 'lg' ? 'shee-logo--lg' : '',
+  props.size !== 'md' ? `shee-logo--${props.size}` : '',
 ])
 </script>
 
@@ -72,6 +76,29 @@ const logoClasses = computed(() => [
 .shee-logo--lg .shee-logo__mark {
   width: 36px;
   height: 36px;
+}
+
+.shee-logo--sm {
+  gap: 0.65rem;
+}
+
+.shee-logo--sm .shee-logo__mark-wrap {
+  width: 44px;
+  height: 44px;
+}
+
+.shee-logo--sm .shee-logo__mark {
+  width: 26px;
+  height: 26px;
+}
+
+.shee-logo--sm .shee-logo__name {
+  font-size: 1.65rem;
+}
+
+.shee-logo--sm .shee-logo__tag {
+  font-size: 0.62rem;
+  letter-spacing: 0.28em;
 }
 
 .shee-logo__text {

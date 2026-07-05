@@ -13,17 +13,16 @@
             :src="slide.image"
             :alt="slide.alt"
             class="hero__bg"
-            :class="{ 'hero__bg--zoom': activeSlide === index }"
             fetchpriority="high"
           />
           <div class="hero__overlay" />
-          <div class="hero__content" :class="{ 'hero__content--in': activeSlide === index && heroReady }">
-            <p class="hero__eyebrow">{{ slide.eyebrow }}</p>
-            <h1 class="hero__title">{{ slide.title }}</h1>
-            <p v-if="slide.subtitle" class="hero__subtitle">{{ slide.subtitle }}</p>
-            <SiteButton :to="slide.ctaTo" variant="primary">{{ slide.cta }}</SiteButton>
-          </div>
         </article>
+      </div>
+      <div class="hero__content">
+        <p class="hero__eyebrow">{{ currentHero.eyebrow }}</p>
+        <h1 class="hero__title">{{ currentHero.title }}</h1>
+        <p v-if="currentHero.subtitle" class="hero__subtitle">{{ currentHero.subtitle }}</p>
+        <SiteButton :to="currentHero.ctaTo" variant="primary">{{ currentHero.cta }}</SiteButton>
       </div>
       <ol class="hero__pager" aria-label="Hero slides">
         <li v-for="(_, index) in heroSlides" :key="index">
@@ -265,23 +264,20 @@
           <h2>@shee_aesthetics</h2>
         </header>
       </ScrollReveal>
-      <div class="gallery__grid">
-        <ScrollReveal
-          v-for="(img, index) in galleryImages"
-          :key="index"
-          variant="scale"
-          :delay="index * 60"
-        >
+      <div class="gallery__marquee" aria-label="Studio photos">
+        <div class="gallery__track">
           <a
+            v-for="(img, index) in galleryMarqueeImages"
+            :key="`${img}-${index}`"
             :href="LANDING_INSTAGRAM_URL"
             class="gallery__item"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="View on Instagram"
           >
-            <img :src="img" alt="Shee Aesthetics studio photo" loading="lazy" />
+            <img :src="img" alt="" loading="lazy" />
           </a>
-        </ScrollReveal>
+        </div>
       </div>
     </section>
 
@@ -328,7 +324,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import {
   flowSteps,
   heroSlides,
@@ -340,9 +336,10 @@ import {
 } from '@/landing/landingContent'
 
 const activeSlide = ref(0)
-const heroReady = ref(true)
 let timer: ReturnType<typeof setInterval> | null = null
 let heroTouchStartX = 0
+
+const currentHero = computed(() => heroSlides[activeSlide.value] ?? heroSlides[0]!)
 
 function onHeroTouchStart(e: TouchEvent) {
   heroTouchStartX = e.changedTouches[0]?.clientX ?? 0
@@ -372,15 +369,7 @@ function resetTimer() {
   }, 5000)
 }
 
-watch(activeSlide, () => {
-  heroReady.value = false
-  requestAnimationFrame(() => {
-    heroReady.value = true
-  })
-})
-
 onMounted(() => {
-  heroReady.value = true
   resetTimer()
 })
 
@@ -459,6 +448,8 @@ const galleryImages = [
   '/images/gallery-5.jpg',
   '/images/gallery-6.jpg',
 ]
+
+const galleryMarqueeImages = computed(() => [...galleryImages, ...galleryImages])
 
 definePageMeta({ layout: 'landing' })
 
@@ -548,7 +539,7 @@ useHead({
   inset: 0;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 1.1s var(--ease-story), visibility 1.1s;
+  transition: opacity 0.5s ease, visibility 0.5s;
 }
 
 .hero__slide--active {
@@ -561,12 +552,6 @@ useHead({
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1.08);
-  transition: transform 7s linear;
-}
-
-.hero__bg--zoom {
-  transform: scale(1);
 }
 
 .hero__overlay {
@@ -587,16 +572,11 @@ useHead({
   text-align: center;
   padding: 1.5rem 1.25rem clamp(3.5rem, 10vw, 4.5rem);
   color: #fff;
-  opacity: 0;
-  transform: translateY(16px);
-  transition:
-    opacity 0.9s var(--ease-story) 0.15s,
-    transform 0.9s var(--ease-story) 0.15s;
+  pointer-events: none;
 }
 
-.hero__content--in {
-  opacity: 1;
-  transform: translateY(0);
+.hero__content :deep(.site-btn) {
+  pointer-events: auto;
 }
 
 .hero__eyebrow {
@@ -1084,36 +1064,59 @@ useHead({
   color: var(--color-muted);
 }
 
-/* Gallery */
+/* Gallery — infinite marquee */
 .gallery {
-  padding: clamp(4rem, 8vh, 6rem) 1.5rem;
+  padding: clamp(4rem, 8vh, 6rem) 0;
   background: var(--color-footer);
+  overflow: hidden;
 }
 
-.gallery__grid {
-  width: var(--container);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.35rem;
+.gallery .section-head {
+  padding: 0 1.5rem;
+}
+
+.gallery__marquee {
+  margin-top: 2rem;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+}
+
+.gallery__track {
+  display: flex;
+  gap: 0.75rem;
+  width: max-content;
+  padding-inline: 0.75rem;
+  animation: gallery-marquee 50s linear infinite;
+}
+
+.gallery__marquee:hover .gallery__track {
+  animation-play-state: paused;
 }
 
 .gallery__item {
   display: block;
+  flex: 0 0 auto;
+  width: clamp(148px, 32vw, 210px);
   aspect-ratio: 1;
   overflow: hidden;
+  border-radius: 2px;
 }
 
 .gallery__item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s var(--ease-story), filter 0.5s;
+  display: block;
 }
 
-.gallery__item:hover img {
-  transform: scale(1.08);
-  filter: brightness(1.05);
+@keyframes gallery-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 /* CTA */
@@ -1206,10 +1209,6 @@ useHead({
   .cta__hours-grid {
     grid-template-columns: 1fr 1fr;
     gap: 1.25rem;
-  }
-
-  .gallery__grid {
-    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -1341,16 +1340,13 @@ useHead({
     grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
   }
-
-  .gallery__grid {
-    grid-template-columns: repeat(6, 1fr);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .hero__slide,
   .hero__bg,
   .hero__content,
+  .gallery__track,
   .cta__photo img,
   .stat-card,
   .package-card,
@@ -1359,8 +1355,7 @@ useHead({
     transition: none !important;
   }
 
-  .hero__bg,
-  .hero__bg--zoom {
+  .hero__bg {
     transform: none;
   }
 }
