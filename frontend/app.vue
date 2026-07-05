@@ -10,10 +10,13 @@ html {
   background: var(--color-bg);
   font-family: var(--font-body);
   scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-height) + 0.75rem);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
+  overflow-x: hidden;
 }
 
 * {

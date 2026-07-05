@@ -35,22 +35,25 @@ export const heroSlides: HeroSlide[] = [
     image: '/images/hero-1.jpg',
     eyebrow: 'Ideal place to unwind',
     title: 'Spa Beauty',
+    subtitle: 'Private treatment rooms in Parklands',
     cta: 'Discover More',
     ctaTo: '/#welcome',
   },
   {
     image: '/images/hero-2.jpg',
     eyebrow: 'Ideal place to unwind',
-    title: 'Spa Care',
+    title: 'Massage',
+    subtitle: 'Swedish and deep tissue to release tension',
     cta: 'Discover More',
     ctaTo: '/#services',
   },
   {
     image: '/images/hero-3.jpg',
     eyebrow: 'Ideal place to unwind',
-    title: 'Treat Yourself',
+    title: 'Makeup',
+    subtitle: 'Everyday glam and full event makeup',
     cta: 'Discover More',
-    ctaTo: '/#welcome',
+    ctaTo: '/#singles',
   },
 ]
 
@@ -59,7 +62,7 @@ export const flowSteps: FlowStep[] = [
   {
     num: '01',
     title: 'Meeting',
-    text: 'Book your appointment online or by phone. We confirm your date and the treatments in your visit.',
+    text: 'Choose your date and treatments online, then pay by M-Pesa to lock in your slot.',
     image: '/images/step-meeting.jpg',
   },
   {
@@ -71,7 +74,7 @@ export const flowSteps: FlowStep[] = [
   {
     num: '03',
     title: 'Finalizing',
-    text: 'Settle your bill, schedule your next visit if you wish, and leave feeling refreshed.',
+    text: 'Your appointment is confirmed once payment is received. Receipt is sent to your email.',
     image: '/images/step-finalizing.jpg',
   },
 ]
@@ -79,7 +82,7 @@ export const flowSteps: FlowStep[] = [
 export const packageDayHeadline = 'Full Package Days'
 
 export const packageDaySubhead =
-  'Tuesdays and Wednesdays are for clients who want the full Shee visit — every treatment in one private room, without rushing between appointments.'
+  'Tuesdays and Wednesdays are for clients who want the full Shee visit. Every treatment in one private room, without rushing between appointments.'
 
 export const packageDayUrgency =
   'We keep these days for packages only. Slots are limited each week.'
@@ -91,12 +94,12 @@ export function isPackageDay(day: string): boolean {
 export const packages: LandingPackage[] = [
   {
     name: 'Classic Full Package',
-    text: 'Our most booked visit — arrive once, leave with skin, body and makeup done.',
+    text: 'Our most booked visit. Arrive once, leave with skin, body and makeup done.',
     price: 'From KES 12,000',
     badge: 'Most booked',
     featured: true,
     daysLabel: 'Tue & Wed only',
-    ctaLabel: 'Book Package Day',
+    ctaLabel: 'Book Now',
     includes: [
       'Deep cleansing facial',
       'Full body waxing',
@@ -107,10 +110,10 @@ export const packages: LandingPackage[] = [
   },
   {
     name: 'Glow Package',
-    text: 'For events and photos — brighten skin, shape brows and finish with soft glam.',
+    text: 'For events and photos. Brighten skin, shape brows and finish with soft glam.',
     price: 'From KES 8,500',
     daysLabel: 'Tue & Wed only',
-    ctaLabel: 'Book Package Day',
+    ctaLabel: 'Book Now',
     includes: [
       'Brightening facial',
       'Brow shaping & wax',
@@ -120,10 +123,10 @@ export const packages: LandingPackage[] = [
   },
   {
     name: 'Relax Package',
-    text: 'When you need to switch off — massage-led with wax and an express facial.',
+    text: 'When you need to switch off. Massage-led with wax and an express facial.',
     price: 'From KES 7,000',
     daysLabel: 'Tue & Wed only',
-    ctaLabel: 'Book Package Day',
+    ctaLabel: 'Book Now',
     includes: [
       'Deep tissue massage',
       'Back & shoulder wax',
@@ -139,23 +142,23 @@ export const singleTreatments: LandingPackage[] = [
     text: '60 minutes tailored to your skin.',
     price: 'From KES 2,500',
     daysLabel: SINGLE_DAYS_LABEL,
-    ctaLabel: 'Book Facial',
+    ctaLabel: 'Book Now',
     includes: ['Skin consultation', 'Cleanse & exfoliation', 'Mask & moisturise'],
   },
   {
     name: 'Massage',
-    text: 'Swedish or deep tissue — back, neck and shoulders.',
+    text: 'Swedish or deep tissue. Back, neck and shoulders.',
     price: 'From KES 3,000',
     daysLabel: SINGLE_DAYS_LABEL,
-    ctaLabel: 'Book Massage',
+    ctaLabel: 'Book Now',
     includes: ['30 or 60-minute session', 'Aromatherapy oils', 'Pressure to suit you'],
   },
   {
     name: 'Waxing',
-    text: 'Face or body — hot wax, neat finish.',
+    text: 'Face or body. Hot wax, neat finish.',
     price: 'From KES 1,200',
     daysLabel: SINGLE_DAYS_LABEL,
-    ctaLabel: 'Book Waxing',
+    ctaLabel: 'Book Now',
     includes: ['Brows, underarms or legs', 'After-care advice', 'Sensitive-skin options'],
   },
   {
@@ -163,7 +166,7 @@ export const singleTreatments: LandingPackage[] = [
     text: 'Everyday polish or full glam for your occasion.',
     price: 'From KES 4,000',
     daysLabel: SINGLE_DAYS_LABEL,
-    ctaLabel: 'Book Makeup',
+    ctaLabel: 'Book Now',
     includes: ['Skin prep', 'Lash-friendly products', 'Touch-up tips'],
   },
 ]

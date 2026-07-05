@@ -42,15 +42,31 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.getByRole('heading', { name: 'What We\'re Offering', level: 2 })).toBeVisible()
 
     await page.locator('#packages').scrollIntoViewIfNeeded()
-    await expect(page.getByRole('heading', { name: /Full Packages — Tuesday/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Full Packages, Tuesday/i })).toBeVisible()
     await expect(page.getByRole('heading', { name: /Book One Service at a Time/i })).toBeVisible()
-    await expect(page.getByText(/Most booked/i)).toBeVisible()
+    await expect(page.locator('.mellis-card__badge', { hasText: 'Most booked' })).toBeVisible()
 
     // No CSP violations in console
     const cspViolations = consoleErrors.filter((e) =>
       /content security policy|refused to execute|refused to load/i.test(e),
     )
     expect(cspViolations, `CSP errors: ${cspViolations.join('; ')}`).toHaveLength(0)
+  })
+
+  test('mobile layout keeps book bar and stacks single-column grids', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto(BASE_URL, { waitUntil: 'networkidle' })
+
+    await expect(page.locator('.site-loader')).toHaveCount(0, { timeout: 8000 })
+    await expect(page.locator('.mobile-book-bar')).toBeVisible()
+    await expect(page.locator('.mobile-book-bar').getByRole('link', { name: /Book Now/i })).toBeVisible()
+
+    const servicesGrid = page.locator('.services__grid')
+    await servicesGrid.scrollIntoViewIfNeeded()
+    const gridCols = await servicesGrid.evaluate((el) => getComputedStyle(el).gridTemplateColumns)
+    expect(gridCols.split(' ').length).toBe(1)
+
+    await expect(page.getByRole('heading', { name: 'Spa Beauty', level: 1 })).toBeVisible()
   })
 
   test('serves strict security headers with nonce-aware CSP', async ({ request }) => {

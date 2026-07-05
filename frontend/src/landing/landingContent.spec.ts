@@ -40,14 +40,13 @@ describe('landingContent', () => {
     })
   })
 
-  it('keeps hero slides short and Mellis-style — no brand in the carousel', () => {
-    expect(heroSlides).toHaveLength(3)
+  it('maps hero slides to spa, massage, and makeup imagery', () => {
+    expect(heroSlides[0]?.image).toBe('/images/hero-1.jpg')
+    expect(heroSlides[1]?.image).toBe('/images/hero-2.jpg')
+    expect(heroSlides[2]?.image).toBe('/images/hero-3.jpg')
     expect(heroSlides[0]?.title).toBe('Spa Beauty')
-    expect(heroSlides[0]?.eyebrow).toMatch(/unwind/i)
-    heroSlides.forEach((slide) => {
-      expect(slide.title.length).toBeLessThan(30)
-      expect(slide.eyebrow).not.toMatch(/shee aesthetics/i)
-    })
+    expect(heroSlides[1]?.title).toBe('Massage')
+    expect(heroSlides[2]?.title).toBe('Makeup')
   })
 
   it('defines Mellis-style packages with feature lists and a featured plan', () => {

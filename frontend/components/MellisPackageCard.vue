@@ -46,7 +46,7 @@ withDefaults(
   align-items: center;
   text-align: center;
   height: 100%;
-  padding: 2.5rem 2rem 2.25rem;
+  padding: 2rem 1.35rem 1.85rem;
   background: #fff;
   border: 1px solid var(--color-line);
   border-top: 3px solid var(--color-rose);
@@ -77,6 +77,12 @@ withDefaults(
   background: var(--color-cream);
   border-top-width: 4px;
   box-shadow: 0 18px 42px rgba(222, 150, 141, 0.18);
+}
+
+@media (min-width: 768px) {
+  .mellis-card {
+    padding: 2.5rem 2rem 2.25rem;
+  }
 }
 
 .mellis-card__badge {

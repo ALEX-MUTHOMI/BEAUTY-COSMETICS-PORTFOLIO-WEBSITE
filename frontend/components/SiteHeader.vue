@@ -4,7 +4,7 @@
       <div class="site-header__top-inner">
         <div class="site-header__contact">
           <a href="mailto:bookings@sheeaesthetics.co.ke">bookings@sheeaesthetics.co.ke</a>
-          <a href="tel:+254712000000">+254 712 000 000</a>
+          <NuxtLink to="/book" class="site-header__policy">Pay online to book</NuxtLink>
         </div>
         <div class="site-header__social" aria-label="Social links">
           <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm10 2H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-5 3.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11zm0 2a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm5.75-3.25a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5z"/></svg></a>
@@ -95,9 +95,15 @@ const menuOpen = ref(false)
   gap: 1.75rem;
 }
 
-.site-header__contact a {
+.site-header__contact a,
+.site-header__policy {
   color: var(--color-rose);
   text-decoration: none;
+}
+
+.site-header__policy {
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 .site-header__social {
@@ -119,9 +125,16 @@ const menuOpen = ref(false)
 .site-header__main-inner {
   display: flex;
   align-items: center;
-  gap: 2rem;
-  padding: 1.15rem 0;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--color-line);
+}
+
+@media (min-width: 768px) {
+  .site-header__main-inner {
+    gap: 2rem;
+    padding: 1.15rem 0;
+  }
 }
 
 .site-header__nav {
@@ -144,14 +157,18 @@ const menuOpen = ref(false)
 }
 
 .site-header__menu-toggle {
-  display: none;
+  display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 5px;
   background: none;
   border: none;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0.4rem;
   cursor: pointer;
   margin-left: auto;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .site-header__menu-toggle span {
@@ -161,25 +178,32 @@ const menuOpen = ref(false)
 }
 
 .site-header__mobile-nav {
-  display: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-line);
 }
 
-@media (max-width: 960px) {
+.site-header__mobile-nav a {
+  text-decoration: none;
+  font: 600 0.8rem var(--font-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+}
+
+@media (min-width: 960px) {
+  .site-header__top { display: block; }
+  .site-header__nav,
+  .site-header__actions { display: flex; }
+  .site-header__menu-toggle { display: none; }
+  .site-header__mobile-nav { display: none; }
+}
+
+@media (max-width: 959px) {
   .site-header__top { display: none; }
-  .site-header__nav, .site-header__actions { display: none; }
-  .site-header__menu-toggle { display: flex; }
-  .site-header__mobile-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
-    padding: 0 1.5rem 1.25rem;
-  }
-  .site-header__mobile-nav a {
-    text-decoration: none;
-    font: 600 0.8rem var(--font-body);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-ink);
-  }
+  .site-header__nav,
+  .site-header__actions { display: none; }
 }
 </style>

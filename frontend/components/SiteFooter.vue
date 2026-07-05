@@ -28,9 +28,10 @@
       </div>
 
       <div class="site-footer__col">
-        <p class="site-footer__heading">Contact</p>
+        <p class="site-footer__heading">Booking</p>
+        <p class="site-footer__note">Appointments are confirmed after online payment only. No phone bookings.</p>
         <a href="mailto:bookings@sheeaesthetics.co.ke">bookings@sheeaesthetics.co.ke</a>
-        <a href="tel:+254712000000">+254 712 000 000</a>
+        <NuxtLink to="/book">Book Now</NuxtLink>
         <NuxtLink to="/staff/login">Staff login</NuxtLink>
       </div>
     </div>
@@ -103,6 +104,12 @@ const year = new Date().getFullYear()
   font: 400 0.92rem/1.55 var(--font-body);
 }
 
+.site-footer__note {
+  margin: 0;
+  font: 400 0.85rem/1.55 var(--font-body);
+  color: rgba(255, 255, 255, 0.55);
+}
+
 .site-footer__hours strong {
   color: #fff;
   font-weight: 600;
@@ -131,6 +138,12 @@ const year = new Date().getFullYear()
 .site-footer__legal a {
   color: rgba(255, 255, 255, 0.45);
   text-decoration: none;
+}
+
+@media (max-width: 767px) {
+  .site-footer {
+    padding-bottom: calc(var(--mobile-book-bar-height) + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 @media (max-width: 900px) {

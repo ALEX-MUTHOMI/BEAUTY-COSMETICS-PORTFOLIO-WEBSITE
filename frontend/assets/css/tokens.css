@@ -53,5 +53,14 @@
 
   --shadow-card: 0 0 40px rgba(39, 37, 42, 0.06);
   --ease-story: cubic-bezier(0.22, 1, 0.36, 1);
-  --container: min(1170px, 100% - 3rem);
+  --container: min(1170px, 100% - 1.25rem);
+  --header-height: 4.25rem;
+  --mobile-book-bar-height: 4.25rem;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --container: min(1170px, 100% - 2.5rem);
+    --header-height: 5rem;
+  }
 }

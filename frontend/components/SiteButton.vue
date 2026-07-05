@@ -33,12 +33,15 @@ const variantClass = computed(() => `site-btn--${props.variant}`)
   gap: 0.5rem;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
+  min-height: 2.75rem;
   padding: 0.85rem 1.75rem;
   font: 600 0.78rem/1 var(--font-body);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition:
     background-color 0.3s var(--ease-story),
     color 0.3s var(--ease-story),
