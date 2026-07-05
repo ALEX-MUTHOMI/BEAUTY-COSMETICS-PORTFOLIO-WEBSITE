@@ -20,7 +20,7 @@
 
         <nav class="site-header__nav" aria-label="Primary">
           <NuxtLink to="/">Home</NuxtLink>
-          <NuxtLink to="/#services">Our Services</NuxtLink>
+          <NuxtLink to="/services">Our Services</NuxtLink>
           <NuxtLink to="/#packages">Packages</NuxtLink>
           <NuxtLink to="/#singles">Singles</NuxtLink>
           <NuxtLink to="/#gallery">Gallery</NuxtLink>
@@ -79,7 +79,7 @@
 
           <div class="site-header__drawer-links">
             <NuxtLink to="/" @click="closeMenu">Home</NuxtLink>
-            <NuxtLink to="/#services" @click="closeMenu">Services</NuxtLink>
+            <NuxtLink to="/services" @click="closeMenu">Services</NuxtLink>
             <NuxtLink to="/#packages" @click="closeMenu">Packages</NuxtLink>
             <NuxtLink to="/#singles" @click="closeMenu">Singles</NuxtLink>
             <NuxtLink to="/#gallery" @click="closeMenu">Gallery</NuxtLink>

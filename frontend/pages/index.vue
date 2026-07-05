@@ -1,4 +1,5 @@
 <template>
+  <SiteLoader />
   <main class="home">
     <!-- Hero slider -->
     <section class="hero" @touchstart.passive="onHeroTouchStart" @touchend.passive="onHeroTouchEnd">
@@ -89,6 +90,9 @@
       <header class="section-head">
         <p class="label">Our treatments</p>
         <h2>Facials, waxing, massage &amp; makeup</h2>
+        <p class="section-head__sub">
+          <NuxtLink to="/services" class="home-services-link">View all services and pricing</NuxtLink>
+        </p>
       </header>
       <div class="services__grid">
         <MellisServiceCard
@@ -284,6 +288,7 @@ import {
   singleTreatments,
 } from '@/landing/landingContent'
 import { useLandingSeo } from '@/landing/useLandingSeo'
+import { getServiceSummaries } from '@/landing/servicesContent'
 
 const activeSlide = ref(0)
 const heroLoadedSlides = ref(new Set<number>([0]))
@@ -326,32 +331,7 @@ onMounted(() => {
   }
 })
 
-const services = [
-  {
-    name: 'Facial Care',
-    text: 'Deep cleanse, exfoliation and hydration tailored to your skin type.',
-    image: '/images/service-facial.jpg',
-    icon: '/images/icon-facial.png',
-  },
-  {
-    name: 'Massages',
-    text: 'Swedish and deep tissue massage to release tension in back, neck and shoulders.',
-    image: '/images/service-massage.jpg',
-    icon: '/images/icon-massage.png',
-  },
-  {
-    name: 'Waxing',
-    text: 'Face and body waxing with hot wax. Brows, underarms, legs and bikini.',
-    image: '/images/service-waxing.jpg',
-    icon: '/images/icon-waxing.png',
-  },
-  {
-    name: 'Makeup',
-    text: 'Everyday makeup and full glam for weddings, events and photo shoots.',
-    image: '/images/service-makeup.jpg',
-    icon: '/images/icon-makeup.png',
-  },
-]
+const services = getServiceSummaries()
 
 const serviceList = [
   'Deep Cleansing Facials',
@@ -400,6 +380,12 @@ const galleryImages = [
 
 definePageMeta({ layout: 'landing' })
 
+useHead({
+  htmlAttrs: {
+    class: 'is-loading',
+  },
+})
+
 useLandingSeo()
 </script>
 
@@ -443,6 +429,17 @@ useLandingSeo()
   margin: 1rem auto 0;
   font: 400 1rem/1.7 var(--font-body);
   color: var(--color-muted);
+}
+
+.home-services-link {
+  font-weight: 600;
+  color: var(--color-rose);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.home-services-link:hover {
+  text-decoration: underline;
 }
 
 .section-head--light .label,

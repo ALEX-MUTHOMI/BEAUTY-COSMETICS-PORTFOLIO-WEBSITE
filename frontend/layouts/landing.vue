@@ -1,6 +1,5 @@
 <template>
   <div class="landing-shell">
-    <SiteLoader />
     <SiteHeader />
     <slot />
     <SiteFooter />
@@ -15,9 +14,6 @@
 import { LANDING_PRIMARY_CTA } from '@/landing/landingContent'
 
 useHead({
-  htmlAttrs: {
-    class: 'is-loading',
-  },
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
   ],

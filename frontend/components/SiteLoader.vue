@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -34,6 +34,8 @@ const props = withDefaults(
 )
 
 const visible = ref(true)
+
+const LOADER_SESSION_KEY = 'shee-loader-done'
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -54,6 +56,13 @@ function preload(src: string, timeoutMs = 1800): Promise<void> {
 }
 
 onMounted(() => {
+  if (sessionStorage.getItem(LOADER_SESSION_KEY) === '1') {
+    visible.value = false
+    document.documentElement.classList.add('site-ready')
+    document.documentElement.classList.remove('is-loading')
+    return
+  }
+
   const started = Date.now()
   const maxWait = props.minDuration + 900
 
@@ -61,6 +70,7 @@ onMounted(() => {
     visible.value = false
     document.documentElement.classList.add('site-ready')
     document.documentElement.classList.remove('is-loading')
+    sessionStorage.setItem(LOADER_SESSION_KEY, '1')
   }
 
   const safety = setTimeout(dismiss, maxWait)
@@ -72,6 +82,10 @@ onMounted(() => {
       const remaining = Math.max(0, props.minDuration - (Date.now() - started))
       wait(remaining).then(dismiss)
     })
+})
+
+onUnmounted(() => {
+  document.documentElement.classList.remove('is-loading')
 })
 </script>
 

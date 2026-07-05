@@ -12,7 +12,7 @@
       <div class="site-footer__col">
         <p class="site-footer__heading">Links</p>
         <NuxtLink to="/#welcome">About</NuxtLink>
-        <NuxtLink to="/#services">Our Services</NuxtLink>
+        <NuxtLink to="/services">Our Services</NuxtLink>
         <NuxtLink to="/#packages">Packages</NuxtLink>
         <NuxtLink to="/book">{{ LANDING_PRIMARY_CTA }}</NuxtLink>
       </div>
