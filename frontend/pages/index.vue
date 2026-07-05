@@ -54,30 +54,26 @@
             <p class="label">Get to know us</p>
             <h2>Welcome to Shee Aesthetics</h2>
             <p class="welcome__text">
-              A private beauty studio in Parklands. Facials, waxing, massage and makeup —
-              one calm room, trained therapists, and time for each client.
+              Shee Aesthetics is a beauty therapy studio offering facials, waxing, massage, and makeup.
+              Appointments are private, therapists are trained, and every service is done in a clean treatment room.
             </p>
             <div class="welcome__offers">
-              <article class="welcome__offer welcome__offer--package">
-                <span class="welcome__offer-badge">Tue &amp; Wed</span>
+              <article class="welcome__offer">
                 <img src="/images/icon-offer.png" alt="" width="46" height="46" />
                 <div>
-                  <h3>Full Package Days</h3>
-                  <p>Facial, waxing, massage and makeup in one visit. Best if you want everything done before an event or a busy week.</p>
+                  <h3>Special Offer</h3>
+                  <p>Full packages on Tuesday and Wednesday — facial, waxing, massage and makeup in one visit.</p>
                 </div>
               </article>
               <article class="welcome__offer">
                 <img src="/images/icon-gift.png" alt="" width="48" height="48" />
                 <div>
                   <h3>Single Treatments</h3>
-                  <p>One service at a time on Mon, Thu, Fri and Sat — when you only need a facial, wax, massage or makeup session.</p>
+                  <p>Book one service at a time on Mon, Thu, Fri and Sat when you only need a single session.</p>
                 </div>
               </article>
             </div>
-            <div class="welcome__actions">
-              <SiteButton to="/#packages" variant="primary">Full Packages</SiteButton>
-              <SiteButton to="/#singles" variant="outline">Single Treatments</SiteButton>
-            </div>
+            <SiteButton to="/#services" variant="primary">Discover More</SiteButton>
           </div>
         </ScrollReveal>
       </div>
@@ -98,16 +94,37 @@
           variant="up"
           :delay="index * 90"
         >
-          <article class="service-card">
-            <div class="service-card__leaf" aria-hidden="true" />
-            <div class="service-card__photo-wrap">
-              <img :src="service.image" :alt="service.name" class="service-card__photo" loading="lazy" />
-              <img :src="service.icon" alt="" class="service-card__icon" loading="lazy" />
-            </div>
-            <h3>{{ service.name }}</h3>
-            <p>{{ service.text }}</p>
-            <SiteButton to="/book" variant="text">Book Now</SiteButton>
-          </article>
+          <MellisServiceCard
+            :name="service.name"
+            :text="service.text"
+            :image="service.image"
+            :icon="service.icon"
+          />
+        </ScrollReveal>
+      </div>
+    </section>
+
+    <!-- How it works — Mellis flow -->
+    <section class="steps">
+      <ScrollReveal variant="fade">
+        <header class="section-head">
+          <p class="label">3 easy steps</p>
+          <h2>How It Works?</h2>
+        </header>
+      </ScrollReveal>
+      <div class="steps__flow">
+        <ScrollReveal
+          v-for="(step, index) in flowSteps"
+          :key="step.title"
+          variant="up"
+          :delay="index * 100"
+        >
+          <MellisFlowStep
+            :num="step.num"
+            :title="step.title"
+            :text="step.text"
+            :image="step.image"
+          />
         </ScrollReveal>
       </div>
     </section>
@@ -118,7 +135,7 @@
         <ScrollReveal variant="left">
           <div class="more__copy">
             <p class="label">What else we do</p>
-            <h2>Your Spa Visit, Your Way</h2>
+            <h2>Get an Incredible Spa Experience at Shee Aesthetics</h2>
             <ul class="more__list">
               <li v-for="item in serviceList" :key="item">{{ item }}</li>
             </ul>
@@ -139,104 +156,6 @@
             </article>
           </ScrollReveal>
         </div>
-      </div>
-    </section>
-
-    <!-- How it works -->
-    <section class="steps">
-      <ScrollReveal variant="fade">
-        <header class="section-head">
-          <p class="label">3 easy steps</p>
-          <h2>How It Works?</h2>
-        </header>
-      </ScrollReveal>
-      <div class="steps__grid">
-        <ScrollReveal
-          v-for="(step, index) in steps"
-          :key="step.title"
-          variant="up"
-          :delay="index * 100"
-        >
-          <article class="step-card">
-            <span class="step-card__num">{{ String(index + 1).padStart(2, '0') }}</span>
-            <h3>{{ step.title }}</h3>
-            <p>{{ step.text }}</p>
-          </article>
-        </ScrollReveal>
-      </div>
-    </section>
-
-    <!-- Package days sell -->
-    <section class="package-days" aria-labelledby="package-days-heading">
-      <ScrollReveal variant="fade">
-        <div class="package-days__inner">
-          <p class="label">Tuesday &amp; Wednesday</p>
-          <h2 id="package-days-heading">{{ packageDayHeadline }}</h2>
-          <p class="package-days__lead">{{ packageDaySubhead }}</p>
-          <p class="package-days__urgency">{{ packageDayUrgency }}</p>
-          <div class="package-days__chips" role="list">
-            <span v-for="day in packageDays" :key="day" role="listitem">{{ day }}</span>
-          </div>
-          <SiteButton to="/book" variant="primary">Reserve Your Package Day</SiteButton>
-        </div>
-      </ScrollReveal>
-    </section>
-
-    <!-- Packages -->
-    <section id="packages" class="packages">
-      <ScrollReveal variant="fade">
-        <header class="section-head">
-          <p class="label">Pricing Plans</p>
-          <h2>Full Packages — Tuesday &amp; Wednesday</h2>
-          <p class="section-head__sub">Three ways to spend your package day. Every option includes multiple treatments in one private visit.</p>
-        </header>
-      </ScrollReveal>
-      <div class="packages__grid">
-        <ScrollReveal
-          v-for="(pkg, index) in packages"
-          :key="pkg.name"
-          variant="up"
-          :delay="index * 90"
-        >
-          <MellisPackageCard
-            :name="pkg.name"
-            :text="pkg.text"
-            :price="pkg.price"
-            :includes="pkg.includes"
-            :featured="pkg.featured"
-            :badge="pkg.badge"
-            :days-label="pkg.daysLabel"
-            :cta-label="pkg.ctaLabel"
-          />
-        </ScrollReveal>
-      </div>
-    </section>
-
-    <!-- Single treatments -->
-    <section id="singles" class="packages packages--singles">
-      <ScrollReveal variant="fade">
-        <header class="section-head">
-          <p class="label">Single Treatments</p>
-          <h2>Book One Service at a Time</h2>
-          <p class="section-head__sub">Available Monday and Thursday through Saturday. Pick the treatment you need today.</p>
-        </header>
-      </ScrollReveal>
-      <div class="packages__grid packages__grid--singles">
-        <ScrollReveal
-          v-for="(treatment, index) in singleTreatments"
-          :key="treatment.name"
-          variant="up"
-          :delay="index * 80"
-        >
-          <MellisPackageCard
-            :name="treatment.name"
-            :text="treatment.text"
-            :price="treatment.price"
-            :includes="treatment.includes"
-            :days-label="treatment.daysLabel"
-            :cta-label="treatment.ctaLabel"
-          />
-        </ScrollReveal>
       </div>
     </section>
 
@@ -362,24 +281,75 @@
         </ScrollReveal>
       </div>
     </section>
+
+    <!-- Full packages -->
+    <section id="packages" class="packages">
+      <ScrollReveal variant="fade">
+        <header class="section-head">
+          <p class="label">Pricing Plans</p>
+          <h2>Full Packages — Tuesday &amp; Wednesday</h2>
+          <p class="section-head__sub">Package days only. Facial, waxing, massage and makeup in one private visit.</p>
+        </header>
+      </ScrollReveal>
+      <div class="packages__grid">
+        <ScrollReveal
+          v-for="(pkg, index) in packages"
+          :key="pkg.name"
+          variant="up"
+          :delay="index * 90"
+        >
+          <MellisPackageCard
+            :name="pkg.name"
+            :text="pkg.text"
+            :price="pkg.price"
+            :includes="pkg.includes"
+            :featured="pkg.featured"
+            :badge="pkg.badge"
+            :days-label="pkg.daysLabel"
+            :cta-label="pkg.ctaLabel"
+          />
+        </ScrollReveal>
+      </div>
+    </section>
+
+    <!-- Single treatments -->
+    <section id="singles" class="packages packages--singles">
+      <ScrollReveal variant="fade">
+        <header class="section-head">
+          <p class="label">Single Treatments</p>
+          <h2>Book One Service at a Time</h2>
+          <p class="section-head__sub">Mon, Thu–Sat. Pick a facial, wax, massage or makeup when you only need one.</p>
+        </header>
+      </ScrollReveal>
+      <div class="packages__grid packages__grid--singles">
+        <ScrollReveal
+          v-for="(treatment, index) in singleTreatments"
+          :key="treatment.name"
+          variant="up"
+          :delay="index * 80"
+        >
+          <MellisPackageCard
+            :name="treatment.name"
+            :text="treatment.text"
+            :price="treatment.price"
+            :includes="treatment.includes"
+            :days-label="treatment.daysLabel"
+            :cta-label="treatment.ctaLabel"
+          />
+        </ScrollReveal>
+      </div>
+    </section>
   </main>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import {
-  PACKAGE_DAYS,
-  bookingSteps,
+  flowSteps,
   heroSlides,
-  packageDayHeadline,
-  packageDaySubhead,
-  packageDayUrgency,
   packages,
   singleTreatments,
 } from '@/landing/landingContent'
-
-const packageDays = PACKAGE_DAYS
-const steps = bookingSteps
 
 const activeSlide = ref(0)
 const heroReady = ref(true)
@@ -772,25 +742,6 @@ useHead({
   position: relative;
 }
 
-.welcome__offer--package {
-  padding: 1.15rem;
-  background: var(--color-cream);
-  border: 1px solid rgba(222, 150, 141, 0.35);
-  border-left: 3px solid var(--color-rose);
-}
-
-.welcome__offer-badge {
-  position: absolute;
-  top: 0.65rem;
-  right: 0.75rem;
-  padding: 0.2rem 0.55rem;
-  background: var(--color-rose);
-  color: #fff;
-  font: 600 0.62rem var(--font-body);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
 .welcome__offers article:hover {
   transform: translateX(4px);
 }
@@ -808,14 +759,7 @@ useHead({
   color: var(--color-muted);
 }
 
-.welcome__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 0.25rem;
-}
-
-/* Services */
+/* Services — Mellis open grid, no boxed cards */
 .services {
   padding: clamp(3rem, 7vh, 5rem) 1.5rem clamp(5rem, 9vh, 6.5rem);
   background: var(--color-paper);
@@ -826,88 +770,7 @@ useHead({
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-}
-
-.service-card {
-  position: relative;
-  background: #fff;
-  border: 1px solid var(--color-line);
-  border-top: 3px solid var(--color-rose);
-  box-shadow: var(--shadow-card);
-  padding: 2.75rem 1.5rem 2rem;
-  text-align: center;
-  height: 100%;
-  transition:
-    transform 0.4s var(--ease-story),
-    box-shadow 0.4s var(--ease-story),
-    border-top-color 0.35s;
-}
-
-.service-card:hover {
-  transform: translateY(-8px);
-  border-top-color: var(--color-rose-dark);
-  box-shadow: 0 20px 50px rgba(39, 37, 42, 0.12);
-}
-
-.service-card__leaf {
-  position: absolute;
-  inset: 0;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 8c-6 14-18 16-18 28a18 18 0 0 0 36 0c0-12-12-14-18-28z' fill='%2327272a'/%3E%3C/svg%3E");
-  background-size: 90px;
-  pointer-events: none;
-}
-
-.service-card__photo-wrap {
-  position: relative;
-  width: 150px;
-  height: 150px;
-  margin: 0 auto 1.75rem;
-}
-
-.service-card__photo {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  transition: transform 0.5s var(--ease-story);
-}
-
-.service-card:hover .service-card__photo {
-  transform: scale(1.05);
-}
-
-.service-card__icon {
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 46px;
-  height: 46px;
-  padding: 10px;
-  border-radius: 50%;
-  background: var(--color-rose);
-  box-sizing: border-box;
-  object-fit: contain;
-  transition: transform 0.35s var(--ease-story);
-}
-
-.service-card:hover .service-card__icon {
-  transform: translateX(-50%) scale(1.08);
-}
-
-.service-card h3 {
-  margin: 0 0 0.85rem;
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  font-weight: 700;
-}
-
-.service-card p {
-  margin: 0 0 1.25rem;
-  font: 400 0.88rem/1.65 var(--font-body);
-  color: var(--color-muted);
+  gap: 2rem;
 }
 
 /* More */
@@ -966,20 +829,14 @@ useHead({
   background: #fff;
   padding: 2rem 1.25rem;
   text-align: center;
-  border: 1px solid var(--color-line);
-  border-top: 3px solid var(--color-rose);
   box-shadow: var(--shadow-card);
   height: 100%;
-  transition:
-    transform 0.4s var(--ease-story),
-    box-shadow 0.4s,
-    border-top-color 0.35s;
+  transition: transform 0.4s var(--ease-story), box-shadow 0.4s;
 }
 
 .stat-card:hover {
-  transform: translateY(-8px);
-  border-top-color: var(--color-rose-dark);
-  box-shadow: 0 20px 48px rgba(39, 37, 42, 0.12);
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(39, 37, 42, 0.1);
 }
 
 .stat-card img {
@@ -1002,106 +859,42 @@ useHead({
   color: var(--color-muted);
 }
 
-/* Steps */
+/* Steps — Mellis circle flow */
 .steps {
   padding: clamp(4rem, 8vh, 6rem) 1.5rem;
+  background: var(--color-paper);
 }
 
-.steps__grid {
+.steps__flow {
+  position: relative;
   width: var(--container);
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0;
-  border: 1px solid var(--color-line);
+  gap: 2rem;
+  padding-top: 0.5rem;
 }
 
-.step-card {
-  padding: 2.5rem 2rem;
-  text-align: center;
-  border-right: 1px solid var(--color-line);
-  height: 100%;
-  transition: background 0.35s;
+.steps__flow::before {
+  content: '';
+  position: absolute;
+  top: 100px;
+  left: 18%;
+  right: 18%;
+  height: 2px;
+  background: var(--color-rose-soft);
+  z-index: 0;
 }
 
-.step-card:hover {
-  background: var(--color-cream);
-}
+@media (max-width: 768px) {
+  .steps__flow {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
 
-.step-card:last-child {
-  border-right: none;
-}
-
-.step-card__num {
-  display: inline-block;
-  margin-bottom: 1.25rem;
-  font: 700 2rem var(--font-display);
-  color: var(--color-rose);
-}
-
-.step-card h3 {
-  margin: 0 0 0.85rem;
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.step-card p {
-  margin: 0;
-  font: 400 0.92rem/1.65 var(--font-body);
-  color: var(--color-muted);
-}
-
-/* Package days sell band */
-.package-days {
-  padding: clamp(3.5rem, 7vh, 5rem) 1.5rem;
-  background: linear-gradient(135deg, var(--color-rose-soft) 0%, var(--color-cream) 55%, #fff 100%);
-  border-top: 1px solid rgba(222, 150, 141, 0.2);
-  border-bottom: 1px solid rgba(222, 150, 141, 0.2);
-}
-
-.package-days__inner {
-  width: min(720px, 100%);
-  margin: 0 auto;
-  text-align: center;
-}
-
-.package-days__inner h2 {
-  margin: 0 0 1rem;
-  font-family: var(--font-display);
-  font-size: clamp(1.85rem, 4vw, 2.5rem);
-  font-weight: 400;
-  line-height: 1.25;
-}
-
-.package-days__lead {
-  margin: 0 0 1rem;
-  font: 400 1rem/1.75 var(--font-body);
-  color: var(--color-muted);
-}
-
-.package-days__urgency {
-  margin: 0 0 1.5rem;
-  font: 600 0.92rem/1.6 var(--font-body);
-  color: var(--color-ink);
-}
-
-.package-days__chips {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 1.75rem;
-}
-
-.package-days__chips span {
-  padding: 0.5rem 1.25rem;
-  border: 1px solid var(--color-rose);
-  background: #fff;
-  font: 600 0.75rem var(--font-body);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-rose-dark);
+  .steps__flow::before {
+    display: none;
+  }
 }
 
 /* Packages */
@@ -1144,22 +937,15 @@ useHead({
 .review-card {
   margin: 0;
   padding: 2.25rem 2rem;
-  background: #fff;
-  border: 1px solid var(--color-line);
-  border-top: 3px solid var(--color-rose);
-  box-shadow: var(--shadow-card);
+  background: var(--color-cream);
   position: relative;
   height: 100%;
-  transition:
-    transform 0.4s var(--ease-story),
-    box-shadow 0.4s,
-    border-top-color 0.35s;
+  transition: transform 0.4s var(--ease-story), box-shadow 0.4s;
 }
 
 .review-card:hover {
-  transform: translateY(-8px);
-  border-top-color: var(--color-rose-dark);
-  box-shadow: 0 20px 48px rgba(39, 37, 42, 0.12);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(39, 37, 42, 0.08);
 }
 
 .review-card__quote {
@@ -1333,20 +1119,11 @@ useHead({
 
 .blog-card {
   height: 100%;
-  background: #fff;
-  border: 1px solid var(--color-line);
-  border-top: 3px solid var(--color-rose);
-  box-shadow: var(--shadow-card);
-  transition:
-    transform 0.4s var(--ease-story),
-    box-shadow 0.4s,
-    border-top-color 0.35s;
+  transition: transform 0.4s var(--ease-story);
 }
 
 .blog-card:hover {
-  transform: translateY(-8px);
-  border-top-color: var(--color-rose-dark);
-  box-shadow: 0 20px 48px rgba(39, 37, 42, 0.12);
+  transform: translateY(-6px);
 }
 
 .blog-card__image {
@@ -1367,7 +1144,7 @@ useHead({
 }
 
 .blog-card__body {
-  padding: 1.5rem 1.25rem 1.75rem;
+  padding: 1.5rem 0 0;
 }
 
 .blog-card h3 {
@@ -1425,12 +1202,10 @@ useHead({
   .packages__grid,
   .packages__grid--singles,
   .reviews__grid,
-  .blog__grid,
-  .steps__grid { grid-template-columns: 1fr; }
+  .blog__grid { grid-template-columns: 1fr; }
 
-  .step-card { border-right: none; border-bottom: 1px solid var(--color-line); }
-  .more__list { columns: 1; }
   .gallery__grid { grid-template-columns: repeat(2, 1fr); }
+  .more__list { columns: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1438,7 +1213,6 @@ useHead({
   .hero__bg,
   .hero__content,
   .cta__photo img,
-  .service-card,
   .stat-card,
   .package-card,
   .review-card,

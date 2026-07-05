@@ -18,11 +18,18 @@ export interface HeroSlide {
   ctaTo: string
 }
 
+export interface FlowStep {
+  num: string
+  title: string
+  text: string
+  image: string
+}
+
 export const PACKAGE_DAYS = ['Tuesday', 'Wednesday'] as const
 
 export const SINGLE_DAYS_LABEL = 'Mon · Thu – Sat'
 
-/** Mellis-style hero — short eyebrow + script headline, no brand in the slider */
+/** Mellis Home 01 hero — script headline, eyebrow, Discover More */
 export const heroSlides: HeroSlide[] = [
   {
     image: '/images/hero-1.jpg',
@@ -33,19 +40,39 @@ export const heroSlides: HeroSlide[] = [
   },
   {
     image: '/images/hero-2.jpg',
-    eyebrow: 'Tuesday & Wednesday',
-    title: 'Full Package Days',
-    subtitle: 'One visit — facial, waxing, massage and makeup.',
-    cta: 'See Packages',
-    ctaTo: '/#packages',
+    eyebrow: 'Ideal place to unwind',
+    title: 'Spa Care',
+    cta: 'Discover More',
+    ctaTo: '/#services',
   },
   {
     image: '/images/hero-3.jpg',
-    eyebrow: 'Mon · Thu – Sat',
+    eyebrow: 'Ideal place to unwind',
     title: 'Treat Yourself',
-    subtitle: 'A facial, wax, massage or makeup when you only need one.',
-    cta: 'View Singles',
-    ctaTo: '/#singles',
+    cta: 'Discover More',
+    ctaTo: '/#welcome',
+  },
+]
+
+/** Mellis flow copy — short paragraphs under each step */
+export const flowSteps: FlowStep[] = [
+  {
+    num: '01',
+    title: 'Meeting',
+    text: 'Book your appointment online or by phone. We confirm your date and the treatments in your visit.',
+    image: '/images/step-meeting.jpg',
+  },
+  {
+    num: '02',
+    title: 'Treatment',
+    text: 'Arrive a few minutes early. Your therapist explains each step before your facial, wax, massage or makeup.',
+    image: '/images/step-treatment.jpg',
+  },
+  {
+    num: '03',
+    title: 'Finalizing',
+    text: 'Settle your bill, schedule your next visit if you wish, and leave feeling refreshed.',
+    image: '/images/step-finalizing.jpg',
   },
 ]
 
@@ -141,20 +168,7 @@ export const singleTreatments: LandingPackage[] = [
   },
 ]
 
-export const bookingSteps = [
-  {
-    title: 'Book',
-    text: 'Choose your day online or call us. Full packages Tue & Wed; single treatments Mon and Thu–Sat.',
-  },
-  {
-    title: 'Arrive',
-    text: 'Come a few minutes early. Your therapist talks you through each step before starting.',
-  },
-  {
-    title: 'Leave refreshed',
-    text: 'Walk out with one treatment done — or the full package finished in a single visit.',
-  },
-]
+export const bookingSteps = flowSteps
 
 /** Reject copy that could break out of text nodes if ever user-sourced later. */
 export function assertSafeDisplayText(value: string): boolean {

@@ -36,16 +36,14 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(logoLink.locator('img.shee-logo__mark')).toBeVisible()
     await expect(logoLink.locator('.shee-logo__name')).toHaveText('Shee')
 
-    // Package days + singles offered
-    const packageDays = page.locator('.package-days')
-    await packageDays.scrollIntoViewIfNeeded()
-    await expect(page.getByRole('heading', { name: /Full Package Days/i }).first()).toBeVisible()
+    // Mellis flow + package cards at bottom
+    await expect(page.getByRole('heading', { name: 'Meeting', level: 3 })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'What We\'re Offering', level: 2 })).toBeVisible()
+
+    await page.locator('#packages').scrollIntoViewIfNeeded()
+    await expect(page.getByRole('heading', { name: /Full Packages — Tuesday/i })).toBeVisible()
     await expect(page.getByRole('heading', { name: /Book One Service at a Time/i })).toBeVisible()
     await expect(page.getByText(/Most booked/i)).toBeVisible()
-    await expect(page.getByText(/Deep cleansing facial/i).first()).toBeVisible()
-
-    // Hero stays clean — no logo inside the carousel
-    await expect(page.locator('.hero .shee-logo')).toHaveCount(0)
 
     // No CSP violations in console
     const cspViolations = consoleErrors.filter((e) =>

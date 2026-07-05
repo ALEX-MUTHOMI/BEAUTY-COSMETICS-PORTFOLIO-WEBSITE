@@ -3,6 +3,7 @@ import {
   PACKAGE_DAYS,
   SINGLE_DAYS_LABEL,
   assertSafeDisplayText,
+  flowSteps,
   heroSlides,
   isPackageDay,
   packageDayHeadline,
@@ -26,6 +27,17 @@ describe('landingContent', () => {
     expect(packageDayHeadline.toLowerCase()).toContain('package')
     expect(packageDayUrgency.toLowerCase()).toMatch(/tue|tuesday|package/)
     expect(packageDayUrgency).not.toMatch(/experience|journey|unlock/i)
+  })
+
+  it('defines Mellis flow steps with circle images', () => {
+    expect(flowSteps).toHaveLength(3)
+    expect(flowSteps[0]?.title).toBe('Meeting')
+    expect(flowSteps[1]?.title).toBe('Treatment')
+    expect(flowSteps[2]?.title).toBe('Finalizing')
+    flowSteps.forEach((step) => {
+      expect(step.image).toMatch(/^\/images\/step-/)
+      expect(step.num).toMatch(/^\d{2}$/)
+    })
   })
 
   it('keeps hero slides short and Mellis-style — no brand in the carousel', () => {
