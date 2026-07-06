@@ -72,15 +72,48 @@ const indexLabel = computed(() => String(props.index + 1).padStart(2, '0'))
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.25s ease,
-    transform 0.2s ease,
-    background-color 0.2s ease;
+    border-color 0.15s ease,
+    box-shadow 0.18s ease,
+    transform 0.15s ease,
+    background-color 0.15s ease;
 }
 
-.service-treatment:hover {
-  box-shadow: 0 10px 28px rgba(39, 37, 42, 0.1);
-  transform: translateY(-2px);
+.service-treatment:hover:not(.service-treatment--selected) {
+  transform: translateY(-3px);
+}
+
+.service-treatment--facials:hover:not(.service-treatment--selected) {
+  border-color: rgba(222, 150, 141, 0.45);
+  background: linear-gradient(165deg, #fff 0%, #fff0ed 100%);
+  box-shadow: 0 12px 28px rgba(222, 150, 141, 0.18);
+}
+
+.service-treatment--massage:hover:not(.service-treatment--selected) {
+  border-color: rgba(201, 127, 118, 0.45);
+  background: linear-gradient(165deg, #fff 0%, #f8ece9 100%);
+  box-shadow: 0 12px 28px rgba(201, 127, 118, 0.16);
+}
+
+.service-treatment--waxing:hover:not(.service-treatment--selected) {
+  border-color: rgba(184, 111, 102, 0.45);
+  background: linear-gradient(165deg, #fff 0%, #f5e6e3 100%);
+  box-shadow: 0 12px 28px rgba(184, 111, 102, 0.16);
+}
+
+.service-treatment--makeup:hover:not(.service-treatment--selected) {
+  border-color: rgba(212, 165, 158, 0.5);
+  background: linear-gradient(165deg, #fff 0%, #faf0ee 100%);
+  box-shadow: 0 12px 28px rgba(212, 165, 158, 0.18);
+}
+
+.service-treatment:hover:not(.service-treatment--selected) .service-treatment__badge {
+  color: #fff;
+  background: var(--color-rose);
+}
+
+.service-treatment:hover:not(.service-treatment--selected) .service-treatment__action {
+  color: var(--color-rose-dark);
+  border-top-color: rgba(222, 150, 141, 0.25);
 }
 
 .service-treatment:focus-visible {

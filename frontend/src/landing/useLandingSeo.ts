@@ -1,3 +1,4 @@
+import { useHead, useRoute, useRuntimeConfig, useSeoMeta } from 'nuxt/app'
 import {
   LANDING_ADDRESS_LINES,
   LANDING_INSTAGRAM_URL,

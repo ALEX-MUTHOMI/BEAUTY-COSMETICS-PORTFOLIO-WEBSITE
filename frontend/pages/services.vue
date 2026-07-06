@@ -9,7 +9,83 @@
       </div>
     </header>
 
-    <section class="services-picker" aria-label="Choose a service category">
+    <nav class="services-paths" aria-label="Choose how you want to book">
+      <a href="#full-packages" class="services-path" @click="scrollToSection('full-packages', $event)">
+        <span class="services-path__icon" aria-hidden="true">◆</span>
+        <span class="services-path__copy">
+          <strong>Full packages</strong>
+          <span>Tue &amp; Wed · everything in one visit</span>
+        </span>
+      </a>
+      <a href="#single-sessions" class="services-path" @click="scrollToSection('single-sessions', $event)">
+        <span class="services-path__icon" aria-hidden="true">◇</span>
+        <span class="services-path__copy">
+          <strong>Single sessions</strong>
+          <span>{{ SINGLE_DAYS_LABEL }} · one treatment</span>
+        </span>
+      </a>
+      <a href="#treatments" class="services-path" @click="scrollToSection('treatments', $event)">
+        <span class="services-path__icon" aria-hidden="true">◎</span>
+        <span class="services-path__copy">
+          <strong>Treatment menu</strong>
+          <span>Exact service, duration &amp; price</span>
+        </span>
+      </a>
+    </nav>
+
+    <section id="full-packages" class="services-packages">
+      <header class="services-section-head">
+        <p class="label">Package days</p>
+        <h2>Full visits, Tuesday &amp; Wednesday</h2>
+        <p class="services-section-head__sub">{{ packageDaySubhead }}</p>
+      </header>
+      <div class="services-packages__grid">
+        <MellisPackageCard
+          v-for="pkg in packages"
+          :key="pkg.name"
+          :name="pkg.name"
+          :text="pkg.text"
+          :price="pkg.price"
+          :includes="pkg.includes"
+          :featured="pkg.featured"
+          :badge="pkg.badge"
+          :days-label="pkg.daysLabel"
+          :cta-label="pkg.ctaLabel"
+        />
+      </div>
+    </section>
+
+    <section id="single-sessions" class="services-packages services-packages--singles">
+      <header class="services-section-head">
+        <p class="label">Single treatments</p>
+        <h2>One service at a time</h2>
+        <p class="services-section-head__sub">
+          {{ SINGLE_DAYS_LABEL }}. Pick a facial, wax, massage or makeup when that is all you need.
+        </p>
+      </header>
+      <div class="services-packages__grid services-packages__grid--singles">
+        <MellisPackageCard
+          v-for="treatment in singleTreatments"
+          :key="treatment.name"
+          :name="treatment.name"
+          :text="treatment.text"
+          :price="treatment.price"
+          :includes="treatment.includes"
+          :days-label="treatment.daysLabel"
+          :cta-label="treatment.ctaLabel"
+        />
+      </div>
+    </section>
+
+    <section id="treatments" class="services-picker" aria-label="Browse treatments by category">
+      <header class="services-section-head services-section-head--compact">
+        <p class="label">Detailed menu</p>
+        <h2>Pick your exact treatment</h2>
+        <p class="services-section-head__sub">
+          Choose a category, tap a card to select, then book. Same services as above — with full detail.
+        </p>
+      </header>
+
       <div
         class="services-tabs"
         role="tablist"
@@ -34,82 +110,86 @@
         </button>
       </div>
 
-      <div
-        :id="`panel-${activeCategory.id}`"
-        role="tabpanel"
-        class="services-panel"
-        :class="`services-panel--${activeCategory.id}`"
-        :aria-labelledby="`tab-${activeCategory.id}`"
-      >
-        <div class="services-panel__inner">
-          <div class="services-panel__intro">
-            <div class="services-panel__visual">
-              <img
-                :src="activeCategory.image"
-                :alt="activeCategory.imageAlt"
-                class="services-panel__photo"
-                loading="eager"
-                decoding="async"
-                width="400"
-                height="400"
-              />
-              <span class="services-panel__icon-wrap" aria-hidden="true">
-                <img :src="activeCategory.icon" alt="" width="26" height="26" />
-              </span>
-            </div>
-            <div class="services-panel__copy">
-              <p class="label">{{ activeCategory.daysNote }}</p>
-              <h2>{{ activeCategory.name }}</h2>
-              <p class="services-panel__text">{{ activeCategory.intro }}</p>
-              <p class="services-panel__hint">
-                Tap a treatment below to select it, then book your visit.
-              </p>
-            </div>
-          </div>
+      <div class="services-panel-wrap">
+        <Transition name="panel-fade" mode="out-in">
+          <div
+            :id="`panel-${activeCategory.id}`"
+            :key="activeCategoryId"
+            role="tabpanel"
+            class="services-panel"
+            :class="`services-panel--${activeCategory.id}`"
+            :aria-labelledby="`tab-${activeCategory.id}`"
+          >
+            <div class="services-panel__inner">
+              <div class="services-panel__intro">
+                <div class="services-panel__visual">
+                  <img
+                    :src="activeCategory.image"
+                    :alt="activeCategory.imageAlt"
+                    class="services-panel__photo"
+                    loading="lazy"
+                    decoding="async"
+                    width="400"
+                    height="400"
+                  />
+                  <span class="services-panel__icon-wrap" aria-hidden="true">
+                    <img :src="activeCategory.icon" alt="" width="26" height="26" />
+                  </span>
+                </div>
+                <div class="services-panel__copy">
+                  <p class="label">{{ activeCategory.daysNote }}</p>
+                  <h2>{{ activeCategory.name }}</h2>
+                  <p class="services-panel__text">{{ activeCategory.intro }}</p>
+                  <p class="services-panel__hint">
+                    Tap a treatment below to select it, then book your visit.
+                  </p>
+                </div>
+              </div>
 
-          <div class="services-panel__grid">
-            <ServiceTreatmentCard
-              v-for="(treatment, index) in activeCategory.treatments"
-              :key="treatment.name"
-              :name="treatment.name"
-              :description="treatment.description"
-              :duration="treatment.duration"
-              :price="treatment.price"
-              :highlights="treatment.highlights"
-              :index="index"
-              :variant="activeCategory.id"
-              :selected="selectedTreatmentName === treatment.name"
-              @select="selectTreatment(treatment.name)"
-            />
-          </div>
+              <div class="services-panel__grid">
+                <ServiceTreatmentCard
+                  v-for="(treatment, index) in activeCategory.treatments"
+                  :key="treatment.name"
+                  :name="treatment.name"
+                  :description="treatment.description"
+                  :duration="treatment.duration"
+                  :price="treatment.price"
+                  :highlights="treatment.highlights"
+                  :index="index"
+                  :variant="activeCategory.id"
+                  :selected="selectedTreatmentName === treatment.name"
+                  @select="selectTreatment(treatment.name)"
+                />
+              </div>
 
-          <div class="services-panel__book" :class="{ 'services-panel__book--ready': selectedTreatmentName }">
-            <p v-if="selectedTreatmentName" class="services-panel__chosen">
-              You selected <strong>{{ selectedTreatmentName }}</strong>
-            </p>
-            <p v-else class="services-panel__chosen services-panel__chosen--muted">
-              Select a treatment above to continue
-            </p>
-            <SiteButton
-              to="/book"
-              variant="primary"
-              class="services-panel__cta"
-              :class="{ 'services-panel__cta--disabled': !selectedTreatmentName }"
-            >
-              {{ LANDING_PRIMARY_CTA }}
-            </SiteButton>
+              <div class="services-panel__book" :class="{ 'services-panel__book--ready': selectedTreatmentName }">
+                <p v-if="selectedTreatmentName" class="services-panel__chosen">
+                  You selected <strong>{{ selectedTreatmentName }}</strong>
+                </p>
+                <p v-else class="services-panel__chosen services-panel__chosen--muted">
+                  Select a treatment above to continue
+                </p>
+                <SiteButton
+                  to="/book"
+                  variant="primary"
+                  class="services-panel__cta"
+                  :class="{ 'services-panel__cta--disabled': !selectedTreatmentName }"
+                >
+                  {{ LANDING_PRIMARY_CTA }}
+                </SiteButton>
+              </div>
+            </div>
           </div>
-        </div>
+        </Transition>
       </div>
     </section>
 
     <section class="services-cta">
       <div class="services-cta__inner">
-        <h2>Need a full visit?</h2>
-        <p>Tuesday and Wednesday packages combine facial, waxing, massage and makeup in one room.</p>
+        <h2>Ready when you are</h2>
+        <p>Full package, single session or one treatment from the menu — book online and pay to confirm.</p>
         <div class="services-cta__actions">
-          <SiteButton to="/#packages" variant="primary">View packages</SiteButton>
-          <SiteButton to="/book" variant="text">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+          <SiteButton to="/book" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
         </div>
       </div>
     </section>
@@ -117,15 +197,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { LANDING_PRIMARY_CTA } from '@/landing/landingContent'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import {
+  LANDING_PRIMARY_CTA,
+  packageDaySubhead,
+  packages,
+  singleTreatments,
+  SINGLE_DAYS_LABEL,
+} from '@/landing/landingContent'
 import {
   SERVICES_PAGE_INTRO,
   serviceCategories,
 } from '@/landing/servicesContent'
-
-const route = useRoute()
-const router = useRouter()
 
 const pageIntro = SERVICES_PAGE_INTRO
 const config = useRuntimeConfig()
@@ -140,10 +223,12 @@ const activeCategory = computed(
 )
 
 function selectCategory(id: string) {
-  if (!validIds.includes(id)) return
+  if (!validIds.includes(id) || activeCategoryId.value === id) return
   activeCategoryId.value = id
   selectedTreatmentName.value = null
-  router.replace({ hash: `#${id}` })
+  if (import.meta.client) {
+    window.history.replaceState(null, '', `#${id}`)
+  }
 }
 
 function selectTreatment(name: string) {
@@ -151,21 +236,44 @@ function selectTreatment(name: string) {
 }
 
 function syncFromHash() {
-  const hash = route.hash.replace('#', '')
+  const hash = window.location.hash.replace('#', '')
   if (hash && validIds.includes(hash)) {
     activeCategoryId.value = hash
     selectedTreatmentName.value = null
   }
 }
 
-onMounted(syncFromHash)
-watch(() => route.hash, syncFromHash)
+function scrollToSection(id: string, event: MouseEvent) {
+  event.preventDefault()
+  const el = document.getElementById(id)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (import.meta.client) {
+      window.history.replaceState(null, '', `#${id}`)
+    }
+  }
+}
+
+function onPopState() {
+  syncFromHash()
+}
+
+onMounted(() => {
+  syncFromHash()
+  window.addEventListener('popstate', onPopState)
+})
+
+onUnmounted(() => {
+  if (import.meta.client) {
+    window.removeEventListener('popstate', onPopState)
+  }
+})
 
 definePageMeta({ layout: 'landing' })
 
 const title = 'Services | Facials, Massage, Waxing & Makeup — Shee Aesthetics Meru'
 const description =
-  'Explore Shee Aesthetics services in Meru Town: deep cleansing and brightening facials, Swedish and deep tissue massage, body waxing, and everyday to bridal makeup. Book online.'
+  'Explore Shee Aesthetics services in Meru Town: full packages Tue & Wed, single treatments Mon Thu–Sat, and detailed facials, massage, waxing and makeup menu. Book online.'
 
 useSeoMeta({
   title,
@@ -191,16 +299,43 @@ useHead({
   color: var(--color-rose);
 }
 
+/* Hero with decorative background */
 .services-hero {
-  padding: clamp(2.5rem, 6vh, 4rem) 1rem 1.5rem;
-  background: linear-gradient(180deg, var(--color-cream) 0%, var(--color-paper) 100%);
+  position: relative;
+  overflow: hidden;
+  padding: clamp(2.5rem, 6vh, 4rem) 1rem 1.75rem;
+  background: linear-gradient(165deg, var(--color-cream) 0%, var(--color-paper) 55%, #fff 100%);
   border-bottom: 1px solid var(--color-line);
 }
 
+.services-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 75% 55% at 8% 15%, rgba(222, 150, 141, 0.14), transparent 58%),
+    radial-gradient(ellipse 65% 45% at 92% 85%, rgba(222, 150, 141, 0.1), transparent 52%),
+    radial-gradient(circle at 50% 0%, rgba(255, 245, 243, 0.9), transparent 42%);
+}
+
+.services-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.045;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 6c-5 11-14 13-14 22a14 14 0 0 0 28 0c0-9-9-11-14-22z' fill='%23de968d'/%3E%3C/svg%3E");
+  background-size: 80px;
+}
+
 .services-hero__inner {
+  position: relative;
+  z-index: 1;
   width: var(--container);
   margin: 0 auto;
   max-width: 42rem;
+  text-align: center;
 }
 
 .services-hero h1 {
@@ -225,11 +360,136 @@ useHead({
   color: var(--color-ink);
 }
 
-/* Picker shell */
+/* Booking path navigator */
+.services-paths {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+  width: var(--container);
+  margin: 0 auto;
+  padding: 1.25rem 0 0.5rem;
+}
+
+.services-path {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  border: 2px solid var(--color-line);
+  border-radius: 2px;
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.12s ease;
+}
+
+.services-path:hover {
+  border-color: var(--color-rose);
+  background: linear-gradient(165deg, #fff 0%, var(--color-rose-soft) 100%);
+  box-shadow: 0 6px 20px rgba(222, 150, 141, 0.15);
+  transform: translateY(-1px);
+}
+
+.services-path:focus-visible {
+  outline: 2px solid var(--color-rose);
+  outline-offset: 2px;
+}
+
+.services-path__icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  color: var(--color-rose-dark);
+  background: var(--color-rose-soft);
+}
+
+.services-path__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.services-path__copy strong {
+  font: 700 0.88rem var(--font-body);
+  letter-spacing: 0.04em;
+  color: var(--color-ink);
+}
+
+.services-path__copy span {
+  font: 400 0.8rem/1.4 var(--font-body);
+  color: var(--color-muted);
+}
+
+/* Package sections */
+.services-packages {
+  padding: clamp(2rem, 5vh, 3.5rem) 1rem;
+  background: var(--color-paper);
+  scroll-margin-top: 5.5rem;
+}
+
+.services-packages--singles {
+  background: var(--color-cream);
+}
+
+.services-section-head {
+  width: var(--container);
+  margin: 0 auto 0.5rem;
+  max-width: 40rem;
+  text-align: center;
+}
+
+.services-section-head--compact {
+  margin-bottom: 1rem;
+}
+
+.services-section-head h2 {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 3.5vw, 2rem);
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--color-ink);
+}
+
+.services-section-head__sub {
+  margin: 0;
+  font: 400 0.95rem/1.7 var(--font-body);
+  color: var(--color-muted);
+}
+
+.services-packages__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  width: var(--container);
+  margin: 0 auto;
+  padding-top: 1.25rem;
+  align-items: stretch;
+}
+
+.services-packages__grid > * {
+  min-width: 0;
+}
+
+.services-packages__grid--singles {
+  grid-template-columns: 1fr;
+}
+
+/* Treatment picker */
 .services-picker {
   width: var(--container);
   margin: 0 auto;
-  padding: 1.25rem 0 calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  padding: clamp(2rem, 5vh, 3rem) 0 calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  scroll-margin-top: 5.5rem;
 }
 
 .services-tabs {
@@ -251,17 +511,23 @@ useHead({
   border-radius: 2px;
   background: #fff;
   cursor: pointer;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition:
-    border-color 0.2s,
-    background-color 0.2s,
-    box-shadow 0.2s,
-    color 0.2s;
+    border-color 0.12s ease,
+    background-color 0.12s ease,
+    box-shadow 0.12s ease,
+    color 0.12s ease,
+    transform 0.1s ease;
 }
 
-.services-tab:hover {
+.services-tab:hover:not(.services-tab--active) {
   border-color: var(--color-rose-soft);
   background: var(--color-cream);
+}
+
+.services-tab:active:not(.services-tab--active) {
+  transform: scale(0.98);
 }
 
 .services-tab:focus-visible {
@@ -306,12 +572,29 @@ useHead({
   line-height: 1.25;
 }
 
-/* Category panel — themed backgrounds */
+.services-panel-wrap {
+  position: relative;
+  min-height: 12rem;
+}
+
+.panel-fade-enter-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.panel-fade-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.panel-fade-enter-from,
+.panel-fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
 .services-panel {
   border-radius: 2px;
   border: 1px solid var(--color-line);
   overflow: hidden;
-  animation: panel-in 0.28s var(--ease-story, ease) both;
 }
 
 .services-panel--facials {
@@ -479,18 +762,12 @@ useHead({
   gap: 0.75rem;
 }
 
-@keyframes panel-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @media (min-width: 640px) {
+  .services-paths {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+
   .services-tabs {
     grid-template-columns: repeat(4, 1fr);
   }
@@ -500,9 +777,12 @@ useHead({
     gap: 1rem;
   }
 
-  .services-cta__actions {
-    flex-direction: row;
-    justify-content: center;
+  .services-packages__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .services-packages__grid--singles {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -532,11 +812,25 @@ useHead({
   .services-panel__grid {
     grid-template-columns: repeat(3, 1fr);
   }
+
+  .services-packages__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .services-packages__grid--singles {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .services-panel {
-    animation: none;
+  .panel-fade-enter-active,
+  .panel-fade-leave-active {
+    transition: none;
+  }
+
+  .services-path:hover,
+  .services-tab:active:not(.services-tab--active) {
+    transform: none;
   }
 }
 </style>
