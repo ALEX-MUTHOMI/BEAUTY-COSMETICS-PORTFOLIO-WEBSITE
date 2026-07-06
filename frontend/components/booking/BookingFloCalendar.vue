@@ -12,35 +12,36 @@
       Loading open dates…
     </div>
 
-    <div v-else class="flo-calendar__weekdays" aria-hidden="true">
-      <span v-for="label in weekdayLabels" :key="label">{{ label }}</span>
-    </div>
-
-    <div v-if="!loading" class="flo-calendar__grid">
-      <span
-        v-for="(pad, index) in leadingPads"
-        :key="`pad-${index}`"
-        class="flo-calendar__pad"
-        aria-hidden="true"
-      />
-      <button
-        v-for="day in days"
-        :key="day.date"
-        type="button"
-        class="flo-day"
-        :class="dayClasses(day)"
-        :disabled="!isDaySelectable(day)"
-        :aria-pressed="selectedDate === day.date"
-        :aria-label="ariaForDay(day)"
-        @click="emit('select', day.date)"
+    <template v-else>
+      <section
+        v-for="week in weeks"
+        :key="week.week_start"
+        class="flo-week"
+        :aria-label="weekLabel(week.week_start)"
       >
-        <span class="flo-day__num">{{ dayNumber(day.date) }}</span>
-        <span class="flo-day__meta">{{ dayStatusLabel(day) }}</span>
-        <span v-if="day.status === 'available'" class="flo-day__remain">
-          {{ day.capacity.remaining }} left
-        </span>
-      </button>
-    </div>
+        <h3 class="flo-week__label">{{ weekLabel(week.week_start) }}</h3>
+        <div class="flo-week__grid" :class="gridClass">
+          <button
+            v-for="day in week.days"
+            :key="day.date"
+            type="button"
+            class="flo-day"
+            :class="dayClasses(day)"
+            :disabled="!isDaySelectable(day)"
+            :aria-pressed="selectedDate === day.date"
+            :aria-label="ariaForDay(day)"
+            @click="emit('select', day.date)"
+          >
+            <span class="flo-day__weekday">{{ weekdayShort(day.weekday) }}</span>
+            <span class="flo-day__num">{{ dayNumber(day.date) }}</span>
+            <span class="flo-day__meta">{{ dayStatusLabel(day) }}</span>
+            <span v-if="day.status === 'available'" class="flo-day__remain">
+              {{ day.capacity.remaining }} left
+            </span>
+          </button>
+        </div>
+      </section>
+    </template>
   </div>
 </template>
 
@@ -50,10 +51,13 @@ import {
   dayStatusLabel,
   isDaySelectable,
   type CalendarDay,
+  type CalendarWeek,
 } from '@/booking/bookingPublicApi'
 
 const props = defineProps<{
   days: CalendarDay[]
+  weeks?: CalendarWeek[]
+  layout?: 'singles' | 'package_pairs'
   selectedDate: string | null
   range?: { start: string; end: string } | null
   loading?: boolean
@@ -63,13 +67,25 @@ const props = defineProps<{
 
 const emit = defineEmits<{ select: [isoDate: string] }>()
 
-const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-
-const leadingPads = computed(() => {
-  const first = props.days[0]
-  if (!first) return []
-  return Array.from({ length: first.weekday }, (_, index) => index)
+const weeks = computed<CalendarWeek[]>(() => {
+  if (props.weeks?.length) return props.weeks
+  if (!props.days.length) return []
+  const buckets = new Map<string, CalendarDay[]>()
+  const order: string[] = []
+  for (const day of props.days) {
+    const weekStart = weekStartFor(day.date)
+    if (!buckets.has(weekStart)) {
+      buckets.set(weekStart, [])
+      order.push(weekStart)
+    }
+    buckets.get(weekStart)!.push(day)
+  }
+  return order.map((week_start) => ({ week_start, days: buckets.get(week_start)! }))
 })
+
+const gridClass = computed(() =>
+  props.layout === 'package_pairs' ? 'flo-week__grid--pairs' : 'flo-week__grid--singles',
+)
 
 const rangeLabel = computed(() => {
   if (!props.range) return 'Upcoming dates'
@@ -77,6 +93,23 @@ const rangeLabel = computed(() => {
   const end = formatShort(props.range.end)
   return `${start} – ${end}`
 })
+
+function weekStartFor(isoDate: string): string {
+  const parts = isoDate.split('-').map(Number)
+  const year = parts[0]
+  const month = parts[1]
+  const day = parts[2]
+  if (!year || !month || !day) return isoDate
+  const utc = new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
+  const weekday = utc.getUTCDay()
+  const mondayOffset = weekday === 0 ? -6 : 1 - weekday
+  utc.setUTCDate(utc.getUTCDate() + mondayOffset)
+  return utc.toISOString().slice(0, 10)
+}
+
+function weekLabel(weekStart: string): string {
+  return `Week of ${formatShort(weekStart)}`
+}
 
 function formatShort(isoDate: string): string {
   const parts = isoDate.split('-').map(Number)
@@ -92,6 +125,10 @@ function formatShort(isoDate: string): string {
   }).format(utc)
 }
 
+function weekdayShort(weekday: number): string {
+  return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][weekday] ?? ''
+}
+
 function dayNumber(isoDate: string): number {
   return Number(isoDate.split('-')[2]) || 0
 }
@@ -101,12 +138,11 @@ function dayClasses(day: CalendarDay): Record<string, boolean> {
     'flo-day--selected': props.selectedDate === day.date,
     'flo-day--available': day.status === 'available',
     'flo-day--full': day.status === 'capacity_full' || day.status === 'no_slots',
-    'flo-day--muted': day.status === 'not_offered' || day.status === 'closed',
   }
 }
 
 function ariaForDay(day: CalendarDay): string {
-  const label = formatShort(day.date)
+  const label = `${weekdayShort(day.weekday)} ${formatShort(day.date)}`
   if (day.status === 'available') {
     return `${label}, ${day.slot_count} slots, ${day.capacity.remaining} spots remaining`
   }
@@ -152,26 +188,31 @@ function ariaForDay(day: CalendarDay): string {
   to { transform: rotate(360deg); }
 }
 
-.flo-calendar__weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.35rem;
-  margin-bottom: 0.35rem;
-  text-align: center;
-  font: 600 0.62rem var(--font-body);
+.flo-week + .flo-week {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-line);
+}
+
+.flo-week__label {
+  margin: 0 0 0.65rem;
+  font: 600 0.72rem var(--font-body);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-muted);
 }
 
-.flo-calendar__grid {
+.flo-week__grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.35rem;
+  gap: 0.5rem;
 }
 
-.flo-calendar__pad {
-  min-height: 4.75rem;
+.flo-week__grid--pairs {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.flo-week__grid--singles {
+  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
 }
 
 .flo-day {
@@ -192,7 +233,7 @@ function ariaForDay(day: CalendarDay): string {
 
 .flo-day:disabled {
   cursor: not-allowed;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 .flo-day--available:not(:disabled):hover {
@@ -210,8 +251,10 @@ function ariaForDay(day: CalendarDay): string {
   background: #f8f8f9;
 }
 
-.flo-day--muted {
-  background: #fafafa;
+.flo-day__weekday {
+  font: 600 0.58rem var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--color-muted);
 }
 
@@ -229,10 +272,6 @@ function ariaForDay(day: CalendarDay): string {
 
 .flo-day--full .flo-day__meta {
   color: #9b2c2c;
-}
-
-.flo-day--muted .flo-day__meta {
-  color: var(--color-muted);
 }
 
 .flo-day__remain {

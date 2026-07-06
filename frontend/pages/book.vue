@@ -23,6 +23,8 @@
 
           <BookingFloCalendar
             :days="flow.calendarDays.value"
+            :weeks="flow.calendar.value?.weeks ?? []"
+            :layout="flow.calendar.value?.layout ?? 'singles'"
             :selected-date="flow.selectedDate.value"
             :range="flow.calendar.value?.range ?? null"
             :loading="flow.loading.value"

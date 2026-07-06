@@ -9,8 +9,8 @@ from bookings.services.availability import AvailabilityService
 from bookings.services.booking_calendar import BookingCalendarService
 from bookings.services.catalog import list_public_full_packages, list_public_services
 from bookings.services.catalog_resolve import resolve_catalog_selection
-from bookings.services.handoff_resolve import resolve_booking_handoff
 from bookings.services.checkout_contract import BookingCheckoutContractService
+from bookings.services.handoff_resolve import resolve_booking_handoff
 from bookings.services.holds import BookingHoldService
 from bookings.services.legal import POLICY_ACCEPTANCE_TEXT
 from core.middleware.correlation_id import get_correlation_id

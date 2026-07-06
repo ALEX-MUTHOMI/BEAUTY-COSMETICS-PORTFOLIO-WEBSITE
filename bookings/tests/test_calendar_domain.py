@@ -1,5 +1,7 @@
 """Tests for deterministic calendar day classification (pure domain)."""
 
+from datetime import date
+
 import pytest
 
 from bookings.domain.calendar import (
@@ -10,9 +12,10 @@ from bookings.domain.calendar import (
     STATUS_AVAILABLE,
     STATUS_CAPACITY_FULL,
     STATUS_CLOSED,
-    STATUS_NOT_OFFERED,
     STATUS_NO_SLOTS,
+    STATUS_NOT_OFFERED,
     classify_calendar_day,
+    iter_offered_dates,
 )
 
 
@@ -114,3 +117,11 @@ def test_classify_is_deterministic_for_identical_inputs():
         slot_count=4,
     )
     assert classify_calendar_day(**kwargs) == classify_calendar_day(**kwargs)
+
+
+def test_iter_offered_dates_returns_only_package_weekdays():
+    start = date(2026, 7, 6)  # Monday
+    horizon = date(2026, 7, 20)
+    offered = iter_offered_dates("full_package", start=start, horizon_end=horizon, count=4)
+    assert [day.weekday() for day in offered] == [1, 2, 1, 2]
+    assert offered[0].isoformat() == "2026-07-07"

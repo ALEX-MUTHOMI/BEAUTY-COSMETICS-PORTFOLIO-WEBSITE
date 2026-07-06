@@ -31,8 +31,14 @@ export interface ResolvedSelection {
   durationMinutes: number
 }
 
+export interface CalendarWeek {
+  week_start: string
+  days: CalendarDay[]
+}
+
 export interface BookingCalendar {
   timezone: string
+  layout: 'singles' | 'package_pairs'
   range: { start: string; end: string }
   selection: {
     type: 'normal' | 'full_package'
@@ -41,6 +47,7 @@ export interface BookingCalendar {
     name: string
   }
   days: CalendarDay[]
+  weeks: CalendarWeek[]
 }
 
 export interface BookingSlot {
@@ -119,6 +126,19 @@ function parseCalendar(payload: unknown): BookingCalendar | null {
   if (!Array.isArray(row.days)) return null
   const days = row.days.map(parseCalendarDay).filter((day): day is CalendarDay => day !== null)
   if (days.length !== row.days.length) return null
+  const layout = String(row.layout ?? '')
+  if (layout !== 'singles' && layout !== 'package_pairs') return null
+  if (!Array.isArray(row.weeks)) return null
+  const weeks: CalendarWeek[] = []
+  for (const week of row.weeks) {
+    if (!week || typeof week !== 'object') return null
+    const weekRow = week as Record<string, unknown>
+    const weekStart = String(weekRow.week_start ?? '')
+    if (!isIsoDate(weekStart) || !Array.isArray(weekRow.days)) return null
+    const weekDays = weekRow.days.map(parseCalendarDay).filter((day): day is CalendarDay => day !== null)
+    if (weekDays.length !== weekRow.days.length) return null
+    weeks.push({ week_start: weekStart, days: weekDays })
+  }
   const selection = row.selection
   if (!selection || typeof selection !== 'object') return null
   const sel = selection as Record<string, unknown>
@@ -127,6 +147,7 @@ function parseCalendar(payload: unknown): BookingCalendar | null {
   if (!isUuid(publicId) || (type !== 'normal' && type !== 'full_package')) return null
   return {
     timezone: safeApiText(row.timezone, 64),
+    layout,
     range: { start, end },
     selection: {
       type,
@@ -135,6 +156,7 @@ function parseCalendar(payload: unknown): BookingCalendar | null {
       name: safeApiText(sel.name),
     },
     days,
+    weeks,
   }
 }
 

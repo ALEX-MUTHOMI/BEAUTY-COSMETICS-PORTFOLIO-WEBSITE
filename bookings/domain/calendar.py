@@ -2,8 +2,23 @@
 
 from __future__ import annotations
 
+from datetime import date, timedelta
+
 MAX_CALENDAR_RANGE_DAYS = 42
 CALENDAR_TIMEZONE = "Africa/Nairobi"
+CALENDAR_OFFERED_DAYS_COUNT = 8
+CALENDAR_SCAN_HORIZON_DAYS = 126
+
+# Monday=0 … Sunday=6 — must match bookings.services.day_policy defaults.
+OFFERED_WEEKDAYS: dict[str, frozenset[int]] = {
+    "normal": frozenset({0, 3, 4, 5}),
+    "full_package": frozenset({1, 2}),
+}
+
+CALENDAR_LAYOUT: dict[str, str] = {
+    "normal": "singles",
+    "full_package": "package_pairs",
+}
 
 # Stable status codes returned to clients (do not rename without API version bump).
 STATUS_AVAILABLE = "available"
@@ -16,6 +31,39 @@ REASON_WRONG_DAY_TYPE = "wrong_day_type"
 REASON_STUDIO_CLOSED = "studio_closed"
 REASON_DAY_CAPACITY_REACHED = "day_capacity_reached"
 REASON_NO_OPEN_TIMES = "no_open_times"
+
+
+def iter_offered_dates(
+    selection_type: str,
+    *,
+    start: date,
+    horizon_end: date,
+    count: int = CALENDAR_OFFERED_DAYS_COUNT,
+) -> list[date]:
+    """Next bookable weekdays for the selection type, capped at *count* days."""
+    weekdays = OFFERED_WEEKDAYS.get(selection_type, OFFERED_WEEKDAYS["normal"])
+    dates: list[date] = []
+    cursor = start
+    while cursor <= horizon_end and len(dates) < count:
+        if cursor.weekday() in weekdays:
+            dates.append(cursor)
+        cursor += timedelta(days=1)
+    return dates
+
+
+def group_days_into_weeks(days: list[dict]) -> list[dict]:
+    """Group day payloads by ISO week (Monday start) preserving order."""
+    buckets: dict[str, list[dict]] = {}
+    order: list[str] = []
+    for day in days:
+        current = date.fromisoformat(str(day["date"]))
+        week_start = current - timedelta(days=current.weekday())
+        key = week_start.isoformat()
+        if key not in buckets:
+            buckets[key] = []
+            order.append(key)
+        buckets[key].append(day)
+    return [{"week_start": key, "days": buckets[key]} for key in order]
 
 
 def classify_calendar_day(

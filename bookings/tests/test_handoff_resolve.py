@@ -1,8 +1,9 @@
-import pytest
 from decimal import Decimal
 
-from bookings.services.handoff_resolve import resolve_booking_handoff
+import pytest
+
 from bookings.models import FullPackage, Service
+from bookings.services.handoff_resolve import resolve_booking_handoff
 
 
 @pytest.mark.django_db

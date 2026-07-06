@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import re
-
 from django.core.exceptions import ValidationError
 
 from bookings.models import Service
-from bookings.services.catalog_resolve import SLUG_RE, _normalize_slug, resolve_catalog_selection
+from bookings.services.catalog_resolve import _normalize_slug, resolve_catalog_selection
 
 GENERIC_HANDOFF_ERROR = "Selection unavailable."
 

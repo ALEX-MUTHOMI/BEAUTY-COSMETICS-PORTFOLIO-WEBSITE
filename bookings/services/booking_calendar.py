@@ -3,29 +3,42 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from django.core.exceptions import ValidationError
+from django.db.models import Count
 from django.utils import timezone
 
 from bookings.domain.calendar import (
+    CALENDAR_LAYOUT,
+    CALENDAR_OFFERED_DAYS_COUNT,
+    CALENDAR_SCAN_HORIZON_DAYS,
     CALENDAR_TIMEZONE,
     MAX_CALENDAR_RANGE_DAYS,
     classify_calendar_day,
+    group_days_into_weeks,
+    iter_offered_dates,
 )
+from bookings.domain.day_policy import BUSINESS_TZ
 from bookings.models import BOOKING_BLOCKING_STATUSES, Booking, BookingDayPolicy
 from bookings.services.availability import AvailabilityService, _as_local_date
 from bookings.services.bundles import get_full_package_summary, safe_public_text, validate_service_bundle
-from bookings.domain.day_policy import BUSINESS_TZ
 from bookings.services.day_policy import default_policy_for_date
 
 GENERIC_CALENDAR_ERROR = "Calendar unavailable."
 
 
-def _count_blocking_clients(local_date: date) -> int:
+def _count_blocking_clients_bulk(dates: list[date]) -> dict[date, int]:
+    if not dates:
+        return {}
     now = timezone.now()
-    queryset = Booking.objects.filter(
-        local_booking_date=local_date,
-        status__in=BOOKING_BLOCKING_STATUSES,
+    rows = (
+        Booking.objects.filter(
+            local_booking_date__in=dates,
+            status__in=BOOKING_BLOCKING_STATUSES,
+        )
+        .exclude(status=Booking.Status.HELD, hold_expires_at__lte=now)
+        .values("local_booking_date")
+        .annotate(booked=Count("id"))
     )
-    return queryset.exclude(status=Booking.Status.HELD, hold_expires_at__lte=now).count()
+    return {row["local_booking_date"]: row["booked"] for row in rows}
 
 
 def _today_nairobi() -> date:
@@ -40,7 +53,7 @@ def _validate_range(start_date, end_date) -> tuple[date, date]:
     if end_date:
         end_day = _as_local_date(end_date)
     else:
-        end_day = start_day + timedelta(days=MAX_CALENDAR_RANGE_DAYS - 1)
+        end_day = start_day + timedelta(days=CALENDAR_SCAN_HORIZON_DAYS - 1)
     if end_day < start_day:
         raise ValidationError(GENERIC_CALENDAR_ERROR)
     range_days = (end_day - start_day).days + 1
@@ -58,6 +71,48 @@ def _policy_payload(policy: BookingDayPolicy) -> dict:
     }
 
 
+def _offered_dates_for_window(selection_type: str, start_day: date, end_day: date) -> list[date]:
+    scan_start = max(start_day, _today_nairobi())
+    horizon_end = min(end_day, scan_start + timedelta(days=CALENDAR_SCAN_HORIZON_DAYS - 1))
+    return iter_offered_dates(
+        selection_type,
+        start=scan_start,
+        horizon_end=horizon_end,
+        count=CALENDAR_OFFERED_DAYS_COUNT,
+    )
+
+
+def _slots_by_date(
+    *,
+    normalized_type: str,
+    service_public_id,
+    full_package_public_id,
+    slot_start: date,
+    slot_end: date,
+    resource_id,
+    request_context,
+) -> dict[str, list]:
+    if slot_end < slot_start:
+        return {}
+    if normalized_type == "full_package":
+        availability = AvailabilityService.get_full_package_available_slots(
+            full_package_public_id,
+            slot_start,
+            slot_end,
+            resource_id=resource_id,
+            request_context=request_context,
+        )
+    else:
+        availability = AvailabilityService.get_available_slots(
+            service_public_id,
+            slot_start,
+            slot_end,
+            resource_id=resource_id,
+            request_context=request_context,
+        )
+    return {row["date"]: row["slots"] for row in availability}
+
+
 class BookingCalendarService:
     @classmethod
     def build_calendar(
@@ -73,16 +128,12 @@ class BookingCalendarService:
     ) -> dict:
         normalized_type = str(selection_type or "normal").strip().lower()
         start_day, end_day = _validate_range(start_date, end_date)
+        offered_dates = _offered_dates_for_window(normalized_type, start_day, end_day)
+        if not offered_dates:
+            raise ValidationError(GENERIC_CALENDAR_ERROR)
 
         if normalized_type == "full_package":
             summary = get_full_package_summary(full_package_public_id)
-            availability = AvailabilityService.get_full_package_available_slots(
-                full_package_public_id,
-                start_day,
-                end_day,
-                resource_id=resource_id,
-                request_context=request_context,
-            )
             selection = {
                 "type": "full_package",
                 "public_id": str(summary.full_package.public_id),
@@ -91,13 +142,6 @@ class BookingCalendarService:
             }
         elif normalized_type == "normal":
             summary = validate_service_bundle([service_public_id])
-            availability = AvailabilityService.get_available_slots(
-                service_public_id,
-                start_day,
-                end_day,
-                resource_id=resource_id,
-                request_context=request_context,
-            )
             service = summary.items[0].service
             selection = {
                 "type": "normal",
@@ -108,13 +152,35 @@ class BookingCalendarService:
         else:
             raise ValidationError(GENERIC_CALENDAR_ERROR)
 
-        slots_by_date = {row["date"]: row["slots"] for row in availability}
-        days = []
-        for offset in range((end_day - start_day).days + 1):
-            current = start_day + timedelta(days=offset)
+        booked_by_date = _count_blocking_clients_bulk(offered_dates)
+        dates_needing_slots: list[date] = []
+        policy_by_date: dict[date, dict] = {}
+        for current in offered_dates:
             policy = default_policy_for_date(current)
             policy_data = _policy_payload(policy)
-            booked = _count_blocking_clients(current)
+            policy_by_date[current] = policy_data
+            booked = booked_by_date.get(current, 0)
+            if booked < policy_data["max_clients"] and policy_data["max_clients"] > 0:
+                dates_needing_slots.append(current)
+
+        slots_by_date: dict[str, list] = {}
+        for current in dates_needing_slots:
+            slots_by_date.update(
+                _slots_by_date(
+                    normalized_type=normalized_type,
+                    service_public_id=service_public_id,
+                    full_package_public_id=full_package_public_id,
+                    slot_start=current,
+                    slot_end=current,
+                    resource_id=resource_id,
+                    request_context=request_context,
+                )
+            )
+
+        days = []
+        for current in offered_dates:
+            policy_data = policy_by_date[current]
+            booked = booked_by_date.get(current, 0)
             slot_count = len(slots_by_date.get(current.isoformat(), []))
             classified = classify_calendar_day(
                 selection_type=normalized_type,
@@ -134,9 +200,13 @@ class BookingCalendarService:
                 }
             )
 
+        range_start = offered_dates[0].isoformat()
+        range_end = offered_dates[-1].isoformat()
         return {
             "timezone": CALENDAR_TIMEZONE,
-            "range": {"start": start_day.isoformat(), "end": end_day.isoformat()},
+            "layout": CALENDAR_LAYOUT.get(normalized_type, "singles"),
+            "range": {"start": range_start, "end": range_end},
             "selection": selection,
             "days": days,
+            "weeks": group_days_into_weeks(days),
         }

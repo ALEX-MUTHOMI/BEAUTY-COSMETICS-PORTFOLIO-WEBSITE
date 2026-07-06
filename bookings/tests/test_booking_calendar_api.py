@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 import pytest
@@ -6,8 +6,8 @@ from django.core.exceptions import ValidationError
 from django.test import Client
 from django.utils import timezone
 
-from bookings.domain.calendar import MAX_CALENDAR_RANGE_DAYS, STATUS_AVAILABLE, STATUS_CAPACITY_FULL, STATUS_NOT_OFFERED
-from bookings.models import Booking, FullPackage, Service
+from bookings.domain.calendar import MAX_CALENDAR_RANGE_DAYS, STATUS_AVAILABLE, STATUS_CAPACITY_FULL
+from bookings.models import Booking, FullPackage
 from bookings.services.booking_calendar import BookingCalendarService
 from bookings.services.catalog_resolve import resolve_catalog_selection
 from bookings.tests.factories import create_booking, create_service_resource_customer
@@ -57,8 +57,9 @@ def test_calendar_marks_tuesday_unavailable_for_normal_selection():
     )
 
     tuesday = monday + timedelta(days=1)
-    tuesday_day = next(day for day in payload["days"] if day["date"] == tuesday.isoformat())
-    assert tuesday_day["status"] == STATUS_NOT_OFFERED
+    returned_dates = {day["date"] for day in payload["days"]}
+    assert tuesday.isoformat() not in returned_dates
+    assert monday.isoformat() in returned_dates
 
 
 @pytest.mark.django_db
@@ -80,8 +81,10 @@ def test_calendar_marks_monday_unavailable_for_package_selection():
         end_date=end,
     )
 
-    monday_day = next(day for day in payload["days"] if day["date"] == monday.isoformat())
-    assert monday_day["status"] == STATUS_NOT_OFFERED
+    returned_dates = {day["date"] for day in payload["days"]}
+    assert monday.isoformat() not in returned_dates
+    assert payload["layout"] == "package_pairs"
+    assert all(day["weekday"] in {1, 2} for day in payload["days"])
 
 
 @pytest.mark.django_db
@@ -200,3 +203,51 @@ def test_catalog_resolve_api_returns_package_by_slug():
     selection = response.json()["selection"]
     assert selection["public_id"] == str(package.public_id)
     assert selection["slug"] == "relax-package"
+
+
+@pytest.mark.django_db
+def test_package_calendar_rolls_forward_when_current_week_full():
+    _service, resource, customer = create_service_resource_customer()
+    package = FullPackage.objects.create(
+        name="Classic Full Package",
+        slug="classic-full-package",
+        duration_minutes=240,
+        price_amount=Decimal("12000.00"),
+    )
+    tuesday = _future_weekday(1)
+    wednesday = tuesday + timedelta(days=1)
+
+    for target_day in (tuesday, wednesday):
+        for hour in range(3):
+            create_booking(
+                service=_service,
+                resource=resource,
+                customer_profile=customer,
+                starts_at=timezone.make_aware(
+                    timezone.datetime.combine(
+                        target_day,
+                        timezone.datetime.min.time().replace(hour=7 + hour),
+                    ),
+                    timezone.get_current_timezone(),
+                ),
+                status=Booking.Status.CONFIRMED,
+                local_booking_date=target_day,
+            )
+
+    payload = BookingCalendarService.build_calendar(
+        selection_type="full_package",
+        full_package_public_id=str(package.public_id),
+        start_date=tuesday,
+        end_date=tuesday + timedelta(days=28),
+    )
+
+    assert all(day["weekday"] in {1, 2} for day in payload["days"])
+    tuesday_day = next(day for day in payload["days"] if day["date"] == tuesday.isoformat())
+    wednesday_day = next(day for day in payload["days"] if day["date"] == wednesday.isoformat())
+    assert tuesday_day["status"] == STATUS_CAPACITY_FULL
+    assert wednesday_day["status"] == STATUS_CAPACITY_FULL
+
+    later_available = [
+        day for day in payload["days"] if day["date"] > wednesday.isoformat() and day["status"] == STATUS_AVAILABLE
+    ]
+    assert later_available, "Expected a later Tue/Wed week with open capacity"

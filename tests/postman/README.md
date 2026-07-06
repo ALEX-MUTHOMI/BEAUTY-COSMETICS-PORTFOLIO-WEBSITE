@@ -9,8 +9,11 @@ It covers routing, CSRF bootstrap, cookie/session login, public catalog reads, b
 Seed deterministic fake data first:
 
 ```powershell
-docker compose exec web poetry run python manage.py seed_api_acceptance_data
+docker compose exec web python manage.py seed_api_acceptance_data
+docker compose exec web python manage.py seed_marketing_catalog
 ```
+
+`seed_api_acceptance_data` supplies Newman holds, checkout, staff login, and fake M-Pesa callbacks. `seed_marketing_catalog` syncs homepage/services slugs (for example `classic-full-package`) without real credentials.
 
 Run with host Newman:
 
