@@ -27,9 +27,9 @@ export interface ServiceCategory {
 
 export const SERVICES_PAGE_INTRO = {
   eyebrow: LANDING_LOCATION_LABEL,
-  title: 'Our treatments',
-  lead: 'Facials, massage, waxing and makeup in a private Meru studio. Every service is done at your pace in a clean, calm room.',
-  note: `Single sessions: ${SINGLE_DAYS_LABEL}. Full packages: Tuesday and Wednesday only.`,
+  title: 'How would you like to visit?',
+  lead: 'Full packages on Tuesday and Wednesday, or a single treatment Mon · Thu – Sat. Every visit is in a private, calm room.',
+  note: `Full packages: Tue & Wed only. Single treatments: ${SINGLE_DAYS_LABEL}.`,
 }
 
 export const serviceCategories: ServiceCategory[] = [

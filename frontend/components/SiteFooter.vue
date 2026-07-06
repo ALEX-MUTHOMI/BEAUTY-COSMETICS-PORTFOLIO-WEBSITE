@@ -13,7 +13,7 @@
         <p class="site-footer__heading">Links</p>
         <NuxtLink to="/#welcome">About</NuxtLink>
         <NuxtLink to="/services">Our Services</NuxtLink>
-        <NuxtLink to="/#packages">Packages</NuxtLink>
+        <NuxtLink :to="SERVICES_ROUTES.fullPackages">Packages</NuxtLink>
         <NuxtLink to="/book">{{ LANDING_PRIMARY_CTA }}</NuxtLink>
       </div>
 
@@ -49,6 +49,7 @@
 
 <script setup lang="ts">
 import { LANDING_ADDRESS_LINES, LANDING_PRIMARY_CTA } from '@/landing/landingContent'
+import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
 
 const year = new Date().getFullYear()
 </script>

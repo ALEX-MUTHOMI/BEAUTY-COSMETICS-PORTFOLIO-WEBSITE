@@ -9,26 +9,41 @@
       </div>
     </header>
 
+    <div class="services-day-banner" role="note" aria-label="Booking days">
+      <div class="services-day-banner__inner">
+        <p class="services-day-banner__item services-day-banner__item--package">
+          <strong>Tue &amp; Wed</strong>
+          <span>Full packages only</span>
+        </p>
+        <p class="services-day-banner__divider" aria-hidden="true">|</p>
+        <p class="services-day-banner__item services-day-banner__item--single">
+          <strong>{{ SINGLE_DAYS_LABEL }}</strong>
+          <span>Single treatments</span>
+        </p>
+      </div>
+    </div>
+
     <nav class="services-paths" aria-label="Choose how you want to book">
-      <a href="#full-packages" class="services-path" @click="scrollToSection('full-packages', $event)">
+      <a
+        href="#full-packages"
+        class="services-path services-path--primary"
+        @click="scrollToSection('full-packages', $event)"
+      >
         <span class="services-path__icon" aria-hidden="true">◆</span>
         <span class="services-path__copy">
-          <strong>Full packages</strong>
-          <span>Tue &amp; Wed · everything in one visit</span>
+          <strong>Full package</strong>
+          <span>Tue &amp; Wed · facial, wax, massage &amp; makeup in one visit</span>
         </span>
       </a>
-      <a href="#single-sessions" class="services-path" @click="scrollToSection('single-sessions', $event)">
+      <a
+        href="#single-sessions"
+        class="services-path"
+        @click="scrollToSection('single-sessions', $event)"
+      >
         <span class="services-path__icon" aria-hidden="true">◇</span>
         <span class="services-path__copy">
-          <strong>Single sessions</strong>
-          <span>{{ SINGLE_DAYS_LABEL }} · one treatment</span>
-        </span>
-      </a>
-      <a href="#treatments" class="services-path" @click="scrollToSection('treatments', $event)">
-        <span class="services-path__icon" aria-hidden="true">◎</span>
-        <span class="services-path__copy">
-          <strong>Treatment menu</strong>
-          <span>Exact service, duration &amp; price</span>
+          <strong>Single treatment</strong>
+          <span>{{ SINGLE_DAYS_LABEL }} · one service (wax, massage, facial or makeup)</span>
         </span>
       </a>
     </nav>
@@ -73,18 +88,26 @@
           :includes="treatment.includes"
           :days-label="treatment.daysLabel"
           :cta-label="treatment.ctaLabel"
+          :details-to="categoryHrefForSingle(treatment.name)"
+          details-label="See all options and prices"
         />
       </div>
-    </section>
 
-    <section id="treatments" class="services-picker" aria-label="Browse treatments by category">
-      <header class="services-section-head services-section-head--compact">
-        <p class="label">Detailed menu</p>
-        <h2>Pick your exact treatment</h2>
-        <p class="services-section-head__sub">
-          Choose a category, tap a card to select, then book. Same services as above — with full detail.
-        </p>
-      </header>
+      <div id="treatments" class="services-picker" aria-label="All treatments and prices">
+        <header class="services-section-head services-section-head--compact">
+          <p class="label">All treatments &amp; prices</p>
+          <h2>Pick your exact treatment</h2>
+          <p class="services-section-head__sub">
+            Need something specific? Choose a category, tap a card to select, then book.
+          </p>
+          <p class="services-menu-upsell">
+            Visiting Tue or Wed?
+            <a href="#full-packages" @click="scrollToSection('full-packages', $event)">
+              See full packages
+            </a>
+            — several of these treatments are included from KES 12,000.
+          </p>
+        </header>
 
       <div
         class="services-tabs"
@@ -182,12 +205,13 @@
           </div>
         </Transition>
       </div>
+      </div>
     </section>
 
     <section class="services-cta">
       <div class="services-cta__inner">
         <h2>Ready when you are</h2>
-        <p>Full package, single session or one treatment from the menu — book online and pay to confirm.</p>
+        <p>Full package or single treatment — book online and pay to confirm your slot.</p>
         <div class="services-cta__actions">
           <SiteButton to="/book" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
         </div>
@@ -209,13 +233,21 @@ import {
   SERVICES_PAGE_INTRO,
   serviceCategories,
 } from '@/landing/servicesContent'
+import {
+  categoryHrefForSingle,
+  isServiceCategoryId,
+  parseServicesHash,
+  type ServiceCategoryId,
+} from '@/landing/servicesNavigation'
 
 const pageIntro = SERVICES_PAGE_INTRO
 const config = useRuntimeConfig()
 const siteUrl = (config.public.siteUrl as string) || 'https://sheeaesthetics.co.ke'
 
-const validIds = serviceCategories.map((c) => c.id)
-const activeCategoryId = ref(validIds[0] ?? 'facials')
+const categoryIds = serviceCategories.map((c) => c.id)
+const activeCategoryId = ref<ServiceCategoryId>(
+  (categoryIds[0] as ServiceCategoryId) ?? 'facials',
+)
 const selectedTreatmentName = ref<string | null>(null)
 
 const activeCategory = computed(
@@ -223,7 +255,7 @@ const activeCategory = computed(
 )
 
 function selectCategory(id: string) {
-  if (!validIds.includes(id) || activeCategoryId.value === id) return
+  if (!isServiceCategoryId(id) || activeCategoryId.value === id) return
   activeCategoryId.value = id
   selectedTreatmentName.value = null
   if (import.meta.client) {
@@ -235,22 +267,38 @@ function selectTreatment(name: string) {
   selectedTreatmentName.value = name
 }
 
-function syncFromHash() {
-  const hash = window.location.hash.replace('#', '')
-  if (hash && validIds.includes(hash)) {
-    activeCategoryId.value = hash
-    selectedTreatmentName.value = null
+function applyHash(raw: string) {
+  const { section, category } = parseServicesHash(raw)
+  if (!section && !category) return
+
+  if (section) {
+    requestAnimationFrame(() => {
+      document.getElementById(section)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+    return
   }
+
+  if (category) {
+    activeCategoryId.value = category
+    selectedTreatmentName.value = null
+    requestAnimationFrame(() => {
+      document.getElementById('treatments')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+}
+
+function syncFromHash() {
+  if (!import.meta.client) return
+  applyHash(window.location.hash)
 }
 
 function scrollToSection(id: string, event: MouseEvent) {
   event.preventDefault()
-  const el = document.getElementById(id)
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    if (import.meta.client) {
-      window.history.replaceState(null, '', `#${id}`)
-    }
+  const { section } = parseServicesHash(`#${id}`)
+  if (!section) return
+  document.getElementById(section)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  if (import.meta.client) {
+    window.history.replaceState(null, '', `#${section}`)
   }
 }
 
@@ -291,6 +339,18 @@ useHead({
 </script>
 
 <style scoped>
+/* Page shell — calm white base, room for fixed mobile book bar */
+.services-page {
+  background: #fff;
+  padding-bottom: calc(var(--mobile-book-bar-height) + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  .services-page {
+    padding-bottom: 0;
+  }
+}
+
 .label {
   margin: 0 0 0.75rem;
   text-transform: uppercase;
@@ -299,12 +359,12 @@ useHead({
   color: var(--color-rose);
 }
 
-/* Hero with decorative background */
+/* Hero — light, low-contrast wash */
 .services-hero {
   position: relative;
   overflow: hidden;
-  padding: clamp(2.5rem, 6vh, 4rem) 1rem 1.75rem;
-  background: linear-gradient(165deg, var(--color-cream) 0%, var(--color-paper) 55%, #fff 100%);
+  padding: clamp(1.75rem, 5vh, 3.25rem) max(1rem, env(safe-area-inset-left)) 1.25rem;
+  background: #fff;
   border-bottom: 1px solid var(--color-line);
 }
 
@@ -314,19 +374,17 @@ useHead({
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 75% 55% at 8% 15%, rgba(222, 150, 141, 0.14), transparent 58%),
-    radial-gradient(ellipse 65% 45% at 92% 85%, rgba(222, 150, 141, 0.1), transparent 52%),
-    radial-gradient(circle at 50% 0%, rgba(255, 245, 243, 0.9), transparent 42%);
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(222, 150, 141, 0.05), transparent 70%);
 }
 
 .services-hero::after {
   content: '';
   position: absolute;
   inset: 0;
-  opacity: 0.045;
+  opacity: 0.02;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 6c-5 11-14 13-14 22a14 14 0 0 0 28 0c0-9-9-11-14-22z' fill='%23de968d'/%3E%3C/svg%3E");
-  background-size: 80px;
+  background-size: 96px;
 }
 
 .services-hero__inner {
@@ -360,6 +418,69 @@ useHead({
   color: var(--color-ink);
 }
 
+.services-day-banner {
+  width: var(--container);
+  margin: 0 auto;
+  padding: 0.75rem max(1rem, env(safe-area-inset-left)) 0;
+}
+
+.services-day-banner__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-line);
+  border-radius: 2px;
+  background: #fafafa;
+}
+
+.services-day-banner__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  margin: 0;
+  text-align: center;
+}
+
+.services-day-banner__item strong {
+  font: 700 0.78rem var(--font-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+}
+
+.services-day-banner__item span {
+  font: 500 0.78rem var(--font-body);
+  color: var(--color-muted);
+}
+
+.services-day-banner__item--package strong {
+  color: var(--color-rose-dark);
+}
+
+.services-day-banner__divider {
+  display: none;
+  margin: 0;
+  color: var(--color-line);
+  font-weight: 300;
+}
+
+@media (min-width: 480px) {
+  .services-day-banner__inner {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem 1rem;
+  }
+
+  .services-day-banner__divider {
+    display: block;
+  }
+}
+
 /* Booking path navigator */
 .services-paths {
   display: grid;
@@ -367,31 +488,57 @@ useHead({
   gap: 0.65rem;
   width: var(--container);
   margin: 0 auto;
-  padding: 1.25rem 0 0.5rem;
+  padding: 1rem max(1rem, env(safe-area-inset-left)) 0.5rem;
 }
 
 .services-path {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  padding: 0.9rem 1rem;
-  border: 2px solid var(--color-line);
+  min-height: 3.25rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--color-line);
   border-radius: 2px;
   background: #fff;
   text-decoration: none;
   color: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition:
     border-color 0.15s ease,
     background-color 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.12s ease;
+    box-shadow 0.15s ease;
 }
 
-.services-path:hover {
-  border-color: var(--color-rose);
-  background: linear-gradient(165deg, #fff 0%, var(--color-rose-soft) 100%);
-  box-shadow: 0 6px 20px rgba(222, 150, 141, 0.15);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .services-path:hover {
+    border-color: rgba(222, 150, 141, 0.45);
+    background: #fafafa;
+    box-shadow: 0 4px 14px rgba(39, 37, 42, 0.05);
+    transform: translateY(-1px);
+  }
+}
+
+.services-path:active {
+  background: #f7f7f8;
+}
+
+.services-path--primary {
+  border-color: rgba(222, 150, 141, 0.35);
+  border-left: 3px solid var(--color-rose);
+  background: #fff;
+  box-shadow: none;
+}
+
+.services-path--primary .services-path__icon {
+  color: var(--color-rose-dark);
+  background: var(--color-rose-soft);
+}
+
+@media (hover: hover) {
+  .services-path--primary:hover {
+    background: #fafafa;
+  }
 }
 
 .services-path:focus-visible {
@@ -429,15 +576,45 @@ useHead({
   color: var(--color-muted);
 }
 
-/* Package sections */
+/* Package sections — unified neutral sections, no heavy pink blocks */
 .services-packages {
-  padding: clamp(2rem, 5vh, 3.5rem) 1rem;
-  background: var(--color-paper);
-  scroll-margin-top: 5.5rem;
+  padding: clamp(1.75rem, 4vh, 3rem) max(1rem, env(safe-area-inset-left));
+  background: #fff;
+  scroll-margin-top: calc(var(--header-height) + 0.5rem);
 }
 
 .services-packages--singles {
-  background: var(--color-cream);
+  background: #fafafa;
+  border-top: 1px solid var(--color-line);
+}
+
+.services-packages--singles .services-picker {
+  width: var(--container);
+  margin: 1.5rem auto 0;
+  padding: 0 0 0.5rem;
+  scroll-margin-top: calc(var(--header-height) + 0.5rem);
+}
+
+.services-menu-upsell {
+  margin: 1rem 0 0;
+  font: 500 0.88rem/1.6 var(--font-body);
+  color: var(--color-muted);
+}
+
+.services-menu-upsell a {
+  font-weight: 700;
+  color: var(--color-rose-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.services-menu-upsell a:hover {
+  color: var(--color-rose);
+}
+
+.services-menu-upsell a:focus-visible {
+  outline: 2px solid var(--color-rose);
+  outline-offset: 2px;
 }
 
 .services-section-head {
@@ -488,7 +665,7 @@ useHead({
 .services-picker {
   width: var(--container);
   margin: 0 auto;
-  padding: clamp(2rem, 5vh, 3rem) 0 calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  padding: 0 0 calc(2rem + env(safe-area-inset-bottom, 0px));
   scroll-margin-top: 5.5rem;
 }
 
@@ -504,10 +681,10 @@ useHead({
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
-  min-height: 4.5rem;
-  padding: 0.75rem 0.5rem;
-  border: 2px solid var(--color-line);
+  gap: 0.4rem;
+  min-height: 3.25rem;
+  padding: 0.7rem 0.45rem;
+  border: 1px solid var(--color-line);
   border-radius: 2px;
   background: #fff;
   cursor: pointer;
@@ -517,17 +694,18 @@ useHead({
     border-color 0.12s ease,
     background-color 0.12s ease,
     box-shadow 0.12s ease,
-    color 0.12s ease,
-    transform 0.1s ease;
+    color 0.12s ease;
 }
 
-.services-tab:hover:not(.services-tab--active) {
-  border-color: var(--color-rose-soft);
-  background: var(--color-cream);
+@media (hover: hover) {
+  .services-tab:hover:not(.services-tab--active) {
+    border-color: rgba(222, 150, 141, 0.35);
+    background: #fafafa;
+  }
 }
 
 .services-tab:active:not(.services-tab--active) {
-  transform: scale(0.98);
+  background: #f3f3f4;
 }
 
 .services-tab:focus-visible {
@@ -537,9 +715,9 @@ useHead({
 
 .services-tab--active {
   border-color: var(--color-rose);
-  background: linear-gradient(165deg, var(--color-rose) 0%, var(--color-rose-dark) 100%);
-  box-shadow: 0 8px 24px rgba(222, 150, 141, 0.35);
-  color: #fff;
+  background: var(--color-rose-soft);
+  box-shadow: none;
+  color: var(--color-ink);
 }
 
 .services-tab__icon-wrap {
@@ -552,7 +730,7 @@ useHead({
 }
 
 .services-tab--active .services-tab__icon-wrap {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(222, 150, 141, 0.2);
 }
 
 .services-tab__icon {
@@ -561,7 +739,7 @@ useHead({
 }
 
 .services-tab--active .services-tab__icon {
-  filter: brightness(0) invert(1);
+  filter: brightness(0) saturate(100%) invert(72%) sepia(18%) saturate(749%) hue-rotate(319deg) brightness(92%) contrast(89%);
 }
 
 .services-tab__label {
@@ -595,22 +773,14 @@ useHead({
   border-radius: 2px;
   border: 1px solid var(--color-line);
   overflow: hidden;
+  background: #fff;
 }
 
-.services-panel--facials {
-  background: linear-gradient(180deg, #fff5f3 0%, #fff 28%);
-}
-
-.services-panel--massage {
-  background: linear-gradient(180deg, #f9f0ee 0%, #fff 28%);
-}
-
-.services-panel--waxing {
-  background: linear-gradient(180deg, #f7ece9 0%, #fff 28%);
-}
-
+.services-panel--facials,
+.services-panel--massage,
+.services-panel--waxing,
 .services-panel--makeup {
-  background: linear-gradient(180deg, #faf2f0 0%, #fff 28%);
+  background: #fff;
 }
 
 .services-panel__inner {
@@ -696,7 +866,7 @@ useHead({
   margin-top: 1.5rem;
   padding: 1.15rem 1rem;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.75);
+  background: #fafafa;
   border: 1px dashed var(--color-line);
   text-align: center;
   transition: border-color 0.2s, background-color 0.2s;
@@ -704,8 +874,14 @@ useHead({
 
 .services-panel__book--ready {
   background: #fff;
-  border: 2px solid var(--color-rose-soft);
-  box-shadow: 0 8px 24px rgba(222, 150, 141, 0.12);
+  border: 1px solid rgba(222, 150, 141, 0.35);
+  box-shadow: 0 4px 16px rgba(39, 37, 42, 0.05);
+}
+
+.services-panel__book :deep(.site-btn) {
+  width: 100%;
+  max-width: 20rem;
+  min-height: 3rem;
 }
 
 .services-panel__chosen {
@@ -762,9 +938,31 @@ useHead({
   gap: 0.75rem;
 }
 
+@media (max-width: 767px) {
+  .services-hero h1 {
+    font-size: clamp(1.65rem, 7vw, 2rem);
+  }
+
+  .services-path__copy span {
+    font-size: 0.78rem;
+  }
+
+  .services-packages__grid {
+    gap: 1rem;
+  }
+
+  .services-panel__inner {
+    padding: 1.25rem 0.85rem 1rem;
+  }
+
+  .services-panel__visual {
+    width: min(140px, 38vw);
+  }
+}
+
 @media (min-width: 640px) {
   .services-paths {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
   }
 
@@ -826,11 +1024,6 @@ useHead({
   .panel-fade-enter-active,
   .panel-fade-leave-active {
     transition: none;
-  }
-
-  .services-path:hover,
-  .services-tab:active:not(.services-tab--active) {
-    transform: none;
   }
 }
 </style>

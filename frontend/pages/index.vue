@@ -63,7 +63,7 @@
               and therapists who take their time with every client.
             </p>
             <div class="welcome__offers">
-              <NuxtLink to="/#packages" class="welcome__offer-btn">
+              <NuxtLink :to="SERVICES_ROUTES.fullPackages" class="welcome__offer-btn">
                 <img src="/images/icon-offer.png" alt="" width="46" height="46" />
                 <div>
                   <h3>Full glow days</h3>
@@ -71,7 +71,7 @@
                   <span class="welcome__offer-action">See packages</span>
                 </div>
               </NuxtLink>
-              <NuxtLink to="/#singles" class="welcome__offer-btn">
+              <NuxtLink :to="SERVICES_ROUTES.singleSessions" class="welcome__offer-btn">
                 <img src="/images/icon-gift.png" alt="" width="48" height="48" />
                 <div>
                   <h3>Single sessions</h3>
@@ -91,7 +91,7 @@
         <p class="label">Our treatments</p>
         <h2>Facials, waxing, massage &amp; makeup</h2>
         <p class="section-head__sub">
-          <NuxtLink to="/services" class="home-services-link">View all services and pricing</NuxtLink>
+          <NuxtLink to="/services" class="home-services-link">View packages and full pricing</NuxtLink>
         </p>
       </header>
       <div class="services__grid">
@@ -134,7 +134,12 @@
       <header class="section-head">
         <p class="label">Single treatments</p>
         <h2>One service at a time</h2>
-        <p class="section-head__sub">Mon, Thu–Sat. Pick a facial, wax, massage or makeup when that is all you need.</p>
+        <p class="section-head__sub">
+          Mon, Thu–Sat. Pick one treatment — or
+          <NuxtLink :to="SERVICES_ROUTES.singleSessions" class="home-services-link">
+            view all singles and prices on our services page
+          </NuxtLink>.
+        </p>
       </header>
       <div class="packages__grid packages__grid--singles">
         <MellisPackageCard
@@ -289,6 +294,7 @@ import {
 } from '@/landing/landingContent'
 import { useLandingSeo } from '@/landing/useLandingSeo'
 import { getServiceSummaries } from '@/landing/servicesContent'
+import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
 
 const activeSlide = ref(0)
 const heroLoadedSlides = ref(new Set<number>([0]))

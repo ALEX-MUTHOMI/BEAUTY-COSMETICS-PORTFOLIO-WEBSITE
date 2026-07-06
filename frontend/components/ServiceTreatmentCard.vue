@@ -79,41 +79,38 @@ const indexLabel = computed(() => String(props.index + 1).padStart(2, '0'))
 }
 
 .service-treatment:hover:not(.service-treatment--selected) {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
 }
 
-.service-treatment--facials:hover:not(.service-treatment--selected) {
-  border-color: rgba(222, 150, 141, 0.45);
-  background: linear-gradient(165deg, #fff 0%, #fff0ed 100%);
-  box-shadow: 0 12px 28px rgba(222, 150, 141, 0.18);
+@media (hover: hover) {
+  .service-treatment--facials:hover:not(.service-treatment--selected) {
+    border-color: rgba(222, 150, 141, 0.3);
+    background: #fafafa;
+    box-shadow: 0 6px 18px rgba(39, 37, 42, 0.06);
+  }
+
+  .service-treatment--massage:hover:not(.service-treatment--selected),
+  .service-treatment--waxing:hover:not(.service-treatment--selected),
+  .service-treatment--makeup:hover:not(.service-treatment--selected) {
+    border-color: rgba(222, 150, 141, 0.3);
+    background: #fafafa;
+    box-shadow: 0 6px 18px rgba(39, 37, 42, 0.06);
+  }
+
+  .service-treatment:hover:not(.service-treatment--selected) .service-treatment__badge {
+    color: var(--color-rose-dark);
+    background: var(--color-rose-soft);
+  }
+
+  .service-treatment:hover:not(.service-treatment--selected) .service-treatment__action {
+    color: var(--color-rose-dark);
+    border-top-color: rgba(39, 37, 42, 0.1);
+  }
 }
 
-.service-treatment--massage:hover:not(.service-treatment--selected) {
-  border-color: rgba(201, 127, 118, 0.45);
-  background: linear-gradient(165deg, #fff 0%, #f8ece9 100%);
-  box-shadow: 0 12px 28px rgba(201, 127, 118, 0.16);
-}
-
-.service-treatment--waxing:hover:not(.service-treatment--selected) {
-  border-color: rgba(184, 111, 102, 0.45);
-  background: linear-gradient(165deg, #fff 0%, #f5e6e3 100%);
-  box-shadow: 0 12px 28px rgba(184, 111, 102, 0.16);
-}
-
-.service-treatment--makeup:hover:not(.service-treatment--selected) {
-  border-color: rgba(212, 165, 158, 0.5);
-  background: linear-gradient(165deg, #fff 0%, #faf0ee 100%);
-  box-shadow: 0 12px 28px rgba(212, 165, 158, 0.18);
-}
-
-.service-treatment:hover:not(.service-treatment--selected) .service-treatment__badge {
-  color: #fff;
-  background: var(--color-rose);
-}
-
-.service-treatment:hover:not(.service-treatment--selected) .service-treatment__action {
-  color: var(--color-rose-dark);
-  border-top-color: rgba(222, 150, 141, 0.25);
+.service-treatment:active:not(.service-treatment--selected) {
+  background: #f5f5f6;
+  border-color: rgba(222, 150, 141, 0.25);
 }
 
 .service-treatment:focus-visible {
@@ -123,30 +120,17 @@ const indexLabel = computed(() => String(props.index + 1).padStart(2, '0'))
 
 .service-treatment--selected {
   border-color: var(--color-rose);
-  background: linear-gradient(165deg, #fff 0%, var(--color-rose-soft) 100%);
-  box-shadow:
-    0 12px 32px rgba(222, 150, 141, 0.22),
-    inset 0 0 0 1px rgba(222, 150, 141, 0.15);
-  transform: translateY(-3px);
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(39, 37, 42, 0.07);
+  transform: none;
 }
 
-.service-treatment--facials.service-treatment--selected {
-  border-color: #de968d;
-}
-
-.service-treatment--massage.service-treatment--selected {
-  border-color: #c97f76;
-  background: linear-gradient(165deg, #fff 0%, #f8ece9 100%);
-}
-
-.service-treatment--waxing.service-treatment--selected {
-  border-color: #b86f66;
-  background: linear-gradient(165deg, #fff 0%, #f5e6e3 100%);
-}
-
+.service-treatment--facials.service-treatment--selected,
+.service-treatment--massage.service-treatment--selected,
+.service-treatment--waxing.service-treatment--selected,
 .service-treatment--makeup.service-treatment--selected {
-  border-color: #d4a59e;
-  background: linear-gradient(165deg, #fff 0%, #faf0ee 100%);
+  border-color: var(--color-rose);
+  background: linear-gradient(180deg, #fff 0%, #fdf9f8 100%);
 }
 
 .service-treatment__badge {
@@ -163,6 +147,17 @@ const indexLabel = computed(() => String(props.index + 1).padStart(2, '0'))
 .service-treatment--selected .service-treatment__badge {
   color: #fff;
   background: var(--color-rose);
+}
+
+@media (max-width: 767px) {
+  .service-treatment {
+    padding: 1.15rem 1rem 1.05rem;
+    min-height: 3.25rem;
+  }
+
+  .service-treatment__name {
+    font-size: 1.08rem;
+  }
 }
 
 .service-treatment__head {

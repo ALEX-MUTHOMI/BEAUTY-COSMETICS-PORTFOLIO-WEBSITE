@@ -14,6 +14,9 @@
     <SiteButton :to="ctaTo" :variant="featured ? 'primary' : 'outline'">
       {{ ctaLabel }}
     </SiteButton>
+    <NuxtLink v-if="detailsTo" :to="detailsTo" class="mellis-card__details">
+      {{ detailsLabel }}
+    </NuxtLink>
   </article>
 </template>
 
@@ -31,11 +34,14 @@ withDefaults(
     daysLabel?: string
     ctaLabel?: string
     ctaTo?: string
+    detailsTo?: string
+    detailsLabel?: string
   }>(),
   {
     daysLabel: 'Tue & Wed only',
     ctaLabel: LANDING_PRIMARY_CTA,
     ctaTo: '/book',
+    detailsLabel: 'See all options',
   },
 )
 </script>
@@ -88,6 +94,31 @@ withDefaults(
 .mellis-card :deep(.site-btn) {
   width: 100%;
   max-width: 14rem;
+}
+
+.mellis-card__details {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  margin-top: 0.85rem;
+  padding: 0.35rem 0.5rem;
+  font: 600 0.72rem var(--font-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--color-rose-dark);
+  transition: color 0.15s ease;
+}
+
+.mellis-card__details:hover {
+  color: var(--color-rose);
+  text-decoration: underline;
+}
+
+.mellis-card__details:focus-visible {
+  outline: 2px solid var(--color-rose);
+  outline-offset: 2px;
 }
 
 @media (max-width: 767px) {

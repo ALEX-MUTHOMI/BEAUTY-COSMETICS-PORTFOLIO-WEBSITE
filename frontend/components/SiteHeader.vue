@@ -21,8 +21,8 @@
         <nav class="site-header__nav" aria-label="Primary">
           <NuxtLink to="/">Home</NuxtLink>
           <NuxtLink to="/services">Our Services</NuxtLink>
-          <NuxtLink to="/#packages">Packages</NuxtLink>
-          <NuxtLink to="/#singles">Singles</NuxtLink>
+          <NuxtLink :to="SERVICES_ROUTES.fullPackages">Packages</NuxtLink>
+          <NuxtLink :to="SERVICES_ROUTES.singleSessions">Singles</NuxtLink>
           <NuxtLink to="/#gallery">Gallery</NuxtLink>
           <NuxtLink to="/#contact">Contact</NuxtLink>
         </nav>
@@ -80,8 +80,8 @@
           <div class="site-header__drawer-links">
             <NuxtLink to="/" @click="closeMenu">Home</NuxtLink>
             <NuxtLink to="/services" @click="closeMenu">Services</NuxtLink>
-            <NuxtLink to="/#packages" @click="closeMenu">Packages</NuxtLink>
-            <NuxtLink to="/#singles" @click="closeMenu">Singles</NuxtLink>
+            <NuxtLink :to="SERVICES_ROUTES.fullPackages" @click="closeMenu">Packages</NuxtLink>
+            <NuxtLink :to="SERVICES_ROUTES.singleSessions" @click="closeMenu">Singles</NuxtLink>
             <NuxtLink to="/#gallery" @click="closeMenu">Gallery</NuxtLink>
             <NuxtLink to="/#contact" @click="closeMenu">Contact</NuxtLink>
           </div>
@@ -102,6 +102,7 @@ import {
   LANDING_LOCATION_LABEL,
   LANDING_PRIMARY_CTA,
 } from '@/landing/landingContent'
+import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
 
 const menuOpen = ref(false)
 
