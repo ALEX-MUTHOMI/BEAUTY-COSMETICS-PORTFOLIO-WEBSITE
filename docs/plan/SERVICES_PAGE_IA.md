@@ -1,6 +1,6 @@
 # Services Page Information Architecture Plan
 
-**Status:** Phase 1 complete — mobile polish & visual calm (2026-07-06)
+**Status:** Phase 2 complete — secure booking handoff (2026-07-06)
 
 ## Phase 1 mobile & visual (final)
 
@@ -83,10 +83,15 @@ Home → “Single sessions” or Nav Singles → `/services#single-sessions` �
 - [x] Single cards deep-link to category tabs (allowlisted hashes)  
 - [x] Day-rule banner on services page  
 
-### Phase 2 — Booking handoff
+### Phase 2 — Booking handoff & availability (complete)
 
-- Pass `type`, `category`, `treatment` (or package id) to `/book` via query params  
-- Enforce day rules in booking UI with clear errors  
+- [x] Allowlisted query params: `type`, `plan`, `category`, `treatment`, `date` via `parseBookHandoffQuery()`  
+- [x] `/book` page — resolved selection, **live availability calendar**, time-slot picker  
+- [x] Fetches `/api/bookings/catalog/*` + `/api/bookings/availability/` (14-day window, validated responses)  
+- [x] Calendar: Mon–Sun grid, slot counts, closed / full / available states  
+- [x] Day policy (client) + backend slots (server) — capacity shown when day is full  
+- [x] Package cards & treatment picker → secure `/book?…` URLs  
+- [x] Unit + E2E security tests  
 
 ### Phase 3 — Homepage dedupe
 
@@ -98,9 +103,18 @@ Home → “Single sessions” or Nav Singles → `/services#single-sessions` �
 - Package path: homepage or nav → package card → book in ≤3 clicks  
 - Single path: nav → category → optional specific treatment → book in ≤4 clicks  
 - No user reads full packages twice on one journey without choosing to  
-- Analytics: `services_section_view`, `category_tab`, `treatment_select` (Phase 2)
+- Analytics: `services_section_view`, `category_tab`, `treatment_select` (Phase 3+)
 
-## Security notes
+## Security notes (Phase 2)
+
+- Book query tokens: `normalizeBookQueryToken()` — URI decode, strip path/query, `[a-z0-9-]+` only, max 64 chars  
+- Package `plan` and treatment slugs resolved from static catalog allowlists (`bookingCatalog.ts`)  
+- Treatment slug must match `category` or entire handoff rejected  
+- Invalid `type` or unknown slugs → generic `/book` (no attacker-controlled labels rendered)  
+- Day validation client-side mirrors `bookings/domain/day_policy.py` for immediate UX feedback  
+- E2E: `frontend/e2e/book-handoff-security.spec.ts` — injection, day rules, CSP headers  
+
+## Security notes (Phase 1)
 
 - Section/category hashes validated via `parseServicesHash()` — URI decode, strip path/query, alphanumeric allowlist only  
 - Unknown or malicious hashes (`<script>`, `javascript:`, encoded newlines) are ignored — no tab change, no `getElementById` with attacker input  
@@ -121,7 +135,7 @@ docker compose exec -T frontend-test npm run type-check
 docker compose exec -T frontend-test npm run test
 docker compose exec -T frontend-test npm audit --audit-level=high
 PLAYWRIGHT_BASE_URL=http://localhost:3000 npm run test:e2e -- e2e/services-security.spec.ts
-PLAYWRIGHT_BASE_URL=http://localhost:3000 npm run test:e2e -- e2e/services-mobile.spec.ts
+PLAYWRIGHT_BASE_URL=http://localhost:3000 npm run test:e2e -- e2e/book-handoff-security.spec.ts
 ```
 
 ## Security review (Phase 1)

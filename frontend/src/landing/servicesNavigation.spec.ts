@@ -24,7 +24,7 @@ describe('servicesNavigation', () => {
 
   it('rejects malicious or encoded hash fragments', () => {
     expect(normalizeServicesHash('<img src=x onerror=alert(1)>')).toBe('')
-    expect(normalizeServicesHash('waxing%0a%0d')).toBe('waxing')
+    expect(normalizeServicesHash('waxing%0a%0d')).toBe('')
     expect(normalizeServicesHash('facials/../../admin')).toBe('facials')
     expect(normalizeServicesHash('javascript:alert(1)')).toBe('')
     expect(parseServicesHash('#<script>alert(1)</script>')).toEqual({})

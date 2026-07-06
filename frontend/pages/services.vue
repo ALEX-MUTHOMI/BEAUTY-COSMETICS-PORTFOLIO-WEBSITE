@@ -66,6 +66,7 @@
           :badge="pkg.badge"
           :days-label="pkg.daysLabel"
           :cta-label="pkg.ctaLabel"
+          :cta-to="bookHrefForPackageName(pkg.name)"
         />
       </div>
     </section>
@@ -193,7 +194,7 @@
                   Select a treatment above to continue
                 </p>
                 <SiteButton
-                  to="/book"
+                  :to="treatmentBookHref"
                   variant="primary"
                   class="services-panel__cta"
                   :class="{ 'services-panel__cta--disabled': !selectedTreatmentName }"
@@ -239,6 +240,7 @@ import {
   parseServicesHash,
   type ServiceCategoryId,
 } from '@/landing/servicesNavigation'
+import { bookHrefForPackageName, bookHrefForTreatment } from '@/landing/bookingHandoff'
 
 const pageIntro = SERVICES_PAGE_INTRO
 const config = useRuntimeConfig()
@@ -252,6 +254,10 @@ const selectedTreatmentName = ref<string | null>(null)
 
 const activeCategory = computed(
   () => serviceCategories.find((c) => c.id === activeCategoryId.value) ?? serviceCategories[0]!,
+)
+
+const treatmentBookHref = computed(() =>
+  bookHrefForTreatment(activeCategoryId.value, selectedTreatmentName.value),
 )
 
 function selectCategory(id: string) {

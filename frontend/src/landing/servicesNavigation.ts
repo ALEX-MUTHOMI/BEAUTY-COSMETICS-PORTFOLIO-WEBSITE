@@ -35,6 +35,7 @@ export function normalizeServicesHash(raw: string): string {
 
   try {
     const decoded = decodeURIComponent(withoutLead)
+    if (/[\s<>"'`\x00-\x1f\x7f]/.test(decoded)) return ''
     const firstToken = decoded.split(/[?#/\\]/)[0]?.trim() ?? ''
     return /^[a-z0-9-]+$/i.test(firstToken) ? firstToken.toLowerCase() : ''
   } catch {

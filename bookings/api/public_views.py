@@ -6,7 +6,10 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 
 from bookings.services.availability import AvailabilityService
+from bookings.services.booking_calendar import BookingCalendarService
 from bookings.services.catalog import list_public_full_packages, list_public_services
+from bookings.services.catalog_resolve import resolve_catalog_selection
+from bookings.services.handoff_resolve import resolve_booking_handoff
 from bookings.services.checkout_contract import BookingCheckoutContractService
 from bookings.services.holds import BookingHoldService
 from bookings.services.legal import POLICY_ACCEPTANCE_TEXT
@@ -15,6 +18,8 @@ from core.throttling import route_throttle
 from users.services import get_redis_client
 
 GENERIC_AVAILABILITY_ERROR = "Availability unavailable."
+GENERIC_CALENDAR_ERROR = "Calendar unavailable."
+GENERIC_RESOLVE_ERROR = "Selection unavailable."
 GENERIC_HOLD_ERROR = "Booking request could not be accepted."
 GENERIC_CHECKOUT_ERROR = "Checkout request could not be accepted."
 FORBIDDEN_CLIENT_FIELDS = {
@@ -98,6 +103,51 @@ def catalog_services(_request):
 @require_GET
 def catalog_packages(_request):
     return _json({"packages": list_public_full_packages()})
+
+
+@require_GET
+def catalog_resolve(request):
+    try:
+        selection = resolve_catalog_selection(
+            selection_type=request.GET.get("selection_type"),
+            slug=request.GET.get("slug"),
+        )
+    except ValidationError:
+        return _json({"detail": GENERIC_RESOLVE_ERROR}, status=400)
+    return _json({"selection": selection})
+
+
+@require_GET
+def catalog_resolve_handoff(request):
+    try:
+        selection = resolve_booking_handoff(
+            handoff_type=request.GET.get("type"),
+            plan_slug=request.GET.get("plan"),
+            category_slug=request.GET.get("category"),
+            treatment_slug=request.GET.get("treatment"),
+        )
+    except ValidationError:
+        return _json({"detail": GENERIC_RESOLVE_ERROR}, status=400)
+    return _json({"selection": selection})
+
+
+@require_GET
+@route_throttle("availability")
+def booking_calendar(request):
+    selection_type = str(request.GET.get("selection_type") or "normal")
+    try:
+        calendar = BookingCalendarService.build_calendar(
+            selection_type=selection_type,
+            service_public_id=request.GET.get("service_public_id"),
+            full_package_public_id=request.GET.get("full_package_public_id"),
+            start_date=request.GET.get("start_date"),
+            end_date=request.GET.get("end_date"),
+            resource_id=request.GET.get("resource_public_id") or None,
+            request_context=_request_context(request),
+        )
+    except ValidationError:
+        return _json({"detail": GENERIC_CALENDAR_ERROR}, status=400)
+    return _json({"calendar": calendar})
 
 
 @require_GET
