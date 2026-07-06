@@ -46,19 +46,23 @@ def _today_nairobi() -> date:
 
 
 def _validate_range(start_date, end_date) -> tuple[date, date]:
+    explicit_range = bool(start_date or end_date)
     if start_date:
         start_day = _as_local_date(start_date)
     else:
         start_day = _today_nairobi()
     if end_date:
         end_day = _as_local_date(end_date)
+    elif start_date:
+        end_day = start_day + timedelta(days=MAX_CALENDAR_RANGE_DAYS - 1)
     else:
         end_day = start_day + timedelta(days=CALENDAR_SCAN_HORIZON_DAYS - 1)
     if end_day < start_day:
         raise ValidationError(GENERIC_CALENDAR_ERROR)
-    range_days = (end_day - start_day).days + 1
-    if range_days > MAX_CALENDAR_RANGE_DAYS:
-        raise ValidationError(GENERIC_CALENDAR_ERROR)
+    if explicit_range:
+        range_days = (end_day - start_day).days + 1
+        if range_days > MAX_CALENDAR_RANGE_DAYS:
+            raise ValidationError(GENERIC_CALENDAR_ERROR)
     return start_day, end_day
 
 

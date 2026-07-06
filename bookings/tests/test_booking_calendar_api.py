@@ -251,3 +251,27 @@ def test_package_calendar_rolls_forward_when_current_week_full():
         day for day in payload["days"] if day["date"] > wednesday.isoformat() and day["status"] == STATUS_AVAILABLE
     ]
     assert later_available, "Expected a later Tue/Wed week with open capacity"
+
+
+@pytest.mark.django_db
+def test_calendar_api_default_range_without_dates():
+    _service, _resource, _customer = create_service_resource_customer()
+    package = FullPackage.objects.create(
+        name="Classic Full Package",
+        slug="classic-full-package-default",
+        duration_minutes=240,
+        price_amount=Decimal("12000.00"),
+    )
+    response = Client().get(
+        "/api/bookings/calendar/",
+        {
+            "selection_type": "full_package",
+            "full_package_public_id": str(package.public_id),
+        },
+        secure=True,
+    )
+    assert response.status_code == 200
+    calendar = response.json()["calendar"]
+    assert calendar["layout"] == "package_pairs"
+    assert len(calendar["days"]) == 8
+    assert all(day["weekday"] in {1, 2} for day in calendar["days"])

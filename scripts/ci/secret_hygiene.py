@@ -36,6 +36,13 @@ EXCLUDED_PATTERNS = [
     r"package-lock.json",
     r"\.git/",
     r"\.env\.example",
+    r"node_modules/",
+    r"\.nuxt/",
+    r"\.output/",
+    r"\.venv/",
+    r"\.local/",
+    r"\.cache/",
+    r"var/",
 ]
 
 
