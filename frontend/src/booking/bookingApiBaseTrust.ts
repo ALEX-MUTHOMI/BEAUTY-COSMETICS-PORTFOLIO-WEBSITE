@@ -1,4 +1,8 @@
 /**
+ * Module: bookingApiBaseTrust
+ * Trust and security base for booking APIs.
+ */
+/**
  * Fail-closed API base URL binding for Nuxt (:3000) → Django (:8000).
  * Rejects attacker-controlled host drift, credentials-in-URL, and non-http(s) schemes.
  */
@@ -57,3 +61,4 @@ export function trustedApiOriginOrEmpty(apiBaseUrl: string | null | undefined): 
   const result = resolveTrustedApiBaseUrl(apiBaseUrl)
   return result.ok ? result.origin : ''
 }
+
