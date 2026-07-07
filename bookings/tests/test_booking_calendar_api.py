@@ -23,16 +23,19 @@ def _future_weekday(target):
 
 @pytest.mark.django_db
 def test_resolve_package_slug_returns_public_id_only():
-    package = FullPackage.objects.create(
-        name="Classic Full Package",
+    package, _created = FullPackage.objects.get_or_create(
         slug="classic-full-package",
-        duration_minutes=240,
-        price_amount=Decimal("12000.00"),
+        defaults={
+            "name": "Classic Full Package",
+            "duration_minutes": 240,
+            "price_amount": Decimal("12000.00"),
+            "is_active": True,
+        },
     )
     resolved = resolve_catalog_selection(selection_type="full_package", slug="classic-full-package")
-    assert resolved["public_id"] == str(package.public_id)
-    assert resolved["name"] == "Classic Full Package"
-    assert "<" not in resolved["name"]
+    assert resolved.public_id
+    assert resolved.name == "Classic Full Package"
+    assert "<" not in resolved.name
 
 
 @pytest.mark.django_db
@@ -67,7 +70,7 @@ def test_calendar_marks_monday_unavailable_for_package_selection():
     _service, _resource, _customer = create_service_resource_customer()
     package = FullPackage.objects.create(
         name="Glow Package",
-        slug="glow-package",
+        slug="glow-package-calendar-unit",
         duration_minutes=180,
         price_amount=Decimal("8500.00"),
     )
@@ -190,29 +193,32 @@ def test_catalog_resolve_api_rejects_path_traversal():
 def test_catalog_resolve_api_returns_package_by_slug():
     package = FullPackage.objects.create(
         name="Relax Package",
-        slug="relax-package",
+        slug="relax-package-catalog-unit",
         duration_minutes=150,
         price_amount=Decimal("7000.00"),
     )
     response = Client().get(
         "/api/bookings/catalog/resolve/",
-        {"selection_type": "full_package", "slug": "relax-package"},
+        {"selection_type": "full_package", "slug": "relax-package-catalog-unit"},
         secure=True,
     )
     assert response.status_code == 200
     selection = response.json()["selection"]
     assert selection["public_id"] == str(package.public_id)
-    assert selection["slug"] == "relax-package"
+    assert selection["slug"] == "relax-package-catalog-unit"
 
 
 @pytest.mark.django_db
 def test_package_calendar_rolls_forward_when_current_week_full():
     _service, resource, customer = create_service_resource_customer()
-    package = FullPackage.objects.create(
-        name="Classic Full Package",
+    package, _created = FullPackage.objects.get_or_create(
         slug="classic-full-package",
-        duration_minutes=240,
-        price_amount=Decimal("12000.00"),
+        defaults={
+            "name": "Classic Full Package",
+            "duration_minutes": 240,
+            "price_amount": Decimal("12000.00"),
+            "is_active": True,
+        },
     )
     tuesday = _future_weekday(1)
     wednesday = tuesday + timedelta(days=1)

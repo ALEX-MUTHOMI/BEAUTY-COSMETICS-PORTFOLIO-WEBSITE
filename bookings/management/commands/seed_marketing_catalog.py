@@ -2,69 +2,10 @@
 
 from __future__ import annotations
 
-import re
-from decimal import Decimal
-
 from django.core.management.base import BaseCommand
 
+from bookings.domain.marketing_catalog import MARKETING_PACKAGES, MARKETING_SERVICES, slugify_name
 from bookings.models import FullPackage, Service, ServiceCategory
-
-SLUG_RE = re.compile(r"^[a-z0-9-]{1,140}$")
-
-MARKETING_PACKAGES = [
-    {
-        "name": "Classic Full Package",
-        "slug": "classic-full-package",
-        "duration_minutes": 240,
-        "price_amount": Decimal("12000.00"),
-        "sort_order": 1,
-    },
-    {
-        "name": "Glow Package",
-        "slug": "glow-package",
-        "duration_minutes": 180,
-        "price_amount": Decimal("8500.00"),
-        "sort_order": 2,
-    },
-    {
-        "name": "Relax Package",
-        "slug": "relax-package",
-        "duration_minutes": 150,
-        "price_amount": Decimal("7000.00"),
-        "sort_order": 3,
-    },
-]
-
-MARKETING_SERVICES = [
-    ("facials", "Deep cleansing facial", 60, Decimal("2500.00")),
-    ("facials", "Brightening facial", 60, Decimal("3000.00")),
-    ("facials", "Hydrating facial", 60, Decimal("2800.00")),
-    ("facials", "Express facial", 30, Decimal("1800.00")),
-    ("facials", "Anti-ageing rejuvenation", 75, Decimal("3500.00")),
-    ("massage", "Swedish massage", 60, Decimal("3000.00")),
-    ("massage", "Deep tissue massage", 60, Decimal("3500.00")),
-    ("massage", "Back, neck & shoulders", 30, Decimal("2200.00")),
-    ("massage", "Hot stone massage", 60, Decimal("4000.00")),
-    ("waxing", "Brow shaping", 20, Decimal("800.00")),
-    ("waxing", "Upper lip & chin", 15, Decimal("600.00")),
-    ("waxing", "Underarms", 15, Decimal("1200.00")),
-    ("waxing", "Half leg", 30, Decimal("1500.00")),
-    ("waxing", "Full leg", 45, Decimal("2500.00")),
-    ("waxing", "Bikini & Brazilian", 45, Decimal("2000.00")),
-    ("waxing", "Full body wax", 90, Decimal("6500.00")),
-    ("makeup", "Everyday makeup", 45, Decimal("4000.00")),
-    ("makeup", "Soft glam", 60, Decimal("5500.00")),
-    ("makeup", "Bridal & event glam", 90, Decimal("8000.00")),
-    ("makeup", "Evening & photography makeup", 75, Decimal("6500.00")),
-]
-
-
-def slugify_name(name: str) -> str:
-    slug = name.lower().replace("&", "and")
-    slug = re.sub(r"[^a-z0-9]+", "-", slug).strip("-")
-    if not SLUG_RE.match(slug):
-        raise ValueError(f"Invalid slug for {name!r}: {slug}")
-    return slug
 
 
 class Command(BaseCommand):

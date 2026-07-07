@@ -114,7 +114,7 @@ def catalog_resolve(request):
         )
     except ValidationError:
         return _json({"detail": GENERIC_RESOLVE_ERROR}, status=400)
-    return _json({"selection": selection})
+    return _json({"selection": selection.to_api_payload()})
 
 
 @require_GET
@@ -128,7 +128,7 @@ def catalog_resolve_handoff(request):
         )
     except ValidationError:
         return _json({"detail": GENERIC_RESOLVE_ERROR}, status=400)
-    return _json({"selection": selection})
+    return _json({"selection": selection.to_api_payload()})
 
 
 @require_GET

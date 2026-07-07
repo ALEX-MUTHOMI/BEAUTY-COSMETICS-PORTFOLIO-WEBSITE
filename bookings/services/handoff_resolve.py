@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.core.exceptions import ValidationError
 
+from bookings.domain.selection import BookableSelection
 from bookings.models import Service
 from bookings.services.catalog_resolve import _normalize_slug, resolve_catalog_selection
 
@@ -32,7 +33,7 @@ def _service_matches_category(service: Service, category_slug: str) -> bool:
     return any(keyword in haystack for keyword in CATEGORY_KEYWORDS[category_slug])
 
 
-def resolve_booking_handoff(*, handoff_type: str, plan_slug=None, category_slug=None, treatment_slug=None) -> dict:
+def resolve_booking_handoff(*, handoff_type: str, plan_slug=None, category_slug=None, treatment_slug=None) -> BookableSelection:
     normalized_type = str(handoff_type or "").strip().lower()
     if normalized_type not in ALLOWED_HANDOFF_TYPES:
         raise ValidationError(GENERIC_HANDOFF_ERROR)

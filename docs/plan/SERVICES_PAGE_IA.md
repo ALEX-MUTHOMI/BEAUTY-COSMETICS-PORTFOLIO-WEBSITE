@@ -85,15 +85,23 @@ Home → “Single sessions” or Nav Singles → `/services#single-sessions` �
 
 ### Phase 2 — Booking handoff & availability (complete)
 
-- [x] Allowlisted query params: `type`, `plan`, `category`, `treatment`, `date` via `parseBookHandoffQuery()`  
+- [x] Allowlisted query params: `type`, `plan`, `category`, `treatment` via `parseBookHandoffQuery()`  
 - [x] `/book` page — resolved selection, **live availability calendar**, time-slot picker  
-- [x] Fetches `/api/bookings/catalog/*` + `/api/bookings/availability/` (14-day window, validated responses)  
-- [x] Calendar: Mon–Sun grid, slot counts, closed / full / available states  
-- [x] Day policy (client) + backend slots (server) — capacity shown when day is full  
+- [x] Backend: `resolve-handoff` → `calendar` → `availability` (two-phase; no booking logic in Nuxt)  
+- [x] Calendar: **offered weekdays only** (Tue/Wed packages, Mon/Thu–Sat singles), week grouping, roll-forward  
 - [x] Package cards & treatment picker → secure `/book?…` URLs  
 - [x] Unit + E2E security tests  
+- [x] `seed_marketing_catalog` — DB rows for all homepage/services slugs  
 
-### Phase 3 — Homepage dedupe
+### Phase 3 — Calendar service (booking domain)
+
+**Design doc:** [CALENDAR_SERVICE_PHASE_3.md](./CALENDAR_SERVICE_PHASE_3.md)
+
+Catalog-aware scheduling service: every marketing offering resolves to a `BookableSelection`, deterministic day classification, bounded algorithms, Newman contract tests, latency + security gates.
+
+Sub-phases: 3a registry → 3b policy engine → 3d Newman/security → 3c performance → 3e per-service overrides (if needed).
+
+### Phase 4 — Homepage dedupe (IA)
 
 - Shorten homepage singles to teaser + link; avoid duplicate scroll on one journey  
 - Optional `?intent=package|single` on `/services` for emphasis  
@@ -103,7 +111,7 @@ Home → “Single sessions” or Nav Singles → `/services#single-sessions` �
 - Package path: homepage or nav → package card → book in ≤3 clicks  
 - Single path: nav → category → optional specific treatment → book in ≤4 clicks  
 - No user reads full packages twice on one journey without choosing to  
-- Analytics: `services_section_view`, `category_tab`, `treatment_select` (Phase 3+)
+- Analytics: `services_section_view`, `category_tab`, `treatment_select` (Phase 4+)
 
 ## Security notes (Phase 2)
 
@@ -111,8 +119,8 @@ Home → “Single sessions” or Nav Singles → `/services#single-sessions` �
 - Package `plan` and treatment slugs resolved from static catalog allowlists (`bookingCatalog.ts`)  
 - Treatment slug must match `category` or entire handoff rejected  
 - Invalid `type` or unknown slugs → generic `/book` (no attacker-controlled labels rendered)  
-- Day validation client-side mirrors `bookings/domain/day_policy.py` for immediate UX feedback  
-- E2E: `frontend/e2e/book-handoff-security.spec.ts` — injection, day rules, CSP headers  
+- Day validation is **server-side only** (`bookings/domain/calendar.py`, `day_policy.py`); frontend renders API statuses  
+- E2E: `frontend/e2e/book-handoff-security.spec.ts` — injection, CSP headers  
 
 ## Security notes (Phase 1)
 
