@@ -25,6 +25,7 @@ from bookings.models import BOOKING_BLOCKING_STATUSES, Booking
 from bookings.services.availability import AvailabilityService, _as_local_date
 from bookings.services.calendar_cache import CalendarCache
 from bookings.services.calendar_selection import GENERIC_CALENDAR_ERROR, resolve_calendar_selection
+from bookings.services.service_day_rules import offered_weekdays_for_selection
 
 logger = logging.getLogger("bookings.calendar")
 
@@ -79,6 +80,7 @@ def _offered_dates_for_window(selection: BookableSelection, start_day: date, end
         horizon_end=horizon_end,
         count=CALENDAR_OFFERED_DAYS_COUNT,
         policy_profile=selection.policy_profile,
+        offered_weekdays=offered_weekdays_for_selection(selection),
     )
 
 

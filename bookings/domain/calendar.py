@@ -54,9 +54,12 @@ def iter_offered_dates(
     horizon_end: date,
     count: int = CALENDAR_OFFERED_DAYS_COUNT,
     policy_profile: str | None = None,
+    offered_weekdays: frozenset[int] | None = None,
 ) -> list[date]:
     """Next bookable weekdays for the selection, capped at *count* days."""
-    if policy_profile:
+    if offered_weekdays is not None:
+        weekdays = offered_weekdays
+    elif policy_profile:
         weekdays = weekdays_for_policy_profile(policy_profile)
     else:
         weekdays = weekdays_for_selection_type(selection_key)

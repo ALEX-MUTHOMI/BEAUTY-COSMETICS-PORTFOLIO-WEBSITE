@@ -516,6 +516,14 @@ def test_calendar_default_range_under_budget():
 
 **Recommended order:** 3a → 3b → 3d (parallel) → 3c → 3e (if needed).
 
+### 3e task checklist
+
+- [x] Add `ServiceDayRule` model + migration (`0020_service_day_rule_phase_3e`)
+- [x] `CalendarPolicy.for_date()` applies per-slug overrides when active rows exist
+- [x] `offered_weekdays_for_selection()` merges type defaults with rule adjustments
+- [x] Tests: default unchanged, override paths, public API cannot write rules
+- [x] **Product default:** no seeded overrides (D1/D2 approved — type-level policy remains canonical)
+
 ### 3a task checklist
 
 - [x] Add `bookings/domain/selection.py` with `BookableSelection`
@@ -569,10 +577,10 @@ def test_calendar_default_range_under_budget():
 
 ## 14. Success criteria (Phase 3 complete)
 
-- [ ] All 23 marketing slugs pass contract test (resolve + calendar)
-- [ ] Newman folder green in Docker CI
+- [x] All 23 marketing slugs pass contract test (resolve + calendar)
+- [x] Newman folder green in Docker CI
 - [x] Calendar p95 < 2s under latency test
-- [ ] Turbo Pass + ZAP passive green
+- [ ] Turbo Pass + ZAP passive green (re-run after venv repair; initial run failed on broken `.venv`)
 - [ ] `/book?type=package&plan=classic-full-package` loads Tue/Wed weeks < 2s on local Docker
 - [ ] No booking policy logic in `frontend/src/booking/` beyond response validation
 - [ ] This document updated with implementation status

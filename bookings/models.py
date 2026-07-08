@@ -180,6 +180,51 @@ class BookingDayPolicy(AuditMixin):
             raise ValidationError("Business start time must be before end time.")
 
 
+class ServiceDayRule(AuditMixin):
+    """Optional per-catalog-slug weekday override (Phase 3e extension point).
+
+    When no active row exists, CalendarPolicy uses type-level defaults from 3b
+    (packages Tue/Wed, singles Mon/Thu/Fri/Sat). Staff or migrations only — never
+    writable from public booking APIs.
+    """
+
+    class SelectionType(models.TextChoices):
+        NORMAL = "normal", "Normal"
+        FULL_PACKAGE = "full_package", "Full Package"
+
+    selection_type = models.CharField(max_length=20, choices=SelectionType.choices)
+    catalog_slug = models.SlugField(max_length=140)
+    weekday = models.PositiveSmallIntegerField()
+    offered = models.BooleanField(null=True, blank=True)
+    max_clients = models.PositiveSmallIntegerField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "booking_service_day_rules"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["selection_type", "catalog_slug", "weekday"],
+                name="uniq_service_day_rule_slug_weekday",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(weekday__gte=0) & models.Q(weekday__lte=6),
+                name="service_day_rule_weekday_range",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["selection_type", "catalog_slug", "weekday", "is_active"],
+                name="service_day_rule_lookup_idx",
+            ),
+        ]
+
+    def clean(self):
+        if self.offered is None and self.max_clients is None:
+            raise ValidationError("Service day rule must set offered and/or max_clients.")
+        if self.max_clients is not None and self.max_clients < 0:
+            raise ValidationError("max_clients cannot be negative.")
+
+
 class BookingDayState(AuditMixin):
     class Status(models.TextChoices):
         OPEN = "open", "Open"

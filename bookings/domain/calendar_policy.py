@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, time
 
 from bookings.domain.calendar import weekdays_for_policy_profile
 from bookings.domain.selection import BookableSelection, PolicyProfile
 from bookings.models import BookingDayPolicy
 from bookings.services.day_policy import default_policy_for_date
+from bookings.services.service_day_rules import lookup_service_day_rule
 
 
 @dataclass(frozen=True)
@@ -60,7 +61,18 @@ class CalendarPolicy:
         """
         base = default_policy_for_date(local_date)
         offered = local_date.weekday() in weekdays_for_policy_profile(selection.policy_profile)
-        return CalendarDayPolicy.from_booking_day_policy(policy=base, offered=offered)
+        policy = CalendarDayPolicy.from_booking_day_policy(policy=base, offered=offered)
+        rule = lookup_service_day_rule(selection=selection, local_date=local_date)
+        if not rule:
+            return policy
+        overrides = {}
+        if rule.offered is not None:
+            overrides["offered"] = rule.offered
+        if rule.max_clients is not None:
+            overrides["max_clients"] = rule.max_clients
+        if overrides:
+            return replace(policy, **overrides)
+        return policy
 
     @staticmethod
     def is_weekday_offered(*, policy_profile: PolicyProfile, local_date: date) -> bool:
