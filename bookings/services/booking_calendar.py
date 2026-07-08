@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+import time
 from datetime import date, timedelta
 
 from django.core.exceptions import ValidationError
@@ -21,7 +23,10 @@ from bookings.domain.day_policy import BUSINESS_TZ
 from bookings.domain.selection import BookableSelection
 from bookings.models import BOOKING_BLOCKING_STATUSES, Booking
 from bookings.services.availability import AvailabilityService, _as_local_date
+from bookings.services.calendar_cache import CalendarCache
 from bookings.services.calendar_selection import GENERIC_CALENDAR_ERROR, resolve_calendar_selection
+
+logger = logging.getLogger("bookings.calendar")
 
 
 def _count_blocking_clients_bulk(dates: list[date]) -> dict[date, int]:
@@ -128,8 +133,8 @@ class BookingCalendarService:
         selection_type: str,
         service_public_id=None,
         full_package_public_id=None,
-        start_date,
-        end_date,
+        start_date=None,
+        end_date=None,
         resource_id=None,
         request_context=None,
     ) -> dict:
@@ -156,10 +161,35 @@ class BookingCalendarService:
         resource_id=None,
         request_context=None,
     ) -> dict:
+        started = time.perf_counter()
+        request_context = request_context or {}
+        redis_client = request_context.get("redis_client")
+
         start_day, end_day = _validate_range(start_date, end_date)
         offered_dates = _offered_dates_for_window(selection, start_day, end_day)
         if not offered_dates:
             raise ValidationError(GENERIC_CALENDAR_ERROR)
+
+        cache_key = CalendarCache.build_key(
+            selection_public_id=selection.public_id,
+            offered_dates=offered_dates,
+            resource_id=resource_id,
+            redis_client=redis_client,
+        )
+        cached = CalendarCache.get_payload(cache_key, redis_client=redis_client)
+        if cached is not None:
+            duration_ms = int((time.perf_counter() - started) * 1000)
+            logger.info(
+                "calendar.build",
+                extra={
+                    "slug": selection.slug,
+                    "days_count": len(cached.get("days", [])),
+                    "status_histogram": CalendarCache.status_histogram(cached.get("days", [])),
+                    "duration_ms": duration_ms,
+                    "cache_hit": True,
+                },
+            )
+            return cached
 
         try:
             booked_by_date = _count_blocking_clients_bulk(offered_dates)
@@ -220,7 +250,7 @@ class BookingCalendarService:
 
         range_start = days[0]["date"]
         range_end = days[-1]["date"]
-        return {
+        payload = {
             "timezone": CALENDAR_TIMEZONE,
             "layout": CALENDAR_LAYOUT.get(selection.calendar_layout_key, "singles"),
             "range": {"start": range_start, "end": range_end},
@@ -228,3 +258,16 @@ class BookingCalendarService:
             "days": days,
             "weeks": group_days_into_weeks(days),
         }
+        CalendarCache.set_payload(cache_key, payload, redis_client=redis_client)
+        duration_ms = int((time.perf_counter() - started) * 1000)
+        logger.info(
+            "calendar.build",
+            extra={
+                "slug": selection.slug,
+                "days_count": len(days),
+                "status_histogram": CalendarCache.status_histogram(days),
+                "duration_ms": duration_ms,
+                "cache_hit": False,
+            },
+        )
+        return payload

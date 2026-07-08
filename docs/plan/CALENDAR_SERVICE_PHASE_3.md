@@ -526,14 +526,14 @@ def test_calendar_default_range_under_budget():
 
 ### 3b task checklist
 
-- [ ] Add `bookings/domain/calendar_policy.py` with `CalendarPolicy`
-- [ ] `BookingCalendarService` uses `CalendarPolicy` only (no inline weekday checks)
-- [ ] Remove duplicated policy knowledge outside domain
+- [x] Add `bookings/domain/calendar_policy.py` with `CalendarPolicy`
+- [x] `BookingCalendarService` uses `CalendarPolicy` only (no inline weekday checks)
+- [x] Remove duplicated policy knowledge outside domain
 
 ### 3c task checklist
 
-- [ ] `tests/latency/test_calendar_service_latency.py`
-- [ ] Optional: `CalendarCache` with hold invalidation
+- [x] `tests/latency/test_calendar_service_latency.py`
+- [x] Optional: `CalendarCache` with hold invalidation
 
 ### 3d task checklist
 
@@ -571,7 +571,7 @@ def test_calendar_default_range_under_budget():
 
 - [ ] All 23 marketing slugs pass contract test (resolve + calendar)
 - [ ] Newman folder green in Docker CI
-- [ ] Calendar p95 < 2s under latency test
+- [x] Calendar p95 < 2s under latency test
 - [ ] Turbo Pass + ZAP passive green
 - [ ] `/book?type=package&plan=classic-full-package` loads Tue/Wed weeks < 2s on local Docker
 - [ ] No booking policy logic in `frontend/src/booking/` beyond response validation

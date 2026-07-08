@@ -20,6 +20,7 @@ from bookings.models import (
 from bookings.privacy import hmac_email_hash, hmac_phone_hash, normalize_email, normalize_phone
 from bookings.services.availability import AvailabilityService
 from bookings.services.bundles import get_full_package_summary, validate_service_bundle
+from bookings.services.calendar_cache import invalidate_calendar_capacity_for_booking
 from bookings.services.circuit_breaker import BookingCircuitBreaker
 from bookings.services.day_policy import lock_and_validate_day_capacity
 
@@ -208,6 +209,7 @@ class BookingHoldService:
         except IntegrityError as exc:
             return cls._recover_integrity_conflict(idempotency_key, request_fingerprint, ttl_minutes, exc)
 
+        invalidate_calendar_capacity_for_booking(booking, redis_client=redis_client)
         logger.info(
             "booking.hold.created",
             extra={
@@ -453,6 +455,7 @@ class BookingHoldService:
                 "request_id": request_context.get("request_id"),
             },
         )
+        invalidate_calendar_capacity_for_booking(booking, redis_client=request_context.get("redis_client"))
         return booking
 
     @staticmethod

@@ -4,6 +4,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from bookings.models import Booking, BookingAuditEvent
+from bookings.services.calendar_cache import invalidate_calendar_capacity_for_transition
 
 
 class BookingStateError(Exception):
@@ -64,6 +65,11 @@ def transition_booking(booking, new_status, actor_type, reason="", actor_id=None
             actor_id=actor_id,
             request_id=request_id,
             metadata_redacted=metadata or {},
+        )
+        invalidate_calendar_capacity_for_transition(
+            old_status=old_status,
+            new_status=new_status,
+            local_date=locked.local_booking_date,
         )
         booking.status = locked.status
         return locked

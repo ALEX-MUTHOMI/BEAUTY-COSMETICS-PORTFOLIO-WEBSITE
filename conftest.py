@@ -50,7 +50,7 @@ def _flush_operational_redis_keys():
         from users.services import get_redis_client
 
         client = get_redis_client()
-        for pattern in ("throttle:*", "abuse:*", "otp:*"):
+        for pattern in ("throttle:*", "abuse:*", "otp:*", "calendar:*"):
             cursor = 0
             while True:
                 cursor, keys = client.scan(cursor, match=pattern, count=200)
