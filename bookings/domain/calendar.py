@@ -15,6 +15,19 @@ OFFERED_WEEKDAYS: dict[str, frozenset[int]] = {
     "full_package": frozenset({1, 2}),
 }
 
+OFFERED_WEEKDAYS_BY_PROFILE: dict[str, frozenset[int]] = {
+    "single": OFFERED_WEEKDAYS["normal"],
+    "full_package": OFFERED_WEEKDAYS["full_package"],
+}
+
+
+def weekdays_for_policy_profile(policy_profile: str) -> frozenset[int]:
+    return OFFERED_WEEKDAYS_BY_PROFILE.get(policy_profile, OFFERED_WEEKDAYS["normal"])
+
+
+def weekdays_for_selection_type(selection_type: str) -> frozenset[int]:
+    return OFFERED_WEEKDAYS.get(selection_type, OFFERED_WEEKDAYS["normal"])
+
 CALENDAR_LAYOUT: dict[str, str] = {
     "normal": "singles",
     "full_package": "package_pairs",
@@ -34,14 +47,18 @@ REASON_NO_OPEN_TIMES = "no_open_times"
 
 
 def iter_offered_dates(
-    selection_type: str,
+    selection_key: str,
     *,
     start: date,
     horizon_end: date,
     count: int = CALENDAR_OFFERED_DAYS_COUNT,
+    policy_profile: str | None = None,
 ) -> list[date]:
-    """Next bookable weekdays for the selection type, capped at *count* days."""
-    weekdays = OFFERED_WEEKDAYS.get(selection_type, OFFERED_WEEKDAYS["normal"])
+    """Next bookable weekdays for the selection, capped at *count* days."""
+    if policy_profile:
+        weekdays = weekdays_for_policy_profile(policy_profile)
+    else:
+        weekdays = weekdays_for_selection_type(selection_key)
     dates: list[date] = []
     cursor = start
     while cursor <= horizon_end and len(dates) < count:

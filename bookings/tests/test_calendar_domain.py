@@ -125,3 +125,16 @@ def test_iter_offered_dates_returns_only_package_weekdays():
     offered = iter_offered_dates("full_package", start=start, horizon_end=horizon, count=4)
     assert [day.weekday() for day in offered] == [1, 2, 1, 2]
     assert offered[0].isoformat() == "2026-07-07"
+
+
+def test_iter_offered_dates_uses_policy_profile_when_provided():
+    start = date(2026, 7, 6)  # Monday
+    horizon = date(2026, 7, 20)
+    offered = iter_offered_dates(
+        "ignored",
+        start=start,
+        horizon_end=horizon,
+        count=4,
+        policy_profile="single",
+    )
+    assert [day.weekday() for day in offered] == [0, 3, 4, 5]
