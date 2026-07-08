@@ -213,6 +213,20 @@ function Invoke-ZapApiMode {
     return Invoke-ZapApiScan -Name "api" -SchemaUrl "http://host.docker.internal:8000/api/schema/" -Max $MaxMinutes -Prefix "zap-api-baseline"
 }
 
+function Test-ZapApiReady {
+    param([string]$ProxyApi)
+    try {
+        $response = Invoke-WebRequest -Uri "$ProxyApi/JSON/core/view/version/" -Method GET -TimeoutSec 5 -UseBasicParsing
+        return $response.StatusCode -eq 200
+    } catch {
+        if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
+            $raw = & curl.exe -s -m 5 "$ProxyApi/JSON/core/view/version/"
+            return [bool]($raw -match '"version"')
+        }
+        return $false
+    }
+}
+
 function Wait-ZapProxy {
     param(
         [string]$Url,
@@ -220,15 +234,11 @@ function Wait-ZapProxy {
     )
     $deadline = (Get-Date).AddSeconds($ZapReadySeconds)
     while ((Get-Date) -lt $deadline) {
-        try {
-            $response = Invoke-WebRequest -Uri "$Url/JSON/core/view/version/" -Method GET -TimeoutSec 5 -UseBasicParsing
-            if ($response.StatusCode -eq 200) {
-                Write-Host "ZAP_READY=True"
-                return
-            }
-        } catch {
-            Start-Sleep -Seconds 2
+        if (Test-ZapApiReady -ProxyApi $Url) {
+            Write-Host "ZAP_READY=True"
+            return
         }
+        Start-Sleep -Seconds 2
     }
     if ($ContainerName) {
         Write-Host "ZAP_READY_DIAGNOSTIC_LOG_TAIL=True"

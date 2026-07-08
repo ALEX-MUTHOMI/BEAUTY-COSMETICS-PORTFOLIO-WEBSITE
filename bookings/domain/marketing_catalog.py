@@ -70,7 +70,4 @@ def slugify_name(name: str) -> str:
 
 def marketing_treatment_cases() -> list[tuple[CategorySlug, str, str]]:
     """(category_slug, treatment_slug, display_name) for every single treatment."""
-    return [
-        (category, slugify_name(name), name)
-        for category, name, _duration, _price in MARKETING_SERVICES
-    ]
+    return [(category, slugify_name(name), name) for category, name, _duration, _price in MARKETING_SERVICES]

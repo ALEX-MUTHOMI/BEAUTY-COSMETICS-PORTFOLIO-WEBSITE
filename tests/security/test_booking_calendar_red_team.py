@@ -3,7 +3,7 @@ import uuid
 import pytest
 from django.test import Client
 
-from bookings.models import FullPackage, Service
+from bookings.models import FullPackage
 from bookings.tests.factories import create_service_resource_customer
 
 GENERIC_UNAVAILABLE = "Selection unavailable."

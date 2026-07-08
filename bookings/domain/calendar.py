@@ -28,6 +28,7 @@ def weekdays_for_policy_profile(policy_profile: str) -> frozenset[int]:
 def weekdays_for_selection_type(selection_type: str) -> frozenset[int]:
     return OFFERED_WEEKDAYS.get(selection_type, OFFERED_WEEKDAYS["normal"])
 
+
 CALENDAR_LAYOUT: dict[str, str] = {
     "normal": "singles",
     "full_package": "package_pairs",
