@@ -1,7 +1,5 @@
 """Red-team: calendar service internal failures must not leak internals or 5xx."""
 
-from decimal import Decimal
-
 import pytest
 from django.core.exceptions import ValidationError
 from django.db.utils import OperationalError
