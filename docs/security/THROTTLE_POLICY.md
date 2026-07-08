@@ -20,8 +20,8 @@ the JSON detail.
 - Staff login: IP plus email cooldown after five failures in ten minutes.
 - STK: authenticated user plus IP, `checkout_stk_push` (`3/min`); legacy fake
   STK uses the existing `stk_push` scope.
-- Booking hold/checkout, status polling, availability, CSRF, gallery/media,
-  and contact reveal use explicit route scopes rather than global limits.
+- Booking hold/checkout, status polling, availability, catalog resolve, CSRF,
+  gallery/media, and contact reveal use explicit route scopes rather than global limits.
 - Webhooks intentionally use provider-IP admission plus inbox/event
   idempotency, not a client rate limit that could drop valid payment callbacks.
 
@@ -33,6 +33,7 @@ operational decision; limits must not be increased merely to satisfy tests.
 
 | File | Change type | Scope/rate | Runtime or test-only | Route affected | Risk | Status |
 | --- | --- | --- | --- | --- | --- |
+| `core/settings.py` | default policy | `catalog_resolve=15/min` | Runtime | handoff/catalog resolve | slug enumeration | active |
 | `core/settings.py` | default policy | `booking_status=30/min` | Runtime | public booking status | polling/enumeration | unchanged |
 | `core/settings.py` | default policy | `booking_hold=5/min`, `booking_checkout=8/min` | Runtime | public writes | capacity/checkout pressure | active |
 | `core/settings.py` | default policy | checkout create `10/min`, detail `60/min`, STK `3/min` | Runtime | customer checkout | payment pressure | active |

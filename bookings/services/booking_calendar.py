@@ -87,22 +87,27 @@ def _slots_by_date(
 ) -> dict[str, list]:
     if slot_end < slot_start:
         return {}
-    if selection.selection_type == "full_package":
-        availability = AvailabilityService.get_full_package_available_slots(
-            str(selection.public_id),
-            slot_start,
-            slot_end,
-            resource_id=resource_id,
-            request_context=request_context,
-        )
-    else:
-        availability = AvailabilityService.get_available_slots(
-            str(selection.public_id),
-            slot_start,
-            slot_end,
-            resource_id=resource_id,
-            request_context=request_context,
-        )
+    try:
+        if selection.selection_type == "full_package":
+            availability = AvailabilityService.get_full_package_available_slots(
+                str(selection.public_id),
+                slot_start,
+                slot_end,
+                resource_id=resource_id,
+                request_context=request_context,
+            )
+        else:
+            availability = AvailabilityService.get_available_slots(
+                str(selection.public_id),
+                slot_start,
+                slot_end,
+                resource_id=resource_id,
+                request_context=request_context,
+            )
+    except ValidationError:
+        return {}
+    except Exception:
+        return {}
     return {row["date"]: row["slots"] for row in availability}
 
 
@@ -156,7 +161,11 @@ class BookingCalendarService:
         if not offered_dates:
             raise ValidationError(GENERIC_CALENDAR_ERROR)
 
-        booked_by_date = _count_blocking_clients_bulk(offered_dates)
+        try:
+            booked_by_date = _count_blocking_clients_bulk(offered_dates)
+        except Exception:
+            raise ValidationError(GENERIC_CALENDAR_ERROR) from None
+
         dates_needing_slots: list[date] = []
         policy_by_date: dict[date, dict] = {}
         for current in offered_dates:

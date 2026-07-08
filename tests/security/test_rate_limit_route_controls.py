@@ -127,3 +127,45 @@ def test_checkout_detail_throttle_is_customer_scoped_and_restores_production_rat
 def test_checkout_route_classes_use_explicit_scopes():
     assert CheckoutSessionCreateThrottle.scope == "checkout_create"
     assert CheckoutSessionDetailThrottle.scope == "checkout_detail"
+
+
+@pytest.mark.django_db(transaction=True)
+def test_catalog_resolve_throttle_is_generic_and_actor_isolated():
+    from django.core.management import call_command
+
+    call_command("seed_marketing_catalog")
+    _clear_scope("catalog_resolve")
+    with _scope_settings(catalog_resolve="1/min"):
+        client = Client()
+        url = "/api/bookings/catalog/resolve-handoff/?type=package&plan=classic-full-package"
+        first = client.get(url, REMOTE_ADDR="203.0.113.30", secure=True)
+        blocked = client.get(url, REMOTE_ADDR="203.0.113.30", secure=True)
+        other_actor = client.get(url, REMOTE_ADDR="203.0.113.31", secure=True)
+
+    assert first.status_code == 200
+    assert blocked.status_code == 429
+    assert blocked.json() == {"detail": "Too many requests. Please try again later."}
+    assert "Retry-After" in blocked
+    assert other_actor.status_code == 200
+    assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["catalog_resolve"] == "15/min"
+
+
+@pytest.mark.django_db(transaction=True)
+def test_catalog_resolve_throttle_is_separate_from_availability_scope():
+    from django.core.management import call_command
+
+    call_command("seed_marketing_catalog")
+    _clear_scope("catalog_resolve")
+    _clear_scope("availability")
+    with _scope_settings(catalog_resolve="1/min", availability="1/min"):
+        client = Client()
+        handoff = "/api/bookings/catalog/resolve-handoff/?type=package&plan=classic-full-package"
+        first_handoff = client.get(handoff, REMOTE_ADDR="203.0.113.40", secure=True)
+        package_id = first_handoff.json()["selection"]["public_id"]
+        calendar = f"/api/bookings/calendar/?selection_type=full_package&full_package_public_id={package_id}"
+        blocked_handoff = client.get(handoff, REMOTE_ADDR="203.0.113.40", secure=True)
+        calendar_first = client.get(calendar, REMOTE_ADDR="203.0.113.40", secure=True)
+
+    assert first_handoff.status_code == 200
+    assert blocked_handoff.status_code == 429
+    assert calendar_first.status_code == 200

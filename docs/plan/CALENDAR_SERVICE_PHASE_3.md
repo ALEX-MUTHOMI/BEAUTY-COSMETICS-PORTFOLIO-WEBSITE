@@ -281,7 +281,8 @@ sequenceDiagram
 
 | Endpoint | Method | Throttle scope | Auth |
 |----------|--------|----------------|------|
-| `/api/bookings/catalog/resolve-handoff/` | GET | `availability` (add dedicated `catalog_resolve` in 3d) | Anonymous |
+| `/api/bookings/catalog/resolve-handoff/` | GET | `catalog_resolve` (15/min IP) | Anonymous |
+| `/api/bookings/catalog/resolve/` | GET | `catalog_resolve` (15/min IP) | Anonymous |
 | `/api/bookings/calendar/` | GET | `availability` (30/min IP) | Anonymous |
 | `/api/bookings/availability/` | GET | `availability` | Anonymous |
 
@@ -536,9 +537,9 @@ def test_calendar_default_range_under_budget():
 
 ### 3d task checklist
 
-- [ ] Newman folder `06 Calendar and Handoff`
-- [ ] `@route_throttle("catalog_resolve")` on resolve-handoff
-- [ ] Expand `test_booking_calendar_red_team.py` (malformed UUID, inactive service)
+- [x] Newman folder `06 Calendar and Handoff`
+- [x] `@route_throttle("catalog_resolve")` on resolve-handoff
+- [x] Expand `test_booking_calendar_red_team.py` (malformed UUID, inactive service)
 
 ---
 

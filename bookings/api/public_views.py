@@ -106,6 +106,7 @@ def catalog_packages(_request):
 
 
 @require_GET
+@route_throttle("catalog_resolve")
 def catalog_resolve(request):
     try:
         selection = resolve_catalog_selection(
@@ -114,10 +115,13 @@ def catalog_resolve(request):
         )
     except ValidationError:
         return _json({"detail": GENERIC_RESOLVE_ERROR}, status=400)
+    except Exception:
+        return _json({"detail": GENERIC_RESOLVE_ERROR}, status=400)
     return _json({"selection": selection.to_api_payload()})
 
 
 @require_GET
+@route_throttle("catalog_resolve")
 def catalog_resolve_handoff(request):
     try:
         selection = resolve_booking_handoff(
@@ -127,6 +131,8 @@ def catalog_resolve_handoff(request):
             treatment_slug=request.GET.get("treatment"),
         )
     except ValidationError:
+        return _json({"detail": GENERIC_RESOLVE_ERROR}, status=400)
+    except Exception:
         return _json({"detail": GENERIC_RESOLVE_ERROR}, status=400)
     return _json({"selection": selection.to_api_payload()})
 
@@ -146,6 +152,8 @@ def booking_calendar(request):
             request_context=_request_context(request),
         )
     except ValidationError:
+        return _json({"detail": GENERIC_CALENDAR_ERROR}, status=400)
+    except Exception:
         return _json({"detail": GENERIC_CALENDAR_ERROR}, status=400)
     return _json({"calendar": calendar})
 

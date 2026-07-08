@@ -395,6 +395,7 @@ REST_FRAMEWORK = {
         "checkout_create": "10/min",
         "checkout_detail": "60/min",
         "csrf_bootstrap": "30/min",
+        "catalog_resolve": "15/min",
         "availability": "30/min",
         "booking_hold": "5/min",
         "booking_checkout": "8/min",

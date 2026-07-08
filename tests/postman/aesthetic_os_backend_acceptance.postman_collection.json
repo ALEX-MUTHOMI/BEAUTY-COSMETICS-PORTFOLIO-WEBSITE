@@ -1076,6 +1076,235 @@
           }
         }
       ]
+    },
+    {
+      "name": "06 Calendar and Handoff",
+      "item": [
+        {
+          "name": "Marketing Package Handoff Resolve",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const selection = pm.response.json().selection;",
+                  "pm.expect(selection.slug).to.eql('classic-full-package');",
+                  "pm.expect(selection.selection_type).to.eql('full_package');",
+                  "pm.expect(selection.public_id).to.be.a('string').and.not.empty;",
+                  "pm.expect(JSON.stringify(pm.response.json())).to.not.include('policy_profile');",
+                  "pm.environment.set('marketing_package_public_id', selection.public_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/catalog/resolve-handoff/?type=package&plan=classic-full-package"
+          }
+        },
+        {
+          "name": "Marketing Package Calendar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const calendar = pm.response.json().calendar;",
+                  "pm.expect(calendar.layout).to.eql('package_pairs');",
+                  "pm.expect(calendar.days).to.be.an('array').with.lengthOf(8);",
+                  "calendar.days.forEach(function (day) {",
+                  "  pm.expect([1, 2]).to.include(day.weekday);",
+                  "});",
+                  "pm.expect(calendar.days.some(function (day) { return day.status !== 'closed'; })).to.be.true;",
+                  "pm.expect(JSON.stringify(calendar)).to.not.include('base_price');",
+                  "pm.environment.set('calendar_package_day', calendar.days[0].date);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/calendar/?selection_type=full_package&full_package_public_id={{marketing_package_public_id}}"
+          }
+        },
+        {
+          "name": "Marketing Package Day Availability",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const availability = pm.response.json().availability;",
+                  "pm.expect(availability).to.be.an('array');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/availability/?selection_type=full_package&full_package_public_id={{marketing_package_public_id}}&start_date={{calendar_package_day}}&end_date={{calendar_package_day}}"
+          }
+        },
+        {
+          "name": "Marketing Single Handoff Resolve",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const selection = pm.response.json().selection;",
+                  "pm.expect(selection.slug).to.eql('brow-shaping');",
+                  "pm.expect(selection.selection_type).to.eql('normal');",
+                  "pm.environment.set('marketing_service_public_id', selection.public_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/catalog/resolve-handoff/?type=single&category=waxing&treatment=brow-shaping"
+          }
+        },
+        {
+          "name": "Marketing Single Calendar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const calendar = pm.response.json().calendar;",
+                  "pm.expect(calendar.layout).to.eql('singles');",
+                  "pm.expect(calendar.days).to.be.an('array').with.lengthOf(8);",
+                  "calendar.days.forEach(function (day) {",
+                  "  pm.expect([0, 3, 4, 5]).to.include(day.weekday);",
+                  "});",
+                  "pm.environment.set('calendar_single_day', calendar.days[0].date);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/calendar/?selection_type=normal&service_public_id={{marketing_service_public_id}}"
+          }
+        },
+        {
+          "name": "Marketing Single Day Availability",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "pm.expect(pm.response.json().availability).to.be.an('array');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/availability/?selection_type=normal&service_public_id={{marketing_service_public_id}}&start_date={{calendar_single_day}}&end_date={{calendar_single_day}}"
+          }
+        },
+        {
+          "name": "Handoff Rejects Path Traversal Plan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(400);",
+                  "pm.expect(pm.response.json().detail).to.eql('Selection unavailable.');",
+                  "pm.expect(pm.response.text().toLowerCase()).to.not.include('passwd');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/catalog/resolve-handoff/?type=package&plan=..%2F..%2Fetc%2Fpasswd"
+          }
+        },
+        {
+          "name": "Calendar Rejects Oversized Explicit Range",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(400);",
+                  "pm.expect(pm.response.json().detail).to.eql('Calendar unavailable.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/calendar/?selection_type=normal&service_public_id={{marketing_service_public_id}}&start_date=2030-01-01&end_date=2030-03-15"
+          }
+        }
+      ]
     }
   ]
 }
