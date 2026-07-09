@@ -154,10 +154,7 @@ jobs:
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
       - name: Run bookings domain partition
-        run: |
-          mkdir -p reports/ci/junit
-          docker compose exec -T web poetry run pytest bookings/tests \
-            --junitxml=reports/ci/junit/bookings.xml -q --durations=25
+        run: bash scripts/ci/run_pytest_partition.sh bookings.xml bookings/tests
       - name: Upload bookings gate report
         if: always()
         uses: actions/upload-artifact@v4
@@ -182,20 +179,18 @@ jobs:
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
       - name: Run CASS calendar service gates
-        run: |
-          mkdir -p reports/ci/junit
-          docker compose exec -T web poetry run pytest \
-            tests/api/test_marketing_catalog_contract.py \
-            tests/security/test_cass_policy_option_a.py \
-            tests/security/test_calendar_cache_red_team.py \
-            tests/security/test_calendar_policy_red_team.py \
-            tests/security/test_calendar_service_failure_red_team.py \
-            tests/security/test_booking_calendar_red_team.py \
-            bookings/tests/test_calendar_policy.py \
-            bookings/tests/test_service_day_rules.py \
-            bookings/tests/test_booking_calendar_api.py \
-            tests/latency/test_calendar_service_latency.py \
-            --junitxml=reports/ci/junit/cass-calendar.xml -q --durations=25
+        run: >
+          bash scripts/ci/run_pytest_partition.sh cass-calendar.xml
+          tests/api/test_marketing_catalog_contract.py
+          tests/security/test_cass_policy_option_a.py
+          tests/security/test_calendar_cache_red_team.py
+          tests/security/test_calendar_policy_red_team.py
+          tests/security/test_calendar_service_failure_red_team.py
+          tests/security/test_booking_calendar_red_team.py
+          bookings/tests/test_calendar_policy.py
+          bookings/tests/test_service_day_rules.py
+          bookings/tests/test_booking_calendar_api.py
+          tests/latency/test_calendar_service_latency.py
       - name: Upload CASS calendar gate report
         if: always()
         uses: actions/upload-artifact@v4
@@ -220,10 +215,7 @@ jobs:
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
       - name: Run API and unit partitions
-        run: |
-          mkdir -p reports/ci/junit
-          docker compose exec -T web poetry run pytest tests/api tests/unit \
-            --junitxml=reports/ci/junit/api-unit.xml -q --durations=25
+        run: bash scripts/ci/run_pytest_partition.sh api-unit.xml tests/api tests/unit
       - name: Upload API unit gate report
         if: always()
         uses: actions/upload-artifact@v4

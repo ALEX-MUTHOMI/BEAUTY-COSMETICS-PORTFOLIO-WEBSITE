@@ -74,3 +74,58 @@ export async function publicBookingGet<T>(
     return { error: GENERIC_BOOKING_API_ERROR }
   }
 }
+
+export type PublicBookingPostResult<T> =
+  | { data: T; status: number }
+  | { error: string; status: number; throttled: boolean }
+
+export async function publicBookingPost<T>(
+  apiBaseUrl: string,
+  path: string,
+  body: Record<string, unknown>,
+  parse: (payload: unknown) => T | null,
+  options: { csrfToken: string; signal?: AbortSignal },
+): Promise<PublicBookingPostResult<T>> {
+  const base = trimApiBaseUrl(apiBaseUrl)
+  const url = `${base}${path}`
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRFToken': options.csrfToken,
+      },
+      body: JSON.stringify(body),
+      signal: options.signal,
+    })
+    if (response.status === 429) {
+      return { error: GENERIC_BOOKING_THROTTLE_ERROR, status: 429, throttled: true }
+    }
+    let payload: unknown = null
+    try {
+      payload = await response.json()
+    } catch {
+      payload = null
+    }
+    if (!response.ok) {
+      return {
+        error: GENERIC_BOOKING_API_ERROR,
+        status: response.status,
+        throttled: response.status === 429,
+      }
+    }
+    const data = parse(payload)
+    if (!data) {
+      return { error: GENERIC_BOOKING_API_ERROR, status: response.status, throttled: false }
+    }
+    return { data, status: response.status }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return { error: GENERIC_BOOKING_API_ERROR, status: 0, throttled: false }
+    }
+    return { error: GENERIC_BOOKING_API_ERROR, status: 0, throttled: false }
+  }
+}

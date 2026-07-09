@@ -19,35 +19,56 @@
             </p>
           </div>
 
-          <p v-if="flow.error.value" class="book-error" role="alert">{{ flow.error.value }}</p>
+          <p v-if="displayError" class="book-error" role="alert">{{ displayError }}</p>
 
-          <BookingFloCalendar
-            :days="flow.calendarDays.value"
-            :weeks="flow.calendar.value?.weeks ?? []"
-            :layout="flow.calendar.value?.layout ?? 'singles'"
-            :selected-date="flow.selectedDate.value"
-            :range="flow.calendar.value?.range ?? null"
-            :loading="flow.loading.value"
-            :interaction-locked="flow.calendarInteractionLocked.value || flow.slotsLoading.value"
-            :capacity-hint="capacityHint"
-            aria-label="Pick your visit date"
-            @select="flow.selectDate"
+          <template v-if="checkoutStep === 'pick'">
+            <BookingFloCalendar
+              :days="flow.calendarDays.value"
+              :weeks="flow.calendar.value?.weeks ?? []"
+              :layout="flow.calendar.value?.layout ?? 'singles'"
+              :selected-date="flow.selectedDate.value"
+              :range="flow.calendar.value?.range ?? null"
+              :loading="flow.loading.value"
+              :interaction-locked="calendarLocked"
+              :capacity-hint="capacityHint"
+              aria-label="Pick your visit date"
+              @select="flow.selectDate"
+            />
+
+            <BookingFloSlots
+              :iso-date="flow.selectedDate.value"
+              :slots="flow.daySlots.value"
+              :selected-slot="flow.selectedSlot.value"
+              :loading="flow.slotsLoading.value"
+              @select="flow.selectSlot"
+            />
+
+            <div class="book-actions">
+              <SiteButton to="/services" variant="outline">Change service</SiteButton>
+              <button
+                type="button"
+                class="book-continue"
+                :disabled="!flow.canContinue.value || isSubmitting"
+                @click="openDetails"
+              >
+                Continue to checkout
+              </button>
+            </div>
+          </template>
+
+          <BookingCustomerPanel
+            v-else
+            v-model:customer-form="customerForm"
+            v-model:policy-accepted="policyAccepted"
+            v-model:turnstile-token="turnstileToken"
+            :policy-text="policyText"
+            :turnstile-required="turnstileRequired"
+            :can-submit="canSubmit"
+            :disabled="isSubmitting"
+            :submit-error="submitError"
+            @back="backToPick"
+            @submit="handleSubmit"
           />
-
-          <BookingFloSlots
-            :iso-date="flow.selectedDate.value"
-            :slots="flow.daySlots.value"
-            :selected-slot="flow.selectedSlot.value"
-            :loading="flow.slotsLoading.value"
-            @select="flow.selectSlot"
-          />
-
-          <div class="book-actions">
-            <SiteButton to="/services" variant="outline">Change service</SiteButton>
-            <button type="button" class="book-continue" :disabled="!flow.canContinue.value">
-              Continue to checkout
-            </button>
-          </div>
         </template>
 
         <template v-else>
@@ -67,8 +88,10 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import BookingCustomerPanel from '~/components/booking/BookingCustomerPanel.vue'
 import BookingFloCalendar from '~/components/booking/BookingFloCalendar.vue'
 import BookingFloSlots from '~/components/booking/BookingFloSlots.vue'
+import { useBookCheckout } from '@/booking/useBookCheckout'
 import { useBookFlow } from '@/booking/useBookFlow'
 import { PACKAGE_DAYS, SINGLE_DAYS_LABEL } from '@/landing/landingContent'
 import {
@@ -79,16 +102,48 @@ import {
 } from '@/landing/bookingHandoff'
 
 const route = useRoute()
+const router = useRouter()
 const config = useRuntimeConfig()
 const apiBaseUrl = (config.public.apiBaseUrl as string) || 'http://localhost:8000'
 
 const handoff = ref<ResolvedBookHandoff | null>(null)
 const flow = useBookFlow(handoff, apiBaseUrl)
+const checkout = useBookCheckout(apiBaseUrl, flow.selection, flow.selectedSlot)
+const {
+  customerForm,
+  policyAccepted,
+  turnstileToken,
+  policyText,
+  turnstileRequired,
+  canSubmit,
+  isSubmitting,
+  submitError,
+  step: checkoutStep,
+  openDetails,
+  backToPick,
+  submitBooking,
+} = checkout
+
+const calendarLocked = computed(
+  () =>
+    flow.calendarInteractionLocked.value ||
+    flow.slotsLoading.value ||
+    isSubmitting.value ||
+    checkoutStep.value !== 'pick',
+)
+
+const displayError = computed(() => flow.error.value || submitError.value)
 
 function syncHandoff() {
   handoff.value =
     parseBookHandoffQuery(route.query as Record<string, unknown>) ?? readPersistedBookHandoff()
   if (handoff.value) persistBookHandoff(handoff.value)
+}
+
+async function handleSubmit() {
+  const result = await submitBooking()
+  if (!result) return
+  await router.push(result.statusUrl)
 }
 
 onMounted(syncHandoff)
@@ -108,10 +163,17 @@ const capacityHint = computed(() =>
     : `${SINGLE_DAYS_LABEL} · up to 5 clients per day`,
 )
 
-const pageTitle = computed(() => (handoff.value ? 'Pick your day & time' : 'Book your visit'))
+const pageTitle = computed(() => {
+  if (!handoff.value) return 'Book your visit'
+  if (checkoutStep.value === 'details') return 'Confirm your details'
+  return 'Pick your day & time'
+})
 
 const pageLead = computed(() => {
   if (!handoff.value) return 'Start on services, then book here with live availability.'
+  if (checkoutStep.value === 'details') {
+    return 'One booking per click. Your slot is held only after you confirm.'
+  }
   if (handoff.value.type === 'package') {
     return `Package days: ${PACKAGE_DAYS.join(' and ')}. Tap a day to load open times.`
   }

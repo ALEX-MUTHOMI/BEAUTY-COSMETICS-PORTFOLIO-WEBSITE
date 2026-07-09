@@ -43,7 +43,7 @@ describe('staff auth client security contract', () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue({
       ok: false,
       json: vi.fn<() => Promise<unknown>>(),
-    } as Response)
+    } as unknown as Response)
 
     const result = await staffPasswordLogin(
       'https://api.example.com',

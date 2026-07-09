@@ -98,7 +98,7 @@ describe('staff portal API client', () => {
         display_name: 'Staff <Admin>',
         permissions: ['bookings:view'],
       }),
-    } as Response)
+    } as unknown as Response)
 
     const result = await getStaffMe('http://web:8000', fetcher)
 
@@ -129,7 +129,7 @@ describe('staff portal API client', () => {
           },
         ],
       }),
-    } as Response)
+    } as unknown as Response)
 
     const result = await getDailySchedule('https://api.example.com', '2026-06-06', fetcher)
 
@@ -147,7 +147,7 @@ describe('staff portal API client', () => {
       ok: false,
       status: 403,
       json: vi.fn<() => Promise<unknown>>().mockResolvedValue({ detail: 'raw backend auth detail' }),
-    } as Response)
+    } as unknown as Response)
 
     const result = await getStaffMe('https://api.example.com', fetcher)
 
