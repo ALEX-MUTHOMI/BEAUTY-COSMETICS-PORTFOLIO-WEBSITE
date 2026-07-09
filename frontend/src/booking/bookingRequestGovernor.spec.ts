@@ -36,4 +36,24 @@ describe('BookingRequestGovernor', () => {
     expect(first.aborted).toBe(true)
     expect(second.aborted).toBe(false)
   })
+
+  it('caps status poll bombardment per minute and concurrency', () => {
+    const governor = new BookingRequestGovernor()
+    let now = 50_000
+    const first = governor.beginStatusFetch(now)
+    expect(first).not.toBeNull()
+    expect(governor.canFetchStatus(now + 100)).toBe(false)
+    governor.finishStatusFetch()
+    expect(governor.canFetchStatus(now + 100)).toBe(false)
+    expect(governor.canFetchStatus(now + BOOKING_CLIENT_LIMITS.minMsBetweenStatusFetches)).toBe(true)
+
+    now = 100_000
+    for (let index = 0; index < BOOKING_CLIENT_LIMITS.maxStatusFetchesPerMinute; index += 1) {
+      const signal = governor.beginStatusFetch(now)
+      expect(signal).not.toBeNull()
+      governor.finishStatusFetch()
+      now += BOOKING_CLIENT_LIMITS.minMsBetweenStatusFetches
+    }
+    expect(governor.beginStatusFetch(now)).toBeNull()
+  })
 })

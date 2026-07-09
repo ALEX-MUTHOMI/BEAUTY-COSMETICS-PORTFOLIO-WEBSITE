@@ -40,4 +40,22 @@ describe('resolveSafeBookingStatusPath — open redirect red team', () => {
   it('falls back to /book when booking id is not a uuid', () => {
     expect(resolveSafeBookingStatusPath('/booking/status/not-a-uuid/', 'not-a-uuid')).toBe('/book')
   })
+
+  it('rejects javascript: and data: open-redirect payloads', () => {
+    expect(resolveSafeBookingStatusPath('javascript:alert(1)', BOOKING_ID)).toBe(
+      `/booking/status/${BOOKING_ID}/`,
+    )
+    expect(resolveSafeBookingStatusPath('data:text/html,phish', BOOKING_ID)).toBe(
+      `/booking/status/${BOOKING_ID}/`,
+    )
+  })
+
+  it('rejects encoded traversal and query-string host smuggling', () => {
+    expect(resolveSafeBookingStatusPath(`/booking/status/${BOOKING_ID}/?next=//evil`, BOOKING_ID)).toBe(
+      `/booking/status/${BOOKING_ID}/`,
+    )
+    expect(resolveSafeBookingStatusPath(`/booking/status/%2e%2e/${BOOKING_ID}/`, BOOKING_ID)).toBe(
+      `/booking/status/${BOOKING_ID}/`,
+    )
+  })
 })

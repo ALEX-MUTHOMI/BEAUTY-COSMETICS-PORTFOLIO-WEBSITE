@@ -23,4 +23,4 @@ def test_booking_status_polling_100_times_is_stable_and_small(settings, tmp_path
             assert b"grace@example.com" not in response.content
             assert b"+254" not in response.content
 
-    assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["booking_status"] == "30/min"
+    assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["booking_status"] == "20/min"

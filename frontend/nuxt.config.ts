@@ -22,8 +22,12 @@ export default defineNuxtConfig({
 
     // Keys exposed on both client and server contexts
     public: {
+      // Single source of truth for Nuxt (:3000) → Django (:8000). Never wildcard.
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://sheeaesthetics.co.ke',
+      // Empty-safe Sentry scaffold — live DSN via secrets later (PII scrubbers always on).
+      sentryDsn: process.env.NUXT_PUBLIC_SENTRY_DSN || '',
+      sentryEnvironment: process.env.NUXT_PUBLIC_SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'development',
       staffAppleEnabled: process.env.NUXT_PUBLIC_STAFF_APPLE_ENABLED === 'true',
       staffGoogleEnabled: process.env.NUXT_PUBLIC_STAFF_GOOGLE_ENABLED === 'true',
       turnstileSiteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY || '1x0000000000000000000000000000000AA',

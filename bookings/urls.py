@@ -1,6 +1,6 @@
 from django.urls import path
 
-from bookings.api import public_views
+from bookings.api import privacy_views, public_views
 from bookings.views import booking_status
 
 urlpatterns = [
@@ -14,4 +14,6 @@ urlpatterns = [
     path("checkout/", public_views.booking_checkout_create, name="booking-checkout-create"),
     path("policy-acceptance-text/", public_views.booking_policy_acceptance_text, name="booking-policy-acceptance-text"),
     path("status/<str:public_booking_id>/", booking_status, name="booking-status"),
+    path("privacy/data-map/", privacy_views.privacy_data_map, name="booking-privacy-data-map"),
+    path("privacy/rights-request/", privacy_views.privacy_rights_request, name="booking-privacy-rights-request"),
 ]

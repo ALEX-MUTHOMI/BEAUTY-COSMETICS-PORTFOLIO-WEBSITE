@@ -1,6 +1,7 @@
 /** Shared helpers for public booking API calls — no user strings in DOM without validation. */
 
 import { stripControlCharsForDisplay } from '../security/textGuards'
+import { trustedApiOriginOrEmpty } from './bookingApiBaseTrust'
 import { GENERIC_BOOKING_THROTTLE_ERROR } from './bookingRequestGovernor'
 
 export const GENERIC_BOOKING_API_ERROR = 'Booking information is temporarily unavailable. Please try again.'
@@ -10,13 +11,9 @@ const UUID_RE =
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
+/** Fail-closed origin binding — never follow attacker path/host drift on the base URL. */
 export function trimApiBaseUrl(apiBaseUrl: string): string {
-  try {
-    const parsed = new URL(apiBaseUrl)
-    return parsed.origin.replace(/\/$/, '')
-  } catch {
-    return apiBaseUrl.replace(/\/$/, '')
-  }
+  return trustedApiOriginOrEmpty(apiBaseUrl)
 }
 
 export function isUuid(value: string): boolean {

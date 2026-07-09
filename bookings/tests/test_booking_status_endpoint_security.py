@@ -50,7 +50,7 @@ def test_booking_status_endpoint_polling_is_read_only_and_bounded(django_assert_
         booking.refresh_from_db()
         assert booking.updated_at == original_updated_at
 
-    assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["booking_status"] == "30/min"
+    assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["booking_status"] == "20/min"
 
 
 @pytest.mark.django_db(transaction=True)

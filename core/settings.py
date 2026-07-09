@@ -399,12 +399,19 @@ REST_FRAMEWORK = {
         "availability": "30/min",
         "booking_hold": "5/min",
         "booking_checkout": "8/min",
-        "booking_status": "30/min",
+        # Status polling — authoritative anti-bombardment (client governor is cushion only).
+        "booking_status": "20/min",
         "public_gallery": "60/min",
         "media_resolver": "60/min",
         "staff_contact_reveal": "6/min",
+        # GDPR / Kenya DPA 2019 subject-rights intake (ticketed, not anonymous dump).
+        "privacy_rights": "5/hour",
     },
 }
+
+# Optional Sentry DSN (empty = disabled). Never send default PII.
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
+SENTRY_ENVIRONMENT = os.environ.get("SENTRY_ENVIRONMENT", "development")
 
 # Opt-in local/test observability. Never enable this by default in production.
 AESTHETIC_OS_DIAGNOSTIC_TRACE = os.environ.get("AESTHETIC_OS_DIAGNOSTIC_TRACE", "false").lower() in {

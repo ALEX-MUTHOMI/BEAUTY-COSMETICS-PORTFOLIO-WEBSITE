@@ -49,4 +49,4 @@ def test_status_portal_polling_is_read_only_and_generic_for_bad_ids(settings, tm
         assert malformed.status_code == missing.status_code == 404
         assert malformed.json() == missing.json()
 
-    assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["booking_status"] == "30/min"
+    assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["booking_status"] == "20/min"

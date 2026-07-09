@@ -23,4 +23,4 @@ def test_customer_status_polling_pressure_is_read_only_and_bounded(settings):
         booking.refresh_from_db()
         assert booking.updated_at == before
 
-    assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["booking_status"] == "30/min"
+    assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["booking_status"] == "20/min"

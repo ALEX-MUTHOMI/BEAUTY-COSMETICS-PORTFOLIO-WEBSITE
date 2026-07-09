@@ -1,4 +1,5 @@
 import { trimApiBaseUrl } from './bookingApi'
+import { resolveTrustedApiBaseUrl } from './bookingApiBaseTrust'
 
 const CSRF_COOKIE = 'csrftoken'
 
@@ -10,15 +11,17 @@ function readCsrfCookie(): string {
 
 /** Same-origin relative base when the API host is an internal Docker service name. */
 export function bookingApiBase(apiBaseUrl: string): string {
+  const trusted = resolveTrustedApiBaseUrl(apiBaseUrl)
+  if (!trusted.ok) return ''
   try {
-    const parsed = new URL(apiBaseUrl)
+    const parsed = new URL(trusted.origin)
     if (['web', 'backend', 'django'].includes(parsed.hostname)) {
       return ''
     }
   } catch {
     return ''
   }
-  return trimApiBaseUrl(apiBaseUrl)
+  return trimApiBaseUrl(trusted.origin)
 }
 
 /** Bootstrap Django CSRF for credentialed POSTs to the bookings API. */
