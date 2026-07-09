@@ -129,10 +129,11 @@ jobs:
           docker compose ps
           exit 1
 
-      - name: Django checks
+      - name: Django checks and migrate smoke
         run: |
           docker compose exec -T web poetry run python manage.py makemigrations --check --dry-run
           docker compose exec -T web poetry run python manage.py check
+          bash scripts/ci/bootstrap_web_db.sh
 
       - name: Docker logs on failure
         if: failure()
@@ -241,6 +242,8 @@ jobs:
       - run: docker compose up -d --build
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
+      - name: Migrate live web DB before Newman seeds
+        run: bash scripts/ci/bootstrap_web_db.sh
       - name: Run Newman acceptance (folder 06 Calendar and Handoff)
         run: bash scripts/ci/run_newman_docker.sh
       - name: Upload Newman report
@@ -430,16 +433,13 @@ jobs:
       - latency
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - run: docker compose up -d --build
-      - name: Run deterministic fake-provider chaos suites
-        run: |
-          docker compose exec -T web poetry run pytest tests/security tests/load tests/latency \
-            --ignore=tests/load/test_notification_backlog_pressure.py \
-            -vv --durations=25
+      - name: Run Toxiproxy chaos gate (fake provider only)
+        run: bash scripts/ci/run_chaos_toxiproxy.sh
       - if: failure()
-        run: docker compose logs --tail=300 web worker db redis || true
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml logs --tail=300 web worker db redis toxiproxy || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml down --volumes --remove-orphans
 
   cass-certification:
     name: cass-certification

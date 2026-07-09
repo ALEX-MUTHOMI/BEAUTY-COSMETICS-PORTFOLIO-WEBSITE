@@ -16,6 +16,8 @@ echo "NEWMAN_COLLECTION=${COLLECTION}"
 echo "NEWMAN_ENVIRONMENT=${ENVIRONMENT}"
 echo "NEWMAN_REPORT=${REPORT_FILE}"
 
+# Live gunicorn DB is empty until migrate — seeds fail hard without this.
+bash "${ROOT}/scripts/ci/bootstrap_web_db.sh"
 docker compose exec -T web poetry run python manage.py seed_api_acceptance_data
 docker compose exec -T web poetry run python manage.py seed_marketing_catalog
 
