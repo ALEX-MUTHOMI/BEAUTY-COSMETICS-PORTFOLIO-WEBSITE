@@ -269,6 +269,11 @@ jobs:
       - run: docker compose up -d --build
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
+      - name: Migrate and seed live web DB for Newman-through-ZAP
+        run: |
+          bash scripts/ci/bootstrap_web_db.sh
+          docker compose exec -T web poetry run python manage.py seed_api_acceptance_data
+          docker compose exec -T web poetry run python manage.py seed_marketing_catalog
       - name: Run ZAP passive Newman gate
         run: pwsh -NoProfile -File scripts/ci/run_security_passive_gate.ps1 -Mode newman
       - name: Upload ZAP passive reports

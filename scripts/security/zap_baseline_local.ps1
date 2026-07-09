@@ -303,17 +303,23 @@ function Invoke-NewmanThroughZap {
     }
     try {
         Wait-ZapProxy -Url $proxyApi -ContainerName $zapContainerName
+        # Write Newman JSON into the ZAP report dir (writable mount), not the read-only Postman tree.
+        $newmanReportHost = Join-Path $reportDir "newman-through-zap.json"
         $newmanArgs = @(
             "run",
             "--rm",
             "--name",
             $newmanContainerName,
+            "--add-host",
+            "host.docker.internal:host-gateway",
             "-e",
             "HTTP_PROXY=http://host.docker.internal:${proxyPort}",
             "-e",
             "HTTPS_PROXY=http://host.docker.internal:${proxyPort}",
             "-v",
-            "${postmanPath}:/etc/newman",
+            "${postmanPath}:/etc/newman:ro",
+            "-v",
+            "${reportDir}:/zap/wrk/:rw",
             $NewmanImage,
             "run",
             "/etc/newman/aesthetic_os_backend_acceptance.postman_collection.json",
@@ -329,8 +335,9 @@ function Invoke-NewmanThroughZap {
             "--reporters",
             "cli,json",
             "--reporter-json-export",
-            "/etc/newman/reports/newman-through-zap.json"
+            "/zap/wrk/newman-through-zap.json"
         )
+        Write-Host "NEWMAN_THROUGH_ZAP_REPORT=$newmanReportHost"
         & docker @newmanArgs | ForEach-Object { Write-Host $_ }
         $newmanExit = $LASTEXITCODE
         Write-Host "NEWMAN_EXIT_CODE=$newmanExit"

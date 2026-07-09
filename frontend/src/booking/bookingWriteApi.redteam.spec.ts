@@ -44,7 +44,7 @@ describe('bookingWriteApi hold body — mass assignment / bot red team', () => {
           next_action: 'checkout_required',
         },
       }),
-    })
+    } as unknown as Response)
 
     await createBookingHold(
       'https://api.example.com',
@@ -77,7 +77,7 @@ describe('bookingWriteApi hold body — mass assignment / bot red team', () => {
       ok: false,
       status: 400,
       json: async () => ({ detail: 'Booking request could not be accepted.' }),
-    })
+    } as unknown as Response)
 
     await createBookingHold(
       'https://api.example.com',

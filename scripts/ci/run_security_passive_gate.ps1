@@ -28,7 +28,9 @@ try {
     if (($Mode -eq "api" -or $Mode -eq "all-passive") -and !$schemaReady) {
         throw "OpenAPI schema did not become ready for passive API scan."
     }
-    powershell -ExecutionPolicy Bypass -File scripts\security\zap_baseline_local.ps1 -Mode $Mode
+    # GitHub ubuntu-latest has pwsh (PowerShell 7), not Windows powershell.exe.
+    $zapScript = Join-Path $PSScriptRoot "..\security\zap_baseline_local.ps1"
+    & pwsh -NoProfile -ExecutionPolicy Bypass -File $zapScript -Mode $Mode
     if ($LASTEXITCODE -ne 0) {
         throw "ZAP passive gate failed with exit code $LASTEXITCODE"
     }
