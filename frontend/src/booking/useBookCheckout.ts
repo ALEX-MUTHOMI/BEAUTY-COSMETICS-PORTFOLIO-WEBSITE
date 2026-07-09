@@ -1,4 +1,4 @@
-import { computed, ref, watch, type Ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch, type Ref } from 'vue'
 import { createClickGate } from '@/staff/botGuard'
 import { ensureBookingCsrfToken } from './bookingCsrf'
 import type { BookingCustomerValidation } from './bookingCustomer'
@@ -30,6 +30,7 @@ export function useBookCheckout(
 ) {
   const submitGovernor = new BookingSubmitGovernor()
   const clickGate = createClickGate(1_200)
+  let submitAbort: AbortController | null = null
 
   const step = ref<BookCheckoutStep>('pick')
   const attemptNonce = ref('')
@@ -68,6 +69,11 @@ export function useBookCheckout(
     return Boolean(validateBookingCustomer(customerForm.value))
   })
 
+  function abortInFlightSubmit() {
+    submitAbort?.abort()
+    submitAbort = null
+  }
+
   async function loadPolicyText() {
     const result = await fetchPolicyAcceptanceText(apiBaseUrl)
     if ('data' in result) {
@@ -86,7 +92,11 @@ export function useBookCheckout(
   }
 
   function backToPick() {
-    if (submitGovernor.isInFlight) return
+    if (submitGovernor.isInFlight) {
+      abortInFlightSubmit()
+      submitGovernor.finishSubmit()
+      clickGate.finish('hold-checkout')
+    }
     step.value = 'pick'
     submitError.value = null
     turnstileToken.value = ''
@@ -121,6 +131,10 @@ export function useBookCheckout(
       return null
     }
 
+    abortInFlightSubmit()
+    submitAbort = new AbortController()
+    const signal = submitAbort.signal
+
     step.value = 'submitting'
     submitError.value = null
     submitGovernor.recordHoldAttempt()
@@ -132,8 +146,14 @@ export function useBookCheckout(
       customer,
       holdIdempotencyKey.value,
       csrfToken,
-      { turnstileToken: turnstileToken.value || undefined },
+      { turnstileToken: turnstileToken.value, signal },
     )
+
+    if (signal.aborted) {
+      submitGovernor.finishSubmit()
+      clickGate.finish('hold-checkout')
+      return null
+    }
 
     if ('error' in holdResult) {
       if (holdResult.throttled) {
@@ -170,7 +190,14 @@ export function useBookCheckout(
       buildCheckoutIdempotencyKey(holdResult.data.bookingPublicId),
       policyText.value,
       csrfToken,
+      { signal },
     )
+
+    if (signal.aborted) {
+      submitGovernor.finishSubmit()
+      clickGate.finish('hold-checkout')
+      return null
+    }
 
     if ('error' in checkout) {
       if (checkout.throttled) {
@@ -186,13 +213,16 @@ export function useBookCheckout(
     }
 
     checkoutResult.value = checkout.data
+    submitAbort = null
     submitGovernor.finishSubmit()
     clickGate.finish('hold-checkout')
     return checkout.data
   }
 
   watch(selectedSlot, () => {
-    if (step.value === 'details') {
+    if (step.value === 'details' || step.value === 'submitting') {
+      abortInFlightSubmit()
+      submitGovernor.finishSubmit()
       step.value = 'pick'
       attemptNonce.value = ''
       turnstileToken.value = ''
@@ -201,12 +231,17 @@ export function useBookCheckout(
   })
 
   watch(selection, () => {
+    abortInFlightSubmit()
     submitGovernor.reset()
     step.value = 'pick'
     attemptNonce.value = ''
     checkoutResult.value = null
     turnstileToken.value = ''
     submitError.value = null
+  })
+
+  onBeforeUnmount(() => {
+    abortInFlightSubmit()
   })
 
   return {

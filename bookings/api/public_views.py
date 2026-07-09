@@ -11,6 +11,7 @@ from bookings.services.catalog import list_public_full_packages, list_public_ser
 from bookings.services.catalog_resolve import resolve_catalog_selection
 from bookings.services.checkout_contract import BookingCheckoutContractService
 from bookings.services.handoff_resolve import resolve_booking_handoff
+from bookings.services.hold_bot_guard import require_hold_turnstile_if_abused
 from bookings.services.holds import BookingHoldService
 from bookings.services.legal import POLICY_ACCEPTANCE_TEXT
 from core.middleware.correlation_id import get_correlation_id
@@ -197,9 +198,17 @@ def booking_hold_create(request):
     if _client_price_tampering_present(payload):
         return _json({"detail": GENERIC_HOLD_ERROR}, status=400)
     try:
+        redis_client = _get_redis_client_safe()
+        require_hold_turnstile_if_abused(
+            request=request,
+            payload=payload,
+            redis_client=redis_client,
+        )
         starts_at = _parse_starts_at(payload.get("starts_at"))
         customer = payload.get("customer") or {}
         selection_type = str(payload.get("selection_type") or "normal")
+        request_context = _request_context(request, payload)
+        request_context["redis_client"] = redis_client
         if selection_type == "full_package":
             hold = BookingHoldService.create_full_package_hold(
                 full_package_public_id=payload.get("full_package_public_id"),
@@ -207,7 +216,7 @@ def booking_hold_create(request):
                 starts_at=starts_at,
                 customer_payload=customer,
                 idempotency_key=payload.get("idempotency_key"),
-                request_context=_request_context(request, payload),
+                request_context=request_context,
                 client_package_items=payload.get("package_items"),
             )
         elif selection_type == "bundle":
@@ -217,7 +226,7 @@ def booking_hold_create(request):
                 starts_at=starts_at,
                 customer_payload=customer,
                 idempotency_key=payload.get("idempotency_key"),
-                request_context=_request_context(request, payload),
+                request_context=request_context,
             )
         else:
             hold = BookingHoldService.create_hold(
@@ -226,7 +235,7 @@ def booking_hold_create(request):
                 starts_at=starts_at,
                 customer_payload=customer,
                 idempotency_key=payload.get("idempotency_key"),
-                request_context=_request_context(request, payload),
+                request_context=request_context,
             )
     except ValidationError:
         return _json({"detail": GENERIC_HOLD_ERROR}, status=400)

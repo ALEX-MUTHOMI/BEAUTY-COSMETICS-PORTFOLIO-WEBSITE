@@ -1,12 +1,14 @@
 import { bookingApiBase } from './bookingCsrf'
 import {
   GENERIC_BOOKING_API_ERROR,
+  isIsoDate,
   isUuid,
   publicBookingGet,
   publicBookingPost,
   safeApiText,
 } from './bookingApi'
 import type { BookingCustomerInput } from './bookingCustomer'
+import { resolveSafeBookingStatusPath } from './bookingNavigation'
 import type { BookingSlot, ResolvedSelection } from './bookingPublicApi'
 
 export interface BookingHoldResult {
@@ -63,11 +65,13 @@ function parseCheckout(payload: unknown): BookingCheckoutResult | null {
   const bookingPublicId = String(row.booking_public_id ?? '')
   const checkoutPublicId = String(row.checkout_public_id ?? '')
   if (!isUuid(bookingPublicId) || !isUuid(checkoutPublicId)) return null
+  const statusUrl = resolveSafeBookingStatusPath(String(row.status_url ?? ''), bookingPublicId)
+  const statusApiUrl = `/api/bookings/status/${bookingPublicId}/`
   return {
     bookingPublicId,
     checkoutPublicId,
-    statusUrl: safeApiText(row.status_url, 256),
-    statusApiUrl: safeApiText(row.status_api_url, 256),
+    statusUrl,
+    statusApiUrl,
     amount: safeApiText(row.amount, 32),
     currency: safeApiText(row.currency, 8),
     nextAction: safeApiText(row.next_action, 48),
@@ -90,15 +94,15 @@ function parseStatus(payload: unknown): BookingStatusSnapshot | null {
     paymentStatus: safeApiText(row.payment_status, 48),
     nextAction: safeApiText(row.next_action, 48),
     serviceName: safeApiText(serviceRow.name),
-    scheduleDate: String(scheduleRow.date ?? ''),
+    scheduleDate: isIsoDate(String(scheduleRow.date ?? '')) ? String(scheduleRow.date) : '',
     scheduleTime: safeApiText(scheduleRow.start_time_eat, 32),
   }
 }
 
 function parsePolicyText(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null
-  const text = String((payload as { checkbox_text?: unknown }).checkbox_text ?? '').trim()
-  return text ? text.slice(0, 2_048) : null
+  const text = safeApiText((payload as { checkbox_text?: unknown }).checkbox_text, 2_048)
+  return text || null
 }
 
 function holdBody(
@@ -106,13 +110,14 @@ function holdBody(
   slot: BookingSlot,
   customer: BookingCustomerInput,
   idempotencyKey: string,
-  turnstileToken?: string,
+  turnstileToken: string,
 ): Record<string, unknown> {
   const body: Record<string, unknown> = {
     selection_type: selection.selectionType,
     resource_public_id: slot.resourcePublicId,
     starts_at: slot.startsAt,
     idempotency_key: idempotencyKey,
+    turnstile_token: turnstileToken,
     customer: {
       full_name: customer.fullName,
       email: customer.email,
@@ -123,9 +128,6 @@ function holdBody(
     body.full_package_public_id = selection.publicId
   } else {
     body.service_public_id = slot.servicePublicId || selection.publicId
-  }
-  if (turnstileToken) {
-    body.turnstile_token = turnstileToken
   }
   return body
 }
@@ -150,7 +152,7 @@ export async function createBookingHold(
   const result = await publicBookingPost(
     base,
     '/api/bookings/holds/',
-    holdBody(selection, slot, customer, idempotencyKey, options?.turnstileToken),
+    holdBody(selection, slot, customer, idempotencyKey, options?.turnstileToken ?? ''),
     parseHold,
     { csrfToken, signal: options?.signal },
   )

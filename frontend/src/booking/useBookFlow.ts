@@ -118,7 +118,17 @@ export function useBookFlow(handoff: Ref<ResolvedBookHandoff | null>, apiBaseUrl
 
   function selectSlot(slot: BookingSlot) {
     if (slotsLoading.value || loading.value) return
-    if (!daySlots.value.some((entry) => entry.startsAt === slot.startsAt)) return
+    // Bind full slot identity — startsAt alone lets bots swap resource/service IDs.
+    if (
+      !daySlots.value.some(
+        (entry) =>
+          entry.startsAt === slot.startsAt &&
+          entry.resourcePublicId === slot.resourcePublicId &&
+          entry.servicePublicId === slot.servicePublicId,
+      )
+    ) {
+      return
+    }
     selectedSlot.value = slot
   }
 

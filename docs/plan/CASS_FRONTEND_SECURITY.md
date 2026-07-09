@@ -13,57 +13,49 @@ The Nuxt `/book` flow is a **thin client** over CASS. Booking policy (weekdays, 
 | Resolve | `GET /api/bookings/catalog/resolve-handoff/` | `catalog_resolve` 15/min |
 | Calendar | `GET /api/bookings/calendar/` | `availability` 30/min |
 | Day slots | `GET /api/bookings/availability/` | `availability` 30/min (shared) |
-| Hold | `POST /api/bookings/holds/` | `booking_hold` 5/min |
+| Hold | `POST /api/bookings/holds/` | `booking_hold` 5/min + Turnstile under abuse |
 | Checkout | `POST /api/bookings/checkout/` | `booking_checkout` 8/min |
 | Status | `GET /api/bookings/status/<id>/` | `booking_status` 30/min |
 
-## Client-side defense in depth
+## OWASP-aligned controls
 
 ### Read path — `bookingRequestGovernor.ts`
 
 | Control | Purpose |
 |---------|---------|
-| Calendar load cooldown (2s) | Blocks handoff/query churn from re-firing resolve+calendar |
-| Load token | Drops stale resolve/calendar responses after newer handoff |
+| Calendar load cooldown (2s) | Blocks handoff/query churn |
+| Load token | Drops stale resolve/calendar responses |
 | Day-slot min interval (450ms) | Stops rapid day-button spam |
-| 12 slot fetches / minute cap | Session-local budget under backend 30/min |
-| `AbortController` | Cancels superseded availability fetches (wrong-day race) |
-| Calendar interaction lock | Disables other days while slots load |
-| HTTP 429 handling | Generic user message, no internals |
+| 12 slot fetches / minute | Session budget under backend 30/min |
+| `AbortController` | Cancels superseded availability fetches |
+| `credentials: 'omit'` on GETs | No cookies on anonymous catalog reads |
 
-### Write path — `bookingSubmitGovernor.ts` + `useBookCheckout.ts`
+### Write path — `bookingSubmitGovernor.ts` + server gates
 
-| Control | OWASP alignment | Purpose |
-|---------|-----------------|---------|
-| Click gate (1.2s) | API4 Unrestricted Resource Consumption | One hold/checkout chain per user gesture |
-| In-flight submit lock | — | Prevents double-submit race from multi-click |
-| Stable hold idempotency key | API6 Unrestricted Access / replay | Same key on accidental double-click |
-| Stable checkout idempotency key | API6 | Safe retry after network blip |
-| 3 holds / min, 2 checkouts / min | API4 | Client budget under server 5/min and 8/min |
-| CSRF bootstrap + `X-CSRFToken` | API2 Broken Auth | Credentialed POST with Django token |
-| Turnstile on details step | API6 Bot abuse | Human verification before hold |
-| Abuse mode on 429 / short TTL | Circuit breaker mirror | Tightens UX when backend signals pressure |
-| Honeypot field | Bot scripts | Silent reject if hidden field filled |
-| Customer input validation | API8 Integrity | No raw user strings without normalization |
-| `textGuards` sanitization | XSS | Strip control chars from API copy |
-| Status poll backoff | API4 | 2s → 15s cap, honors `Retry-After` |
-| Generic error messages | API8 | No backend internals in DOM |
+| Control | OWASP | Purpose |
+|---------|-------|---------|
+| Click gate + in-flight lock | API4 | One hold→checkout chain per gesture |
+| Stable hold/checkout idempotency | API6 | Survives double-click / retry |
+| CSRF + `X-CSRFToken` | API2 | Credentialed POST only |
+| **Server Turnstile under abuse** | API6 | `hold_bot_guard` verifies token when circuit ≠ NORMAL |
+| Always send `turnstile_token` | API6 | Cannot omit field to skip server gate |
+| Honeypot (client UX) | Bot scripts | Rejects form bots; API bots hit server throttles |
+| Full slot identity bind | API8 | `startsAt` + resource + service must match daySlots |
+| Safe status navigation | A01 | Allowlist `/booking/status/<uuid>/` only — no open redirect |
+| Submit `AbortController` | API4 | Cancel hold/checkout on back/unmount |
+| Generic errors | API8 | No backend internals in DOM |
 
-**Server throttles remain authoritative.** Client limits protect UX and reduce accidental abuse; they do not replace Redis/IP throttles.
+**Server throttles + Turnstile under abuse are authoritative.** Client governors reduce accidental abuse; they do not replace Redis/IP throttles.
+
+## Red-team coverage
+
+| Suite | What it proves |
+|-------|----------------|
+| `bookingBotAbuse.redteam.spec.ts` | Multi-click / calendar spam / honeypot / XSS names |
+| `bookingNavigation.spec.ts` | Open-redirect phishing via `status_url` |
+| `bookingWriteApi.redteam.spec.ts` | No price mass-assignment; Turnstile always present |
+| `tests/security/test_hold_turnstile_abuse_gate.py` | Server rejects holds under abuse without valid Turnstile |
 
 ## Phase 3e Option A (locked)
 
 All 23 marketing slugs use **type-level** weekdays only. No per-treatment overrides in production.
-
-## Key modules
-
-| Module | Role |
-|--------|------|
-| `useBookFlow.ts` | Calendar read orchestration |
-| `useBookCheckout.ts` | Hold → checkout submit orchestration |
-| `bookingWriteApi.ts` | Typed POST/GET parsers for hold, checkout, status |
-| `bookingCsrf.ts` | Django CSRF cookie bootstrap |
-| `bookingIdempotency.ts` | Stable idempotency key builders |
-| `bookingCustomer.ts` | Client validation + honeypot |
-| `bookingStatusPoll.ts` | Post-checkout status polling with backoff |
-| `pages/booking/status/[publicId].vue` | Customer status surface |

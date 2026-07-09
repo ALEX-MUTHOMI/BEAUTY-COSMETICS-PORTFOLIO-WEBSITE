@@ -143,7 +143,8 @@ function syncHandoff() {
 async function handleSubmit() {
   const result = await submitBooking()
   if (!result) return
-  await router.push(result.statusUrl)
+  // statusUrl is already allowlisted in parseCheckout; never navigate API absolute URLs.
+  await router.push(result.statusUrl || `/booking/status/${result.bookingPublicId}/`)
 }
 
 onMounted(syncHandoff)

@@ -48,7 +48,7 @@ export async function publicBookingGet<T>(
   path: string,
   params: Record<string, string>,
   parse: (payload: unknown) => T | null,
-  options?: { signal?: AbortSignal },
+  options?: { signal?: AbortSignal; credentials?: RequestCredentials },
 ): Promise<{ data: T } | { error: string }> {
   const base = trimApiBaseUrl(apiBaseUrl)
   const search = new URLSearchParams(params).toString()
@@ -57,7 +57,8 @@ export async function publicBookingGet<T>(
   try {
     const response = await fetch(url, {
       method: 'GET',
-      credentials: 'include',
+      // Anonymous catalog/calendar/availability reads do not need cookies.
+      credentials: options?.credentials ?? 'omit',
       headers: { Accept: 'application/json' },
       signal: options?.signal,
     })
