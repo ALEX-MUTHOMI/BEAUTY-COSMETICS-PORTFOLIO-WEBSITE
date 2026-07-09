@@ -10,8 +10,7 @@ REDACTED = "[REDACTED]"
 _EMAIL_RE = re.compile(r"[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}", re.I)
 _MSISDN_RE = re.compile(r"(?:\+?254|0)7\d{8}\b")
 _TOKENISH_RE = re.compile(
-    r"(?:csrf|csrftoken|turnstile|idempotency|access_token|authorization|bearer|sessionid)"
-    r"[=:\s]+[^\s\"',}]+",
+    r"(?:csrf|csrftoken|turnstile|idempotency|access_token|authorization|bearer|sessionid)" r"[=:\s]+[^\s\"',}]+",
     re.I,
 )
 _SENSITIVE_KEYS = (
