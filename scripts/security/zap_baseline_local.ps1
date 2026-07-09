@@ -297,7 +297,25 @@ function Invoke-NewmanThroughZap {
     Remove-ProjectScannerContainer -Name $zapContainerName
     Remove-ProjectScannerContainer -Name $newmanContainerName
 
-    & docker run -d --name $zapContainerName -p "${proxyPort}:8090" -v "${reportDir}:/zap/wrk/:rw" $ZapImage zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.disablekey=true -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true | Out-Null
+    # Join the compose network so ZAP can reach Django as `web:8000` (host.docker.internal
+    # through a nested proxy returns 502 on GitHub Actions Linux runners).
+    $composeNetwork = "aesthetic_os_isolated_network"
+    $targetBaseUrl = "http://web:8000"
+    Write-Host "ZAP_COMPOSE_NETWORK=$composeNetwork"
+    Write-Host "ZAP_TARGET_BASE_URL=$targetBaseUrl"
+
+    & docker run -d `
+        --name $zapContainerName `
+        --network $composeNetwork `
+        -p "${proxyPort}:8090" `
+        -v "${reportDir}:/zap/wrk/:rw" `
+        $ZapImage `
+        zap.sh -daemon -host 0.0.0.0 -port 8090 `
+        -config api.disablekey=true `
+        -config api.addrs.addr.name=.* `
+        -config api.addrs.addr.regex=true `
+        -config network.connection.dnsTtlSuccessfulQueries=-1 `
+        -config network.connection.timeoutInSecs=120 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw "ZAP_START_FAILED"
     }
@@ -310,12 +328,14 @@ function Invoke-NewmanThroughZap {
             "--rm",
             "--name",
             $newmanContainerName,
-            "--add-host",
-            "host.docker.internal:host-gateway",
+            "--network",
+            $composeNetwork,
             "-e",
-            "HTTP_PROXY=http://host.docker.internal:${proxyPort}",
+            "HTTP_PROXY=http://${zapContainerName}:8090",
             "-e",
-            "HTTPS_PROXY=http://host.docker.internal:${proxyPort}",
+            "HTTPS_PROXY=http://${zapContainerName}:8090",
+            "-e",
+            "NO_PROXY=localhost,127.0.0.1",
             "-v",
             "${postmanPath}:/etc/newman:ro",
             "-v",
@@ -326,7 +346,7 @@ function Invoke-NewmanThroughZap {
             "-e",
             "/etc/newman/local-docker.postman_environment.json",
             "--env-var",
-            "base_url=http://host.docker.internal:8000",
+            "base_url=$targetBaseUrl",
             "--timeout",
             "300000",
             "--timeout-request",
