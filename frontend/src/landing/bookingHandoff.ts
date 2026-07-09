@@ -8,6 +8,7 @@ import {
   type PackagePlanSlug,
   type TreatmentSlug,
 } from './bookingCatalog'
+import { containsUnsafeDecodedToken } from '../security/textGuards'
 import { isServiceCategoryId, type ServiceCategoryId } from './servicesNavigation'
 
 export type BookingIntentType = 'package' | 'single'
@@ -44,7 +45,7 @@ export function normalizeBookQueryToken(raw: unknown): string {
 
   try {
     const decoded = decodeURIComponent(value)
-    if (/[\s<>"'`\x00-\x1f\x7f]/.test(decoded)) return ''
+    if (containsUnsafeDecodedToken(decoded)) return ''
     const firstToken = decoded.split(/[?#/\\&]/)[0]?.trim() ?? ''
     if (!firstToken || firstToken.length > 64) return ''
     return /^[a-z0-9-]+$/i.test(firstToken) ? firstToken.toLowerCase() : ''

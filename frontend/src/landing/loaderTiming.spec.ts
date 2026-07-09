@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-/** Mirrors SiteLoader timing contract — keep in sync with components/SiteLoader.vue */
-export function loaderSafetyTimeoutMs(minDuration: number): number {
-  return minDuration + 1500
-}
+import { loaderSafetyTimeoutMs } from './loaderTiming'
 
 describe('landing loader timing contract', () => {
   it('always dismisses within minDuration plus safety window', () => {

@@ -19,6 +19,7 @@
         class="flo-slots__btn"
         :class="{ 'flo-slots__btn--active': selectedSlot?.startsAt === slot.startsAt }"
         :aria-pressed="selectedSlot?.startsAt === slot.startsAt"
+        :disabled="loading"
         @click="emit('select', slot)"
       >
         {{ formatSlotLabel(slot.startsAt) }}

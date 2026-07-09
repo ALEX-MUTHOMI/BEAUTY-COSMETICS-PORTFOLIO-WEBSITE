@@ -1,8 +1,10 @@
 [flake8]
 exclude =
+    .cache,
     .git,
     .local,
     .pytest_cache,
+    .venv,
     __pycache__,
     */migrations/*,
     venv,

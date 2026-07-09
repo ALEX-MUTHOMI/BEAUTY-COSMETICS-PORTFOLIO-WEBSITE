@@ -40,10 +40,10 @@ describe('staff auth client security contract', () => {
   })
 
   it('posts password login with cookie credentials and CSRF but returns generic failures', async () => {
-    const fetcher = vi.fn().mockResolvedValue({
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue({
       ok: false,
-      json: vi.fn(),
-    })
+      json: vi.fn<() => Promise<unknown>>(),
+    } as Response)
 
     const result = await staffPasswordLogin(
       'https://api.example.com',

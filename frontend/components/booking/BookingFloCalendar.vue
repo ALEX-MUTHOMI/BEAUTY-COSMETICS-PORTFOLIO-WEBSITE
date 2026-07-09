@@ -27,7 +27,7 @@
             type="button"
             class="flo-day"
             :class="dayClasses(day)"
-            :disabled="!isDaySelectable(day)"
+            :disabled="!isDaySelectable(day) || isDayInteractionBlocked(day)"
             :aria-pressed="selectedDate === day.date"
             :aria-label="ariaForDay(day)"
             @click="emit('select', day.date)"
@@ -61,6 +61,7 @@ const props = defineProps<{
   selectedDate: string | null
   range?: { start: string; end: string } | null
   loading?: boolean
+  interactionLocked?: boolean
   capacityHint: string
   ariaLabel?: string
 }>()
@@ -138,7 +139,13 @@ function dayClasses(day: CalendarDay): Record<string, boolean> {
     'flo-day--selected': props.selectedDate === day.date,
     'flo-day--available': day.status === 'available',
     'flo-day--full': day.status === 'capacity_full' || day.status === 'no_slots',
+    'flo-day--locked': isDayInteractionBlocked(day),
   }
+}
+
+function isDayInteractionBlocked(day: CalendarDay): boolean {
+  if (!props.interactionLocked) return false
+  return props.selectedDate !== day.date
 }
 
 function ariaForDay(day: CalendarDay): string {

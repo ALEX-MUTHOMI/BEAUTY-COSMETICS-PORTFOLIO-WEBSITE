@@ -49,6 +49,7 @@ extend-exclude = [
     ".pytest_cache",
     ".ruff_cache",
     ".local",
+    ".venv",
     "var",
     "*/migrations/*",
     "venv",
@@ -68,6 +69,7 @@ extend-exclude = '''
   | ^/\.git/
   | ^/\.pytest_cache/
   | ^/\.ruff_cache/
+  | ^/\.venv/
   | ^/var/
   | ^/venv/
   | ^/venvvenv/
@@ -87,6 +89,7 @@ skip_glob = [
     ".local/*",
     ".pytest_cache/*",
     ".ruff_cache/*",
+    ".venv/*",
     "var/*",
     "*/migrations/*",
     "venv/*",

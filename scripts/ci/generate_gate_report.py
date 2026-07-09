@@ -41,7 +41,7 @@ def main() -> int:
         "",
         f"- generated_utc: {now}",
         f"- status: **{status}**",
-        f"- cass_policy: Option A (type-level only)",
+        "- cass_policy: Option A (type-level only)",
         "",
         "## Evidence",
         "",

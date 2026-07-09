@@ -28,6 +28,7 @@
             :selected-date="flow.selectedDate.value"
             :range="flow.calendar.value?.range ?? null"
             :loading="flow.loading.value"
+            :interaction-locked="flow.calendarInteractionLocked.value || flow.slotsLoading.value"
             :capacity-hint="capacityHint"
             aria-label="Pick your visit date"
             @select="flow.selectDate"

@@ -224,6 +224,7 @@ export async function fetchDaySlots(
   apiBaseUrl: string,
   selection: ResolvedSelection,
   isoDate: string,
+  options?: { signal?: AbortSignal },
 ): Promise<{ data: BookingSlot[] } | { error: string }> {
   if (!isIsoDate(isoDate)) return { error: GENERIC_BOOKING_API_ERROR }
   const params: Record<string, string> = {
@@ -236,7 +237,13 @@ export async function fetchDaySlots(
   } else {
     params.service_public_id = selection.publicId
   }
-  const result = await publicBookingGet(apiBaseUrl, '/api/bookings/availability/', params, parseAvailability)
+  const result = await publicBookingGet(
+    apiBaseUrl,
+    '/api/bookings/availability/',
+    params,
+    parseAvailability,
+    options,
+  )
   if ('error' in result) return result
   return { data: result.data }
 }

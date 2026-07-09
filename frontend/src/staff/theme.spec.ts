@@ -21,8 +21,10 @@ describe('staff theme preference security contract', () => {
   })
 
   it('falls back to system preference when no safe stored preference exists', () => {
-    const storage = { getItem: vi.fn().mockReturnValue('token=secret') }
-    const win = { matchMedia: vi.fn().mockReturnValue({ matches: true }) }
+    const storage = { getItem: vi.fn<Storage['getItem']>().mockReturnValue('token=secret') }
+    const win = {
+      matchMedia: vi.fn<Window['matchMedia']>().mockReturnValue({ matches: true } as MediaQueryList),
+    }
 
     expect(readStoredStaffTheme(storage)).toBeNull()
     expect(resolveStaffTheme(storage, win)).toBe('dark')

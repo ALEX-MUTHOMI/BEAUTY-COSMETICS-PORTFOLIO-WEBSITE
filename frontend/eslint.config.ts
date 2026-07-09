@@ -17,7 +17,15 @@ export default defineConfigWithVueTs(
     files: ['**/*.{vue,ts,mts,tsx}'],
   },
 
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
+  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**', '**/.nuxt/**', '**/.output/**']),
+
+  {
+    name: 'app/nuxt-pages',
+    files: ['pages/**/*.vue', 'layouts/**/*.vue'],
+    rules: {
+      'vue/multi-word-component-names': 'off',
+    },
+  },
 
   ...pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,

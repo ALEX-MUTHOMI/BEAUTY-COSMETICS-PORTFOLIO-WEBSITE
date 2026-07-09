@@ -1,5 +1,8 @@
 /** Shared helpers for public booking API calls — no user strings in DOM without validation. */
 
+import { stripControlCharsForDisplay } from '../security/textGuards'
+import { GENERIC_BOOKING_THROTTLE_ERROR } from './bookingRequestGovernor'
+
 export const GENERIC_BOOKING_API_ERROR = 'Booking information is temporarily unavailable. Please try again.'
 
 const UUID_RE =
@@ -34,9 +37,7 @@ export function isIsoDate(value: string): boolean {
 
 /** Strip tags/control chars from API copy before text display. */
 export function safeApiText(value: unknown, maxLength = 128): string {
-  const cleaned = String(value ?? '')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/[\x00-\x1f\x7f]/g, ' ')
+  const cleaned = stripControlCharsForDisplay(String(value ?? '').replace(/<[^>]*>/g, ' '))
     .replace(/\s+/g, ' ')
     .trim()
   return cleaned.slice(0, maxLength)
@@ -47,6 +48,7 @@ export async function publicBookingGet<T>(
   path: string,
   params: Record<string, string>,
   parse: (payload: unknown) => T | null,
+  options?: { signal?: AbortSignal },
 ): Promise<{ data: T } | { error: string }> {
   const base = trimApiBaseUrl(apiBaseUrl)
   const search = new URLSearchParams(params).toString()
@@ -57,13 +59,18 @@ export async function publicBookingGet<T>(
       method: 'GET',
       credentials: 'include',
       headers: { Accept: 'application/json' },
+      signal: options?.signal,
     })
+    if (response.status === 429) return { error: GENERIC_BOOKING_THROTTLE_ERROR }
     if (!response.ok) return { error: GENERIC_BOOKING_API_ERROR }
     const payload: unknown = await response.json()
     const data = parse(payload)
     if (!data) return { error: GENERIC_BOOKING_API_ERROR }
     return { data }
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return { error: GENERIC_BOOKING_API_ERROR }
+    }
     return { error: GENERIC_BOOKING_API_ERROR }
   }
 }

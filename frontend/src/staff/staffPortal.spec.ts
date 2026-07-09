@@ -91,11 +91,14 @@ describe('staff portal friendly copy and security boundaries', () => {
 
 describe('staff portal API client', () => {
   it('uses cookie credentials and hides Docker-only upstream hosts', async () => {
-    const fetcher = vi.fn().mockResolvedValue({
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue({
       ok: true,
       status: 200,
-      json: vi.fn().mockResolvedValue({ display_name: 'Staff <Admin>', permissions: ['bookings:view'] }),
-    })
+      json: vi.fn<() => Promise<unknown>>().mockResolvedValue({
+        display_name: 'Staff <Admin>',
+        permissions: ['bookings:view'],
+      }),
+    } as Response)
 
     const result = await getStaffMe('http://web:8000', fetcher)
 
@@ -107,10 +110,10 @@ describe('staff portal API client', () => {
   })
 
   it('normalizes schedule responses into safe public booking rows', async () => {
-    const fetcher = vi.fn().mockResolvedValue({
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue({
       ok: true,
       status: 200,
-      json: vi.fn().mockResolvedValue({
+      json: vi.fn<() => Promise<unknown>>().mockResolvedValue({
         local_date: '2026-06-06',
         day_type: 'full_package',
         capacity: { booked_clients: 4, max_clients: 6, remaining_clients: 2 },
@@ -126,7 +129,7 @@ describe('staff portal API client', () => {
           },
         ],
       }),
-    })
+    } as Response)
 
     const result = await getDailySchedule('https://api.example.com', '2026-06-06', fetcher)
 
@@ -140,11 +143,11 @@ describe('staff portal API client', () => {
   })
 
   it('marks 401/403 as session-expired without exposing backend error bodies', async () => {
-    const fetcher = vi.fn().mockResolvedValue({
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue({
       ok: false,
       status: 403,
-      json: vi.fn().mockResolvedValue({ detail: 'raw backend auth detail' }),
-    })
+      json: vi.fn<() => Promise<unknown>>().mockResolvedValue({ detail: 'raw backend auth detail' }),
+    } as Response)
 
     const result = await getStaffMe('https://api.example.com', fetcher)
 

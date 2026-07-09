@@ -99,7 +99,7 @@ jobs:
           poetry run isort --check-only .
           poetry run ruff check .
           poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          poetry run bandit -r . -x tests -ll -ii
+          poetry run bandit -r . -x tests,.venv,.cache,frontend/node_modules -ll -ii
           poetry run python scripts/ci/secret_hygiene.py
 
   django-smoke:
@@ -420,6 +420,7 @@ jobs:
       - run: docker compose --profile test up -d --build frontend-test
       - name: npm dependency vulnerability audit (CICD-SEC-3)
         run: docker compose exec -T frontend-test npm audit --audit-level=high
+      - run: docker compose exec -T frontend-test npm run lint:oxlint
       - run: docker compose exec -T frontend-test npm run test
       - run: docker compose exec -T frontend-test npm run type-check
       - run: docker compose exec -T frontend-test npm run build
