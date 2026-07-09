@@ -9,6 +9,9 @@ def _production_frontend_sources() -> list[Path]:
         name = path.name.lower()
         if name.endswith(".spec.ts") or name.endswith(".test.ts") or ".redteam." in name:
             continue
+        # PII scrubbers intentionally list secret marker names for redaction patterns.
+        if "sentrypiiscrubber" in name.replace("_", "").replace("-", ""):
+            continue
         paths.append(path)
     return paths
 

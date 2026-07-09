@@ -63,6 +63,7 @@ def test_privacy_rights_post_requires_csrf_and_does_not_echo_pii():
         content_type="application/json",
         secure=True,
         HTTP_X_CSRFTOKEN=token,
+        HTTP_REFERER="https://testserver/",
     )
     assert response.status_code == 202
     body = response.json()
