@@ -522,7 +522,7 @@ def test_calendar_default_range_under_budget():
 - [x] `CalendarPolicy.for_date()` applies per-slug overrides when active rows exist
 - [x] `offered_weekdays_for_selection()` merges type defaults with rule adjustments
 - [x] Tests: default unchanged, override paths, public API cannot write rules
-- [x] **Product default:** no seeded overrides (D1/D2 approved — type-level policy remains canonical)
+- [x] **Product decision locked: Option A** — type-level policy only; **zero** seeded `ServiceDayRule` rows; every service follows package/single rules (`bookings/domain/cass_policy.py`, `tests/security/test_cass_policy_option_a.py`)
 
 ### 3a task checklist
 

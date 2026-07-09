@@ -125,6 +125,13 @@ def test_other_slugs_ignore_unrelated_service_day_rules():
 
 
 @pytest.mark.django_db
+def test_production_catalog_seed_has_zero_service_day_rules():
+    from bookings.domain.cass_policy import assert_option_a_catalog_invariant
+
+    assert_option_a_catalog_invariant()
+
+
+@pytest.mark.django_db
 def test_public_calendar_api_cannot_set_service_day_rules_via_query():
     service, _resource, _customer = create_service_resource_customer()
     response = Client().get(

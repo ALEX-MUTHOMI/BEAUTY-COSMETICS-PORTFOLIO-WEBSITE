@@ -142,6 +142,152 @@ jobs:
         if: always()
         run: docker compose down --volumes --remove-orphans
 
+  bookings-unit:
+    name: bookings-unit
+    runs-on: ubuntu-latest
+    needs: django-smoke
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - run: docker compose up -d --build
+      - name: Wait for Docker health
+        run: bash scripts/ci/wait_for_compose_health.sh
+      - name: Run bookings domain partition
+        run: |
+          mkdir -p reports/ci/junit
+          docker compose exec -T web poetry run pytest bookings/tests \
+            --junitxml=reports/ci/junit/bookings.xml -q --durations=25
+      - name: Upload bookings gate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bookings-unit-reports
+          path: reports/ci/
+          if-no-files-found: warn
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  cass-calendar-service:
+    name: cass-calendar-service
+    runs-on: ubuntu-latest
+    needs: django-smoke
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - run: docker compose up -d --build
+      - name: Wait for Docker health
+        run: bash scripts/ci/wait_for_compose_health.sh
+      - name: Run CASS calendar service gates
+        run: |
+          mkdir -p reports/ci/junit
+          docker compose exec -T web poetry run pytest \
+            tests/api/test_marketing_catalog_contract.py \
+            tests/security/test_cass_policy_option_a.py \
+            tests/security/test_calendar_cache_red_team.py \
+            tests/security/test_calendar_policy_red_team.py \
+            tests/security/test_calendar_service_failure_red_team.py \
+            tests/security/test_booking_calendar_red_team.py \
+            bookings/tests/test_calendar_policy.py \
+            bookings/tests/test_service_day_rules.py \
+            bookings/tests/test_booking_calendar_api.py \
+            tests/latency/test_calendar_service_latency.py \
+            --junitxml=reports/ci/junit/cass-calendar.xml -q --durations=25
+      - name: Upload CASS calendar gate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cass-calendar-service-reports
+          path: reports/ci/
+          if-no-files-found: warn
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  tests-api-unit:
+    name: tests-api-unit
+    runs-on: ubuntu-latest
+    needs: django-smoke
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - run: docker compose up -d --build
+      - name: Wait for Docker health
+        run: bash scripts/ci/wait_for_compose_health.sh
+      - name: Run API and unit partitions
+        run: |
+          mkdir -p reports/ci/junit
+          docker compose exec -T web poetry run pytest tests/api tests/unit \
+            --junitxml=reports/ci/junit/api-unit.xml -q --durations=25
+      - name: Upload API unit gate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-api-unit-reports
+          path: reports/ci/
+          if-no-files-found: warn
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  newman-acceptance:
+    name: newman-acceptance
+    runs-on: ubuntu-latest
+    needs:
+      - cass-calendar-service
+      - bookings-unit
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - run: docker compose up -d --build
+      - name: Wait for Docker health
+        run: bash scripts/ci/wait_for_compose_health.sh
+      - name: Run Newman acceptance (folder 06 Calendar and Handoff)
+        run: bash scripts/ci/run_newman_docker.sh
+      - name: Upload Newman report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-acceptance-reports
+          path: reports/ci/newman/
+          if-no-files-found: warn
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  zap-passive-newman:
+    name: zap-passive-newman
+    runs-on: ubuntu-latest
+    needs: newman-acceptance
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - run: docker compose up -d --build
+      - name: Wait for Docker health
+        run: bash scripts/ci/wait_for_compose_health.sh
+      - name: Run ZAP passive Newman gate
+        run: pwsh -NoProfile -File scripts/ci/run_security_passive_gate.ps1 -Mode newman
+      - name: Upload ZAP passive reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-passive-newman-reports
+          path: reports/security/zap/
+          if-no-files-found: warn
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: docker compose down --volumes --remove-orphans
+
   billing-unit:
     name: billing-unit
     runs-on: ubuntu-latest
@@ -302,12 +448,43 @@ jobs:
       - if: always()
         run: docker compose down --volumes --remove-orphans
 
+  cass-certification:
+    name: cass-certification
+    runs-on: ubuntu-latest
+    needs:
+      - bookings-unit
+      - cass-calendar-service
+      - newman-acceptance
+      - zap-passive-newman
+      - latency
+      - payment-security
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Emit CASS certification report
+        run: |
+          mkdir -p reports/ci
+          python scripts/ci/generate_gate_report.py cass-certification passed \
+            "bookings-unit partition green" \
+            "cass-calendar-service gates green" \
+            "newman acceptance green" \
+            "latency partition includes calendar p95 gate" \
+            "payment-security partition includes calendar red-team"
+      - name: Upload CASS certification report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cass-certification-report
+          path: reports/ci/cass-certification.md
+
   docker-build:
     name: docker-build
     runs-on: ubuntu-latest
     needs:
       - chaos
       - frontend-test
+      - cass-certification
+      - zap-passive-newman
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - run: docker build -t aesthetic-os-prod:latest .
