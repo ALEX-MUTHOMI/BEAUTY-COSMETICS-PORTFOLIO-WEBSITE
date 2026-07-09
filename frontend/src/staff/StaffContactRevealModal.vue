@@ -10,7 +10,7 @@
       <p v-if="message" role="status" aria-live="polite">{{ message }}</p>
       <div class="modal__actions">
         <button type="button" @click="$emit('close')">Cancel</button>
-        <button type="button" :disabled="loading" @click="submit">
+        <button type="button" :disabled="loading || !password" @click="submit">
           {{ loading ? 'Checking...' : 'Confirm securely' }}
         </button>
       </div>
@@ -21,20 +21,37 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-defineEmits<{
+import { ensureBookingCsrfToken } from '../booking/bookingCsrf'
+import { postStaffReauth } from './staffPortalApi'
+
+const emit = defineEmits<{
   close: []
+  confirmed: []
 }>()
 
+const runtimeConfig = useRuntimeConfig()
 const password = ref('')
 const loading = ref(false)
 const message = ref('')
 
 async function submit() {
+  if (!password.value || loading.value) return
   loading.value = true
   message.value = ''
   try {
-    await new Promise((resolve) => window.setTimeout(resolve, 120))
+    const apiBaseUrl = String(runtimeConfig.public.apiBaseUrl || '')
+    const csrfToken = await ensureBookingCsrfToken(apiBaseUrl)
+    if (!csrfToken) {
+      message.value = 'We could not confirm your password. Please try again.'
+      return
+    }
+    const response = await postStaffReauth(apiBaseUrl, password.value, csrfToken)
+    if (!response.ok) {
+      message.value = 'We could not confirm your password. Please try again.'
+      return
+    }
     message.value = 'Confirmed. Contact reveal can continue.'
+    emit('confirmed')
   } catch {
     message.value = 'We could not confirm your password. Please try again.'
   } finally {

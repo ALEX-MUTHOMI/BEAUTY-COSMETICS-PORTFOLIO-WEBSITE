@@ -143,6 +143,11 @@ function syncHandoff() {
 async function handleSubmit() {
   const result = await submitBooking()
   if (!result) return
+  try {
+    sessionStorage.setItem(`aesthetic_os:checkout:${result.bookingPublicId}`, result.checkoutPublicId)
+  } catch {
+    /* ignore quota / private mode */
+  }
   // statusUrl is already allowlisted in parseCheckout; never navigate API absolute URLs.
   await router.push(result.statusUrl || `/booking/status/${result.bookingPublicId}/`)
 }

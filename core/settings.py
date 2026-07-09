@@ -249,7 +249,23 @@ CELERY_TASK_ROUTES = {
     "bookings.tasks.process_booking_notification": {"queue": "receipts"},
     "bookings.tasks.sweep_booking_notifications": {"queue": "receipts"},
     "bookings.tasks.sweep_booking_reminders": {"queue": "receipts"},
+    "bookings.tasks.sweep_stale_holds": {"queue": "celery"},
+    "bookings.tasks.sweep_expired_checkouts": {"queue": "celery"},
     "bookings.tasks.process_gallery_image": {"queue": "gallery"},
+}
+CELERY_BEAT_SCHEDULE = {
+    "sweep-stale-booking-holds": {
+        "task": "bookings.tasks.sweep_stale_holds",
+        "schedule": 60.0,
+    },
+    "sweep-expired-checkout-sessions": {
+        "task": "bookings.tasks.sweep_expired_checkouts",
+        "schedule": 60.0,
+    },
+    "sweep-booking-notifications": {
+        "task": "bookings.tasks.sweep_booking_notifications",
+        "schedule": 120.0,
+    },
 }
 CELERY_TASK_QUEUES = (
     Queue("celery", Exchange("celery"), routing_key="celery"),
@@ -295,6 +311,15 @@ DARAJA_SANDBOX_CALLBACK_TUNNEL_DOMAINS = [
     ).split(",")
     if domain.strip()
 ]
+# Explicit opt-in for sandbox tunnel IP bypass (never implied by DARAJA_ENV alone).
+DARAJA_SANDBOX_ALLOW_TUNNEL_CALLBACKS = os.environ.get(
+    "DARAJA_SANDBOX_ALLOW_TUNNEL_CALLBACKS", "false"
+).lower() in ("true", "1", "t", "yes")
+# Edge shared secret for M-Pesa callbacks (Daraja does not sign payloads).
+MPESA_WEBHOOK_SHARED_SECRET = os.environ.get("MPESA_WEBHOOK_SHARED_SECRET", "")
+MPESA_WEBHOOK_REQUIRE_SHARED_SECRET = os.environ.get(
+    "MPESA_WEBHOOK_REQUIRE_SHARED_SECRET", "false"
+).lower() in ("true", "1", "t", "yes")
 PAYMENT_STK_CLIENT_TIMEOUT_SECONDS = int(os.environ.get("PAYMENT_STK_CLIENT_TIMEOUT_SECONDS", "45"))
 PAYMENT_STATUS_POLL_INTERVAL_SECONDS = int(os.environ.get("PAYMENT_STATUS_POLL_INTERVAL_SECONDS", "5"))
 PAYMENT_STATUS_MAX_WAIT_SECONDS = int(os.environ.get("PAYMENT_STATUS_MAX_WAIT_SECONDS", "300"))
@@ -399,6 +424,7 @@ REST_FRAMEWORK = {
         "availability": "30/min",
         "booking_hold": "5/min",
         "booking_checkout": "8/min",
+        "booking_guest_stk": "3/min",
         # Status polling — authoritative anti-bombardment (client governor is cushion only).
         "booking_status": "20/min",
         "public_gallery": "60/min",

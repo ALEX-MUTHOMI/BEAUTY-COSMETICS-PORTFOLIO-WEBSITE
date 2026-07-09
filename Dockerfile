@@ -29,9 +29,15 @@ RUN pip install --no-cache-dir "poetry>=2.0.0"
 # Copy package requirements files
 COPY pyproject.toml poetry.lock ./
 
-# Build dependencies only (cached layer). Include dev for container-only verification gates.
+# Build dependencies only (cached layer).
+# INSTALL_DEV=true for CI/test images; production builds must pass INSTALL_DEV=false.
+ARG INSTALL_DEV=true
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR \
-    poetry install --with dev --no-root
+    if [ "$INSTALL_DEV" = "true" ]; then \
+      poetry install --with dev --no-root; \
+    else \
+      poetry install --only main --no-root; \
+    fi
 
 # ==============================================================================
 # STAGE 2: Production Run-time Environment

@@ -6,6 +6,7 @@ import { validateBookingCustomer } from './bookingCustomer'
 import {
   buildCheckoutIdempotencyKey,
   buildHoldIdempotencyKey,
+  buildStkIdempotencyKey,
   createBookingAttemptNonce,
 } from './bookingIdempotency'
 import { GENERIC_BOOKING_THROTTLE_ERROR } from './bookingRequestGovernor'
@@ -13,6 +14,7 @@ import {
   createBookingCheckout,
   createBookingHold,
   fetchPolicyAcceptanceText,
+  initiateBookingGuestStk,
   type BookingCheckoutResult,
 } from './bookingWriteApi'
 import type { BookingSlot, ResolvedSelection } from './bookingPublicApi'
@@ -210,6 +212,37 @@ export function useBookCheckout(
       submitGovernor.finishSubmit()
       clickGate.finish('hold-checkout')
       return null
+    }
+
+    // Guest-safe STK: phone must match booking customer (server HMAC). Fail closed on error
+    // but still return checkout so status page can offer retry without orphaning the hold.
+    if (checkout.data.nextAction === 'initiate_payment' || checkout.data.checkoutPublicId) {
+      const stk = await initiateBookingGuestStk(
+        apiBaseUrl,
+        {
+          bookingPublicId: checkout.data.bookingPublicId,
+          checkoutPublicId: checkout.data.checkoutPublicId,
+          phoneNumber: customer.phone,
+          idempotencyKey: buildStkIdempotencyKey(
+            checkout.data.checkoutPublicId,
+            attemptNonce.value || createBookingAttemptNonce(),
+          ),
+        },
+        csrfToken,
+        { signal },
+      )
+      if (signal.aborted) {
+        submitGovernor.finishSubmit()
+        clickGate.finish('hold-checkout')
+        return null
+      }
+      if ('error' in stk) {
+        if (stk.throttled) {
+          submitGovernor.markAbuseSuspected()
+          submitError.value = GENERIC_BOOKING_THROTTLE_ERROR
+        }
+        // Still navigate to status — payment can be retried there.
+      }
     }
 
     checkoutResult.value = checkout.data

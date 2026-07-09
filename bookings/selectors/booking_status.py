@@ -94,7 +94,7 @@ def next_action(booking, notification):
     if booking.status == Booking.Status.CONFIRMED:
         return "none"
     if booking.status == Booking.Status.PAYMENT_PENDING:
-        return "keep_booking_reference"
+        return "complete_mpesa_stk"
     if booking.status == Booking.Status.EXPIRED:
         return "select_new_slot"
     return "manual_review_required"

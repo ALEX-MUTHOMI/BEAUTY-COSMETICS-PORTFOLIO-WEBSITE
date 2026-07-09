@@ -30,7 +30,36 @@ from users.views import RequestOTPView, VerifyOTPView
 
 
 def health_check(_request):
+    """Shallow liveness — process is up (no dependency probes)."""
     return JsonResponse({"status": "ok"})
+
+
+@require_GET
+def readiness_check(_request):
+    """
+    Deep readiness — fail closed if Postgres or Redis is unreachable.
+    Used by /api/health-check/; keep /health/ shallow for liveness.
+    """
+    from django.db import connection
+
+    checks = {"database": "ok", "redis": "ok"}
+    try:
+        connection.ensure_connection()
+    except Exception:
+        checks["database"] = "error"
+    try:
+        from users.services import get_redis_client
+
+        client = get_redis_client()
+        if not client.ping():
+            checks["redis"] = "error"
+    except Exception:
+        checks["redis"] = "error"
+
+    ok = all(value == "ok" for value in checks.values())
+    response = JsonResponse({"status": "ok" if ok else "degraded", "checks": checks}, status=200 if ok else 503)
+    response["Cache-Control"] = "no-store"
+    return response
 
 
 @ensure_csrf_cookie
@@ -45,7 +74,7 @@ def csrf_bootstrap(request):
 
 urlpatterns = [
     path("health/", health_check, name="health-check"),
-    path("api/health-check/", health_check, name="api-health-check"),
+    path("api/health-check/", readiness_check, name="api-health-check"),
     path("api/csrf/", csrf_bootstrap, name="api-csrf-bootstrap"),
     path("api/schema/", openapi_schema_view, name="api-openapi-schema"),
     path("api/auth/request-otp/", RequestOTPView.as_view(), name="request-otp"),

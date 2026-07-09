@@ -10,6 +10,7 @@ from bookings.services.booking_calendar import BookingCalendarService
 from bookings.services.catalog import list_public_full_packages, list_public_services
 from bookings.services.catalog_resolve import resolve_catalog_selection
 from bookings.services.checkout_contract import BookingCheckoutContractService
+from bookings.services.guest_stk import initiate_guest_booking_stk
 from bookings.services.handoff_resolve import resolve_booking_handoff
 from bookings.services.hold_bot_guard import require_hold_turnstile_if_abused
 from bookings.services.holds import BookingHoldService
@@ -23,6 +24,7 @@ GENERIC_CALENDAR_ERROR = "Calendar unavailable."
 GENERIC_RESOLVE_ERROR = "Selection unavailable."
 GENERIC_HOLD_ERROR = "Booking request could not be accepted."
 GENERIC_CHECKOUT_ERROR = "Checkout request could not be accepted."
+GENERIC_STK_ERROR = "Payment could not be started."
 FORBIDDEN_CLIENT_FIELDS = {
     "amount",
     "base_price",
@@ -262,6 +264,26 @@ def booking_checkout_create(request):
     except ValidationError:
         return _json({"detail": GENERIC_CHECKOUT_ERROR}, status=400)
     return _json({"checkout": checkout}, status=201)
+
+
+@require_POST
+@route_throttle("booking_guest_stk")
+def booking_guest_stk_create(request):
+    """
+    Guest STK — CSRF-protected, booking↔checkout bound, phone HMAC match.
+    Does not use IsAuthenticated; knowledge of UUIDs alone is insufficient.
+    """
+    payload = _body(request)
+    try:
+        result = initiate_guest_booking_stk(
+            booking_public_id=payload.get("booking_public_id"),
+            checkout_public_id=payload.get("checkout_public_id"),
+            phone_number=payload.get("phone_number"),
+            idempotency_key=payload.get("idempotency_key"),
+        )
+    except ValidationError:
+        return _json({"detail": GENERIC_STK_ERROR}, status=400)
+    return _json({"stk": result}, status=202)
 
 
 @require_GET

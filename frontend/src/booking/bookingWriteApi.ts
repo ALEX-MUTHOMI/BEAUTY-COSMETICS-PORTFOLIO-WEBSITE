@@ -29,6 +29,14 @@ export interface BookingCheckoutResult {
   nextAction: string
 }
 
+export interface BookingStkResult {
+  bookingPublicId: string
+  checkoutPublicId: string
+  attemptId: string
+  paymentStatus: string
+  nextAction: string
+}
+
 export interface BookingStatusSnapshot {
   bookingReference: string
   bookingStatus: string
@@ -96,6 +104,24 @@ function parseStatus(payload: unknown): BookingStatusSnapshot | null {
     serviceName: safeApiText(serviceRow.name),
     scheduleDate: isIsoDate(String(scheduleRow.date ?? '')) ? String(scheduleRow.date) : '',
     scheduleTime: safeApiText(scheduleRow.start_time_eat, 32),
+  }
+}
+
+function parseStk(payload: unknown): BookingStkResult | null {
+  if (!payload || typeof payload !== 'object') return null
+  const stk = (payload as { stk?: unknown }).stk
+  if (!stk || typeof stk !== 'object') return null
+  const row = stk as Record<string, unknown>
+  const bookingPublicId = String(row.booking_public_id ?? '')
+  const checkoutPublicId = String(row.checkout_public_id ?? '')
+  const attemptId = String(row.attempt_id ?? '')
+  if (!isUuid(bookingPublicId) || !isUuid(checkoutPublicId) || !isUuid(attemptId)) return null
+  return {
+    bookingPublicId,
+    checkoutPublicId,
+    attemptId,
+    paymentStatus: safeApiText(row.payment_status, 48),
+    nextAction: safeApiText(row.next_action, 48),
   }
 }
 
@@ -186,6 +212,39 @@ export async function createBookingCheckout(
       },
     },
     parseCheckout,
+    { csrfToken, signal: options?.signal },
+  )
+  if ('error' in result) {
+    return { error: result.error, throttled: result.throttled }
+  }
+  return { data: result.data }
+}
+
+export async function initiateBookingGuestStk(
+  apiBaseUrl: string,
+  input: {
+    bookingPublicId: string
+    checkoutPublicId: string
+    phoneNumber: string
+    idempotencyKey: string
+  },
+  csrfToken: string,
+  options?: { signal?: AbortSignal },
+): Promise<{ data: BookingStkResult } | { error: string; throttled: boolean }> {
+  if (!isUuid(input.bookingPublicId) || !isUuid(input.checkoutPublicId)) {
+    return { error: GENERIC_BOOKING_API_ERROR, throttled: false }
+  }
+  const base = bookingApiBase(apiBaseUrl)
+  const result = await publicBookingPost(
+    base,
+    '/api/bookings/checkout/mpesa/stk/',
+    {
+      booking_public_id: input.bookingPublicId,
+      checkout_public_id: input.checkoutPublicId,
+      phone_number: input.phoneNumber,
+      idempotency_key: input.idempotencyKey,
+    },
+    parseStk,
     { csrfToken, signal: options?.signal },
   )
   if ('error' in result) {

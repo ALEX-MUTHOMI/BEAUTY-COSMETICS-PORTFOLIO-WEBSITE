@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from checkout.exceptions import CheckoutStateError, CheckoutValidationError
-from checkout.permissions import IsSafaricomCheckoutIP
+from checkout.permissions import IsAuthorizedMpesaWebhook
 from checkout.providers.base import ProviderError
 from checkout.providers.mpesa import MpesaProvider
 from checkout.selectors import get_customer_checkout_or_none
@@ -109,7 +109,7 @@ class CheckoutMpesaSTKView(APIView):
 
 class CheckoutMpesaWebhookView(APIView):
     authentication_classes = []
-    permission_classes = [IsSafaricomCheckoutIP]
+    permission_classes = [IsAuthorizedMpesaWebhook]
 
     def post(self, request):
         try:

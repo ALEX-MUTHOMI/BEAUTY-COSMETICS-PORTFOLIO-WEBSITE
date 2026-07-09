@@ -10,16 +10,17 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
+
+import { ensureBookingCsrfToken } from '../../src/booking/bookingCsrf'
 import StaffLoginPanel from '../../src/staff/StaffLoginPanel.vue'
 
 definePageMeta({ layout: false })
 
 const runtimeConfig = useRuntimeConfig()
 const router = useRouter()
-const csrfToken = useCookie<string>('csrftoken', {
-  sameSite: 'strict',
-  secure: process.env.NODE_ENV === 'production',
-})
+/** Always from API /api/csrf/ JSON — never Nuxt-origin cookie (cross-origin fail-closed). */
+const csrfToken = ref('')
 
 useHead({
   title: 'Staff Sign In | AestheticOS Portal',
@@ -29,6 +30,11 @@ useHead({
       content: 'noindex,nofollow',
     },
   ],
+})
+
+onMounted(async () => {
+  csrfToken.value =
+    (await ensureBookingCsrfToken(String(runtimeConfig.public.apiBaseUrl || ''))) || ''
 })
 
 function handleSignedIn(nextPath: string) {

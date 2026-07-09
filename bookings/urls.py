@@ -12,6 +12,7 @@ urlpatterns = [
     path("availability/", public_views.booking_availability, name="booking-availability"),
     path("holds/", public_views.booking_hold_create, name="booking-hold-create"),
     path("checkout/", public_views.booking_checkout_create, name="booking-checkout-create"),
+    path("checkout/mpesa/stk/", public_views.booking_guest_stk_create, name="booking-guest-stk-create"),
     path("policy-acceptance-text/", public_views.booking_policy_acceptance_text, name="booking-policy-acceptance-text"),
     path("status/<str:public_booking_id>/", booking_status, name="booking-status"),
     path("privacy/data-map/", privacy_views.privacy_data_map, name="booking-privacy-data-map"),

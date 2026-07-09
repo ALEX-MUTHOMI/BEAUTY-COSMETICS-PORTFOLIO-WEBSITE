@@ -38,6 +38,30 @@ def sweep_booking_reminders(limit=100, correlation_id=None):
 
 
 @shared_task(
+    name="bookings.tasks.sweep_stale_holds",
+    queue="celery",
+    rate_limit="30/m",
+    ignore_result=True,
+)
+def sweep_stale_holds(limit=500, correlation_id=None):
+    from bookings.services.hold_expiry import BookingHoldExpiryService
+
+    return BookingHoldExpiryService.expire_stale_holds(limit=limit)
+
+
+@shared_task(
+    name="bookings.tasks.sweep_expired_checkouts",
+    queue="celery",
+    rate_limit="30/m",
+    ignore_result=True,
+)
+def sweep_expired_checkouts(correlation_id=None):
+    from checkout.services import expire_due_checkout_sessions
+
+    return expire_due_checkout_sessions()
+
+
+@shared_task(
     name="bookings.tasks.process_gallery_image",
     queue="gallery",
     rate_limit="60/m",

@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 from django.conf import settings
 
 from billing.permissions import IsSafaricomIP
+from checkout.webhook_auth import HasMpesaWebhookSharedSecret
 
 
 class IsSafaricomCheckoutIP(IsSafaricomIP):
@@ -10,13 +11,19 @@ class IsSafaricomCheckoutIP(IsSafaricomIP):
     Preserve strict production Daraja IP allowlisting.
 
     Sandbox-only exception: Safaricom sandbox callbacks can be verified through
-    ephemeral HTTPS tunnels. The exception is allowed only when the configured
-    callback URL itself points at an approved tunnel host and the request Host
-    matches that exact tunnel host.
+    ephemeral HTTPS tunnels. The exception is allowed only when:
+    - DARAJA_ENV=sandbox
+    - DARAJA_SANDBOX_ALLOW_TUNNEL_CALLBACKS is explicitly true (or DEBUG)
+    - callback URL host is an approved tunnel domain and matches request Host
     """
 
     def _is_sandbox_tunnel_callback(self, request):
         if getattr(settings, "DARAJA_ENV", "") != "sandbox":
+            return False
+        allow_tunnel = getattr(settings, "DARAJA_SANDBOX_ALLOW_TUNNEL_CALLBACKS", False) or getattr(
+            settings, "DEBUG", False
+        )
+        if not allow_tunnel:
             return False
 
         callback_url = getattr(settings, "DARAJA_CALLBACK_URL", "")
@@ -40,3 +47,12 @@ class IsSafaricomCheckoutIP(IsSafaricomIP):
         if self._is_sandbox_tunnel_callback(request):
             return True
         return super().has_permission(request, view)
+
+
+class IsAuthorizedMpesaWebhook(IsSafaricomCheckoutIP):
+    """IP/tunnel allowlist AND shared-secret gate (when required or configured)."""
+
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+        return HasMpesaWebhookSharedSecret().has_permission(request, view)

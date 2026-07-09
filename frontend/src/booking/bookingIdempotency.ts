@@ -23,6 +23,11 @@ export function buildCheckoutIdempotencyKey(bookingPublicId: string): string {
   return stableActionKey(['checkout', bookingPublicId]).slice(0, IDEMPOTENCY_MAX_LENGTH)
 }
 
+/** Stable per checkout STK attempt — safe retries without duplicate provider spam. */
+export function buildStkIdempotencyKey(checkoutPublicId: string, attemptNonce: string): string {
+  return stableActionKey(['stk', checkoutPublicId, attemptNonce]).slice(0, IDEMPOTENCY_MAX_LENGTH)
+}
+
 export function createBookingAttemptNonce(): string {
   return crypto.randomUUID()
 }
