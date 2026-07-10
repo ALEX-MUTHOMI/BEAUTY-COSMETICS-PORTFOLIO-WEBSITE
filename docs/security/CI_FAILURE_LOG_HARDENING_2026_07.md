@@ -33,3 +33,8 @@
 - console `PiiMessageRedactionFilter`
 - staff OAuth unconfigured → 404 (not 503)
 - Beat schedule includes `sweep_booking_reminders`
+
+## Follow-on CI failure (9589cc3 / run 29115481643)
+- **Job:** lint-security → Dependency vulnerability audit (pip-audit)
+- **Root cause:** Django 6.0.6 — PYSEC-2026-2090/2091/2092; fix versions include **6.0.7**
+- **Fix:** bump `django (>=6.0.7,<7.0.0)` + refresh lock
