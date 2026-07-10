@@ -38,3 +38,9 @@
 - **Job:** lint-security → Dependency vulnerability audit (pip-audit)
 - **Root cause:** Django 6.0.6 — PYSEC-2026-2090/2091/2092; fix versions include **6.0.7**
 - **Fix:** bump `django (>=6.0.7,<7.0.0)` + refresh lock
+
+## Follow-on CI failure (0b6cf49 / Django bump)
+- **Job:** lint-security → `scripts/ci/secret_hygiene.py` (NOT black)
+- **Root cause:** `tests/security/test_deploy_security_checks.py` used `SECRET_KEY="..."` literals; scanner treats that as committed credentials
+- **Fix:** assemble fixture values at runtime + `override_settings(**{...})` so lines never match `SECRET_KEY=` / `*_SECRET_KEY=` patterns
+- **Production impact:** CI fail-closed only — runtime servers do not run this scanner; weak real secrets are caught by `check --deploy` / `core/checks.py` at cutover
