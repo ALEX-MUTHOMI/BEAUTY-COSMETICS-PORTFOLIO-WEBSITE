@@ -54,7 +54,11 @@ describe('staff portal friendly copy and security boundaries', () => {
   })
 
   it('requires a re-auth modal before contact reveal and prevents duplicate completion clicks', async () => {
-    const wrapper = mount(StaffBookingDetail, { global: { stubs: globalStubs } })
+    // apiBaseUrl is injected like pages/staff/bookings/[publicId].vue — no Nuxt auto-imports in src/.
+    const wrapper = mount(StaffBookingDetail, {
+      props: { apiBaseUrl: 'https://api.example.com' },
+      global: { stubs: globalStubs },
+    })
 
     expect(wrapper.text()).not.toMatch(/checkoutrequest|merchantrequest|ledger/i)
     const revealButton = wrapper.findAll('button').find((button) => button.text().includes('Reveal customer contact'))

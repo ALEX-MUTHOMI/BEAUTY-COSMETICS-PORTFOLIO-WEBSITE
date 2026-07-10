@@ -26,7 +26,7 @@ import { postStaffReauth } from './staffPortalApi'
 
 const props = withDefaults(
   defineProps<{
-    /** Injected by Nuxt pages — avoids Nuxt auto-import in Vitest unit mounts. */
+    /** Injected by Nuxt pages — never call useRuntimeConfig inside src/ components. */
     apiBaseUrl?: string
   }>(),
   { apiBaseUrl: '' },

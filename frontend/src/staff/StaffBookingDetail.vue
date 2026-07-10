@@ -20,7 +20,7 @@
 
     <StaffContactRevealModal
       v-if="showReauth"
-      :api-base-url="apiBaseUrl"
+      :api-base-url="props.apiBaseUrl"
       @close="showReauth = false"
       @confirmed="onReauthConfirmed"
     />
@@ -36,6 +36,7 @@ import StaffStatusChip from './StaffStatusChip.vue'
 
 const props = withDefaults(
   defineProps<{
+    /** Injected by Nuxt pages — never call useRuntimeConfig inside src/ components. */
     apiBaseUrl?: string
   }>(),
   { apiBaseUrl: '' },
@@ -43,7 +44,6 @@ const props = withDefaults(
 
 const showReauth = ref(false)
 const completed = ref(false)
-const apiBaseUrl = props.apiBaseUrl
 
 function onReauthConfirmed() {
   showReauth.value = false

@@ -44,3 +44,20 @@
 - **Root cause:** `tests/security/test_deploy_security_checks.py` used `SECRET_KEY="..."` literals; scanner treats that as committed credentials
 - **Fix:** assemble fixture values at runtime + `override_settings(**{...})` so lines never match `SECRET_KEY=` / `*_SECRET_KEY=` patterns
 - **Production impact:** CI fail-closed only — runtime servers do not run this scanner; weak real secrets are caught by `check --deploy` / `core/checks.py` at cutover
+
+## Follow-on CI failure (dbacc06 / run 29117806683 / PR annotation #120)
+- **Job:** `frontend-test` (Vitest)
+- **Failing test:** `src/staff/staffPortal.spec.ts` → `requires a re-auth modal before contact reveal...`
+- **Symptom:** `ReferenceError: useRuntimeConfig is not defined` at `StaffContactRevealModal.vue` setup
+- **Root cause (architecture, not flaky CI):**
+  1. Staff reauth was hardened to call real `postStaffReauth` + CSRF.
+  2. The modal (under `frontend/src/`, mounted by Vue Test Utils) called Nuxt auto-import `useRuntimeConfig()`.
+  3. Vitest has **no** Nuxt auto-import layer → setup throws before assertions run.
+  4. Production Nuxt pages would have worked; unit gate correctly fail-closed.
+- **Wrong fix class:** stubbing `useRuntimeConfig` globally in Vitest (hides future boundary violations).
+- **Production-grade fix:**
+  1. Keep Nuxt composables in `pages/` / `middleware/` only.
+  2. Inject `apiBaseUrl` as a prop into `StaffBookingDetail` / `StaffContactRevealModal` (same pattern as `StaffLoginPanel`).
+  3. Regression guard: `src/security/nuxtBoundary.spec.ts` fails CI if `src/**/*.vue` calls Nuxt auto-imports again.
+- **Verification:** local Vitest `staffPortal.spec.ts` 9/9; CI run `29118595024` (`da7361a`) `frontend-test` = success
+- **Note:** GitHub UI may still show the #120 annotation from `dbacc06` until the newer run finishes — do not re-fix against the stale log.
