@@ -18,7 +18,12 @@
       </div>
     </section>
 
-    <StaffContactRevealModal v-if="showReauth" @close="showReauth = false" />
+    <StaffContactRevealModal
+      v-if="showReauth"
+      :api-base-url="apiBaseUrl"
+      @close="showReauth = false"
+      @confirmed="onReauthConfirmed"
+    />
   </StaffPortalShell>
 </template>
 
@@ -29,8 +34,20 @@ import StaffContactRevealModal from './StaffContactRevealModal.vue'
 import StaffPortalShell from './StaffPortalShell.vue'
 import StaffStatusChip from './StaffStatusChip.vue'
 
+const props = withDefaults(
+  defineProps<{
+    apiBaseUrl?: string
+  }>(),
+  { apiBaseUrl: '' },
+)
+
 const showReauth = ref(false)
 const completed = ref(false)
+const apiBaseUrl = props.apiBaseUrl
+
+function onReauthConfirmed() {
+  showReauth.value = false
+}
 </script>
 
 <style scoped>

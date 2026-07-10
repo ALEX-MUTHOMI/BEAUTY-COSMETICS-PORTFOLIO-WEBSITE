@@ -24,12 +24,19 @@ import { ref } from 'vue'
 import { ensureBookingCsrfToken } from '../booking/bookingCsrf'
 import { postStaffReauth } from './staffPortalApi'
 
+const props = withDefaults(
+  defineProps<{
+    /** Injected by Nuxt pages — avoids Nuxt auto-import in Vitest unit mounts. */
+    apiBaseUrl?: string
+  }>(),
+  { apiBaseUrl: '' },
+)
+
 const emit = defineEmits<{
   close: []
   confirmed: []
 }>()
 
-const runtimeConfig = useRuntimeConfig()
 const password = ref('')
 const loading = ref(false)
 const message = ref('')
@@ -39,7 +46,7 @@ async function submit() {
   loading.value = true
   message.value = ''
   try {
-    const apiBaseUrl = String(runtimeConfig.public.apiBaseUrl || '')
+    const apiBaseUrl = String(props.apiBaseUrl || '').trim()
     const csrfToken = await ensureBookingCsrfToken(apiBaseUrl)
     if (!csrfToken) {
       message.value = 'We could not confirm your password. Please try again.'
