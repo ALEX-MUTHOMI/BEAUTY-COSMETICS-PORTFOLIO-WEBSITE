@@ -46,6 +46,7 @@ export function useBookCheckout(
   const customerForm = ref<BookingCustomerValidation>({
     fullName: '',
     email: '',
+    emailConfirm: '',
     phone: '',
     honeypot: '',
   })

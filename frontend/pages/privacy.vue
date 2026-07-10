@@ -5,12 +5,13 @@
       <h1>Privacy Policy</h1>
       <p>
         Shee Aesthetics collects the information you provide when booking online, including your name,
-        contact details and appointment preferences. We use this only to manage your visit, send receipts
-        and communicate about your booking.
+        email, and phone number. We use this only to perform your booking contract: manage the visit,
+        initiate M-Pesa payment, send confirmation, and deliver your PDF receipt. This is not marketing.
       </p>
       <p>
-        We do not sell your personal data. Payment is processed securely at checkout. For questions,
-        email <a href="mailto:bookings@sheeaesthetics.co.ke">bookings@sheeaesthetics.co.ke</a>.
+        We do not sell your personal data. You do not need to create a customer account to book.
+        Payment is processed securely at checkout. For privacy rights questions, email
+        <a href="mailto:bookings@sheeaesthetics.co.ke">bookings@sheeaesthetics.co.ke</a>.
       </p>
       <NuxtLink to="/" class="legal-page__back">Back to home</NuxtLink>
     </div>

@@ -12,8 +12,21 @@ describe('bookingCustomer validation', () => {
       validateBookingCustomer({
         fullName: 'Grace M',
         email: 'grace@example.com',
+        emailConfirm: 'grace@example.com',
         phone: '0712345678',
         honeypot: 'bot filled this',
+      }),
+    ).toBeNull()
+  })
+
+  it('rejects mismatched confirmation email', () => {
+    expect(
+      validateBookingCustomer({
+        fullName: 'Grace M',
+        email: 'grace@example.com',
+        emailConfirm: 'other@example.com',
+        phone: '0712345678',
+        honeypot: '',
       }),
     ).toBeNull()
   })
@@ -23,6 +36,7 @@ describe('bookingCustomer validation', () => {
       validateBookingCustomer({
         fullName: '  Grace   M  ',
         email: ' GRACE@EXAMPLE.COM ',
+        emailConfirm: 'grace@example.com',
         phone: '0712345678',
         honeypot: '',
       }),

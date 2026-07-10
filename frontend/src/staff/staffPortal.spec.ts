@@ -30,7 +30,22 @@ describe('staff portal friendly copy and security boundaries', () => {
 
   it('renders dashboard, bookings, and payments without raw backend jargon', () => {
     const dashboard = mount(StaffDashboard, { global: { stubs: globalStubs } })
-    const bookings = mount(StaffBookingsWorkspace, { global: { stubs: globalStubs } })
+    const bookings = mount(StaffBookingsWorkspace, {
+      props: {
+        appointments: [
+          {
+            publicBookingId: 'BK-1001',
+            time: '09:00',
+            client: 'Grace M.',
+            service: 'Soft glam makeup',
+            bookingStatus: 'held',
+            paymentStatus: 'success',
+            rescheduleStatus: 'none',
+          },
+        ],
+      },
+      global: { stubs: globalStubs },
+    })
     const payments = mount(StaffPaymentsWorkspace, { global: { stubs: globalStubs } })
     const rendered = `${dashboard.text()} ${bookings.text()} ${payments.text()}`
 
@@ -135,15 +150,18 @@ describe('staff portal API client', () => {
       }),
     } as unknown as Response)
 
-    const result = await getDailySchedule('https://api.example.com', '2026-06-06', fetcher)
+    const result = await getDailySchedule('https://api.example.com', '2026-06-06', { fetcher })
 
     expect(result.data?.dayType).toBe('Full-package day')
     expect(result.data?.appointments[0]).toMatchObject({
       publicBookingId: 'BK-1001',
-      bookingStatus: 'Booking confirmed',
-      paymentStatus: 'Awaiting payment',
-      rescheduleStatus: 'Needs attention',
+      bookingStatus: 'confirmed',
+      paymentStatus: 'payment_pending',
+      rescheduleStatus: 'manual_review',
     })
+    expect(friendlyStatus(result.data!.appointments[0].bookingStatus)).toBe('Booking confirmed')
+    expect(friendlyStatus(result.data!.appointments[0].paymentStatus)).toBe('Awaiting payment')
+    expect(friendlyStatus(result.data!.appointments[0].rescheduleStatus)).toBe('Needs attention')
   })
 
   it('marks 401/403 as session-expired without exposing backend error bodies', async () => {

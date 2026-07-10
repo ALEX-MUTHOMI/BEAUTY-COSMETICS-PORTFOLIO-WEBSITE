@@ -7,6 +7,7 @@ export interface BookingCustomerInput {
 export interface BookingCustomerValidation {
   fullName: string
   email: string
+  emailConfirm: string
   phone: string
   honeypot: string
 }
@@ -28,10 +29,12 @@ export function validateBookingCustomer(input: BookingCustomerValidation): Booki
 
   const fullName = input.fullName.trim().replace(/\s+/g, ' ')
   const email = input.email.trim().toLowerCase()
+  const emailConfirm = input.emailConfirm.trim().toLowerCase()
   const phone = normalizeKenyaPhone(input.phone)
 
   if (!NAME_RE.test(fullName)) return null
   if (!EMAIL_RE.test(email) || email.length > 254) return null
+  if (email !== emailConfirm) return null
   if (!phone) return null
 
   return { fullName, email, phone }

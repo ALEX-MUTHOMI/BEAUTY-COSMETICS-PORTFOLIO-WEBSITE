@@ -118,4 +118,49 @@ export function storageContainsStaffSecrets(storage: Storage): boolean {
   return false
 }
 
+export async function requestStaffPasswordReset(
+  apiBaseUrl: string,
+  email: string,
+  csrfToken: string,
+  fetcher: typeof fetch = fetch,
+): Promise<{ ok: boolean; message: string }> {
+  const response = await fetcher(`${publicApiBaseUrl(apiBaseUrl)}/api/staff/auth/password-reset/request/`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken,
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ email: email.trim().toLowerCase() }),
+  })
+  return {
+    ok: response.ok,
+    message: 'If the account exists, reset instructions have been sent.',
+  }
+}
+
+export async function confirmStaffPasswordReset(
+  apiBaseUrl: string,
+  token: string,
+  newPassword: string,
+  csrfToken: string,
+  fetcher: typeof fetch = fetch,
+): Promise<{ ok: boolean; message: string }> {
+  const response = await fetcher(`${publicApiBaseUrl(apiBaseUrl)}/api/staff/auth/password-reset/confirm/`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken,
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ token: token.trim(), new_password: newPassword }),
+  })
+  if (!response.ok) {
+    return { ok: false, message: 'Password reset request is invalid or expired.' }
+  }
+  return { ok: true, message: 'Password reset complete. You can sign in with your new password.' }
+}
+
 export { sanitizeNextPath }

@@ -65,6 +65,7 @@ describe('bot / multi-click abuse — client governors', () => {
       validateBookingCustomer({
         fullName: 'Bot Name',
         email: 'bot@example.com',
+        emailConfirm: 'bot@example.com',
         phone: '0712345678',
         honeypot: 'Acme Corp SEO',
       }),
@@ -76,6 +77,7 @@ describe('bot / multi-click abuse — client governors', () => {
       validateBookingCustomer({
         fullName: '<script>alert(1)</script>',
         email: 'grace@example.com',
+        emailConfirm: 'grace@example.com',
         phone: '0712345678',
         honeypot: '',
       }),

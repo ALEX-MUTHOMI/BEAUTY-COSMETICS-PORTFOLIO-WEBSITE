@@ -1,3 +1,5 @@
+import json
+
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 
@@ -27,6 +29,17 @@ def _json(payload, status=200):
     response["Cache-Control"] = "no-store"
     response["X-Content-Type-Options"] = "nosniff"
     return response
+
+
+def _request_payload(request):
+    content_type = str(request.META.get("CONTENT_TYPE", "") or "")
+    if "application/json" in content_type:
+        try:
+            payload = json.loads(request.body.decode() or "{}")
+        except json.JSONDecodeError:
+            return {}
+        return payload if isinstance(payload, dict) else {}
+    return request.POST
 
 
 def _forbidden():
@@ -152,7 +165,7 @@ def staff_booking_contact_access(request, public_booking_id):
         payload = reveal_contact(
             public_booking_id,
             staff_user=request.user,
-            reason=request.POST.get("reason", ""),
+            reason=str(_request_payload(request).get("reason", "")),
             ip_address=request.META.get("REMOTE_ADDR", ""),
             user_agent=request.META.get("HTTP_USER_AGENT", ""),
         )

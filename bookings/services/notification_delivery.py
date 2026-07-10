@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from billing.redaction import hash_sensitive_value
 from bookings.models import Booking, BookingNotification
+from bookings.privacy import decrypt_value
 from bookings.services.email_provider import EmailProviderError, get_email_provider, redact_email_error
 from bookings.services.legal import NO_REFUND_NOTICE
 from bookings.services.receipt_pdf import ReceiptPDFService
@@ -40,6 +41,21 @@ def _safe_text(value, max_length=160):
 
 def _safe_download_url(receipt):
     return f"https://example.test/receipts/download/{receipt.receipt_number}"
+
+
+def resolve_notification_recipient_email(notification):
+    """Decrypt customer email at send boundary. Fail-closed if unavailable."""
+    profile = getattr(notification.booking, "customer_profile", None)
+    if profile is None or not getattr(profile, "email_encrypted", ""):
+        raise EmailProviderError("Recipient email address is unavailable for delivery.")
+    try:
+        email = decrypt_value(profile.email_encrypted)
+    except Exception as exc:  # noqa: BLE001 - fail closed on any decrypt/crypto error
+        raise EmailProviderError("Recipient email address is unavailable for delivery.") from exc
+    email = str(email or "").strip().lower()
+    if not email or "@" not in email or "***" in email:
+        raise EmailProviderError("Recipient email address is unavailable for delivery.")
+    return email
 
 
 def _attachment_for_receipt(receipt):
@@ -234,9 +250,11 @@ class BookingNotificationDeliveryService:
                 failed += 1
                 continue
             try:
+                recipient_email = resolve_notification_recipient_email(notification)
                 result = provider.send_email(
                     to_hash=notification.recipient_email_hash,
                     to_redacted=notification.recipient_email_redacted,
+                    to_address=recipient_email,
                     subject=payload.subject,
                     html=payload.html,
                     text=payload.text,

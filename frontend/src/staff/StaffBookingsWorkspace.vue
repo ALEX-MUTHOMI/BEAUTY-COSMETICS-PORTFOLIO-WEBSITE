@@ -1,20 +1,35 @@
 <template>
   <StaffPortalShell title="Bookings">
     <section class="toolbar" aria-label="Booking filters">
-      <label>Date <input v-model="selectedDate" type="date" /></label>
-      <label>Status <select><option>All bookings</option><option>Booking confirmed</option></select></label>
-      <label>Search <input placeholder="Client or booking reference" /></label>
+      <label>
+        Date
+        <input v-model="selectedDate" type="date" @change="loadSchedule" />
+      </label>
+      <label>
+        Status
+        <select v-model="statusFilter" @change="loadSchedule">
+          <option value="">All bookings</option>
+          <option value="confirmed">Booking confirmed</option>
+          <option value="held">Awaiting payment</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="completed">Completed</option>
+        </select>
+      </label>
+      <label>
+        Search
+        <input v-model="searchQuery" placeholder="Client or booking reference" />
+      </label>
     </section>
 
-    <section v-if="props.loading" class="table-card table-card--state" aria-label="Loading bookings">
+    <section v-if="showLoading" class="table-card table-card--state" aria-label="Loading bookings">
       <div v-for="index in 4" :key="index" class="skeleton-row" />
     </section>
-    <section v-else-if="props.errorMessage" class="table-card table-card--state" role="alert">
+    <section v-else-if="showError" class="table-card table-card--state" role="alert">
       <h2>Bookings could not load.</h2>
-      <p>{{ props.errorMessage }}</p>
-      <button type="button">Try again</button>
+      <p>{{ displayError }}</p>
+      <button type="button" @click="loadSchedule">Try again</button>
     </section>
-    <section v-else-if="props.empty" class="table-card table-card--state">
+    <section v-else-if="showEmpty" class="table-card table-card--state">
       <h2>No bookings found.</h2>
       <p>Try a different date, payment status, or booking reference.</p>
     </section>
@@ -27,7 +42,7 @@
         <span>Payment</span>
         <span>Actions</span>
       </div>
-      <article v-for="booking in bookings" :key="booking.publicBookingId" class="booking-row">
+      <article v-for="booking in visibleBookings" :key="booking.publicBookingId" class="booking-row">
         <strong>{{ booking.time }}</strong>
         <span>{{ booking.client }}</span>
         <span>{{ booking.service }}</span>
@@ -40,43 +55,96 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 import StaffPortalShell from './StaffPortalShell.vue'
 import StaffStatusChip from './StaffStatusChip.vue'
+import { getDailySchedule, type StaffAppointment } from './staffPortalApi'
 
 const props = withDefaults(
   defineProps<{
+    apiBaseUrl?: string
     loading?: boolean
     empty?: boolean
     errorMessage?: string
+    appointments?: StaffAppointment[]
   }>(),
   {
+    apiBaseUrl: '',
     loading: false,
     empty: false,
     errorMessage: '',
+    appointments: undefined,
   },
 )
 
 const selectedDate = ref(new Date().toISOString().slice(0, 10))
-const bookings = [
-  {
-    publicBookingId: 'BK-1001',
-    time: '09:00',
-    client: 'Grace M.',
-    service: 'Soft glam makeup',
-    bookingStatus: 'confirmed',
-    paymentStatus: 'paid',
+const statusFilter = ref('')
+const searchQuery = ref('')
+const internalLoading = ref(false)
+const internalError = ref('')
+const bookings = ref<StaffAppointment[]>([])
+
+const showLoading = computed(() => props.loading || internalLoading.value)
+const displayError = computed(() => props.errorMessage || internalError.value)
+const showError = computed(() => Boolean(displayError.value) && !showLoading.value)
+
+const sourceBookings = computed(() => {
+  if (props.appointments) return props.appointments
+  return bookings.value
+})
+
+const visibleBookings = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) return sourceBookings.value
+  return sourceBookings.value.filter((booking) => {
+    const haystack = `${booking.client} ${booking.service} ${booking.publicBookingId} ${booking.bookingReference || ''}`.toLowerCase()
+    return haystack.includes(query)
+  })
+})
+
+const showEmpty = computed(() => {
+  if (showLoading.value || showError.value) return false
+  if (props.empty) return true
+  return visibleBookings.value.length === 0
+})
+
+async function loadSchedule() {
+  if (props.appointments || props.loading || props.errorMessage || props.empty) return
+  if (!props.apiBaseUrl) {
+    bookings.value = []
+    return
+  }
+  internalLoading.value = true
+  internalError.value = ''
+  try {
+    const result = await getDailySchedule(props.apiBaseUrl, selectedDate.value, {
+      status: statusFilter.value || undefined,
+    })
+    if (!result.ok || !result.data) {
+      internalError.value = result.message || 'Please check your connection and try again.'
+      bookings.value = []
+      return
+    }
+    bookings.value = result.data.appointments
+  } catch {
+    internalError.value = 'Please check your connection and try again.'
+    bookings.value = []
+  } finally {
+    internalLoading.value = false
+  }
+}
+
+onMounted(() => {
+  void loadSchedule()
+})
+
+watch(
+  () => props.apiBaseUrl,
+  () => {
+    void loadSchedule()
   },
-  {
-    publicBookingId: 'BK-1002',
-    time: '11:30',
-    client: 'Amina K.',
-    service: 'Full package',
-    bookingStatus: 'held',
-    paymentStatus: 'payment_pending',
-  },
-]
+)
 </script>
 
 <style scoped>
@@ -98,16 +166,15 @@ const bookings = [
 .toolbar label {
   display: grid;
   gap: 0.4rem;
-  font-weight: 850;
+  font-weight: 800;
 }
 
 .toolbar input,
 .toolbar select {
-  min-height: 2.8rem;
+  min-height: 2.6rem;
   border: 1px solid rgba(55, 32, 22, 0.16);
-  border-radius: 16px;
-  padding: 0 0.8rem;
-  background: #fffaf3;
+  border-radius: 14px;
+  padding: 0 0.75rem;
 }
 
 .table-card {
@@ -117,58 +184,62 @@ const bookings = [
 .table-card--state {
   display: grid;
   gap: 0.75rem;
-  padding: 1rem;
-}
-
-.table-card--state h2,
-.table-card--state p {
-  margin: 0;
-}
-
-.table-card--state button {
-  width: max-content;
-  min-height: 2.7rem;
-  border: 0;
-  border-radius: 999px;
-  padding: 0 1rem;
-  color: #fffaf3;
-  background: #241611;
-  font-weight: 900;
-}
-
-.skeleton-row {
-  min-height: 3.4rem;
-  border-radius: 18px;
-  background: linear-gradient(90deg, #ead7c3, #fff8ef, #ead7c3);
-  animation: staff-shimmer 1.2s ease-in-out infinite;
-}
-
-@keyframes staff-shimmer {
-  50% {
-    opacity: 0.45;
-  }
+  padding: 1.25rem;
 }
 
 .table-card__head,
 .booking-row {
   display: grid;
-  grid-template-columns: 5rem 1fr 1.5fr 1fr 1fr 5rem;
-  gap: 1rem;
+  grid-template-columns: 0.8fr 1.1fr 1.4fr 1fr 1fr 0.7fr;
+  gap: 0.75rem;
   align-items: center;
-  padding: 1rem;
+  padding: 0.85rem 1rem;
 }
 
 .table-card__head {
-  color: #76513d;
-  background: #f3e2d0;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   font-weight: 900;
+  background: rgba(55, 32, 22, 0.06);
 }
 
-.booking-row:not(:last-child) {
-  border-bottom: 1px solid rgba(55, 32, 22, 0.1);
+.booking-row + .booking-row {
+  border-top: 1px solid rgba(55, 32, 22, 0.08);
 }
 
-@media (max-width: 820px) {
+.booking-row a,
+.table-card--state button {
+  min-height: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: #241611;
+  color: #fffaf3;
+  text-decoration: none;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.skeleton-row {
+  height: 3rem;
+  margin: 0.75rem 1rem;
+  border-radius: 16px;
+  background: linear-gradient(90deg, rgba(55, 32, 22, 0.06), rgba(55, 32, 22, 0.12), rgba(55, 32, 22, 0.06));
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 900px) {
   .toolbar,
   .table-card__head,
   .booking-row {

@@ -68,7 +68,9 @@ def _format_resend_attachments(attachments):
 class FakeEmailProvider:
     provider = "fake"
 
-    def send_email(self, *, to_hash, to_redacted, subject, html, text, attachments=None, metadata=None):
+    def send_email(
+        self, *, to_hash, to_redacted, subject, html, text, attachments=None, metadata=None, to_address=None
+    ):
         subject = _sanitize_header(subject)
         message_id = hash_sensitive_value(f"{to_hash}:{subject}:{metadata or {}}")[:32]
         safe_attachments = []
@@ -110,17 +112,31 @@ class ConsoleEmailProvider(FakeEmailProvider):
     provider = "console"
 
 
+def _resolve_delivery_address(*, to_address=None, to_redacted=""):
+    """Prefer decrypted recipient; optional staging override; never send to redacted placeholders."""
+    override = str(getattr(settings, "EMAIL_EXTERNAL_TEST_RECIPIENT", "") or "").strip()
+    if override and "@" in override and "***" not in override:
+        return override
+    candidate = str(to_address or "").strip()
+    if candidate and "@" in candidate and "***" not in candidate:
+        return candidate
+    raise EmailProviderError("Recipient email address is unavailable for delivery.")
+
+
 class ResendEmailProvider:
     provider = "resend"
 
-    def send_email(self, *, to_hash, to_redacted, subject, html, text, attachments=None, metadata=None):
+    def send_email(
+        self, *, to_hash, to_redacted, subject, html, text, attachments=None, metadata=None, to_address=None
+    ):
         api_key = getattr(settings, "EMAIL_PROVIDER_API_KEY", "")
         if not api_key:
             raise EmailProviderError("Email provider API key is not configured.")
         url = _validated_https_url(getattr(settings, "EMAIL_PROVIDER_BASE_URL", "https://api.resend.com/emails"))
+        recipient = _resolve_delivery_address(to_address=to_address, to_redacted=to_redacted)
         payload = {
             "from": getattr(settings, "EMAIL_FROM_ADDRESS", "no-reply@example.test"),
-            "to": [getattr(settings, "EMAIL_EXTERNAL_TEST_RECIPIENT", to_redacted)],
+            "to": [recipient],
             "reply_to": getattr(settings, "EMAIL_REPLY_TO_ADDRESS", ""),
             "subject": _sanitize_header(subject),
             "html": html,
@@ -148,17 +164,20 @@ class ResendEmailProvider:
 class MailgunEmailProvider:
     provider = "mailgun"
 
-    def send_email(self, *, to_hash, to_redacted, subject, html, text, attachments=None, metadata=None):
+    def send_email(
+        self, *, to_hash, to_redacted, subject, html, text, attachments=None, metadata=None, to_address=None
+    ):
         api_key = getattr(settings, "EMAIL_PROVIDER_API_KEY", "")
         if not api_key:
             raise EmailProviderError("Email provider API key is not configured.")
         url = _validated_https_url(getattr(settings, "EMAIL_PROVIDER_BASE_URL", ""))
         if not url:
             raise EmailProviderError("Email provider base URL is not configured.")
+        recipient = _resolve_delivery_address(to_address=to_address, to_redacted=to_redacted)
         data = urllib.parse.urlencode(
             {
                 "from": getattr(settings, "EMAIL_FROM_ADDRESS", "no-reply@example.test"),
-                "to": getattr(settings, "EMAIL_EXTERNAL_TEST_RECIPIENT", to_redacted),
+                "to": recipient,
                 "subject": _sanitize_header(subject),
                 "html": html,
                 "text": text,

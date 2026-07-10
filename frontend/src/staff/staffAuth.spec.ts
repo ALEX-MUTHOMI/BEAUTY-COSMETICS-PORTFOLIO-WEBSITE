@@ -6,6 +6,8 @@ import {
   buildStaffAppleLoginUrl,
   buildStaffGoogleLoginUrl,
   buildStaffLoginUrl,
+  confirmStaffPasswordReset,
+  requestStaffPasswordReset,
   sanitizeNextPath,
   staffPasswordLogin,
   storageContainsStaffSecrets,
@@ -141,5 +143,47 @@ describe('staff login panel', () => {
     expect(wrapper.find('input[name="password"]').attributes('type')).toBe('text')
     expect(storageContainsStaffSecrets(localStorage)).toBe(false)
     expect(storageContainsStaffSecrets(sessionStorage)).toBe(false)
+  })
+})
+
+describe('staff password reset client', () => {
+  it('posts reset request and confirm with CSRF and generic messages', async () => {
+    const requestFetcher = vi.fn<typeof fetch>().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue({ detail: 'ok' }),
+    } as unknown as Response)
+    const requestResult = await requestStaffPasswordReset(
+      'https://api.example.com',
+      'beautician@example.com',
+      'csrf-token',
+      requestFetcher,
+    )
+    expect(requestResult.ok).toBe(true)
+    expect(requestResult.message).toContain('reset instructions')
+    expect(requestFetcher).toHaveBeenCalledWith(
+      'https://api.example.com/api/staff/auth/password-reset/request/',
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'include',
+        headers: expect.objectContaining({ 'X-CSRFToken': 'csrf-token' }),
+      }),
+    )
+
+    const confirmFetcher = vi.fn<typeof fetch>().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: vi.fn().mockResolvedValue({ detail: 'raw' }),
+    } as unknown as Response)
+    const confirmResult = await confirmStaffPasswordReset(
+      'https://api.example.com',
+      'token-value',
+      'Nairobi salon passphrase secure 2026!',
+      'csrf-token',
+      confirmFetcher,
+    )
+    expect(confirmResult.ok).toBe(false)
+    expect(confirmResult.message).toContain('invalid or expired')
+    expect(JSON.stringify(confirmResult)).not.toContain('raw')
   })
 })

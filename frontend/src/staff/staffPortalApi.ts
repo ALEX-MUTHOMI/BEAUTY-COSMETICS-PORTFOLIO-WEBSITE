@@ -15,6 +15,7 @@ export interface StaffAppointment {
   rescheduleStatus: string
   amount?: string
   currency?: string
+  bookingReference?: string
 }
 
 export interface StaffSchedule {
@@ -192,12 +193,15 @@ export async function postStaffGalleryImage(
 export async function getDailySchedule(
   apiBaseUrl: string,
   date: string,
-  fetcher?: Fetcher,
+  options: { status?: string; bookingType?: string; fetcher?: Fetcher } = {},
 ): Promise<StaffApiResult<StaffSchedule>> {
+  const params = new URLSearchParams({ date })
+  if (options.status) params.set('status', options.status)
+  if (options.bookingType) params.set('booking_type', options.bookingType)
   const result = await staffFetch<Record<string, unknown>>(
     apiBaseUrl,
-    `/api/staff/bookings/schedule/?date=${encodeURIComponent(date)}`,
-    fetcher,
+    `/api/staff/bookings/schedule/?${params.toString()}`,
+    options.fetcher,
   )
   if (!result.ok || !result.data) {
     return { ...result, data: undefined }
@@ -220,13 +224,97 @@ export async function getDailySchedule(
           time: safeDisplayText(item.start_time_eat),
           client: safeDisplayText(item.customer_display_name_safe, 'Client'),
           service: safeDisplayText(item.service_summary, 'Selected service'),
-          bookingStatus: friendlyStatus(String(item.booking_status || 'confirmed')),
-          paymentStatus: friendlyStatus(String(item.payment_status || 'payment_pending')),
-          rescheduleStatus: friendlyStatus(String(item.reschedule_status || 'none')),
+          bookingStatus: String(item.booking_status || 'confirmed'),
+          paymentStatus: String(item.payment_status || 'payment_pending'),
+          rescheduleStatus: String(item.reschedule_status || 'none'),
           amount: item.amount ? safeDisplayText(item.amount) : undefined,
           currency: item.currency ? safeDisplayText(item.currency) : undefined,
+          bookingReference: safeDisplayText(item.booking_reference || item.public_booking_id),
         }
       }),
+    },
+  }
+}
+
+export interface StaffBookingDetailData {
+  publicBookingId: string
+  localDate: string
+  time: string
+  endTime: string
+  client: string
+  service: string
+  bookingStatus: string
+  paymentStatus: string
+  amount: string
+  currency: string
+  resource: string
+}
+
+export async function getStaffBookingDetail(
+  apiBaseUrl: string,
+  publicBookingId: string,
+  fetcher?: Fetcher,
+): Promise<StaffApiResult<StaffBookingDetailData>> {
+  const result = await staffFetch<Record<string, unknown>>(
+    apiBaseUrl,
+    `/api/staff/bookings/${encodeURIComponent(publicBookingId)}/`,
+    fetcher,
+  )
+  if (!result.ok || !result.data) {
+    return { ...result, data: undefined }
+  }
+  return {
+    ...result,
+    data: {
+      publicBookingId: safeDisplayText(result.data.public_booking_id || publicBookingId),
+      localDate: safeDisplayText(result.data.local_date),
+      time: safeDisplayText(result.data.start_time_eat),
+      endTime: safeDisplayText(result.data.end_time_eat),
+      client: safeDisplayText(result.data.customer_display_name_safe, 'Client'),
+      service: safeDisplayText(result.data.service_summary, 'Selected service'),
+      bookingStatus: String(result.data.booking_status || 'confirmed'),
+      paymentStatus: String(result.data.payment_status || 'payment_pending'),
+      amount: safeDisplayText(result.data.amount),
+      currency: safeDisplayText(result.data.currency, 'KES'),
+      resource: safeDisplayText(result.data.resource),
+    },
+  }
+}
+
+export async function postStaffContactAccess(
+  apiBaseUrl: string,
+  publicBookingId: string,
+  reason: string,
+  csrfToken: string,
+  fetcher: Fetcher = fetch,
+): Promise<StaffApiResult<{ email: string; phone: string; client: string }>> {
+  const response = await fetcher(`${apiBase(apiBaseUrl)}/api/staff/bookings/${encodeURIComponent(publicBookingId)}/contact-access/`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken,
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ reason }),
+  })
+  const data = await safeJson(response)
+  if (!response.ok || typeof data !== 'object' || data === null) {
+    return {
+      ok: false,
+      status: response.status,
+      sessionExpired: response.status === 401 || response.status === 403,
+      message: 'Contact details could not be revealed. Confirm your password and try again.',
+    }
+  }
+  const payload = data as Record<string, unknown>
+  return {
+    ok: true,
+    status: response.status,
+    data: {
+      email: safeDisplayText(payload.email),
+      phone: safeDisplayText(payload.phone),
+      client: safeDisplayText(payload.customer_display_name_safe, 'Client'),
     },
   }
 }

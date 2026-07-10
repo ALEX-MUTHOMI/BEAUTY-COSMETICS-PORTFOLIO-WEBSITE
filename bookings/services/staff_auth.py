@@ -256,7 +256,7 @@ def staff_profile(user):
             for code in [permission.split(".", 1)[1]]
             if permission.startswith("bookings.") and code in STAFF_PORTAL_PERMISSION_CODES
         ),
-        "next": "/staff/portal",
+        "next": "/staff/dashboard",
     }
 
 
