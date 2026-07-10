@@ -1,6 +1,8 @@
-"""Logging filters that keep request-scoped identifiers out of console output."""
+"""Logging filters that keep request-scoped identifiers and PII out of console output."""
 
 import logging
+
+from core.sentry_scrubber import scrub_pii_text
 
 
 class RequestPathRedactionFilter(logging.Filter):
@@ -19,4 +21,19 @@ class RequestPathRedactionFilter(logging.Filter):
 
         record.msg = "http_request status=%s route=%s"
         record.args = (status_code, route)
+        return True
+
+
+class PiiMessageRedactionFilter(logging.Filter):
+    """Scrub email / Kenyan MSISDN / tokenish secrets from log messages (DPA/GDPR)."""
+
+    def filter(self, record):
+        try:
+            message = record.getMessage()
+            scrubbed = scrub_pii_text(message)
+            if scrubbed != message:
+                record.msg = scrubbed
+                record.args = ()
+        except Exception:  # noqa: BLE001 — never break logging
+            return True
         return True

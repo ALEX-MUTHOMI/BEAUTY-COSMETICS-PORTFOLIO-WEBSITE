@@ -73,8 +73,8 @@ def _staff_oauth_start(request, provider):
     response_mode = _oauth_setting(provider, "RESPONSE_MODE", "")
 
     if not client_id or not redirect_uri or not auth_url:
-        label = "Google" if provider == "google" else "Apple"
-        return _json({"detail": f"Staff {label} sign-in is not configured."}, status=503)
+        # Fail closed: do not advertise a half-implemented OAuth surface (no 503 stub).
+        return _json({"detail": "Not found."}, status=404)
 
     state = secrets.token_urlsafe(32)
     request.session[f"staff_{provider}_oauth_state"] = state

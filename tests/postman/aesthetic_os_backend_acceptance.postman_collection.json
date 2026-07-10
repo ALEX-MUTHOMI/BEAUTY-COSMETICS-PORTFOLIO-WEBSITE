@@ -135,7 +135,10 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.response.to.have.status(200);",
-                  "pm.expect(pm.response.json()).to.eql({ status: 'ok' });"
+                  "const body = pm.response.json();",
+                  "pm.expect(body.status).to.eql('ok');",
+                  "pm.expect(body.checks.database).to.eql('ok');",
+                  "pm.expect(body.checks.redis).to.eql('ok');"
                 ]
               }
             }

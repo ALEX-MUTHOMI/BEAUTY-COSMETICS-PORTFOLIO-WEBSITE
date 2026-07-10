@@ -1449,3 +1449,41 @@ class StaffPasswordResetChallenge(AuditMixin):
     def clean(self):
         _require_aware_utc(self.expires_at, "expires_at")
         _require_aware_utc(self.used_at, "used_at")
+
+
+class PrivacyRightsRequest(AuditMixin):
+    """
+    Durable GDPR / Kenya DPA 2019 subject-rights ticket.
+
+    Stores peppered contact hashes only — never cleartext email/MSISDN.
+    Fulfilment is staff-operated; this row is the audit trail for intake.
+    """
+
+    class RequestType(models.TextChoices):
+        ACCESS = "access", "Access"
+        ERASURE = "erasure", "Erasure"
+        RECTIFICATION = "rectification", "Rectification"
+        OBJECTION = "objection", "Objection"
+
+    class Status(models.TextChoices):
+        ACCEPTED = "accepted", "Accepted"
+        IN_PROGRESS = "in_progress", "In Progress"
+        FULFILLED = "fulfilled", "Fulfilled"
+        REJECTED = "rejected", "Rejected"
+
+    ticket_id = models.CharField(max_length=32, unique=True, db_index=True)
+    request_type = models.CharField(max_length=32, choices=RequestType.choices)
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.ACCEPTED)
+    email_hash_hmac = models.CharField(max_length=128, db_index=True)
+    phone_hash_hmac = models.CharField(max_length=128, blank=True, db_index=True)
+    details_hash_hmac = models.CharField(max_length=128, blank=True)
+    correlation_id = models.CharField(max_length=128, blank=True)
+    ip_hash_hmac = models.CharField(max_length=128, blank=True)
+    user_agent_hash_hmac = models.CharField(max_length=128, blank=True)
+
+    class Meta:
+        db_table = "booking_privacy_rights_requests"
+        indexes = [
+            models.Index(fields=["status", "created_at"], name="privacy_rights_status_time_idx"),
+            models.Index(fields=["request_type", "created_at"], name="privacy_rights_type_time_idx"),
+        ]

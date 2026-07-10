@@ -14,6 +14,7 @@ def test_booking_pii_data_map_covers_contractual_fields():
         assert meta["retention"]
 
 
+@pytest.mark.django_db
 def test_accept_privacy_rights_request_hashes_contact_and_returns_ticket():
     ticket = accept_privacy_rights_request(
         {
@@ -28,10 +29,37 @@ def test_accept_privacy_rights_request_hashes_contact_and_returns_ticket():
     assert ticket.status == "accepted"
     assert ticket.request_type == "access"
     assert len(ticket.ticket_id) == 20
+    from bookings.models import PrivacyRightsRequest
+
+    row = PrivacyRightsRequest.objects.get(ticket_id=ticket.ticket_id)
+    assert row.email_hash_hmac
+    assert row.phone_hash_hmac
+    assert "grace@" not in row.email_hash_hmac
+    assert "+254" not in row.phone_hash_hmac
 
 
+@pytest.mark.django_db
 def test_accept_privacy_rights_request_rejects_invalid_type():
     assert accept_privacy_rights_request({"request_type": "dump_all", "email": "grace@example.com"}) is None
+
+
+@pytest.mark.django_db
+def test_privacy_rights_logs_never_contain_cleartext_pii(caplog):
+    import logging
+
+    with caplog.at_level(logging.INFO, logger="bookings.privacy_rights"):
+        accept_privacy_rights_request(
+            {
+                "request_type": "erasure",
+                "email": "grace@example.com",
+                "phone": "+254712345678",
+            },
+            correlation_id="corr-pii",
+        )
+    joined = " ".join(r.message for r in caplog.records)
+    assert "grace@example.com" not in joined
+    assert "+254712345678" not in joined
+    assert "privacy_rights_accepted" in joined
 
 
 @pytest.mark.django_db

@@ -213,3 +213,5 @@ def test_celery_beat_schedule_registers_expiry_sweeps(settings):
     assert "sweep-stale-booking-holds" in schedule
     assert schedule["sweep-stale-booking-holds"]["task"] == "bookings.tasks.sweep_stale_holds"
     assert "sweep-expired-checkout-sessions" in schedule
+    assert "sweep-booking-reminders" in schedule
+    assert schedule["sweep-booking-reminders"]["task"] == "bookings.tasks.sweep_booking_reminders"

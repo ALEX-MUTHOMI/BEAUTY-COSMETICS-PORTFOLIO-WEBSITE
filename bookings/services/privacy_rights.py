@@ -2,7 +2,7 @@
 GDPR + Kenya Data Protection Act 2019 — subject-rights intake (ticketed).
 
 This is not an anonymous data dump. Requests are accepted, rate-limited, and
-audited. Fulfilment is staff-operated with retention constraints.
+audited to a durable row with peppered hashes only. Fulfilment is staff-operated.
 """
 
 from __future__ import annotations
@@ -45,8 +45,15 @@ class PrivacyRightsTicket:
     status: str
 
 
-def _hash_contact(value: str) -> str:
-    return hashlib.sha256(value.strip().lower().encode("utf-8")).hexdigest()[:16]
+def _details_hash(details: str) -> str:
+    if not details:
+        return ""
+    import hmac as hmac_mod
+
+    from django.conf import settings
+
+    pepper = (getattr(settings, "PII_HASH_PEPPER", "") or "debug-only-booking-secret").encode()
+    return hmac_mod.new(pepper, details.strip().lower().encode("utf-8"), hashlib.sha256).hexdigest()
 
 
 def validate_privacy_rights_payload(payload: dict[str, Any]) -> tuple[dict[str, str] | None, str | None]:
@@ -69,7 +76,16 @@ def validate_privacy_rights_payload(payload: dict[str, Any]) -> tuple[dict[str, 
     }, None
 
 
-def accept_privacy_rights_request(payload: dict[str, Any], *, correlation_id: str = "") -> PrivacyRightsTicket | None:
+def accept_privacy_rights_request(
+    payload: dict[str, Any],
+    *,
+    correlation_id: str = "",
+    request_context: dict[str, Any] | None = None,
+) -> PrivacyRightsTicket | None:
+    from bookings.models import PrivacyRightsRequest
+    from bookings.privacy import hmac_email_hash, hmac_phone_hash
+
+    request_context = request_context or {}
     cleaned, error = validate_privacy_rights_payload(payload)
     if cleaned is None:
         logger.info(
@@ -81,13 +97,35 @@ def accept_privacy_rights_request(payload: dict[str, Any], *, correlation_id: st
 
     ticket_material = f"{cleaned['request_type']}:{cleaned['email']}:{correlation_id}"
     ticket_id = hashlib.sha256(ticket_material.encode("utf-8")).hexdigest()[:20]
+    email_hash = hmac_email_hash(cleaned["email"])
+    phone_hash = hmac_phone_hash(cleaned["phone"]) if cleaned["phone"] else ""
+    details_hash = _details_hash(cleaned["details"])
+    ip_hash = ""
+    ua_hash = ""
+    if request_context.get("ip"):
+        ip_hash = hashlib.sha256(str(request_context["ip"]).encode("utf-8")).hexdigest()
+    if request_context.get("user_agent"):
+        ua_hash = hashlib.sha256(str(request_context["user_agent"]).encode("utf-8")).hexdigest()
+
+    PrivacyRightsRequest.objects.create(
+        ticket_id=ticket_id,
+        request_type=cleaned["request_type"],
+        status=PrivacyRightsRequest.Status.ACCEPTED,
+        email_hash_hmac=email_hash,
+        phone_hash_hmac=phone_hash,
+        details_hash_hmac=details_hash,
+        correlation_id=(correlation_id or "")[:128],
+        ip_hash_hmac=ip_hash,
+        user_agent_hash_hmac=ua_hash,
+    )
+
     # Audit without storing cleartext PII in logs (DPA 2019 security of processing).
     logger.info(
         "privacy_rights_accepted ticket=%s type=%s email_hash=%s phone_hash=%s correlation_id=%s",
         ticket_id,
         cleaned["request_type"],
-        _hash_contact(cleaned["email"]),
-        _hash_contact(cleaned["phone"]) if cleaned["phone"] else "none",
+        email_hash[:16],
+        phone_hash[:16] if phone_hash else "none",
         correlation_id or "none",
     )
     return PrivacyRightsTicket(ticket_id=ticket_id, request_type=cleaned["request_type"], status="accepted")

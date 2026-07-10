@@ -92,7 +92,10 @@ def test_api_health_alias_and_csrf_bootstrap_are_json_safe():
     csrf = client.get("/api/csrf/", secure=True)
 
     assert health.status_code == 200
-    assert health.json() == {"status": "ok"}
+    health_body = health.json()
+    assert health_body["status"] == "ok"
+    assert health_body.get("checks", {}).get("database") == "ok"
+    assert health_body.get("checks", {}).get("redis") == "ok"
     assert csrf.status_code == 200
     assert csrf.cookies.get("csrftoken")
     assert csrf.json()["csrf_token"]

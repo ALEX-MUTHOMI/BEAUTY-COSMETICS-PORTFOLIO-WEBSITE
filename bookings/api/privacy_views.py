@@ -38,7 +38,14 @@ def privacy_rights_request(request):
         return JsonResponse(GENERIC_REJECTED, status=400)
 
     correlation_id = getattr(request, "correlation_id", "") or request.headers.get("X-Correlation-ID", "")
-    ticket = accept_privacy_rights_request(payload, correlation_id=str(correlation_id))
+    ticket = accept_privacy_rights_request(
+        payload,
+        correlation_id=str(correlation_id),
+        request_context={
+            "ip": request.META.get("REMOTE_ADDR", ""),
+            "user_agent": request.META.get("HTTP_USER_AGENT", ""),
+        },
+    )
     if ticket is None:
         return JsonResponse(GENERIC_REJECTED, status=400)
 

@@ -39,15 +39,15 @@ def test_staff_login_endpoint_cookie_session_generic_errors_and_non_staff_reject
 @pytest.mark.django_db
 def test_staff_google_start_is_safe_when_not_configured():
     response = Client().get("/api/staff/auth/google/start/?next=/staff/portal", secure=True)
-    assert response.status_code == 503
-    assert response.json() == {"detail": "Staff Google sign-in is not configured."}
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found."}
 
 
 @pytest.mark.django_db
 def test_staff_apple_start_is_safe_when_not_configured():
     response = Client().get("/api/staff/auth/apple/start/?next=/staff/dashboard", secure=True)
-    assert response.status_code == 503
-    assert response.json() == {"detail": "Staff Apple sign-in is not configured."}
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found."}
 
 
 @pytest.mark.django_db
