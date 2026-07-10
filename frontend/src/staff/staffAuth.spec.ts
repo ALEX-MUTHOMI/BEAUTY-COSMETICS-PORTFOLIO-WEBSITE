@@ -151,7 +151,7 @@ describe('staff password reset client', () => {
     const requestFetcher = vi.fn<typeof fetch>().mockResolvedValue({
       ok: true,
       status: 200,
-      json: vi.fn().mockResolvedValue({ detail: 'ok' }),
+      json: vi.fn<() => Promise<{ detail: string }>>().mockResolvedValue({ detail: 'ok' }),
     } as unknown as Response)
     const requestResult = await requestStaffPasswordReset(
       'https://api.example.com',
@@ -173,7 +173,7 @@ describe('staff password reset client', () => {
     const confirmFetcher = vi.fn<typeof fetch>().mockResolvedValue({
       ok: false,
       status: 400,
-      json: vi.fn().mockResolvedValue({ detail: 'raw' }),
+      json: vi.fn<() => Promise<{ detail: string }>>().mockResolvedValue({ detail: 'raw' }),
     } as unknown as Response)
     const confirmResult = await confirmStaffPasswordReset(
       'https://api.example.com',
