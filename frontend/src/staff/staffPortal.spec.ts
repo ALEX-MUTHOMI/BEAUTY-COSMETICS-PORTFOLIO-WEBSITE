@@ -153,15 +153,17 @@ describe('staff portal API client', () => {
     const result = await getDailySchedule('https://api.example.com', '2026-06-06', { fetcher })
 
     expect(result.data?.dayType).toBe('Full-package day')
-    expect(result.data?.appointments[0]).toMatchObject({
+    const appointment = result.data?.appointments[0]
+    expect(appointment).toBeDefined()
+    expect(appointment).toMatchObject({
       publicBookingId: 'BK-1001',
       bookingStatus: 'confirmed',
       paymentStatus: 'payment_pending',
       rescheduleStatus: 'manual_review',
     })
-    expect(friendlyStatus(result.data!.appointments[0].bookingStatus)).toBe('Booking confirmed')
-    expect(friendlyStatus(result.data!.appointments[0].paymentStatus)).toBe('Awaiting payment')
-    expect(friendlyStatus(result.data!.appointments[0].rescheduleStatus)).toBe('Needs attention')
+    expect(friendlyStatus(appointment?.bookingStatus)).toBe('Booking confirmed')
+    expect(friendlyStatus(appointment?.paymentStatus)).toBe('Awaiting payment')
+    expect(friendlyStatus(appointment?.rescheduleStatus)).toBe('Needs attention')
   })
 
   it('marks 401/403 as session-expired without exposing backend error bodies', async () => {
