@@ -4,7 +4,7 @@
       <StaffSheeBrand to="/staff/login" size="sm" />
       <p class="eyebrow">Staff recovery</p>
       <h1>Reset your staff password</h1>
-      <p class="lead">Enter the email for your staff account. We only send instructions when the account exists.</p>
+      <p class="lead">Enter your staff email and we&apos;ll send next steps.</p>
       <form @submit.prevent="submit">
         <label>
           Email

@@ -1,22 +1,20 @@
 <template>
   <section class="staff-login" aria-labelledby="staff-login-title">
-    <div class="staff-login__stage">
-      <div class="staff-login__brand staff-login__brand--enter">
-        <div class="staff-login__brand-top">
-          <StaffSheeBrand to="/staff/login" size="lg" />
-          <StaffThemeToggle />
-        </div>
-        <p class="staff-login__eyebrow">Staff portal</p>
-        <h1 id="staff-login-title" class="staff-login__brand-name">Shee Aesthetics</h1>
-        <p class="staff-login__purpose">Staff desk</p>
-      </div>
+    <header class="staff-login__header">
+      <a class="staff-login__logo" href="/staff/login" aria-label="Shee Aesthetics">
+        <span class="staff-login__logo-mark" aria-hidden="true" />
+        <span class="staff-login__logo-text">
+          <span class="staff-login__logo-name">Shee</span>
+          <span class="staff-login__logo-tag">Aesthetics</span>
+        </span>
+      </a>
+    </header>
 
-      <form class="staff-login__card staff-login__card--enter" novalidate @submit.prevent="submitLogin">
-        <div class="staff-login__card-head">
-          <p class="staff-login__eyebrow">Beautician sign in</p>
-          <p class="staff-login__lede">Use your staff email and password. Sessions are cookie-based and staff-only.</p>
-        </div>
+    <div class="staff-login__panel">
+      <h1 id="staff-login-title">Welcome back</h1>
+      <p class="staff-login__lede">Sign in to your staff desk.</p>
 
+      <form class="staff-login__form" novalidate @submit.prevent="submitLogin">
         <input type="hidden" name="csrfmiddlewaretoken" :value="csrfToken" autocomplete="off" />
 
         <label>
@@ -33,7 +31,7 @@
 
         <label>
           <span>Password</span>
-          <span class="staff-login__password-control">
+          <span class="staff-login__password-row">
             <input
               v-model="password"
               autocomplete="current-password"
@@ -42,7 +40,7 @@
               required
               :type="showPassword ? 'text' : 'password'"
             />
-            <button type="button" class="staff-login__ghost" @click="showPassword = !showPassword">
+            <button type="button" class="staff-login__text-btn" @click="showPassword = !showPassword">
               {{ showPassword ? 'Hide' : 'Show' }}
             </button>
           </span>
@@ -54,33 +52,31 @@
 
         <button class="staff-login__primary" type="submit" :disabled="submitting">
           <span v-if="submitting" class="staff-login__spinner" aria-hidden="true" />
-          {{ submitting ? 'Checking access...' : 'Sign in' }}
+          {{ submitting ? 'Signing in…' : 'Sign in' }}
         </button>
+      </form>
 
-        <a
-          v-if="googleEnabled"
-          class="staff-login__provider"
-          :href="googleLoginUrl"
-          rel="nofollow"
-        >
+      <div class="staff-login__divider" aria-hidden="true"><span>or</span></div>
+
+      <div class="staff-login__providers">
+        <a class="staff-login__provider" :href="googleLoginUrl" rel="nofollow">
+          <span class="staff-login__provider-icon staff-login__provider-icon--google" aria-hidden="true">G</span>
           Continue with Google
         </a>
-
-        <a
-          v-if="appleEnabled"
-          class="staff-login__provider"
-          :href="appleLoginUrl"
-          rel="nofollow"
-        >
+        <a class="staff-login__provider" :href="appleLoginUrl" rel="nofollow">
+          <span class="staff-login__provider-icon staff-login__provider-icon--apple" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M16.7 12.6c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.7-1.3-.1-2.5.8-3.1.8-.7 0-1.7-.7-2.8-.7-1.4 0-2.8.9-3.5 2.2-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.6 2.1 2.7 2.1 1.1 0 1.5-.7 2.8-.7s1.7.7 2.8.7c1.2 0 1.9-1 2.6-2 .8-1.1 1.1-2.2 1.1-2.3-.1 0-2.1-.8-2.1-3.7zM14.4 6.5c.6-.7 1-1.7.9-2.7-0.9.1-1.9.6-2.5 1.3-.6.6-1.1 1.6-1 2.6 1 .1 1.9-.5 2.6-1.2z"
+              />
+            </svg>
+          </span>
           Continue with Apple
         </a>
+      </div>
 
-        <a class="staff-login__reset" :href="passwordResetPath">Forgot your staff password?</a>
-
-        <p class="staff-login__fineprint">
-          Do not use this screen on a shared device without signing out afterwards.
-        </p>
-      </form>
+      <a class="staff-login__reset" :href="passwordResetPath">Forgot password?</a>
     </div>
   </section>
 </template>
@@ -88,10 +84,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import StaffSheeBrand from './StaffSheeBrand.vue'
 import { createClickGate } from './botGuard'
 import { buildStaffAppleLoginUrl, buildStaffGoogleLoginUrl, staffPasswordLogin } from './staffAuth'
-import StaffThemeToggle from './StaffThemeToggle.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -99,14 +93,15 @@ const props = withDefaults(
     csrfToken: string
     nextPath?: string
     passwordResetPath?: string
+    /** Kept for page wiring; provider buttons are always shown and hit fail-closed start URLs. */
     googleEnabled?: boolean
     appleEnabled?: boolean
   }>(),
   {
     nextPath: '/staff/dashboard',
     passwordResetPath: '/staff/forgot-password',
-    googleEnabled: false,
-    appleEnabled: false,
+    googleEnabled: true,
+    appleEnabled: true,
   },
 )
 
@@ -126,7 +121,7 @@ const appleLoginUrl = computed(() => buildStaffAppleLoginUrl(props.apiBaseUrl, p
 
 async function submitLogin() {
   if (!clickGate.canRun('staff-login')) {
-    statusMessage.value = 'Please wait a moment before trying again.'
+    statusMessage.value = 'Please wait a moment.'
     return
   }
   submitting.value = true
@@ -158,179 +153,228 @@ async function submitLogin() {
 
 <style scoped>
 .staff-login {
-  --staff-ink: var(--color-ink, #27272a);
-  --staff-muted: var(--color-muted, #89858d);
-  --staff-cream: var(--color-cream, #fcf5f5);
-  --staff-rose: var(--color-rose, #de968d);
-  --staff-rose-dark: var(--color-rose-dark, #c97f76);
-  --staff-rose-soft: var(--color-rose-soft, #f5e8e6);
-  --staff-paper: var(--color-paper, #ffffff);
-  --staff-line: var(--color-line, rgba(39, 37, 42, 0.1));
-  --staff-display: var(--font-display, 'Libre Baskerville', Georgia, serif);
-  --staff-body: var(--font-body, 'Manrope', ui-sans-serif, system-ui, sans-serif);
   min-height: 100vh;
   display: grid;
-  place-items: center;
-  padding: clamp(1rem, 4vw, 2.5rem);
-  color: var(--staff-ink);
-  font-family: var(--staff-body);
+  grid-template-rows: auto 1fr;
+  color: var(--color-ink, #27272a);
+  font-family: var(--font-body, 'Manrope', ui-sans-serif, system-ui, sans-serif);
   background:
-    radial-gradient(circle at 12% 18%, rgba(222, 150, 141, 0.28), transparent 22rem),
-    radial-gradient(circle at 88% 8%, rgba(245, 232, 230, 0.95), transparent 18rem),
-    linear-gradient(165deg, var(--staff-cream) 0%, #fff 42%, var(--staff-rose-soft) 100%);
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(222, 150, 141, 0.22), transparent 55%),
+    linear-gradient(180deg, var(--color-cream, #fcf5f5) 0%, #fff 48%, var(--color-rose-soft, #f5e8e6) 100%);
 }
 
-:global(html[data-staff-theme='dark']) .staff-login {
-  --staff-ink: #f5f0f2;
-  --staff-muted: #b7b0b6;
-  --staff-cream: #1a1719;
-  --staff-rose: #e4a79f;
-  --staff-rose-dark: #d18f86;
-  --staff-rose-soft: #2a2224;
-  --staff-paper: #221e21;
-  --staff-line: rgba(245, 240, 242, 0.12);
-  background:
-    radial-gradient(circle at 12% 18%, rgba(222, 150, 141, 0.18), transparent 22rem),
-    linear-gradient(165deg, #141214 0%, #1c181a 48%, #2a2224 100%);
-}
-
-.staff-login__stage {
-  width: min(100%, 28rem);
-  display: grid;
-  gap: 1.5rem;
-}
-
-.staff-login__brand,
-.staff-login__card {
-  border: 1px solid var(--staff-line);
-  background: color-mix(in srgb, var(--staff-paper) 92%, transparent);
-  box-shadow: var(--shadow-card, 0 0 40px rgba(39, 37, 42, 0.06));
-}
-
-.staff-login__brand {
-  display: grid;
-  gap: 0.65rem;
-  padding: clamp(1.25rem, 4vw, 2rem);
-}
-
-.staff-login__brand-top {
+.staff-login__header {
   display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
   align-items: center;
+  padding: 1.25rem clamp(1.25rem, 4vw, 2.5rem);
 }
 
-.staff-login__eyebrow {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--staff-rose-dark);
-  font: 600 0.72rem/1.2 var(--staff-body);
+.staff-login__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  text-decoration: none;
+  color: inherit;
 }
 
-.staff-login__brand-name {
-  margin: 0;
-  max-width: 12ch;
-  font-family: var(--staff-display);
-  font-size: clamp(2.4rem, 10vw, 3.4rem);
-  font-weight: 700;
+.staff-login__logo-mark {
+  display: block;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: var(--color-rose, #de968d);
+  background-image: url('/images/logo-mark.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 30px 30px;
+  box-shadow: 0 4px 14px rgba(222, 150, 141, 0.35);
+  /* Invert white mark on rose disc when the PNG is dark. */
+  filter: none;
+}
+
+.staff-login__logo-text {
+  display: flex;
+  flex-direction: column;
   line-height: 1.05;
-  letter-spacing: -0.02em;
 }
 
-.staff-login__purpose {
-  margin: 0;
-  color: var(--staff-muted);
-  font: 500 1rem/1.5 var(--staff-body);
+.staff-login__logo-name {
+  font-family: var(--font-script, 'Parisienne', cursive);
+  font-size: 2.15rem;
+  font-weight: 400;
 }
 
-.staff-login__card {
+.staff-login__logo-tag {
+  margin-top: 0.1rem;
+  font-family: var(--font-display, 'Libre Baskerville', Georgia, serif);
+  font-size: 0.72rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--color-muted, #89858d);
+}
+
+.staff-login__panel {
+  width: min(100% - 2rem, 26rem);
+  margin: 0 auto auto;
+  padding: 0 0 3rem;
   display: grid;
   gap: 1rem;
-  padding: clamp(1.25rem, 4vw, 2rem);
+  animation: staff-login-rise 0.7s var(--ease-story, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
-.staff-login__card-head {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.staff-login__lede,
-.staff-login__status,
-.staff-login__reset,
-.staff-login__fineprint {
+.staff-login h1 {
   margin: 0;
-  color: var(--staff-muted);
-  font: 0.92rem/1.55 var(--staff-body);
+  font-family: var(--font-display, 'Libre Baskerville', Georgia, serif);
+  font-size: clamp(1.85rem, 5vw, 2.35rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.staff-login__lede {
+  margin: -0.35rem 0 0.35rem;
+  color: var(--color-muted, #89858d);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.staff-login__form {
+  display: grid;
+  gap: 0.9rem;
 }
 
 .staff-login label {
   display: grid;
-  gap: 0.45rem;
-  font: 600 0.82rem/1.2 var(--staff-body);
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
-.staff-login input {
+.staff-login input[type='email'],
+.staff-login input[type='password'],
+.staff-login input[type='text'] {
   width: 100%;
-  min-height: 3.1rem;
-  border: 1px solid var(--staff-line);
+  min-height: 3rem;
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.12));
   border-radius: 0;
-  padding: 0 1rem;
-  background: var(--staff-paper);
-  color: var(--staff-ink);
-  font: 1rem var(--staff-body);
+  padding: 0 0.95rem;
+  background: #fff;
+  color: inherit;
+  font: 1rem/1.2 var(--font-body, 'Manrope', ui-sans-serif, system-ui, sans-serif);
 }
 
-.staff-login__password-control {
+.staff-login input:focus {
+  outline: 2px solid var(--color-rose, #de968d);
+  outline-offset: 1px;
+}
+
+.staff-login__password-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.5rem;
+  align-items: center;
+}
+
+.staff-login__text-btn {
+  min-height: 3rem;
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.12));
+  background: #fff;
+  color: var(--color-ink, #27272a);
+  padding: 0 0.9rem;
+  cursor: pointer;
+  font: 600 0.85rem/1 var(--font-body, 'Manrope', ui-sans-serif, system-ui, sans-serif);
 }
 
 .staff-login__primary,
 .staff-login__provider {
-  min-height: 3rem;
+  min-height: 3.1rem;
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  gap: 0.7rem;
-  border-radius: 0;
+  gap: 0.65rem;
   text-decoration: none;
-  font: 600 0.78rem/1 var(--staff-body);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font: 600 0.95rem/1 var(--font-body, 'Manrope', ui-sans-serif, system-ui, sans-serif);
+  cursor: pointer;
 }
 
 .staff-login__primary {
   border: 0;
   color: #fff;
-  background: var(--staff-rose);
-  cursor: pointer;
+  background: var(--color-rose, #de968d);
+  transition: background 0.2s var(--ease-story, ease);
 }
 
 .staff-login__primary:hover:not(:disabled) {
-  background: var(--staff-rose-dark);
+  background: var(--color-rose-dark, #c97f76);
 }
 
 .staff-login__primary:disabled {
+  opacity: 0.7;
   cursor: wait;
-  opacity: 0.68;
 }
 
-.staff-login__ghost {
-  min-width: 4.4rem;
-  border: 1px solid var(--staff-line);
-  border-radius: 0;
-  color: var(--staff-ink);
-  background: var(--staff-cream);
-  cursor: pointer;
-  font: 600 0.82rem var(--staff-body);
+.staff-login__divider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  color: var(--color-muted, #89858d);
+  font-size: 0.8rem;
+}
+
+.staff-login__divider::before,
+.staff-login__divider::after {
+  content: '';
+  height: 1px;
+  background: var(--color-line, rgba(39, 37, 42, 0.12));
+}
+
+.staff-login__providers {
+  display: grid;
+  gap: 0.65rem;
 }
 
 .staff-login__provider {
-  border: 1px solid var(--staff-line);
-  color: var(--staff-ink);
-  background: var(--staff-cream);
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.14));
+  background: #fff;
+  color: var(--color-ink, #27272a);
+}
+
+.staff-login__provider:hover {
+  border-color: rgba(39, 37, 42, 0.28);
+}
+
+.staff-login__provider-icon {
+  width: 1.55rem;
+  height: 1.55rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.staff-login__provider-icon--google {
+  color: #fff;
+  background: #1a73e8;
+}
+
+.staff-login__provider-icon--apple {
+  color: #fff;
+  background: #111;
+}
+
+.staff-login__status {
+  margin: 0;
+  color: var(--color-muted, #89858d);
+  font-size: 0.9rem;
+}
+
+.staff-login__reset {
+  justify-self: center;
+  margin-top: 0.25rem;
+  color: var(--color-muted, #89858d);
+  font-size: 0.9rem;
 }
 
 .staff-login__spinner {
@@ -342,28 +386,16 @@ async function submitLogin() {
   animation: staff-spin 0.8s linear infinite;
 }
 
-.staff-login__reset {
-  justify-self: center;
-}
-
-.staff-login__brand--enter {
-  animation: staff-rise 0.7s var(--ease-story, cubic-bezier(0.22, 1, 0.36, 1)) both;
-}
-
-.staff-login__card--enter {
-  animation: staff-rise 0.7s var(--ease-story, cubic-bezier(0.22, 1, 0.36, 1)) 0.12s both;
-}
-
 @keyframes staff-spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-@keyframes staff-rise {
+@keyframes staff-login-rise {
   from {
     opacity: 0;
-    transform: translateY(0.85rem);
+    transform: translateY(0.75rem);
   }
   to {
     opacity: 1;
@@ -372,7 +404,7 @@ async function submitLogin() {
 }
 
 @media (max-width: 420px) {
-  .staff-login__password-control {
+  .staff-login__password-row {
     grid-template-columns: 1fr;
   }
 }

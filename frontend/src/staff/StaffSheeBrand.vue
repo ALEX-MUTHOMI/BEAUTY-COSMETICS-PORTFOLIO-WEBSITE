@@ -6,7 +6,7 @@
     :class="sizeClass"
     aria-label="Shee Aesthetics"
   >
-    <span class="staff-shee-brand__mark" aria-hidden="true">S</span>
+    <span class="staff-shee-brand__mark" aria-hidden="true" />
     <span class="staff-shee-brand__text">
       <span class="staff-shee-brand__name">Shee</span>
       <span class="staff-shee-brand__tag">Aesthetics</span>
@@ -40,14 +40,17 @@ const linkAttrs = computed(() => (props.to ? { href: props.to } : {}))
 }
 
 .staff-shee-brand__mark {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 2.75rem;
   height: 2.75rem;
   flex-shrink: 0;
-  background: var(--color-rose, #de968d);
-  color: #fff;
-  font: 700 1rem/1 var(--font-display, 'Libre Baskerville', Georgia, serif);
+  border-radius: 50%;
+  background-color: var(--color-rose, #de968d);
+  background-image: url('/images/logo-mark.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 1.55rem 1.55rem;
+  box-shadow: 0 4px 14px rgba(222, 150, 141, 0.35);
 }
 
 .staff-shee-brand__text {
@@ -78,6 +81,7 @@ const linkAttrs = computed(() => (props.to ? { href: props.to } : {}))
 .staff-shee-brand--sm .staff-shee-brand__mark {
   width: 2.35rem;
   height: 2.35rem;
+  background-size: 1.3rem 1.3rem;
 }
 
 .staff-shee-brand--sm .staff-shee-brand__name {
@@ -87,7 +91,7 @@ const linkAttrs = computed(() => (props.to ? { href: props.to } : {}))
 .staff-shee-brand--lg .staff-shee-brand__mark {
   width: 3.4rem;
   height: 3.4rem;
-  font-size: 1.2rem;
+  background-size: 1.9rem 1.9rem;
 }
 
 .staff-shee-brand--lg .staff-shee-brand__name {

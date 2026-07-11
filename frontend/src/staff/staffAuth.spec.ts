@@ -90,40 +90,34 @@ describe('staff auth client security contract', () => {
 })
 
 describe('staff login panel', () => {
-  const logoStub = {
-    StaffSheeBrand: { template: '<div class="shee-logo-stub">Shee Aesthetics</div>' },
-  }
-
-  it('renders password login, brand-first Melis desk, reset, and accessibility status surfaces', async () => {
+  it('renders Melis login with Shee mark, providers, reset, and accessibility surfaces', async () => {
     const wrapper = mount(StaffLoginPanel, {
       props: {
         apiBaseUrl: 'https://api.example.com',
         csrfToken: 'csrf-token',
       },
-      global: { stubs: logoStub },
     })
 
-    expect(wrapper.text()).toContain('Shee Aesthetics')
-    expect(wrapper.text()).toContain('Staff desk')
-    expect(wrapper.text()).not.toContain('Continue with Google')
-    expect(wrapper.text()).not.toContain('Continue with Apple')
+    expect(wrapper.find('.staff-login__logo').exists()).toBe(true)
+    expect(wrapper.find('.staff-login__logo-mark').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Welcome back')
+    expect(wrapper.text()).toContain('Continue with Google')
+    expect(wrapper.text()).toContain('Continue with Apple')
     expect(wrapper.find('input[type="email"]').attributes('autocomplete')).toBe('username')
     expect(wrapper.find('input[type="password"]').attributes('autocomplete')).toBe('current-password')
     expect(wrapper.find('input[type="password"]').attributes('minlength')).toBe('15')
-    expect(wrapper.text()).toContain('Forgot your staff password?')
+    expect(wrapper.text()).toContain('Forgot password?')
     expect(wrapper.find('.staff-login__reset').attributes('href')).toBe('/staff/forgot-password')
+    expect(wrapper.text()).not.toMatch(/cookie-based|staff-only|shared device|dark mode/i)
   })
 
-  it('only exposes provider start URLs when provider auth is explicitly enabled', () => {
+  it('always exposes provider start URLs with sanitized next', () => {
     const wrapper = mount(StaffLoginPanel, {
       props: {
         apiBaseUrl: 'https://api.example.com',
         csrfToken: 'csrf-token',
-        googleEnabled: true,
-        appleEnabled: true,
         nextPath: '/staff/dashboard',
       },
-      global: { stubs: logoStub },
     })
 
     const links = wrapper.findAll('a.staff-login__provider')
@@ -139,11 +133,10 @@ describe('staff login panel', () => {
         apiBaseUrl: 'https://api.example.com',
         csrfToken: 'csrf-token',
       },
-      global: { stubs: logoStub },
     })
 
     expect(wrapper.find('input[name="password"]').attributes('type')).toBe('password')
-    await wrapper.find('button.staff-login__ghost').trigger('click')
+    await wrapper.find('button.staff-login__text-btn').trigger('click')
     expect(wrapper.find('input[name="password"]').attributes('type')).toBe('text')
     expect(storageContainsStaffSecrets(localStorage)).toBe(false)
     expect(storageContainsStaffSecrets(sessionStorage)).toBe(false)

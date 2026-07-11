@@ -27,6 +27,7 @@ from bookings.services.staff_auth import (
     request_staff_password_reset,
     staff_profile,
 )
+from core.throttling import route_throttle, staff_or_ip_identity
 
 
 def _json(payload, status=200):
@@ -169,10 +170,12 @@ def staff_password_reset_confirm(request):
 
 
 @require_GET
+@route_throttle("staff_oauth_start", key_builder=staff_or_ip_identity)
 def staff_google_start(request):
     return _staff_oauth_start(request, "google")
 
 
 @require_GET
+@route_throttle("staff_oauth_start", key_builder=staff_or_ip_identity)
 def staff_apple_start(request):
     return _staff_oauth_start(request, "apple")

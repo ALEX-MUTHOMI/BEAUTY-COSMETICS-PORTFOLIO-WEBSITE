@@ -19,7 +19,6 @@
         <h1>{{ title }}</h1>
       </div>
       <div class="staff-shell__actions">
-        <StaffThemeToggle />
         <slot name="actions" />
       </div>
     </header>
@@ -39,7 +38,6 @@
 
 <script setup lang="ts">
 import StaffSheeBrand from './StaffSheeBrand.vue'
-import StaffThemeToggle from './StaffThemeToggle.vue'
 
 defineProps<{
   title: string
