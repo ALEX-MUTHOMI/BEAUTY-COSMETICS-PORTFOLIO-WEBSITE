@@ -13,7 +13,7 @@ const apiBaseUrl = String(runtimeConfig.public.apiBaseUrl || '')
 const publicBookingId = String(route.params.publicId || '')
 
 useHead({
-  title: 'Booking Detail | AestheticOS Portal',
+  title: 'Booking Detail | Shee Aesthetics',
   meta: [{ name: 'robots', content: 'noindex,nofollow' }],
 })
 </script>

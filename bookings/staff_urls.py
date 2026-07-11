@@ -28,6 +28,11 @@ urlpatterns = [
         name="staff-booking-payment",
     ),
     path(
+        "bookings/<str:public_booking_id>/receipt.pdf",
+        staff_views.staff_booking_receipt_pdf,
+        name="staff-booking-receipt-pdf",
+    ),
+    path(
         "bookings/<str:public_booking_id>/contact-access/",
         staff_views.staff_booking_contact_access,
         name="staff-booking-contact-access",

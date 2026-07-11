@@ -150,9 +150,9 @@ watch(
 <style scoped>
 .toolbar,
 .table-card {
-  border: 1px solid rgba(55, 32, 22, 0.12);
-  border-radius: 28px;
-  background: rgba(255, 253, 248, 0.82);
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.1));
+  border-radius: 0;
+  background: color-mix(in srgb, var(--color-paper, #fff) 88%, transparent);
 }
 
 .toolbar {
@@ -161,20 +161,24 @@ watch(
   gap: 1rem;
   padding: 1rem;
   margin-bottom: 1rem;
+  font-family: var(--font-body, 'Manrope', sans-serif);
 }
 
 .toolbar label {
   display: grid;
   gap: 0.4rem;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .toolbar input,
 .toolbar select {
   min-height: 2.6rem;
-  border: 1px solid rgba(55, 32, 22, 0.16);
-  border-radius: 14px;
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.1));
+  border-radius: 0;
   padding: 0 0.75rem;
+  background: var(--color-paper, #fff);
+  color: var(--color-ink, #27272a);
+  font: 1rem var(--font-body, 'Manrope', sans-serif);
 }
 
 .table-card {
@@ -197,15 +201,16 @@ watch(
 }
 
 .table-card__head {
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-weight: 900;
-  background: rgba(55, 32, 22, 0.06);
+  font-weight: 600;
+  color: var(--color-muted, #89858d);
+  background: var(--color-rose-soft, #f5e8e6);
 }
 
 .booking-row + .booking-row {
-  border-top: 1px solid rgba(55, 32, 22, 0.08);
+  border-top: 1px solid var(--color-line, rgba(39, 37, 42, 0.1));
 }
 
 .booking-row a,
@@ -216,19 +221,20 @@ watch(
   justify-content: center;
   padding: 0 0.9rem;
   border: 0;
-  border-radius: 999px;
-  background: #241611;
-  color: #fffaf3;
+  border-radius: 0;
+  background: var(--color-ink, #27272a);
+  color: #fff;
   text-decoration: none;
-  font-weight: 800;
+  font: 600 0.78rem/1 var(--font-body, 'Manrope', sans-serif);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
 .skeleton-row {
   height: 3rem;
   margin: 0.75rem 1rem;
-  border-radius: 16px;
-  background: linear-gradient(90deg, rgba(55, 32, 22, 0.06), rgba(55, 32, 22, 0.12), rgba(55, 32, 22, 0.06));
+  background: linear-gradient(90deg, var(--color-rose-soft, #f5e8e6), #fff, var(--color-rose-soft, #f5e8e6));
   background-size: 200% 100%;
   animation: shimmer 1.2s linear infinite;
 }

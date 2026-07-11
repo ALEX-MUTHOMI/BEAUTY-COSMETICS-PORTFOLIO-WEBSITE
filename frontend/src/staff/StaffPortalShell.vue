@@ -1,7 +1,10 @@
 <template>
   <div class="staff-shell">
     <aside class="staff-shell__sidebar" aria-label="Staff portal navigation">
-      <p class="staff-shell__brand">AestheticOS</p>
+      <div class="staff-shell__brand-block">
+        <StaffSheeBrand to="/staff/dashboard" size="sm" />
+        <p class="staff-shell__eyebrow">Staff portal</p>
+      </div>
       <nav>
         <NuxtLink v-for="item in navItems" :key="item.path" :to="item.path">
           <span aria-hidden="true">{{ item.icon }}</span>
@@ -35,6 +38,7 @@
 </template>
 
 <script setup lang="ts">
+import StaffSheeBrand from './StaffSheeBrand.vue'
 import StaffThemeToggle from './StaffThemeToggle.vue'
 
 defineProps<{
@@ -53,34 +57,39 @@ const navItems = [
 
 <style scoped>
 .staff-shell {
-  --staff-text: #241611;
-  --staff-muted: #8a4f34;
-  --staff-surface: rgba(255, 253, 248, 0.82);
-  --staff-border: rgba(55, 32, 22, 0.12);
-  --staff-primary: #7a3f34;
-  --staff-inverse: #fffaf3;
-  --staff-focus: #d89c73;
+  --staff-text: var(--color-ink, #27272a);
+  --staff-muted: var(--color-muted, #89858d);
+  --staff-surface: color-mix(in srgb, var(--color-paper, #fff) 88%, transparent);
+  --staff-border: var(--color-line, rgba(39, 37, 42, 0.1));
+  --staff-primary: var(--color-rose, #de968d);
+  --staff-primary-strong: var(--color-rose-dark, #c97f76);
+  --staff-inverse: #fff;
+  --staff-cream: var(--color-cream, #fcf5f5);
+  --staff-display: var(--font-display, 'Libre Baskerville', Georgia, serif);
+  --staff-body: var(--font-body, 'Manrope', ui-sans-serif, system-ui, sans-serif);
   min-height: 100vh;
   display: grid;
   grid-template-columns: 17rem minmax(0, 1fr);
   grid-template-rows: auto 1fr;
   color: var(--staff-text);
+  font-family: var(--staff-body);
   background:
-    radial-gradient(circle at top right, rgba(202, 127, 85, 0.22), transparent 28rem),
-    linear-gradient(135deg, #fffaf3 0%, #f7eadc 45%, #f0dac6 100%);
+    radial-gradient(circle at top right, rgba(222, 150, 141, 0.18), transparent 28rem),
+    linear-gradient(135deg, var(--staff-cream) 0%, #fff 48%, var(--color-rose-soft, #f5e8e6) 100%);
 }
 
 :global(html[data-staff-theme='dark']) .staff-shell {
-  --staff-text: #f8efe7;
-  --staff-muted: #cdb9a9;
-  --staff-surface: rgba(40, 29, 25, 0.86);
-  --staff-border: rgba(255, 239, 226, 0.13);
-  --staff-primary: #d59b86;
-  --staff-inverse: #180f0c;
-  --staff-focus: #e0b083;
+  --staff-text: #f5f0f2;
+  --staff-muted: #b7b0b6;
+  --staff-surface: rgba(34, 30, 33, 0.9);
+  --staff-border: rgba(245, 240, 242, 0.12);
+  --staff-primary: #e4a79f;
+  --staff-primary-strong: #d18f86;
+  --staff-inverse: #1a1719;
+  --staff-cream: #1a1719;
   background:
-    radial-gradient(circle at top right, rgba(213, 155, 134, 0.18), transparent 28rem),
-    linear-gradient(135deg, #120b09 0%, #211714 48%, #33211c 100%);
+    radial-gradient(circle at top right, rgba(222, 150, 141, 0.14), transparent 28rem),
+    linear-gradient(135deg, #141214 0%, #1c181a 48%, #2a2224 100%);
 }
 
 .staff-shell__sidebar {
@@ -91,11 +100,16 @@ const navItems = [
   backdrop-filter: blur(18px);
 }
 
-.staff-shell__brand,
+.staff-shell__brand-block {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
 .staff-shell__eyebrow {
-  margin: 0 0 1rem;
+  margin: 0;
   color: var(--staff-muted);
-  font: 900 0.78rem/1.2 ui-sans-serif, system-ui, sans-serif;
+  font: 600 0.72rem/1.2 var(--staff-body);
   letter-spacing: 0.15em;
   text-transform: uppercase;
 }
@@ -111,10 +125,10 @@ const navItems = [
   align-items: center;
   gap: 0.75rem;
   padding: 0 0.95rem;
-  border-radius: 18px;
+  border-radius: 0;
   color: var(--staff-text);
   text-decoration: none;
-  font: 850 0.95rem/1 ui-sans-serif, system-ui, sans-serif;
+  font: 600 0.95rem/1 var(--staff-body);
 }
 
 .staff-shell a span {
@@ -122,7 +136,7 @@ const navItems = [
   min-height: 1.55rem;
   display: inline-grid;
   place-items: center;
-  border-radius: 999px;
+  border-radius: 0;
   color: var(--staff-inverse);
   background: var(--staff-primary);
   font-size: 0.7rem;
@@ -154,8 +168,9 @@ const navItems = [
 
 .staff-shell h1 {
   margin: 0;
-  font-size: clamp(1.8rem, 4vw, 3rem);
-  line-height: 1;
+  font-family: var(--staff-display);
+  font-size: clamp(1.8rem, 4vw, 2.75rem);
+  line-height: 1.1;
 }
 
 .staff-shell__main {
@@ -183,9 +198,9 @@ const navItems = [
     grid-template-columns: repeat(4, minmax(0, 1fr));
     padding: 0.4rem;
     border: 1px solid var(--staff-border);
-    border-radius: 24px;
+    border-radius: 0;
     background: var(--staff-surface);
-    box-shadow: 0 18px 45px rgba(55, 32, 22, 0.2);
+    box-shadow: var(--shadow-card, 0 0 40px rgba(39, 37, 42, 0.06));
     backdrop-filter: blur(18px);
   }
 

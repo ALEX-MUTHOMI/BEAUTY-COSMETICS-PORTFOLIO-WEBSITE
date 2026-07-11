@@ -75,7 +75,7 @@ onMounted(() => {
 
   const safety = setTimeout(dismiss, maxWait)
 
-  Promise.all([...props.assets.map((src) => preload(src))])
+  Promise.all(props.assets.map((src) => preload(src)))
     .catch(() => undefined)
     .finally(() => {
       clearTimeout(safety)

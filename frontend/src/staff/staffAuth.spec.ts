@@ -90,26 +90,28 @@ describe('staff auth client security contract', () => {
 })
 
 describe('staff login panel', () => {
-  it('renders password login, disabled OAuth surfaces, reset, and accessibility status surfaces', async () => {
+  const logoStub = {
+    StaffSheeBrand: { template: '<div class="shee-logo-stub">Shee Aesthetics</div>' },
+  }
+
+  it('renders password login, brand-first Melis desk, reset, and accessibility status surfaces', async () => {
     const wrapper = mount(StaffLoginPanel, {
       props: {
         apiBaseUrl: 'https://api.example.com',
         csrfToken: 'csrf-token',
       },
+      global: { stubs: logoStub },
     })
 
+    expect(wrapper.text()).toContain('Shee Aesthetics')
+    expect(wrapper.text()).toContain('Staff desk')
+    expect(wrapper.text()).not.toContain('Continue with Google')
+    expect(wrapper.text()).not.toContain('Continue with Apple')
     expect(wrapper.find('input[type="email"]').attributes('autocomplete')).toBe('username')
     expect(wrapper.find('input[type="password"]').attributes('autocomplete')).toBe('current-password')
     expect(wrapper.find('input[type="password"]').attributes('minlength')).toBe('15')
-    expect(wrapper.text()).toContain('Continue with Google')
-    expect(wrapper.text()).toContain('Continue with Apple')
-    expect(wrapper.find('a.staff-login__google').attributes('href')).toBe('#')
-    expect(wrapper.find('a.staff-login__google').attributes('aria-disabled')).toBe('true')
     expect(wrapper.text()).toContain('Forgot your staff password?')
     expect(wrapper.find('.staff-login__reset').attributes('href')).toBe('/staff/forgot-password')
-
-    await wrapper.find('a.staff-login__google').trigger('click')
-    expect(wrapper.text()).toContain('Google sign-in is not available yet.')
   })
 
   it('only exposes provider start URLs when provider auth is explicitly enabled', () => {
@@ -121,9 +123,10 @@ describe('staff login panel', () => {
         appleEnabled: true,
         nextPath: '/staff/dashboard',
       },
+      global: { stubs: logoStub },
     })
 
-    const links = wrapper.findAll('a.staff-login__google')
+    const links = wrapper.findAll('a.staff-login__provider')
     expect(links).toHaveLength(2)
     const [googleLink, appleLink] = links
     expect(googleLink?.attributes('href')).toContain('/api/staff/auth/google/start/?next=%2Fstaff%2Fdashboard')
@@ -136,6 +139,7 @@ describe('staff login panel', () => {
         apiBaseUrl: 'https://api.example.com',
         csrfToken: 'csrf-token',
       },
+      global: { stubs: logoStub },
     })
 
     expect(wrapper.find('input[name="password"]').attributes('type')).toBe('password')

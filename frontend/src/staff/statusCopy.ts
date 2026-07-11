@@ -32,6 +32,18 @@ export function friendlyStatus(value?: string): string {
   return STATUS_COPY[normalized] || 'Needs attention'
 }
 
+/** Normalize receipt statuses so paid/generated map to staff-friendly receipt copy. */
+export function receiptChipStatus(value?: string): string {
+  const normalized = String(value || '').trim().toLowerCase()
+  if (!normalized || normalized === 'not_issued') return 'not_issued'
+  if (normalized === 'paid' || normalized === 'generated' || normalized === 'ready') return 'issued'
+  return normalized
+}
+
+export function isReceiptIssued(value?: string): boolean {
+  return receiptChipStatus(value) !== 'not_issued'
+}
+
 export function containsInternalJargon(value: string): boolean {
   return INTERNAL_WORDS.test(value)
 }

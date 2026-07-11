@@ -12,6 +12,7 @@ export interface StaffAppointment {
   service: string
   bookingStatus: string
   paymentStatus: string
+  receiptStatus: string
   rescheduleStatus: string
   amount?: string
   currency?: string
@@ -226,6 +227,7 @@ export async function getDailySchedule(
           service: safeDisplayText(item.service_summary, 'Selected service'),
           bookingStatus: String(item.booking_status || 'confirmed'),
           paymentStatus: String(item.payment_status || 'payment_pending'),
+          receiptStatus: String(item.receipt_status || 'not_issued'),
           rescheduleStatus: String(item.reschedule_status || 'none'),
           amount: item.amount ? safeDisplayText(item.amount) : undefined,
           currency: item.currency ? safeDisplayText(item.currency) : undefined,
@@ -245,9 +247,19 @@ export interface StaffBookingDetailData {
   service: string
   bookingStatus: string
   paymentStatus: string
+  receiptStatus: string
   amount: string
   currency: string
   resource: string
+}
+
+export interface StaffPaymentSummary {
+  paymentStatus: string
+  amount: string
+  currency: string
+  receiptStatus: string
+  paidAtEat: string
+  providerReference: string
 }
 
 export async function getStaffBookingDetail(
@@ -274,11 +286,83 @@ export async function getStaffBookingDetail(
       service: safeDisplayText(result.data.service_summary, 'Selected service'),
       bookingStatus: String(result.data.booking_status || 'confirmed'),
       paymentStatus: String(result.data.payment_status || 'payment_pending'),
+      receiptStatus: String(result.data.receipt_status || 'not_issued'),
       amount: safeDisplayText(result.data.amount),
       currency: safeDisplayText(result.data.currency, 'KES'),
       resource: safeDisplayText(result.data.resource),
     },
   }
+}
+
+export async function getStaffBookingPayment(
+  apiBaseUrl: string,
+  publicBookingId: string,
+  fetcher?: Fetcher,
+): Promise<StaffApiResult<StaffPaymentSummary>> {
+  const result = await staffFetch<Record<string, unknown>>(
+    apiBaseUrl,
+    `/api/staff/bookings/${encodeURIComponent(publicBookingId)}/payment/`,
+    fetcher,
+  )
+  if (!result.ok || !result.data) {
+    return { ...result, data: undefined }
+  }
+  return {
+    ...result,
+    data: {
+      paymentStatus: String(result.data.payment_status || 'payment_pending'),
+      amount: safeDisplayText(result.data.amount),
+      currency: safeDisplayText(result.data.currency, 'KES'),
+      receiptStatus: String(result.data.receipt_status || 'not_issued'),
+      paidAtEat: safeDisplayText(result.data.paid_at_eat, ''),
+      providerReference: safeDisplayText(result.data.provider_reference, 'unavailable'),
+    },
+  }
+}
+
+export async function downloadStaffReceiptPdf(
+  apiBaseUrl: string,
+  publicBookingId: string,
+  fetcher: Fetcher = fetch,
+): Promise<StaffApiResult<{ revoked: boolean }>> {
+  const response = await fetcher(
+    `${apiBase(apiBaseUrl)}/api/staff/bookings/${encodeURIComponent(publicBookingId)}/receipt.pdf`,
+    {
+      credentials: 'include',
+      headers: { Accept: 'application/pdf' },
+    },
+  )
+  if (!response.ok) {
+    return {
+      ok: false,
+      status: response.status,
+      sessionExpired: response.status === 401 || response.status === 403,
+      message:
+        response.status === 404
+          ? 'Receipt is not available yet.'
+          : 'Receipt could not be opened. Please try again.',
+    }
+  }
+  const blob = await response.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  let revoked = false
+  try {
+    const anchor = document.createElement('a')
+    anchor.href = objectUrl
+    anchor.target = '_blank'
+    anchor.rel = 'noopener'
+    anchor.download = `receipt-${publicBookingId}.pdf`
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+  } finally {
+    // Always revoke after trigger so blob URLs do not accumulate in memory.
+    window.setTimeout(() => {
+      URL.revokeObjectURL(objectUrl)
+    }, 0)
+    revoked = true
+  }
+  return { ok: true, status: response.status, data: { revoked } }
 }
 
 export async function postStaffContactAccess(

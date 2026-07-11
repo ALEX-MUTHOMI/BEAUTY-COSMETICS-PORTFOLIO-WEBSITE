@@ -14,13 +14,20 @@ const props = defineProps<{
 const label = computed(() => friendlyStatus(props.status))
 const tone = computed(() => {
   const status = props.status.toLowerCase()
-  if (status.includes('success') || status.includes('paid') || status.includes('confirmed') || status.includes('completed')) {
+  if (
+    status.includes('success') ||
+    status.includes('paid') ||
+    status.includes('confirmed') ||
+    status.includes('completed') ||
+    status === 'issued' ||
+    status === 'sent'
+  ) {
     return 'good'
   }
   if (status.includes('failed') || status.includes('no_show')) {
     return 'bad'
   }
-  if (status.includes('review') || status.includes('pending') || status.includes('held')) {
+  if (status.includes('review') || status.includes('pending') || status.includes('held') || status === 'not_issued') {
     return 'watch'
   }
   return 'neutral'
@@ -34,8 +41,8 @@ const tone = computed(() => {
   width: max-content;
   min-height: 1.8rem;
   padding: 0 0.7rem;
-  border-radius: 999px;
-  font: 850 0.78rem/1 ui-sans-serif, system-ui, sans-serif;
+  border-radius: 0;
+  font: 600 0.78rem/1 var(--font-body, 'Manrope', sans-serif);
 }
 
 .status-chip[data-tone='good'] {
@@ -54,7 +61,7 @@ const tone = computed(() => {
 }
 
 .status-chip[data-tone='neutral'] {
-  color: #50382b;
-  background: #efe3d7;
+  color: var(--color-ink, #27272a);
+  background: var(--color-rose-soft, #f5e8e6);
 }
 </style>

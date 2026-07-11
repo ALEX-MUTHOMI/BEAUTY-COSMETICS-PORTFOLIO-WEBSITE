@@ -1,6 +1,6 @@
 import json
 
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 
 from bookings.models import StaffSecurityAudit
@@ -17,6 +17,7 @@ from bookings.services.staff_portal import (
     get_booking_detail,
     get_daily_schedule,
     get_payment_summary,
+    get_staff_receipt_pdf,
     get_weekly_overview,
     reveal_contact,
 )
@@ -136,6 +137,34 @@ def staff_booking_payment(request, public_booking_id):
     except StaffBookingNotFound:
         return _not_found()
     return _json(payload)
+
+
+@require_GET
+@route_throttle("staff_receipt_download", key_builder=staff_or_ip_identity)
+def staff_booking_receipt_pdf(request, public_booking_id):
+    denied = _require_staff_permission(request, "view_staff_payment_summary")
+    if denied:
+        return denied
+    try:
+        pdf_bytes, filename = get_staff_receipt_pdf(
+            public_booking_id,
+            staff_user=request.user,
+            ip_address=request.META.get("REMOTE_ADDR", ""),
+            user_agent=request.META.get("HTTP_USER_AGENT", ""),
+        )
+    except StaffBookingNotFound:
+        return _not_found()
+    audit_staff_event(
+        StaffSecurityAudit.EventType.RECEIPT_DOWNLOAD,
+        staff_user=request.user,
+        request=request,
+        metadata={"booking_reference": public_booking_id},
+    )
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = f'inline; filename="{filename}"'
+    response["Cache-Control"] = "no-store"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 @require_POST

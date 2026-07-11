@@ -1,78 +1,223 @@
 <template>
-  <StaffPortalShell title="Payments">
-    <StaffPortalCards label="Payment overview" :cards="cards" :loading="props.loading" />
-    <section v-if="props.loading" class="list-panel" aria-label="Loading payment records">
+  <StaffPortalShell :title="shellTitle">
+    <section class="toolbar" aria-label="Payment day filters">
+      <label>
+        Date
+        <input v-model="selectedDate" type="date" @change="loadSchedule" />
+      </label>
+      <p class="toolbar__hint">Day-scoped payment view for the selected date — change the date to review past days.</p>
+    </section>
+
+    <StaffPortalCards label="Payment overview" :cards="cards" :loading="showLoading" />
+
+    <section v-if="showLoading" class="list-panel" aria-label="Loading payment records">
       <div v-for="index in 4" :key="index" class="payment-skeleton" />
     </section>
-    <section v-else-if="props.errorMessage" class="list-panel list-panel--state" role="alert">
+    <section v-else-if="showError" class="list-panel list-panel--state" role="alert">
       <h2>Payments could not load.</h2>
-      <p>{{ props.errorMessage }}</p>
-      <button type="button">Try again</button>
+      <p>{{ displayError }}</p>
+      <button type="button" @click="loadSchedule">Try again</button>
     </section>
-    <section v-else-if="props.empty" class="list-panel list-panel--state">
-      <h2>No payment records found.</h2>
-      <p>Try a different date or payment status.</p>
+    <section v-else-if="showEmpty" class="list-panel list-panel--state">
+      <h2>No payment records for this day.</h2>
+      <p>Try a different date, or open bookings for the full schedule.</p>
     </section>
     <section v-else class="list-panel" aria-label="Payment records">
-      <article v-for="payment in payments" :key="payment.reference">
+      <div class="list-panel__head">
+        <span>Time</span>
+        <span>Service</span>
+        <span>Payment</span>
+        <span>Receipt</span>
+        <span>Actions</span>
+      </div>
+      <article v-for="payment in sortedPayments" :key="payment.publicBookingId">
+        <strong>{{ payment.time }}</strong>
         <div>
           <strong>{{ payment.client }}</strong>
           <span>{{ payment.service }}</span>
+          <span v-if="payment.amount">{{ payment.currency || 'KES' }} {{ payment.amount }}</span>
         </div>
-        <span>{{ payment.amount }}</span>
-        <StaffStatusChip :status="payment.status" />
+        <StaffStatusChip :status="payment.paymentStatus" />
+        <StaffStatusChip :status="receiptChipStatus(payment.receiptStatus)" />
+        <NuxtLink :to="`/staff/bookings/${payment.publicBookingId}`">Open</NuxtLink>
       </article>
     </section>
   </StaffPortalShell>
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+
 import StaffPortalCards from './StaffPortalCards.vue'
 import StaffPortalShell from './StaffPortalShell.vue'
 import StaffStatusChip from './StaffStatusChip.vue'
+import { getDailySchedule, type StaffAppointment } from './staffPortalApi'
+import { receiptChipStatus } from './statusCopy'
 
 const props = withDefaults(
   defineProps<{
+    apiBaseUrl?: string
     loading?: boolean
     empty?: boolean
     errorMessage?: string
+    appointments?: StaffAppointment[]
   }>(),
   {
+    apiBaseUrl: '',
     loading: false,
     empty: false,
     errorMessage: '',
+    appointments: undefined,
   },
 )
 
-const cards = [
-  { label: 'Confirmed', value: 'KES 18k', hint: 'Paid bookings' },
-  { label: 'Awaiting', value: 2, hint: 'Customer action needed' },
-  { label: 'Needs review', value: 0, hint: 'No open issues' },
-  { label: 'Receipts', value: 'Ready', hint: 'Customer-safe copies' },
-]
+const selectedDate = ref(new Date().toISOString().slice(0, 10))
+const internalLoading = ref(false)
+const internalError = ref('')
+const payments = ref<StaffAppointment[]>([])
 
-const payments = [
-  { reference: 'BK-1001', client: 'Grace M.', service: 'Soft glam makeup', amount: 'KES 4,500', status: 'paid' },
-  { reference: 'BK-1002', client: 'Amina K.', service: 'Full package', amount: 'KES 12,000', status: 'payment_pending' },
-]
+const shellTitle = computed(() => {
+  const today = new Date().toISOString().slice(0, 10)
+  return selectedDate.value === today ? "Today's payments" : `Payments for ${selectedDate.value}`
+})
+
+const showLoading = computed(() => props.loading || internalLoading.value)
+const displayError = computed(() => props.errorMessage || internalError.value)
+const showError = computed(() => Boolean(displayError.value) && !showLoading.value)
+
+const sourcePayments = computed(() => {
+  if (props.appointments) return props.appointments
+  return payments.value
+})
+
+const sortedPayments = computed(() => {
+  return [...sourcePayments.value].sort((left, right) => {
+    const leftPending = isAwaiting(left.paymentStatus) ? 0 : 1
+    const rightPending = isAwaiting(right.paymentStatus) ? 0 : 1
+    if (leftPending !== rightPending) return leftPending - rightPending
+    return left.time.localeCompare(right.time)
+  })
+})
+
+const showEmpty = computed(() => {
+  if (showLoading.value || showError.value) return false
+  if (props.empty) return true
+  return sortedPayments.value.length === 0
+})
+
+const cards = computed(() => {
+  const rows = sourcePayments.value
+  const paid = rows.filter((row) => isPaid(row.paymentStatus)).length
+  const awaiting = rows.filter((row) => isAwaiting(row.paymentStatus)).length
+  const receiptsReady = rows.filter((row) => {
+    const status = String(row.receiptStatus || '').toLowerCase()
+    return status && status !== 'not_issued'
+  }).length
+  return [
+    { label: 'Confirmed', value: paid, hint: 'Paid bookings this day' },
+    { label: 'Awaiting', value: awaiting, hint: 'Customer action needed' },
+    { label: 'On schedule', value: rows.length, hint: `For ${selectedDate.value}` },
+    { label: 'Receipts', value: receiptsReady, hint: 'Ready to view' },
+  ]
+})
+
+function isPaid(status: string) {
+  const normalized = status.toLowerCase()
+  return normalized === 'paid' || normalized === 'success'
+}
+
+function isAwaiting(status: string) {
+  const normalized = status.toLowerCase()
+  return normalized.includes('pending') || normalized === 'not_paid' || normalized === 'held'
+}
+
+async function loadSchedule() {
+  if (props.appointments || props.loading || props.errorMessage || props.empty) return
+  if (!props.apiBaseUrl) {
+    payments.value = []
+    return
+  }
+  internalLoading.value = true
+  internalError.value = ''
+  try {
+    const result = await getDailySchedule(props.apiBaseUrl, selectedDate.value)
+    if (!result.ok || !result.data) {
+      internalError.value = result.message || 'Please check your connection and try again.'
+      payments.value = []
+      return
+    }
+    payments.value = result.data.appointments
+  } catch {
+    internalError.value = 'Please check your connection and try again.'
+    payments.value = []
+  } finally {
+    internalLoading.value = false
+  }
+}
+
+onMounted(() => {
+  void loadSchedule()
+})
 </script>
 
 <style scoped>
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.toolbar label {
+  display: grid;
+  gap: 0.35rem;
+  font: 600 0.82rem/1.2 var(--font-body, 'Manrope', sans-serif);
+}
+
+.toolbar input {
+  min-height: 2.8rem;
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.1));
+  border-radius: 0;
+  padding: 0 0.85rem;
+  background: var(--color-paper, #fff);
+  color: var(--color-ink, #27272a);
+  font: 1rem var(--font-body, 'Manrope', sans-serif);
+}
+
+.toolbar__hint {
+  margin: 0;
+  max-width: 36ch;
+  color: var(--color-muted, #89858d);
+  font: 0.9rem/1.45 var(--font-body, 'Manrope', sans-serif);
+}
+
 .list-panel {
   display: grid;
   gap: 0.8rem;
   margin-top: 1rem;
 }
 
+.list-panel__head,
 .list-panel article {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: 5rem minmax(0, 1.4fr) auto auto auto;
   gap: 1rem;
   align-items: center;
+}
+
+.list-panel__head {
+  padding: 0 1rem;
+  color: var(--color-muted, #89858d);
+  font: 600 0.72rem/1 var(--font-body, 'Manrope', sans-serif);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.list-panel article {
   padding: 1rem;
-  border: 1px solid rgba(55, 32, 22, 0.12);
-  border-radius: 24px;
-  background: rgba(255, 253, 248, 0.84);
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.1));
+  background: color-mix(in srgb, var(--color-paper, #fff) 88%, transparent);
 }
 
 .list-panel div {
@@ -81,14 +226,30 @@ const payments = [
 }
 
 .list-panel span {
-  color: #76513d;
+  color: var(--color-muted, #89858d);
+}
+
+.list-panel a,
+.list-panel--state button {
+  width: max-content;
+  min-height: 2.7rem;
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  padding: 0 1rem;
+  color: #fff;
+  background: var(--color-ink, #27272a);
+  text-decoration: none;
+  font: 600 0.78rem/1 var(--font-body, 'Manrope', sans-serif);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
 }
 
 .list-panel--state {
   padding: 1rem;
-  border: 1px solid rgba(55, 32, 22, 0.12);
-  border-radius: 24px;
-  background: rgba(255, 253, 248, 0.84);
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.1));
+  background: color-mix(in srgb, var(--color-paper, #fff) 88%, transparent);
 }
 
 .list-panel--state h2,
@@ -96,21 +257,9 @@ const payments = [
   margin: 0;
 }
 
-.list-panel--state button {
-  width: max-content;
-  min-height: 2.7rem;
-  border: 0;
-  border-radius: 999px;
-  padding: 0 1rem;
-  color: #fffaf3;
-  background: #241611;
-  font-weight: 900;
-}
-
 .payment-skeleton {
   min-height: 4rem;
-  border-radius: 24px;
-  background: linear-gradient(90deg, #ead7c3, #fff8ef, #ead7c3);
+  background: linear-gradient(90deg, var(--color-rose-soft, #f5e8e6), #fff, var(--color-rose-soft, #f5e8e6));
   animation: staff-shimmer 1.2s ease-in-out infinite;
 }
 
@@ -120,7 +269,11 @@ const payments = [
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 860px) {
+  .list-panel__head {
+    display: none;
+  }
+
   .list-panel article {
     grid-template-columns: 1fr;
   }

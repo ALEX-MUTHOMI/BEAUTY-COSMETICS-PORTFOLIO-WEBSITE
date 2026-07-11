@@ -4,18 +4,22 @@ from datetime import date, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
+from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.db.models import Prefetch
 from django.utils import timezone
 
 from billing.models import LedgerTransaction
 from billing.redaction import hash_sensitive_value
 from bookings.domain.day_policy import built_in_policy_for_weekday
+from bookings.infrastructure.receipt_pdf import ReceiptPDFService
 from bookings.models import (
     BOOKING_BLOCKING_STATUSES,
     Booking,
     BookingFinancialHistory,
     BookingNotification,
     BookingReminder,
+    ReceiptPDFArtifact,
     StaffActionAuditEvent,
 )
 from bookings.privacy import decrypt_value, safe_display_name
@@ -345,3 +349,59 @@ def reveal_contact(public_booking_id, *, staff_user, reason, ip_address="", user
         "phone": decrypt_value(booking.customer_profile.phone_encrypted),
         "email": decrypt_value(booking.customer_profile.email_encrypted),
     }
+
+
+STAFF_RECEIPT_PDF_CACHE_TTL_SECONDS = 45
+
+
+def _read_ready_receipt_artifact(receipt):
+    existing = getattr(receipt, "pdf_artifact", None)
+    if not existing:
+        return None
+    if existing.status != ReceiptPDFArtifact.Status.READY or existing.regeneratable:
+        return None
+    try:
+        return ReceiptPDFService.read_artifact(existing)
+    except ValidationError:
+        return None
+
+
+def get_staff_receipt_pdf(public_booking_id, *, staff_user, ip_address="", user_agent=""):
+    """
+    Return receipt PDF bytes for staff download.
+
+    Prefer an existing READY artifact (Celery/local storage). If generation is
+    required, use a short-lived cache so double-clicks do not double-render under
+    Gunicorn. Missing receipts stay fail-closed as StaffBookingNotFound (404).
+    """
+    booking = _get_booking(public_booking_id)
+    receipt = getattr(booking, "receipt", None)
+    if not receipt:
+        raise StaffBookingNotFound
+
+    pdf = _read_ready_receipt_artifact(receipt)
+    if pdf is None:
+        cache_key = f"staff_receipt_pdf_bytes:{receipt.pk}"
+        cached = cache.get(cache_key)
+        if cached:
+            pdf = cached
+        else:
+            try:
+                pdf = ReceiptPDFService.ensure_artifact(receipt)
+            except (ValidationError, TimeoutError, OSError):
+                raise StaffBookingNotFound from None
+            cache.set(cache_key, pdf, timeout=STAFF_RECEIPT_PDF_CACHE_TTL_SECONDS)
+
+    StaffActionAuditEvent.objects.create(
+        staff=staff_user,
+        booking=booking,
+        action=StaffActionAuditEvent.Action.RECEIPT_DOWNLOAD,
+        reason="Staff viewed booking receipt PDF",
+        metadata_redacted={
+            "booking_reference": str(booking.public_id),
+            "ip_hash": hash_sensitive_value(ip_address or "unknown"),
+            "user_agent_hash": hash_sensitive_value(user_agent or "unknown"),
+        },
+    )
+    filename = f"receipt-{booking.public_id}.pdf"
+    return pdf, filename

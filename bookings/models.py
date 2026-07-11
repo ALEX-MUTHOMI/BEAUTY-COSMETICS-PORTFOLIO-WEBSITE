@@ -1364,6 +1364,7 @@ class StaffActionAuditEvent(AuditMixin):
     class Action(models.TextChoices):
         CONTACT_REVEAL = "contact_reveal", "Contact Reveal"
         STATUS_OVERRIDE = "status_override", "Status Override"
+        RECEIPT_DOWNLOAD = "receipt_download", "Receipt Download"
 
     staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -1393,6 +1394,7 @@ class StaffSecurityAudit(AuditMixin):
         REAUTH_SUCCESS = "reauth_success", "Reauth Success"
         REAUTH_FAILURE = "reauth_failure", "Reauth Failure"
         CONTACT_REVEAL = "contact_reveal", "Contact Reveal"
+        RECEIPT_DOWNLOAD = "receipt_download", "Receipt Download"
         PERMISSION_DENIED = "permission_denied", "Permission Denied"
 
     public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)

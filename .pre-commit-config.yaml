@@ -1,55 +1,70 @@
 # ==============================================================================
-# Local 'Shift-Left' Git Pre-Commit Hook Architecture
+# Gate 1 — Local shift-left hooks (stop burning CI on lint)
 # ==============================================================================
+# Install once:  .\scripts\ci\install_git_hooks.ps1
+# Manual mirror: .\scripts\ci\local_ci_mirror.ps1
+#
+# pre-commit  → format + ruff + secrets + oxlint (fast)
+# pre-push    → local_ci_mirror.ps1 (exact CI lint ladder + vue-tsc)
+# CI Actions  → Vitest, build, pytest partitions (heavy lifting only)
+#
+# Green CI / green mirror certifies the *tree*, not production readiness.
+# ==============================================================================
+
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit]
+
 repos:
-  # ----------------------------------------------------------------------------
-  # 1. Standard Enterprise Sanitization Hooks
-  # ----------------------------------------------------------------------------
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        name: Trim Trailing Whitespace
-        description: Trims trailing whitespace from files.
       - id: end-of-file-fixer
-        name: Fix End of Files
-        description: Ensures files end with a single newline character.
       - id: check-yaml
-        name: Validate YAML Files
-        description: Checks syntax correctness of YAML configurations.
       - id: check-added-large-files
-        name: Block Large Binary Files
-        description: Prevents massive binary files from being committed (max 5MB).
-        args: ['--maxkb=5120']
+        args: ["--maxkb=5120"]
 
-  # ----------------------------------------------------------------------------
-  # 2. Code Quality Formatting & Import Sorting Hooks
-  # ----------------------------------------------------------------------------
-  - repo: https://github.com/psf/black
-    rev: 24.4.2
-    hooks:
-      - id: black
-        name: Apply Black Code Formatter
-        types: [python]
-        args: [--line-length=120]
-
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        name: Sort Python Imports
-        types: [python]
-        args: ["--profile", "black", "--line-length=120"]
-
-  # ----------------------------------------------------------------------------
-  # 3. Custom Local Secret Scan Gate (Shift-Left Edge Protection)
-  # ----------------------------------------------------------------------------
+  # Poetry-pinned tools — same versions as CI (avoid mirror-repo drift).
   - repo: local
     hooks:
+      - id: poetry-black
+        name: black (poetry)
+        entry: poetry run black
+        language: system
+        types: [python]
+
+      - id: poetry-isort
+        name: isort (poetry)
+        entry: poetry run isort
+        language: system
+        types: [python]
+
+      - id: poetry-ruff
+        name: ruff (poetry)
+        entry: poetry run ruff
+        language: system
+        types: [python]
+        args: [check, --fix]
+
       - id: local-secret-hygiene-scan
-        name: Secret Hygiene Edge Scanner
-        description: Fail-safe hook preventing hardcoded credentials from being committed to Git.
-        entry: python scripts/ci/secret_hygiene.py
+        name: Secret hygiene edge scanner
+        entry: poetry run python scripts/ci/secret_hygiene.py
         language: system
         pass_filenames: false
         always_run: true
+
+      - id: frontend-oxlint
+        name: frontend oxlint (CI mirror)
+        entry: npm --prefix frontend run lint:oxlint
+        language: system
+        files: ^frontend/
+        pass_filenames: false
+
+      # Pre-push: full Gate 1 ladder matching Actions lint-security + FE type-check.
+      - id: local-ci-mirror-pre-push
+        name: local CI mirror (pre-push)
+        entry: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/local_ci_mirror.ps1
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

@@ -37,19 +37,21 @@ defineProps<{
   display: grid;
   align-content: space-between;
   padding: 1.2rem;
-  border: 1px solid rgba(55, 32, 22, 0.12);
-  border-radius: 28px;
-  background: rgba(255, 253, 248, 0.86);
-  box-shadow: 0 24px 60px rgba(55, 32, 22, 0.08);
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.1));
+  border-radius: 0;
+  background: color-mix(in srgb, var(--color-paper, #fff) 88%, transparent);
+  box-shadow: var(--shadow-card, 0 0 40px rgba(39, 37, 42, 0.06));
+  font-family: var(--font-body, 'Manrope', sans-serif);
 }
 
 .portal-card p,
 .portal-card span {
   margin: 0;
-  color: #76513d;
+  color: var(--color-muted, #89858d);
 }
 
 .portal-card strong {
+  font-family: var(--font-display, 'Libre Baskerville', Georgia, serif);
   font-size: clamp(2rem, 4vw, 3.2rem);
   line-height: 1;
 }
@@ -57,8 +59,8 @@ defineProps<{
 .portal-card--skeleton span,
 .portal-card--skeleton strong {
   min-height: 1rem;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #ead7c3, #fff8ef, #ead7c3);
+  border-radius: 0;
+  background: linear-gradient(90deg, var(--color-rose-soft, #f5e8e6), #fff, var(--color-rose-soft, #f5e8e6));
   animation: staff-shimmer 1.2s ease-in-out infinite;
 }
 

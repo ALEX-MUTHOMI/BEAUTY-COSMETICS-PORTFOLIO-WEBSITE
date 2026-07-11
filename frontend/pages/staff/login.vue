@@ -23,7 +23,7 @@ const router = useRouter()
 const csrfToken = ref('')
 
 useHead({
-  title: 'Staff Sign In | AestheticOS Portal',
+  title: 'Staff Sign In | Shee Aesthetics',
   meta: [
     {
       name: 'robots',

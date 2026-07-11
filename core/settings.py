@@ -440,6 +440,7 @@ REST_FRAMEWORK = {
         "public_gallery": "60/min",
         "media_resolver": "60/min",
         "staff_contact_reveal": "6/min",
+        "staff_receipt_download": "12/min",
         # GDPR / Kenya DPA 2019 subject-rights intake (ticketed, not anonymous dump).
         "privacy_rights": "5/hour",
     },

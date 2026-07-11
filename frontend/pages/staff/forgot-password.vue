@@ -1,8 +1,9 @@
 <template>
   <main class="staff-reset-page">
     <section>
-      <p>Staff recovery</p>
-      <h1>Reset your staff password.</h1>
+      <StaffSheeBrand to="/staff/login" size="sm" />
+      <p class="eyebrow">Staff recovery</p>
+      <h1>Reset your staff password</h1>
       <p class="lead">Enter the email for your staff account. We only send instructions when the account exists.</p>
       <form @submit.prevent="submit">
         <label>
@@ -22,12 +23,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import StaffSheeBrand from '../../src/staff/StaffSheeBrand.vue'
 import { ensureBookingCsrfToken } from '../../src/booking/bookingCsrf'
 import { requestStaffPasswordReset } from '../../src/staff/staffAuth'
 
 definePageMeta({ layout: false })
 useHead({
-  title: 'Staff Password Recovery | AestheticOS Portal',
+  title: 'Staff Password Recovery | Shee Aesthetics',
   meta: [{ name: 'robots', content: 'noindex,nofollow' }],
 })
 
@@ -64,7 +66,11 @@ async function submit() {
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: linear-gradient(135deg, #fffaf3, #e9c6ab);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  background:
+    radial-gradient(circle at 18% 14%, rgba(222, 150, 141, 0.22), transparent 18rem),
+    linear-gradient(165deg, var(--color-cream), #fff 50%, var(--color-rose-soft));
 }
 
 .staff-reset-page section {
@@ -72,14 +78,30 @@ async function submit() {
   display: grid;
   gap: 1rem;
   padding: 1.5rem;
-  border-radius: 28px;
-  background: #fffdf8;
+  border: 1px solid var(--color-line);
+  background: color-mix(in srgb, var(--color-paper) 94%, transparent);
+  box-shadow: var(--shadow-card);
+}
+
+.staff-reset-page .eyebrow {
+  margin: 0;
+  color: var(--color-rose-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font: 600 0.72rem/1.2 var(--font-body);
+}
+
+.staff-reset-page h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  line-height: 1.15;
 }
 
 .staff-reset-page .lead,
 .staff-reset-page p[role='status'] {
   margin: 0;
-  color: #6b4a3a;
+  color: var(--color-muted);
 }
 
 .staff-reset-page form,
@@ -91,19 +113,34 @@ async function submit() {
 .staff-reset-page input,
 .staff-reset-page button {
   min-height: 2.8rem;
-  border-radius: 16px;
+  border-radius: 0;
+}
+
+.staff-reset-page input {
+  border: 1px solid var(--color-line);
+  padding: 0 1rem;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font: 1rem var(--font-body);
 }
 
 .staff-reset-page button {
   border: 0;
-  background: #241611;
-  color: #fffaf3;
-  font-weight: 800;
+  background: var(--color-rose);
+  color: #fff;
+  font: 600 0.78rem/1 var(--font-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
 .staff-reset-page button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.staff-reset-page a {
+  color: var(--color-muted);
+  font: 0.92rem var(--font-body);
 }
 </style>

@@ -11,7 +11,7 @@ const runtimeConfig = useRuntimeConfig()
 const apiBaseUrl = String(runtimeConfig.public.apiBaseUrl || '')
 
 useHead({
-  title: 'Staff Bookings | AestheticOS Portal',
+  title: 'Staff Bookings | Shee Aesthetics',
   meta: [{ name: 'robots', content: 'noindex,nofollow' }],
 })
 </script>

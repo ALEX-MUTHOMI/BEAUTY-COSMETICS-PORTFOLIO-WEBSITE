@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import StaffBookingDetail from './StaffBookingDetail.vue'
 import StaffBookingsWorkspace from './StaffBookingsWorkspace.vue'
@@ -7,15 +7,49 @@ import StaffDashboard from './StaffDashboard.vue'
 import StaffGalleryWorkspace from './StaffGalleryWorkspace.vue'
 import StaffPaymentsWorkspace from './StaffPaymentsWorkspace.vue'
 import StaffSettingsSecurity from './StaffSettingsSecurity.vue'
-import { getDailySchedule, getStaffMe } from './staffPortalApi'
-import { containsInternalJargon, friendlyStatus, safeDisplayText } from './statusCopy'
+import {
+  downloadStaffReceiptPdf,
+  getDailySchedule,
+  getStaffBookingPayment,
+  getStaffMe,
+} from './staffPortalApi'
+import { containsInternalJargon, friendlyStatus, isReceiptIssued, safeDisplayText } from './statusCopy'
 
 const globalStubs = {
   NuxtLink: {
     props: ['to'],
     template: '<a :href="to"><slot /></a>',
   },
+  SheeLogo: {
+    template: '<div class="shee-logo-stub">Shee Aesthetics</div>',
+  },
+  StaffSheeBrand: {
+    template: '<div class="shee-logo-stub">Shee Aesthetics</div>',
+  },
 }
+
+const sampleAppointments = [
+  {
+    publicBookingId: 'BK-1001',
+    time: '09:00',
+    client: 'Grace M.',
+    service: 'Soft glam makeup',
+    bookingStatus: 'held',
+    paymentStatus: 'success',
+    receiptStatus: 'issued',
+    rescheduleStatus: 'none',
+  },
+  {
+    publicBookingId: 'BK-1002',
+    time: '11:30',
+    client: 'Amina K.',
+    service: 'Facial',
+    bookingStatus: 'held',
+    paymentStatus: 'payment_pending',
+    receiptStatus: 'not_issued',
+    rescheduleStatus: 'none',
+  },
+]
 
 describe('staff portal friendly copy and security boundaries', () => {
   it('maps backend states to staff-friendly words without internal jargon', () => {
@@ -24,35 +58,34 @@ describe('staff portal friendly copy and security boundaries', () => {
     expect(friendlyStatus('manual_review')).toBe('Needs attention')
     expect(friendlyStatus('held')).toBe('Awaiting customer payment')
     expect(friendlyStatus('checkout_session_pending')).toBe('Needs attention')
+    expect(isReceiptIssued('issued')).toBe(true)
+    expect(isReceiptIssued('not_issued')).toBe(false)
     expect(containsInternalJargon('ledger correlation ID')).toBe(true)
     expect(safeDisplayText('ledger correlation ID', 'Hidden')).toBe('Hidden')
   })
 
   it('renders dashboard, bookings, and payments without raw backend jargon', () => {
-    const dashboard = mount(StaffDashboard, { global: { stubs: globalStubs } })
-    const bookings = mount(StaffBookingsWorkspace, {
-      props: {
-        appointments: [
-          {
-            publicBookingId: 'BK-1001',
-            time: '09:00',
-            client: 'Grace M.',
-            service: 'Soft glam makeup',
-            bookingStatus: 'held',
-            paymentStatus: 'success',
-            rescheduleStatus: 'none',
-          },
-        ],
-      },
+    const dashboard = mount(StaffDashboard, {
+      props: { appointments: sampleAppointments },
       global: { stubs: globalStubs },
     })
-    const payments = mount(StaffPaymentsWorkspace, { global: { stubs: globalStubs } })
+    const bookings = mount(StaffBookingsWorkspace, {
+      props: { appointments: sampleAppointments },
+      global: { stubs: globalStubs },
+    })
+    const payments = mount(StaffPaymentsWorkspace, {
+      props: { appointments: sampleAppointments },
+      global: { stubs: globalStubs },
+    })
     const rendered = `${dashboard.text()} ${bookings.text()} ${payments.text()}`
 
     expect(rendered).toContain('Today at a glance')
+    expect(rendered).toContain("Today's payments")
+    expect(rendered).toContain('Day-scoped payment view')
     expect(rendered).toContain('Awaiting payment')
     expect(rendered).toContain('Payment confirmed')
-    expect(rendered).not.toMatch(/ledger|checkout session|correlation ID|provider payload/i)
+    expect(rendered).not.toMatch(/checkout session|correlation ID|provider payload/i)
+    expect(rendered).not.toMatch(/\bledger\b/i)
   })
 
   it('renders skeleton and safe retry states for slow or failed staff data requests', () => {
@@ -69,13 +102,13 @@ describe('staff portal friendly copy and security boundaries', () => {
   })
 
   it('requires a re-auth modal before contact reveal and prevents duplicate completion clicks', async () => {
-    // apiBaseUrl is injected like pages/staff/bookings/[publicId].vue — no Nuxt auto-imports in src/.
     const wrapper = mount(StaffBookingDetail, {
       props: { apiBaseUrl: 'https://api.example.com' },
       global: { stubs: globalStubs },
     })
 
     expect(wrapper.text()).not.toMatch(/checkoutrequest|merchantrequest|ledger/i)
+    expect(wrapper.text()).toContain('View receipt PDF')
     const revealButton = wrapper.findAll('button').find((button) => button.text().includes('Reveal customer contact'))
     expect(revealButton).toBeDefined()
     await revealButton?.trigger('click')
@@ -86,6 +119,18 @@ describe('staff portal friendly copy and security boundaries', () => {
     expect(wrapper.text()).toContain('Service completed')
     const completed = wrapper.findAll('button').find((button) => button.text().includes('Service completed'))
     expect(completed?.attributes('disabled')).toBeDefined()
+  })
+
+  it('shows receipt PDF CTA on demo detail and gates not-issued receipts', () => {
+    const wrapper = mount(StaffBookingDetail, {
+      props: { apiBaseUrl: '' },
+      global: { stubs: globalStubs },
+    })
+
+    expect(wrapper.text()).toContain('View receipt PDF')
+    expect(wrapper.find('button.receipt-button').attributes('disabled')).toBeUndefined()
+    expect(isReceiptIssued('not_issued')).toBe(false)
+    expect(isReceiptIssued('paid')).toBe(true)
   })
 
   it('renders gallery upload navigation with friendly states and no backend jargon', () => {
@@ -109,6 +154,11 @@ describe('staff portal friendly copy and security boundaries', () => {
 })
 
 describe('staff portal API client', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
   it('uses cookie credentials and hides Docker-only upstream hosts', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue({
       ok: true,
@@ -144,6 +194,7 @@ describe('staff portal API client', () => {
             service_summary: 'Soft glam',
             booking_status: 'confirmed',
             payment_status: 'payment_pending',
+            receipt_status: 'not_issued',
             reschedule_status: 'manual_review',
           },
         ],
@@ -159,11 +210,72 @@ describe('staff portal API client', () => {
       publicBookingId: 'BK-1001',
       bookingStatus: 'confirmed',
       paymentStatus: 'payment_pending',
+      receiptStatus: 'not_issued',
       rescheduleStatus: 'manual_review',
     })
     expect(friendlyStatus(appointment?.bookingStatus)).toBe('Booking confirmed')
     expect(friendlyStatus(appointment?.paymentStatus)).toBe('Awaiting payment')
     expect(friendlyStatus(appointment?.rescheduleStatus)).toBe('Needs attention')
+  })
+
+  it('normalizes payment summary without exposing provider secrets', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn<() => Promise<unknown>>().mockResolvedValue({
+        payment_status: 'paid',
+        amount: '4500.00',
+        currency: 'KES',
+        receipt_status: 'paid',
+        paid_at_eat: '2026-06-06T09:01:00+03:00',
+        provider_reference: 'redacted',
+      }),
+    } as unknown as Response)
+
+    const result = await getStaffBookingPayment('https://api.example.com', 'BK-1001', fetcher)
+    expect(result.data).toMatchObject({
+      paymentStatus: 'paid',
+      amount: '4500.00',
+      receiptStatus: 'paid',
+      providerReference: 'redacted',
+    })
+    expect(JSON.stringify(result)).not.toMatch(/checkoutrequest|merchantrequest/i)
+  })
+
+  it('revokes blob object URLs after staff receipt PDF download', async () => {
+    const revokeObjectURL = vi.fn<(url: string) => void>()
+    const createObjectURL = vi.fn<(obj: Blob | MediaSource) => string>().mockReturnValue('blob:staff-receipt')
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL })
+    vi.useFakeTimers()
+
+    const click = vi.fn<() => void>()
+    const remove = vi.fn<() => void>()
+    const appendChild = vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node)
+    const createElement = vi.spyOn(document, 'createElement').mockReturnValue({
+      href: '',
+      target: '',
+      rel: '',
+      download: '',
+      click,
+      remove,
+    } as unknown as HTMLAnchorElement)
+
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue({
+      ok: true,
+      status: 200,
+      blob: vi.fn<() => Promise<Blob>>().mockResolvedValue(new Blob(['%PDF'], { type: 'application/pdf' })),
+    } as unknown as Response)
+
+    const result = await downloadStaffReceiptPdf('https://api.example.com', 'BK-1001', fetcher)
+    expect(result.ok).toBe(true)
+    expect(result.data?.revoked).toBe(true)
+    expect(createObjectURL).toHaveBeenCalled()
+    vi.runAllTimers()
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:staff-receipt')
+
+    createElement.mockRestore()
+    appendChild.mockRestore()
+    vi.useRealTimers()
   })
 
   it('marks 401/403 as session-expired without exposing backend error bodies', async () => {
