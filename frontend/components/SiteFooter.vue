@@ -32,7 +32,6 @@
         <p class="site-footer__note">Appointments are confirmed after online payment only. No phone bookings.</p>
         <a href="mailto:bookings@sheeaesthetics.co.ke">bookings@sheeaesthetics.co.ke</a>
         <NuxtLink to="/book">{{ LANDING_PRIMARY_CTA }}</NuxtLink>
-        <NuxtLink to="/staff/login">Staff login</NuxtLink>
       </div>
     </div>
 
