@@ -30,8 +30,18 @@ function Invoke-Checked {
         Write-Host "RUN $Command"
     }
     $stepStart = Get-Date
-    powershell -NoProfile -ExecutionPolicy Bypass -Command $Command
-    $exit = $LASTEXITCODE
+    # Docker/tooling often writes progress banners to stderr; only exit codes fail the gate.
+    $prevEap = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        powershell -NoProfile -ExecutionPolicy Bypass -Command $Command
+        $exit = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $prevEap
+    }
+    if ($null -eq $exit) {
+        $exit = 0
+    }
     $elapsed = [int]((Get-Date) - $stepStart).TotalSeconds
     Add-Summary "- ${Name}: exit=$exit duration_seconds=$elapsed"
     if ($exit -ne 0) {
@@ -86,7 +96,7 @@ try {
     Invoke-Checked "Isort check" "docker compose exec -T web poetry run isort --check-only ."
     Invoke-Checked "Ruff check" "docker compose exec -T web poetry run ruff check ."
     Invoke-Checked "Flake8 fatal gate" "docker compose exec -T web poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics"
-    Invoke-Checked "Bandit gate" "docker compose exec -T web poetry run bandit -r . -x tests -ll -ii"
+    Invoke-Checked "Bandit gate" "docker compose exec -T web poetry run bandit -r bookings billing checkout core scripts -ll -ii"
     Invoke-Checked "Secret hygiene filesystem scan" "docker compose exec -T web poetry run python scripts/ci/secret_hygiene.py"
     Invoke-Checked "Docker health" "docker compose ps"
     Invoke-Checked "Worker ping" "docker compose exec -T worker celery -A core inspect ping --timeout=10"

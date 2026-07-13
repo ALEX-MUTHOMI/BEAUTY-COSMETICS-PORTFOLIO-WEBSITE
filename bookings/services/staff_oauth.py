@@ -76,7 +76,7 @@ def _http_json(
         req_headers["Content-Type"] = "application/x-www-form-urlencoded"
     request = Request(url, data=body, headers=req_headers, method=method.upper())
     try:
-        with urlopen(request, timeout=8) as response:  # noqa: S310 — HTTPS endpoints from settings only
+        with urlopen(request, timeout=8) as response:  # noqa: S310  # nosec B310 — HTTPS IdP URLs from settings only
             raw = response.read().decode("utf-8")
     except Exception as exc:  # noqa: BLE001 — never leak provider transport detail
         logger.warning("staff_oauth_http_failed provider_transport=1")

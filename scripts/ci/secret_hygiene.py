@@ -58,12 +58,26 @@ def get_git_tracked_files():
         return [f.strip() for f in result.stdout.splitlines() if f.strip()]
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         print(f"[-] Git command failed or Git is not initialized: {e}")
-        # Fallback to scanning all workspace files if git is not available
+        # Fallback to scanning workspace files, pruning heavy/excluded directories.
+        skip_dir_names = {
+            ".git",
+            ".venv",
+            ".local",
+            ".cache",
+            ".pytest_cache",
+            ".ruff_cache",
+            "node_modules",
+            ".nuxt",
+            ".output",
+            "var",
+            "venv",
+        }
         files = []
-        for root, _, filenames in os.walk("."):
+        for root, dirs, filenames in os.walk("."):
+            dirs[:] = [d for d in dirs if d not in skip_dir_names]
             for filename in filenames:
                 path = os.path.relpath(os.path.join(root, filename), ".")
-                files.append(path)
+                files.append(path.replace("\\", "/"))
         return files
 
 
