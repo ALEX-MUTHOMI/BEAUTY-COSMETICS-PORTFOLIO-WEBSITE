@@ -8,6 +8,8 @@ import StaffGalleryWorkspace from './StaffGalleryWorkspace.vue'
 import StaffPaymentsWorkspace from './StaffPaymentsWorkspace.vue'
 import StaffSettingsSecurity from './StaffSettingsSecurity.vue'
 import {
+  canDownloadReceipt,
+  canSeePaymentsDesk,
   downloadStaffReceiptPdf,
   getDailySchedule,
   getStaffBookingPayment,
@@ -62,6 +64,25 @@ describe('staff portal friendly copy and security boundaries', () => {
     expect(isReceiptIssued('not_issued')).toBe(false)
     expect(containsInternalJargon('ledger correlation ID')).toBe(true)
     expect(safeDisplayText('ledger correlation ID', 'Hidden')).toBe('Hidden')
+  })
+
+  it('gates Payments nav with stub-safe permission rules until Phase B', () => {
+    expect(canSeePaymentsDesk(null)).toBe(true)
+    expect(canSeePaymentsDesk(['view_staff_payment_summary', 'view_staff_contact_details'])).toBe(true)
+    expect(canSeePaymentsDesk(['view_staff_payments_desk'])).toBe(true)
+    expect(canSeePaymentsDesk(['view_staff_portal'])).toBe(false)
+    expect(canSeePaymentsDesk(['download_staff_receipt', 'view_staff_payment_summary'])).toBe(false)
+    expect(canSeePaymentsDesk(['download_staff_receipt', 'view_staff_payments_desk'])).toBe(true)
+    expect(canSeePaymentsDesk(['confirm_staff_attendance', 'view_staff_payment_summary'])).toBe(false)
+    expect(
+      canSeePaymentsDesk(['view_staff_portal', 'view_staff_booking', 'view_staff_payment_summary']),
+    ).toBe(false)
+  })
+
+  it('requires download_staff_receipt for PDF button gating', () => {
+    expect(canDownloadReceipt(null)).toBe(false)
+    expect(canDownloadReceipt(['view_staff_payment_summary'])).toBe(false)
+    expect(canDownloadReceipt(['download_staff_receipt'])).toBe(true)
   })
 
   it('renders dashboard, bookings, and payments without raw backend jargon', () => {

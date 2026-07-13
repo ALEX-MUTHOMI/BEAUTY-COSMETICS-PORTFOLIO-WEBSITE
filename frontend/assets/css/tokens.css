@@ -1,4 +1,4 @@
-/* Mellis theme tokens — Shee Aesthetics public site */
+/* Mellis theme tokens — Shee Aesthetics public site + staff desk */
 
 @import '@fontsource/manrope/400.css';
 @import '@fontsource/manrope/500.css';
@@ -11,14 +11,17 @@
 @import '@fontsource/libre-baskerville/700.css';
 
 :root {
+  /* Warm stone / parchment surfaces; rose is accent-only (CTAs, links, status). */
   --color-ink: #27272a;
   --color-deep: #3d3a42;
-  --color-muted: #89858d;
-  --color-cream: #fcf5f5;
-  --color-paper: #ffffff;
-  --color-rose: #de968d;
-  --color-rose-dark: #c97f76;
-  --color-rose-soft: #f5e8e6;
+  --color-muted: #8a8580;
+  --color-cream: #f7f3ee;
+  --color-paper: #fffcf8;
+  --color-stone: #efeae3;
+  --color-parchment: #f4efe8;
+  --color-rose: #c98980;
+  --color-rose-dark: #b5746c;
+  --color-rose-soft: #f0e8e4;
   --color-line: rgba(39, 37, 42, 0.1);
   --color-footer: #27252a;
   --color-overlay: rgba(39, 37, 42, 0.55);
@@ -51,7 +54,7 @@
   --radius-lg: 0;
   --radius-pill: 0;
 
-  --shadow-card: 0 0 40px rgba(39, 37, 42, 0.06);
+  --shadow-card: 0 0 40px rgba(39, 37, 42, 0.05);
   --ease-story: cubic-bezier(0.22, 1, 0.36, 1);
   --container: min(1170px, 100% - 1.25rem);
   --header-height: 4.25rem;

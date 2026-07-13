@@ -1,5 +1,5 @@
 <template>
-  <StaffPortalShell title="Booking detail">
+  <StaffPortalShell title="Booking detail" :api-base-url="apiBaseUrl">
     <section v-if="loading" class="detail-card detail-card--state" aria-label="Loading booking">
       <div class="skeleton-block" />
       <div class="skeleton-block skeleton-block--short" />
@@ -14,9 +14,12 @@
       <h2>{{ detail.client }} · {{ detail.service }}</h2>
       <div class="detail-grid">
         <span>{{ detail.localDate }} · {{ detail.time }}{{ detail.endTime ? `–${detail.endTime}` : '' }}</span>
+        <span class="code">Code {{ detail.bookingReference || detail.publicBookingId }}</span>
         <StaffStatusChip :status="detail.bookingStatus" />
+        <StaffStatusChip :status="detail.fulfillmentStatus || 'not_started'" />
         <StaffStatusChip :status="detail.paymentStatus" />
         <span v-if="detail.amount">{{ detail.currency }} {{ detail.amount }}</span>
+        <span v-if="detail.assignedStaffDisplayName">Beautician {{ detail.assignedStaffDisplayName }}</span>
       </div>
 
       <section class="payment-panel" aria-label="Payment summary">
@@ -29,9 +32,13 @@
             <span>{{ payment.currency }} {{ payment.amount }}</span>
             <StaffStatusChip :status="receiptChipStatus(payment.receiptStatus)" />
             <span v-if="payment.paidAtEat">Paid {{ payment.paidAtEat }}</span>
+            <span v-if="payment.providerReference && payment.providerReference !== 'unavailable'" class="code">
+              Ref {{ payment.providerReference }}
+            </span>
           </div>
           <p v-if="!receiptReady" class="payment-panel__copy">Receipt not issued yet.</p>
           <button
+            v-if="showReceiptDownload"
             type="button"
             class="receipt-button"
             :disabled="!receiptReady || receiptDownloading"
@@ -39,8 +46,23 @@
           >
             {{ receiptDownloading ? 'Opening receipt…' : 'View receipt PDF' }}
           </button>
+          <p v-else-if="receiptReady" class="payment-panel__copy">Payment confirmed — receipt download is locked.</p>
           <p v-if="receiptMessage" class="payment-panel__copy" role="status">{{ receiptMessage }}</p>
         </template>
+      </section>
+
+      <section v-if="canAssign" class="assign-panel" aria-label="Assign beautician">
+        <p class="eyebrow">Beautician</p>
+        <label>
+          Assign
+          <select v-model="assignSelection" @change="saveAssignment">
+            <option :value="null">Unassigned</option>
+            <option v-for="person in beauticians" :key="person.id" :value="person.id">
+              {{ person.displayName }}
+            </option>
+          </select>
+        </label>
+        <p v-if="assignMessage" class="payment-panel__copy" role="status">{{ assignMessage }}</p>
       </section>
 
       <div v-if="revealedContact" class="contact-reveal" role="status">
@@ -50,8 +72,19 @@
 
       <div class="actions">
         <button type="button" @click="showReauth = true">Reveal customer contact</button>
-        <button type="button" :disabled="completed" @click="completed = true">
-          {{ completed ? 'Service completed' : 'Mark service completed' }}
+        <button
+          v-if="canConfirm"
+          type="button"
+          :disabled="fulfillmentSaving || detail.fulfillmentStatus === 'completed'"
+          @click="markCompleted"
+        >
+          {{
+            detail.fulfillmentStatus === 'completed'
+              ? 'Service completed'
+              : fulfillmentSaving
+                ? 'Saving…'
+                : 'Mark service completed'
+          }}
         </button>
         <NuxtLink to="/staff/bookings">Back to bookings</NuxtLink>
       </div>
@@ -74,10 +107,17 @@ import StaffContactRevealModal from './StaffContactRevealModal.vue'
 import StaffPortalShell from './StaffPortalShell.vue'
 import StaffStatusChip from './StaffStatusChip.vue'
 import {
+  canAssignStaff,
+  canConfirmAttendance,
+  canDownloadReceipt,
   downloadStaffReceiptPdf,
+  getAssignableBeauticians,
   getStaffBookingDetail,
   getStaffBookingPayment,
+  getStaffMe,
+  postStaffAssign,
   postStaffContactAccess,
+  postStaffFulfillment,
   type StaffBookingDetailData,
   type StaffPaymentSummary,
 } from './staffPortalApi'
@@ -85,7 +125,6 @@ import { isReceiptIssued, receiptChipStatus } from './statusCopy'
 
 const props = withDefaults(
   defineProps<{
-    /** Injected by Nuxt pages — never call useRuntimeConfig inside src/ components. */
     apiBaseUrl?: string
     publicBookingId?: string
   }>(),
@@ -93,7 +132,6 @@ const props = withDefaults(
 )
 
 const showReauth = ref(false)
-const completed = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
 const detail = ref<StaffBookingDetailData | null>(null)
@@ -103,15 +141,22 @@ const paymentError = ref('')
 const receiptDownloading = ref(false)
 const receiptMessage = ref('')
 const revealedContact = ref<{ email: string; phone: string } | null>(null)
+const permissions = ref<string[] | null>(null)
+const fulfillmentSaving = ref(false)
+const beauticians = ref<{ id: string; email: string; displayName: string; role: string }[]>([])
+const assignSelection = ref<string | null>(null)
+const assignMessage = ref('')
 
 const demoDetail: StaffBookingDetailData = {
   publicBookingId: 'demo',
+  bookingReference: 'demo',
   localDate: 'Today',
   time: '09:00',
   endTime: '',
   client: 'Grace M.',
   service: 'Soft glam makeup',
   bookingStatus: 'confirmed',
+  fulfillmentStatus: 'not_started',
   paymentStatus: 'paid',
   receiptStatus: 'issued',
   amount: '4,500',
@@ -120,6 +165,18 @@ const demoDetail: StaffBookingDetailData = {
 }
 
 const receiptReady = computed(() => isReceiptIssued(payment.value?.receiptStatus || detail.value?.receiptStatus))
+const showReceiptDownload = computed(() => {
+  if (!props.apiBaseUrl || !props.publicBookingId) return true
+  return canDownloadReceipt(permissions.value)
+})
+const canConfirm = computed(() => {
+  if (!props.apiBaseUrl || !props.publicBookingId) return true
+  return canConfirmAttendance(permissions.value)
+})
+const canAssign = computed(() => {
+  if (!props.apiBaseUrl || !props.publicBookingId) return false
+  return canAssignStaff(permissions.value)
+})
 
 if (!props.publicBookingId) {
   detail.value = demoDetail
@@ -130,6 +187,22 @@ if (!props.publicBookingId) {
     receiptStatus: 'issued',
     paidAtEat: '',
     providerReference: 'redacted',
+  }
+}
+
+async function loadPermissions() {
+  if (!props.apiBaseUrl) return
+  const result = await getStaffMe(props.apiBaseUrl)
+  if (result.ok && result.data) {
+    permissions.value = result.data.permissions
+  }
+}
+
+async function loadBeauticians() {
+  if (!props.apiBaseUrl || !canAssign.value) return
+  const result = await getAssignableBeauticians(props.apiBaseUrl)
+  if (result.ok && result.data) {
+    beauticians.value = result.data.beauticians
   }
 }
 
@@ -168,6 +241,10 @@ async function loadDetail() {
       return
     }
     detail.value = result.data
+    assignSelection.value =
+      result.data.assignedStaffId == null || result.data.assignedStaffId === ''
+        ? null
+        : String(result.data.assignedStaffId)
     await loadPayment()
   } catch {
     errorMessage.value = 'Please check your connection and try again.'
@@ -178,7 +255,7 @@ async function loadDetail() {
 }
 
 async function openReceiptPdf() {
-  if (!props.apiBaseUrl || !props.publicBookingId || !receiptReady.value) return
+  if (!props.apiBaseUrl || !props.publicBookingId || !receiptReady.value || !showReceiptDownload.value) return
   receiptDownloading.value = true
   receiptMessage.value = ''
   try {
@@ -190,6 +267,61 @@ async function openReceiptPdf() {
     receiptMessage.value = 'Receipt could not be opened.'
   } finally {
     receiptDownloading.value = false
+  }
+}
+
+async function markCompleted() {
+  if (!detail.value) return
+  if (!props.apiBaseUrl || !props.publicBookingId) {
+    detail.value = { ...detail.value, fulfillmentStatus: 'completed' }
+    return
+  }
+  if (!canConfirm.value) return
+  fulfillmentSaving.value = true
+  errorMessage.value = ''
+  try {
+    const csrfToken = await ensureBookingCsrfToken(props.apiBaseUrl)
+    if (!csrfToken) {
+      errorMessage.value = 'Could not reach the desk. Refresh and try again.'
+      return
+    }
+    const result = await postStaffFulfillment(props.apiBaseUrl, props.publicBookingId, 'completed', csrfToken)
+    if (!result.ok || !result.data) {
+      errorMessage.value = result.message || 'Fulfillment could not be updated.'
+      return
+    }
+    detail.value = { ...detail.value, fulfillmentStatus: result.data.fulfillmentStatus || 'completed' }
+  } catch {
+    errorMessage.value = 'Fulfillment could not be updated.'
+  } finally {
+    fulfillmentSaving.value = false
+  }
+}
+
+async function saveAssignment() {
+  if (!props.apiBaseUrl || !props.publicBookingId || !canAssign.value) return
+  assignMessage.value = ''
+  try {
+    const csrfToken = await ensureBookingCsrfToken(props.apiBaseUrl)
+    if (!csrfToken) {
+      assignMessage.value = 'Could not reach the desk. Refresh and try again.'
+      return
+    }
+    const result = await postStaffAssign(props.apiBaseUrl, props.publicBookingId, assignSelection.value, csrfToken)
+    if (!result.ok || !result.data) {
+      assignMessage.value = result.message || 'Assignment could not be updated.'
+      return
+    }
+    if (detail.value) {
+      detail.value = {
+        ...detail.value,
+        assignedStaffDisplayName: result.data.assignedStaffDisplayName,
+        assignedStaffId: assignSelection.value,
+      }
+    }
+    assignMessage.value = 'Beautician assignment saved.'
+  } catch {
+    assignMessage.value = 'Assignment could not be updated.'
   }
 }
 
@@ -218,14 +350,15 @@ async function onReauthConfirmed() {
   }
 }
 
-onMounted(() => {
-  void loadDetail()
+onMounted(async () => {
+  await loadPermissions()
+  await loadBeauticians()
+  await loadDetail()
 })
-
 watch(
-  () => [props.apiBaseUrl, props.publicBookingId],
-  () => {
-    void loadDetail()
+  () => props.publicBookingId,
+  async () => {
+    await loadDetail()
   },
 )
 </script>
@@ -234,115 +367,73 @@ watch(
 .detail-card {
   display: grid;
   gap: 1rem;
-  padding: clamp(1rem, 3vw, 1.5rem);
-  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.1));
-  border-radius: 0;
-  background: color-mix(in srgb, var(--color-paper, #fff) 88%, transparent);
-  font-family: var(--font-body, 'Manrope', sans-serif);
+  padding: 1.25rem 1.35rem;
+  border-radius: 1.1rem;
+  background: color-mix(in srgb, var(--staff-surface, #f7f3ee) 92%, white);
+  border: 1px solid color-mix(in srgb, var(--staff-ink, #2c2420) 8%, transparent);
 }
 
 .detail-card--state {
-  gap: 0.75rem;
+  min-height: 10rem;
 }
 
 .eyebrow {
   margin: 0;
-  color: var(--color-rose-dark, #c97f76);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font: 600 0.72rem/1.2 var(--font-body, 'Manrope', sans-serif);
+  color: color-mix(in srgb, var(--staff-ink, #2c2420) 55%, transparent);
 }
 
-.detail-card h2 {
-  margin: 0;
-  font-family: var(--font-display, 'Libre Baskerville', Georgia, serif);
-}
-
-.detail-grid,
-.actions {
+.detail-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.65rem 1rem;
+  align-items: center;
 }
 
-.payment-panel {
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+.payment-panel,
+.assign-panel {
   display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
-  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.1));
-  background: var(--color-cream, #fcf5f5);
+  gap: 0.65rem;
+  padding-top: 0.35rem;
 }
 
 .payment-panel__copy {
   margin: 0;
-  color: var(--color-muted, #89858d);
+  color: color-mix(in srgb, var(--staff-ink, #2c2420) 70%, transparent);
 }
 
-.receipt-button {
-  width: max-content;
-  min-height: 2.8rem;
-  border: 0;
-  padding: 0 1rem;
-  color: #fff;
-  background: var(--color-rose, #de968d);
-  font: 600 0.78rem/1 var(--font-body, 'Manrope', sans-serif);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  cursor: pointer;
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
 }
 
-.receipt-button:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+.receipt-button,
+.actions button,
+.assign-panel select {
+  font: inherit;
+}
+
+.skeleton-block {
+  height: 1.1rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--staff-ink, #2c2420) 8%, transparent);
+}
+
+.skeleton-block--short {
+  width: 40%;
 }
 
 .contact-reveal {
   display: grid;
-  gap: 0.35rem;
-  padding: 0.9rem 1rem;
-  background: var(--color-rose-soft, #f5e8e6);
-}
-
-.contact-reveal p {
-  margin: 0;
-}
-
-.actions button,
-.actions a,
-.detail-card--state button {
-  min-height: 2.8rem;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 1rem;
-  border: 0;
-  border-radius: 0;
-  color: #fff;
-  background: var(--color-ink, #27272a);
-  text-decoration: none;
-  font: 600 0.78rem/1 var(--font-body, 'Manrope', sans-serif);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.actions button:disabled {
-  opacity: 0.6;
-}
-
-.skeleton-block {
-  height: 2.8rem;
-  background: linear-gradient(90deg, var(--color-rose-soft, #f5e8e6), #fff, var(--color-rose-soft, #f5e8e6));
-  background-size: 200% 100%;
-  animation: shimmer 1.2s linear infinite;
-}
-
-.skeleton-block--short {
-  width: 60%;
-}
-
-@keyframes shimmer {
-  to {
-    background-position: -200% 0;
-  }
+  gap: 0.25rem;
 }
 </style>

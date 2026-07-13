@@ -29,18 +29,19 @@ defineProps<{
 .portal-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .portal-card {
-  min-height: 9rem;
+  min-height: 8.25rem;
   display: grid;
   align-content: space-between;
-  padding: 1.2rem;
+  gap: 0.55rem;
+  padding: 1.1rem 1.15rem;
   border: 1px solid var(--color-line, rgba(39, 37, 42, 0.1));
   border-radius: 0;
-  background: color-mix(in srgb, var(--color-paper, #fff) 88%, transparent);
-  box-shadow: var(--shadow-card, 0 0 40px rgba(39, 37, 42, 0.06));
+  background: color-mix(in srgb, var(--color-paper, #fff) 90%, transparent);
+  box-shadow: var(--shadow-card, 0 0 40px rgba(39, 37, 42, 0.05));
   font-family: var(--font-body, 'Manrope', sans-serif);
 }
 
@@ -50,10 +51,23 @@ defineProps<{
   color: var(--color-muted, #89858d);
 }
 
+.portal-card p {
+  font: 600 0.72rem/1.2 var(--font-body, 'Manrope', sans-serif);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.portal-card span {
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
 .portal-card strong {
   font-family: var(--font-display, 'Libre Baskerville', Georgia, serif);
-  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-size: clamp(1.75rem, 3.2vw, 2.75rem);
+  font-weight: 400;
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .portal-card--skeleton span,
@@ -65,7 +79,7 @@ defineProps<{
 }
 
 .portal-card--skeleton strong {
-  min-height: 2.6rem;
+  min-height: 2.4rem;
 }
 
 @keyframes staff-shimmer {
@@ -74,7 +88,7 @@ defineProps<{
   }
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1024px) {
   .portal-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -82,7 +96,22 @@ defineProps<{
 
 @media (max-width: 560px) {
   .portal-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .portal-card {
+    min-height: 0;
+    padding: 0.9rem 0.85rem;
+    gap: 0.4rem;
+  }
+
+  .portal-card strong {
+    font-size: clamp(1.5rem, 8vw, 1.9rem);
+  }
+
+  .portal-card span {
+    font-size: 0.75rem;
   }
 }
 </style>

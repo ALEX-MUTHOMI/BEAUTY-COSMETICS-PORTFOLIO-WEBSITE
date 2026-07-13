@@ -1,5 +1,5 @@
 <template>
-  <StaffPortalShell title="Gallery">
+  <StaffPortalShell title="Gallery" :api-base-url="apiBaseUrl">
     <section class="gallery-panel">
       <div>
         <p class="eyebrow">Portfolio manager</p>

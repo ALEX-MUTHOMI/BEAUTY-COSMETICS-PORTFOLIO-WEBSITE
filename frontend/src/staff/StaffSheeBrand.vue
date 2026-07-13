@@ -75,17 +75,29 @@ const linkAttrs = computed(() => (props.to ? { href: props.to } : {}))
 }
 
 .staff-shee-brand--sm {
-  gap: 0.55rem;
+  gap: 0.5rem;
 }
 
 .staff-shee-brand--sm .staff-shee-brand__mark {
-  width: 2.35rem;
-  height: 2.35rem;
-  background-size: 1.3rem 1.3rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  background-size: 1.25rem 1.25rem;
+  box-shadow: 0 3px 10px rgba(201, 137, 128, 0.22);
 }
 
 .staff-shee-brand--sm .staff-shee-brand__name {
-  font-size: 1.45rem;
+  font-size: 1.35rem;
+}
+
+.staff-shee-brand--sm .staff-shee-brand__tag {
+  font-size: 0.58rem;
+  letter-spacing: 0.24em;
+}
+
+@media (max-width: 380px) {
+  .staff-shee-brand--sm .staff-shee-brand__tag {
+    letter-spacing: 0.18em;
+  }
 }
 
 .staff-shee-brand--lg .staff-shee-brand__mark {

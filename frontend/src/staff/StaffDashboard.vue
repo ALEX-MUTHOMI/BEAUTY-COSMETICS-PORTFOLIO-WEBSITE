@@ -1,5 +1,5 @@
 <template>
-  <StaffPortalShell title="Today at a glance">
+  <StaffPortalShell title="Today at a glance" :api-base-url="apiBaseUrl">
     <template #actions>
       <NuxtLink class="action-link" to="/staff/bookings">View today&apos;s schedule</NuxtLink>
     </template>
@@ -141,18 +141,31 @@ onMounted(() => {
 
 <style scoped>
 .action-link {
-  min-height: 2.8rem;
+  min-height: 2.75rem;
   display: inline-flex;
   align-items: center;
-  padding: 0 1rem;
+  justify-content: center;
+  padding: 0 1.1rem;
   border: 0;
   border-radius: 0;
   color: #fff;
-  background: var(--color-rose, #de968d);
+  background: var(--color-rose, #c98980);
   text-decoration: none;
-  font: 600 0.78rem/1 var(--font-body, 'Manrope', sans-serif);
-  letter-spacing: 0.12em;
+  font: 600 0.74rem/1 var(--font-body, 'Manrope', sans-serif);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  transition:
+    background 0.2s var(--ease-story, ease),
+    transform 0.2s var(--ease-story, ease);
+}
+
+.action-link:hover {
+  background: var(--color-rose-dark, #b5746c);
+}
+
+.action-link:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(201, 137, 128, 0.28);
 }
 
 .panel {

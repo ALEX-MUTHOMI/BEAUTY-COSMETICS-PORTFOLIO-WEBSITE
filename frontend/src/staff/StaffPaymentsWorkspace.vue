@@ -1,5 +1,5 @@
 <template>
-  <StaffPortalShell :title="shellTitle">
+  <StaffPortalShell :title="shellTitle" :api-base-url="apiBaseUrl">
     <section class="toolbar" aria-label="Payment day filters">
       <label>
         Date
