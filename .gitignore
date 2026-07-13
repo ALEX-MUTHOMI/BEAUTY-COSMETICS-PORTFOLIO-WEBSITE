@@ -41,3 +41,5 @@ _agent_*.json
 staff_dashboard_login_proof.png
 frontend/_owner_login_probe.mjs
 NUL
+
+.venv.broken_win/

@@ -13,6 +13,8 @@ volumes:
     driver: local
   pytest_cache:
     driver: local
+  linux_venv_mask:
+    driver: local
 
 services:
   # ============================================================================
@@ -114,6 +116,8 @@ services:
         core.wsgi:application
     volumes:
       - .:/app:rw
+      # Mask host Windows .venv so Linux poetry/pytest use image site-packages.
+      - linux_venv_mask:/app/.venv
       - receipt_artifacts:/app/var/receipt-artifacts:rw
       - gallery_storage:/app/var/gallery-storage:rw
       - pytest_cache:/app/var/pytest-cache:rw
@@ -362,6 +366,7 @@ services:
     command: celery -A core worker --loglevel=info -Q celery,express_auth,billing,dlq_billing
     volumes:
       - .:/app:rw
+      - linux_venv_mask:/app/.venv
       - receipt_artifacts:/app/var/receipt-artifacts:rw
       - pytest_cache:/app/var/pytest-cache:rw
     environment:
@@ -517,6 +522,7 @@ services:
     command: celery -A core beat --loglevel=info
     volumes:
       - .:/app:rw
+      - linux_venv_mask:/app/.venv
     environment:
       - DEBUG=${DEBUG:-False}
       - POETRY_VIRTUALENVS_CREATE=false
@@ -559,6 +565,7 @@ services:
     command: celery -A core worker --loglevel=info -Q receipts --concurrency=${RECEIPT_WORKER_CONCURRENCY:-2}
     volumes:
       - .:/app:rw
+      - linux_venv_mask:/app/.venv
       - receipt_artifacts:/app/var/receipt-artifacts:rw
       - pytest_cache:/app/var/pytest-cache:rw
     environment:
@@ -632,6 +639,7 @@ services:
     command: celery -A core worker --loglevel=info -Q gallery --concurrency=${GALLERY_WORKER_CONCURRENCY:-1}
     volumes:
       - .:/app:rw
+      - linux_venv_mask:/app/.venv
       - gallery_storage:/app/var/gallery-storage:rw
       - pytest_cache:/app/var/pytest-cache:rw
     environment:
