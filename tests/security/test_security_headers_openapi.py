@@ -20,7 +20,8 @@ def test_security_headers_are_present_on_public_and_error_responses(client, path
     assert "frame-ancestors 'none'" in response["Content-Security-Policy"]
     assert "object-src 'none'" in response["Content-Security-Policy"]
     assert response["Referrer-Policy"] in {"same-origin", "strict-origin-when-cross-origin"}
-    assert response["Cross-Origin-Resource-Policy"] == "same-origin"
+    expected_corp = "cross-origin" if path.startswith("/api/") else "same-origin"
+    assert response["Cross-Origin-Resource-Policy"] == expected_corp
     assert "geolocation=()" in response["Permissions-Policy"]
 
 

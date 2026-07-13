@@ -45,3 +45,18 @@ def test_redis_throttle_failure_returns_controlled_rejection(monkeypatch):
     assert response.json() == {"detail": "Service temporarily unavailable."}
     assert response.get("Cache-Control") == "no-store"
     assert response.get("X-Content-Type-Options") == "nosniff"
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.load
+def test_csrf_bootstrap_redis_failure_returns_503_with_retry_after(monkeypatch):
+    with monkeypatch.context() as patched:
+        patched.setattr("users.services.get_redis_client", lambda: BrokenRedis())
+        client = APIClient()
+        client.raise_request_exception = False
+        response = client.get("/api/csrf/", REMOTE_ADDR="198.51.100.22")
+
+    assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert response.json() == {"detail": "Service temporarily unavailable."}
+    assert response.get("Retry-After") == "5"
+    assert response.get("Cache-Control") == "no-store"

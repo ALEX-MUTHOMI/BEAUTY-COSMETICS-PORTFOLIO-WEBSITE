@@ -205,16 +205,22 @@ class RedisTokenBucketThrottle(BaseThrottle):
                 early_retry_points,
             )
         except Exception as exc:
-            logger.warning("Redis throttle unavailable for scope=%s; failing closed.", self.scope)
+            # Fail closed (no silent admit). Log redis_error_class for stall/NOAUTH diagnosis.
+            logger.warning(
+                "Redis throttle unavailable for scope=%s; failing closed. redis_error_class=%s",
+                self.scope,
+                type(exc).__name__,
+            )
             throttle_event(
                 request,
                 scope=self.scope,
                 rate=rate,
                 allowed=False,
                 tokens_remaining="",
-                retry_after="",
+                retry_after="5",
                 redis_status="unavailable",
                 failure_behavior="fail_closed_503",
+                redis_error_class=type(exc).__name__,
             )
             raise ThrottleInfrastructureUnavailable() from exc
         allowed = int(result[0]) == 1
@@ -291,6 +297,7 @@ def route_throttle(scope, key_builder=None):
                 allowed = throttle.allow_request(request, view_func)
             except ThrottleInfrastructureUnavailable:
                 response = JsonResponse({"detail": "Service temporarily unavailable."}, status=503)
+                response["Retry-After"] = "5"
                 response["Cache-Control"] = "no-store"
                 response["X-Content-Type-Options"] = "nosniff"
                 return response

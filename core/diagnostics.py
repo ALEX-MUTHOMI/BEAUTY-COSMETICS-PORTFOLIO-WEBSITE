@@ -66,16 +66,19 @@ def throttle_event(
     retry_after: object,
     redis_status: str,
     failure_behavior: str,
+    redis_error_class: str = "",
 ) -> None:
-    emit(
-        "throttle_decision",
-        request_id_hash=_hash(getattr(request, "correlation_id", "")),
-        scope=scope,
-        rate=rate,
-        allowed=allowed,
-        tokens_remaining=str(tokens_remaining),
-        retry_after=str(retry_after or ""),
-        redis_status=redis_status,
-        failure_behavior=failure_behavior,
+    fields = {
+        "request_id_hash": _hash(getattr(request, "correlation_id", "")),
+        "scope": scope,
+        "rate": rate,
+        "allowed": allowed,
+        "tokens_remaining": str(tokens_remaining),
+        "retry_after": str(retry_after or ""),
+        "redis_status": redis_status,
+        "failure_behavior": failure_behavior,
         **actor_metadata(request),
-    )
+    }
+    if redis_error_class:
+        fields["redis_error_class"] = redis_error_class
+    emit("throttle_decision", **fields)

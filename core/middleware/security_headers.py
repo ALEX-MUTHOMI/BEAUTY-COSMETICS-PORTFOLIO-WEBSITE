@@ -61,11 +61,21 @@ class SecurityHeadersMiddleware:
         return response
 
     @staticmethod
+    def _corp_policy(path: str) -> str:
+        # Nuxt (:3000) credentialed fetches to Django (:8000) are cross-origin.
+        # CORP same-origin blocks those reads even when CORS allows the SPA.
+        # Keep same-origin for non-API surfaces; allow cross-origin only for /api/.
+        if path.startswith("/api/"):
+            return "cross-origin"
+        return "same-origin"
+
+    @staticmethod
     def _apply_security_headers(request: HttpRequest, response: HttpResponse) -> None:
-        csp = ADMIN_CONTENT_SECURITY_POLICY if request.path_info.startswith("/admin/") else CONTENT_SECURITY_POLICY
+        path = request.path_info or request.path
+        csp = ADMIN_CONTENT_SECURITY_POLICY if path.startswith("/admin/") else CONTENT_SECURITY_POLICY
         response.headers.setdefault("Content-Security-Policy", csp)
         response.headers.setdefault("Permissions-Policy", PERMISSIONS_POLICY)
-        response.headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
+        response.headers.setdefault("Cross-Origin-Resource-Policy", SecurityHeadersMiddleware._corp_policy(path))
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("Referrer-Policy", "same-origin")
 
