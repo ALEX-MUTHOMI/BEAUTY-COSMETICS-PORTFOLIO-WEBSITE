@@ -44,6 +44,7 @@ describe('staff auth client security contract', () => {
   it('posts password login with cookie credentials and CSRF but returns generic failures', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue({
       ok: false,
+      status: 400,
       json: vi.fn<() => Promise<unknown>>(),
     } as unknown as Response)
 
@@ -57,7 +58,13 @@ describe('staff auth client security contract', () => {
       fetcher,
     )
 
-    expect(result).toEqual({ ok: false, nextPath: '', message: 'Invalid credentials.' })
+    expect(result).toEqual({
+      ok: false,
+      nextPath: '',
+      message: 'Invalid credentials.',
+      displayName: '',
+      retryable: false,
+    })
     expect(fetcher).toHaveBeenCalledWith(
       'https://api.example.com/api/staff/auth/login/',
       expect.objectContaining({
@@ -75,6 +82,86 @@ describe('staff auth client security contract', () => {
       turnstile_token: '',
     })
     expect(storageContainsStaffSecrets(localStorage)).toBe(false)
+  })
+
+  it('maps rate-limit, availability, CSRF/session, and network failures separately from invalid credentials', async () => {
+    const rateLimited = vi.fn<typeof fetch>().mockResolvedValue({
+      ok: false,
+      status: 429,
+      json: vi.fn<() => Promise<unknown>>(),
+    } as unknown as Response)
+    expect(
+      (
+        await staffPasswordLogin(
+          'https://api.example.com',
+          { email: 'a@b.com', password: 'x'.repeat(16), csrfToken: 't' },
+          rateLimited,
+        )
+      ).message,
+    ).toBe('Please try again later.')
+
+    const unavailable = vi.fn<typeof fetch>().mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: vi.fn<() => Promise<unknown>>(),
+    } as unknown as Response)
+    const unavailableResult = await staffPasswordLogin(
+      'https://api.example.com',
+      { email: 'a@b.com', password: 'x'.repeat(16), csrfToken: 't' },
+      unavailable,
+    )
+    expect(unavailableResult.message).toBe('Desk temporarily unavailable. Try again in a moment.')
+    expect(unavailableResult.retryable).toBe(true)
+    expect(unavailableResult.message).not.toBe('Invalid credentials.')
+
+    const offline = vi.fn<typeof fetch>().mockRejectedValue(new TypeError('Failed to fetch'))
+    expect(
+      (
+        await staffPasswordLogin(
+          'https://api.example.com',
+          { email: 'a@b.com', password: 'x'.repeat(16), csrfToken: 't' },
+          offline,
+        )
+      ).message,
+    ).toBe('Could not reach the desk. Refresh and try again.')
+
+    const csrfForbidden = vi.fn<typeof fetch>().mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: vi.fn<() => Promise<unknown>>(),
+    } as unknown as Response)
+    const csrfResult = await staffPasswordLogin(
+      'https://api.example.com',
+      { email: 'a@b.com', password: 'x'.repeat(16), csrfToken: 't' },
+      csrfForbidden,
+    )
+    expect(csrfResult.message).toBe('Sign-in session expired. Refresh the page and try again.')
+    expect(csrfResult.retryable).toBe(true)
+    expect(csrfResult.message).not.toContain('Could not reach the desk')
+    expect(csrfResult.message).not.toBe('Invalid credentials.')
+
+    vi.useFakeTimers()
+    try {
+      const hung = vi.fn<typeof fetch>().mockImplementation(
+        (_url: string | URL | Request, init?: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+          }),
+      )
+      const hungPromise = staffPasswordLogin(
+        'https://api.example.com',
+        { email: 'a@b.com', password: 'x'.repeat(16), csrfToken: 't' },
+        hung,
+      )
+      await vi.advanceTimersByTimeAsync(15_000)
+      expect((await hungPromise).message).toBe('Could not reach the desk. Refresh and try again.')
+      expect(hung).toHaveBeenCalledWith(
+        'https://api.example.com/api/staff/auth/login/',
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      )
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('client-side click gate blocks rapid duplicate actions without being the security boundary', () => {
@@ -100,7 +187,7 @@ describe('staff login panel', () => {
 
     expect(wrapper.find('.staff-login__logo').exists()).toBe(true)
     expect(wrapper.find('.staff-login__logo-mark').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Welcome back')
+    expect(wrapper.text()).toMatch(/Welcome back/)
     expect(wrapper.text()).toContain('Continue with Google')
     expect(wrapper.text()).toContain('Continue with Apple')
     expect(wrapper.find('input[type="email"]').attributes('autocomplete')).toBe('username')
@@ -127,6 +214,17 @@ describe('staff login panel', () => {
     expect(appleLink?.attributes('href')).toContain('/api/staff/auth/apple/start/?next=%2Fstaff%2Fdashboard')
   })
 
+  it('personalizes welcome from typed email local-part', async () => {
+    const wrapper = mount(StaffLoginPanel, {
+      props: {
+        apiBaseUrl: 'https://api.example.com',
+        csrfToken: 'csrf-token',
+      },
+    })
+    await wrapper.find('input[type="email"]').setValue('amina.k@example.com')
+    expect(wrapper.find('#staff-login-title').text()).toBe('Welcome back, Amina')
+  })
+
   it('shows and hides password input without persisting secrets', async () => {
     const wrapper = mount(StaffLoginPanel, {
       props: {
@@ -140,6 +238,22 @@ describe('staff login panel', () => {
     expect(wrapper.find('input[name="password"]').attributes('type')).toBe('text')
     expect(storageContainsStaffSecrets(localStorage)).toBe(false)
     expect(storageContainsStaffSecrets(sessionStorage)).toBe(false)
+  })
+
+  it('never maps missing CSRF to invalid credentials and offers retry', async () => {
+    const wrapper = mount(StaffLoginPanel, {
+      props: {
+        apiBaseUrl: 'https://api.example.com',
+        csrfToken: '',
+      },
+    })
+
+    await wrapper.find('form').trigger('submit')
+    expect(wrapper.find('.staff-login__status--error').text()).toBe(
+      'Desk temporarily unavailable. Try again in a moment.',
+    )
+    expect(wrapper.find('button.staff-login__retry').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('Invalid credentials.')
   })
 })
 

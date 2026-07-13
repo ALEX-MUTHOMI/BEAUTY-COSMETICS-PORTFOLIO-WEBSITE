@@ -7,6 +7,12 @@ export default defineNuxtConfig({
   // Enforce Server-Side Rendering (SSR) for optimal SEO crawlability and index ranking
   ssr: true,
 
+  // Staff desk uses credentialed calls to the API origin; SPA mode avoids SSR
+  // session checks that cannot see cross-origin API cookies inside Docker.
+  routeRules: {
+    '/staff/**': { ssr: false },
+  },
+
   // Mellis theme design tokens shared across the public site
   css: ['~/assets/css/tokens.css', '~/assets/css/motion.css', '~/assets/css/loader.css'],
 
@@ -23,7 +29,7 @@ export default defineNuxtConfig({
     // Keys exposed on both client and server contexts
     public: {
       // Single source of truth for Nuxt (:3000) → Django (:8000). Never wildcard.
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://sheeaesthetics.co.ke',
       // Empty-safe Sentry scaffold — live DSN via secrets later (PII scrubbers always on).
       sentryDsn: process.env.NUXT_PUBLIC_SENTRY_DSN || '',

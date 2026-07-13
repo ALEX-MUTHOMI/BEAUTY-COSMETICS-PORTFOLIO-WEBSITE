@@ -5,7 +5,7 @@
       <p class="eyebrow">Staff recovery</p>
       <h1>Reset your staff password</h1>
       <p class="lead">Enter your staff email and we&apos;ll send next steps.</p>
-      <form @submit.prevent="submit">
+      <form v-if="!sent" @submit.prevent="submit">
         <label>
           Email
           <input v-model="email" autocomplete="username" type="email" required :disabled="submitting" />
@@ -15,6 +15,11 @@
           {{ submitting ? 'Sending…' : 'Send recovery instructions' }}
         </button>
       </form>
+      <div v-else class="sent" role="status">
+        <h2>Check your inbox</h2>
+        <p>{{ message }}</p>
+        <NuxtLink class="continue" to="/staff/reset-password">Continue to reset</NuxtLink>
+      </div>
       <NuxtLink to="/staff/login">Back to sign in</NuxtLink>
     </section>
   </main>
@@ -39,6 +44,7 @@ const apiBaseUrl = String(runtimeConfig.public.apiBaseUrl || '')
 const email = ref('')
 const submitting = ref(false)
 const message = ref('')
+const sent = ref(false)
 
 async function submit() {
   if (submitting.value || !email.value.trim()) return
@@ -52,8 +58,10 @@ async function submit() {
     }
     const result = await requestStaffPasswordReset(apiBaseUrl, email.value, csrfToken)
     message.value = result.message
+    sent.value = result.ok
   } catch {
     message.value = 'If the account exists, reset instructions have been sent.'
+    sent.value = true
   } finally {
     submitting.value = false
   }
@@ -142,5 +150,42 @@ async function submit() {
 .staff-reset-page a {
   color: var(--color-muted);
   font: 0.92rem var(--font-body);
+}
+
+.staff-reset-page .sent {
+  display: grid;
+  gap: 0.75rem;
+  animation: staff-reset-rise 0.45s ease both;
+}
+
+.staff-reset-page .sent h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+.staff-reset-page a.continue {
+  justify-self: start;
+  min-height: 2.8rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 1rem;
+  background: var(--color-rose);
+  color: #fff;
+  text-decoration: none;
+  font: 600 0.78rem/1 var(--font-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@keyframes staff-reset-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

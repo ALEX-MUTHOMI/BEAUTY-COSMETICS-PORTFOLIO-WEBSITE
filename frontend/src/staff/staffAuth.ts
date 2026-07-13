@@ -9,10 +9,25 @@ export interface StaffLoginResult {
   ok: boolean
   nextPath: string
   message: string
+  displayName: string
+  /** Availability / session — show Retry, never treat as bad password. */
+  retryable?: boolean
 }
 
 const GENERIC_LOGIN_ERROR = 'Invalid credentials.'
+const RATE_LIMIT_ERROR = 'Please try again later.'
+/** Network / abort — desk may be down or the browser could not reach the API. */
+const DESK_UNREACHABLE_ERROR = 'Could not reach the desk. Refresh and try again.'
+/** Redis/throttle/admission 503 — distinct from invalid credentials and from 429. */
+const DESK_UNAVAILABLE_ERROR = 'Desk temporarily unavailable. Try again in a moment.'
+/**
+ * CSRF/session 403 — not an auth oracle (never "invalid credentials").
+ * Often host mismatch (localhost vs 127.0.0.1) with SameSite=Strict cookies.
+ */
+const SESSION_REFRESH_ERROR = 'Sign-in session expired. Refresh the page and try again.'
 const DEFAULT_NEXT_PATH = '/staff/dashboard'
+/** Fail closed so the desk never sticks on “Signing in…” forever. */
+const LOGIN_FETCH_TIMEOUT_MS = 15_000
 
 function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, '')
@@ -65,27 +80,74 @@ export function buildStaffAppleLoginUrl(apiBaseUrl: string, nextPath = DEFAULT_N
   return `${baseUrl}/api/staff/auth/apple/start/?${query}`
 }
 
+/**
+ * Map HTTP status → staff-facing message without credential enumeration.
+ * 403 is CSRF/session (retry refresh), not "desk down" and not bad password.
+ * 503 is availability; 429 is rate limit — both retryable, neither is invalid creds.
+ */
+function failureMessageForStatus(status: number): { message: string; retryable: boolean } {
+  if (status === 429) return { message: RATE_LIMIT_ERROR, retryable: true }
+  if (status === 503) return { message: DESK_UNAVAILABLE_ERROR, retryable: true }
+  if (status === 403) return { message: SESSION_REFRESH_ERROR, retryable: true }
+  return { message: GENERIC_LOGIN_ERROR, retryable: false }
+}
+
+/** True when portal origin host ≠ API host (breaks SameSite=Strict CSRF cookies). */
+export function staffApiHostMismatch(apiBaseUrl: string, pageHostname?: string): boolean {
+  if (typeof pageHostname !== 'string' || !pageHostname) return false
+  try {
+    const apiHost = new URL(apiBaseUrl).hostname
+    if (!apiHost || ['web', 'backend', 'django'].includes(apiHost)) return false
+    return apiHost !== pageHostname
+  } catch {
+    return false
+  }
+}
+
 export async function staffPasswordLogin(
   apiBaseUrl: string,
   payload: StaffLoginPayload,
   fetcher: typeof fetch = fetch,
 ): Promise<StaffLoginResult> {
-  const response = await fetcher(buildStaffLoginUrl(apiBaseUrl), {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': payload.csrfToken,
-    },
-    body: JSON.stringify({
-      email: payload.email.trim().toLowerCase(),
-      password: payload.password,
-      turnstile_token: payload.turnstileToken || '',
-    }),
-  })
+  let response: Response
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), LOGIN_FETCH_TIMEOUT_MS)
+  try {
+    response = await fetcher(buildStaffLoginUrl(apiBaseUrl), {
+      method: 'POST',
+      credentials: 'include',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': payload.csrfToken,
+      },
+      body: JSON.stringify({
+        email: payload.email.trim().toLowerCase(),
+        password: payload.password,
+        turnstile_token: payload.turnstileToken || '',
+      }),
+    })
+  } catch {
+    return {
+      ok: false,
+      nextPath: '',
+      message: DESK_UNREACHABLE_ERROR,
+      displayName: '',
+      retryable: true,
+    }
+  } finally {
+    clearTimeout(timeoutId)
+  }
 
   if (!response.ok) {
-    return { ok: false, nextPath: '', message: GENERIC_LOGIN_ERROR }
+    const failure = failureMessageForStatus(response.status)
+    return {
+      ok: false,
+      nextPath: '',
+      message: failure.message,
+      displayName: '',
+      retryable: failure.retryable,
+    }
   }
 
   let data: unknown = {}
@@ -99,11 +161,38 @@ export async function staffPasswordLogin(
     typeof data === 'object' && data !== null && 'next' in data && typeof data.next === 'string'
       ? sanitizeNextPath(data.next)
       : DEFAULT_NEXT_PATH
+  const displayName =
+    typeof data === 'object' && data !== null && 'display_name' in data && typeof data.display_name === 'string'
+      ? data.display_name
+      : ''
 
   return {
     ok: true,
     nextPath,
     message: 'Signed in.',
+    displayName,
+  }
+}
+
+export async function fetchStaffOAuthProviders(
+  apiBaseUrl: string,
+  fetcher: typeof fetch = fetch,
+): Promise<{ google: boolean; apple: boolean }> {
+  try {
+    const response = await fetcher(`${publicApiBaseUrl(apiBaseUrl)}/api/staff/auth/providers/`, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
+    if (!response.ok) {
+      return { google: false, apple: false }
+    }
+    const data = (await response.json()) as { google?: unknown; apple?: unknown }
+    return {
+      google: Boolean(data.google),
+      apple: Boolean(data.apple),
+    }
+  } catch {
+    return { google: false, apple: false }
   }
 }
 
@@ -163,4 +252,11 @@ export async function confirmStaffPasswordReset(
   return { ok: true, message: 'Password reset complete. You can sign in with your new password.' }
 }
 
-export { sanitizeNextPath }
+export {
+  sanitizeNextPath,
+  DESK_UNREACHABLE_ERROR,
+  DESK_UNAVAILABLE_ERROR,
+  SESSION_REFRESH_ERROR,
+  RATE_LIMIT_ERROR,
+  GENERIC_LOGIN_ERROR,
+}
