@@ -99,7 +99,19 @@ services:
       dockerfile: Dockerfile
     image: aesthetic_os_web_app:latest
     container_name: aesthetic_os_web_app
-    command: gunicorn --bind 0.0.0.0:8000 --workers 3 core.wsgi:application
+    # Sync workers ~250–400MB each. Default 1 under the 1G memory limit avoids OOM/SIGKILL
+    # death spirals that stall CSRF/login for hours. Raise GUNICORN_WORKERS only with more RAM.
+    command:
+      - sh
+      - -c
+      - >-
+        gunicorn --bind 0.0.0.0:8000
+        --workers $${GUNICORN_WORKERS:-1}
+        --timeout $${GUNICORN_TIMEOUT:-60}
+        --graceful-timeout $${GUNICORN_GRACEFUL_TIMEOUT:-30}
+        --max-requests $${GUNICORN_MAX_REQUESTS:-500}
+        --max-requests-jitter $${GUNICORN_MAX_REQUESTS_JITTER:-50}
+        core.wsgi:application
     volumes:
       - .:/app:rw
       - receipt_artifacts:/app/var/receipt-artifacts:rw
@@ -115,13 +127,19 @@ services:
       - POETRY_VIRTUALENVS_CREATE=false
       - PATH=/app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
       - SECRET_KEY=${SECRET_KEY:-phase1-phase2-prod-verification-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f}
-      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-True}
+      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-False}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,web,testserver}
       - DISABLE_DJANGO_ADMIN=${DISABLE_DJANGO_ADMIN:-False}
       - DRF_DISABLE_BROWSABLE_API=${DRF_DISABLE_BROWSABLE_API:-False}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - PII_HASH_PEPPER=${PII_HASH_PEPPER:-local-test-pii-hash-pepper-change-me}
       - PII_ENCRYPTION_KEY=${PII_ENCRYPTION_KEY:-local-test-pii-encryption-key-change-me}
+      # Gunicorn sizing (consumed by web command). Keep workers=1 on 1G Docker Desktop.
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-1}
+      - GUNICORN_TIMEOUT=${GUNICORN_TIMEOUT:-60}
+      - GUNICORN_GRACEFUL_TIMEOUT=${GUNICORN_GRACEFUL_TIMEOUT:-30}
+      - GUNICORN_MAX_REQUESTS=${GUNICORN_MAX_REQUESTS:-500}
+      - GUNICORN_MAX_REQUESTS_JITTER=${GUNICORN_MAX_REQUESTS_JITTER:-50}
 
       # ------------------------------------------------------------------------
       # Database
@@ -235,17 +253,32 @@ services:
       - GALLERY_PUBLIC_SENSITIVE_LIMIT=${GALLERY_PUBLIC_SENSITIVE_LIMIT:-6}
       - GALLERY_PROCESSING_TIMEOUT_SECONDS=${GALLERY_PROCESSING_TIMEOUT_SECONDS:-15}
       - STAFF_GOOGLE_OAUTH_CLIENT_ID=${STAFF_GOOGLE_OAUTH_CLIENT_ID:-}
+      - STAFF_GOOGLE_OAUTH_CLIENT_SECRET=${STAFF_GOOGLE_OAUTH_CLIENT_SECRET:-}
       - STAFF_GOOGLE_OAUTH_REDIRECT_URI=${STAFF_GOOGLE_OAUTH_REDIRECT_URI:-}
       - STAFF_GOOGLE_OAUTH_SCOPE=${STAFF_GOOGLE_OAUTH_SCOPE:-openid email profile}
       - STAFF_APPLE_OAUTH_CLIENT_ID=${STAFF_APPLE_OAUTH_CLIENT_ID:-}
+      - STAFF_APPLE_OAUTH_CLIENT_SECRET=${STAFF_APPLE_OAUTH_CLIENT_SECRET:-}
       - STAFF_APPLE_OAUTH_REDIRECT_URI=${STAFF_APPLE_OAUTH_REDIRECT_URI:-}
       - STAFF_APPLE_OAUTH_SCOPE=${STAFF_APPLE_OAUTH_SCOPE:-name email}
+      # Prefer 127.0.0.1 locally so CSRF SameSite=Strict matches the Nuxt desk host.
+      - STAFF_PORTAL_PUBLIC_ORIGIN=${STAFF_PORTAL_PUBLIC_ORIGIN:-http://127.0.0.1:3000}
 
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Fail unhealthy if CSRF bootstrap is dead (login stall signal).
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/csrf/', timeout=5).read()\"",
+        ]
+      interval: 15s
+      timeout: 8s
+      retries: 8
+      start_period: 45s
     networks:
       - aesthetic_os_isolated_net
     security_opt:
@@ -275,13 +308,17 @@ services:
 
       # Frontend gets only public API URL / public keys.
       # Never expose Daraja secrets through NUXT_PUBLIC_*.
-      - NUXT_PUBLIC_API_BASE_URL=${NUXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+      # Host must match the browser origin host (CSRF cookie SameSite=Strict):
+      # open the desk at http://127.0.0.1:3000 when API is 127.0.0.1:8000
+      # (localhost ≠ 127.0.0.1 for cookies; Cursor browser often needs 127.0.0.1).
+      - NUXT_PUBLIC_API_BASE_URL=${NUXT_PUBLIC_API_BASE_URL:-http://127.0.0.1:8000}
       - NUXT_PUBLIC_STAFF_GOOGLE_ENABLED=${NUXT_PUBLIC_STAFF_GOOGLE_ENABLED:-false}
       - NUXT_PUBLIC_STAFF_APPLE_ENABLED=${NUXT_PUBLIC_STAFF_APPLE_ENABLED:-false}
       - NUXT_PUBLIC_TURNSTILE_SITE_KEY=${NUXT_PUBLIC_TURNSTILE_SITE_KEY:-1x0000000000000000000000000000000AA}
       - NUXT_TURNSTILE_SECRET_KEY=${NUXT_TURNSTILE_SECRET_KEY:-1x0000000000000000000000000000000AA}
     depends_on:
-      - web
+      web:
+        condition: service_healthy
     networks:
       - aesthetic_os_isolated_net
     security_opt:
@@ -306,7 +343,7 @@ services:
     command: tail -f /dev/null
     environment:
       - NODE_ENV=test
-      - NUXT_PUBLIC_API_BASE_URL=${NUXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+      - NUXT_PUBLIC_API_BASE_URL=${NUXT_PUBLIC_API_BASE_URL:-http://127.0.0.1:8000}
       - NUXT_PUBLIC_STAFF_GOOGLE_ENABLED=${NUXT_PUBLIC_STAFF_GOOGLE_ENABLED:-false}
       - NUXT_PUBLIC_STAFF_APPLE_ENABLED=${NUXT_PUBLIC_STAFF_APPLE_ENABLED:-false}
     networks:
@@ -335,7 +372,7 @@ services:
       - POETRY_VIRTUALENVS_CREATE=false
       - PATH=/app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
       - SECRET_KEY=${SECRET_KEY:-phase1-phase2-prod-verification-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f}
-      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-True}
+      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-False}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,web,testserver}
       - DISABLE_DJANGO_ADMIN=${DISABLE_DJANGO_ADMIN:-False}
       - DRF_DISABLE_BROWSABLE_API=${DRF_DISABLE_BROWSABLE_API:-False}
@@ -436,11 +473,14 @@ services:
       - BOOKING_REMINDER_2H_ENABLED=${BOOKING_REMINDER_2H_ENABLED:-false}
       - BOOKING_REMINDER_MAX_ATTEMPTS=${BOOKING_REMINDER_MAX_ATTEMPTS:-3}
       - STAFF_GOOGLE_OAUTH_CLIENT_ID=${STAFF_GOOGLE_OAUTH_CLIENT_ID:-}
+      - STAFF_GOOGLE_OAUTH_CLIENT_SECRET=${STAFF_GOOGLE_OAUTH_CLIENT_SECRET:-}
       - STAFF_GOOGLE_OAUTH_REDIRECT_URI=${STAFF_GOOGLE_OAUTH_REDIRECT_URI:-}
       - STAFF_GOOGLE_OAUTH_SCOPE=${STAFF_GOOGLE_OAUTH_SCOPE:-openid email profile}
       - STAFF_APPLE_OAUTH_CLIENT_ID=${STAFF_APPLE_OAUTH_CLIENT_ID:-}
+      - STAFF_APPLE_OAUTH_CLIENT_SECRET=${STAFF_APPLE_OAUTH_CLIENT_SECRET:-}
       - STAFF_APPLE_OAUTH_REDIRECT_URI=${STAFF_APPLE_OAUTH_REDIRECT_URI:-}
       - STAFF_APPLE_OAUTH_SCOPE=${STAFF_APPLE_OAUTH_SCOPE:-name email}
+      - STAFF_PORTAL_PUBLIC_ORIGIN=${STAFF_PORTAL_PUBLIC_ORIGIN:-http://127.0.0.1:3000}
 
     depends_on:
       db:
