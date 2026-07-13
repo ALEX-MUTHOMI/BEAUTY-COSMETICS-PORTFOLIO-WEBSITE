@@ -33,3 +33,11 @@ var/
 media/
 uploads/
 node_modules/
+
+# Local auth diagnostics / agent scratch (never commit)
+_login_diag/
+_agent_*.json
+*_login_proof.png
+staff_dashboard_login_proof.png
+frontend/_owner_login_probe.mjs
+NUL
