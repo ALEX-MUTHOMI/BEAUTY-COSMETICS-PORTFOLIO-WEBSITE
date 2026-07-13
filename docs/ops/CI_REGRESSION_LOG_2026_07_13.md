@@ -67,3 +67,17 @@ required job failed — cascade, not independent regressions.
 - Local Windows: after enabling the windows compose file, recreate web/worker
   and once-run `docker compose exec -u root web poetry install --with dev --no-root`
   if Poetry still complains about an empty mask volume.
+
+## Watch outcome (3f4b1a)
+
+See Actions: https://github.com/ALEX-MUTHOMI/aesthetic-os/actions/runs/29279581517
+
+
+### 4) Docker Hub registry flake (`b3f4b1a` run 29279581517)
+
+- **Not a product regression.** Multiple parallel jobs failed at
+  `docker compose up -d --build` with Docker Hub `500 Internal Server Error`
+  fetching `python:3.13-slim` / `node:22-alpine` metadata, plus transient
+  `pull access denied for aesthetic_os_web_app` when build aborted mid-bake.
+- django-smoke / lint-security / validate / checkout-unit still green on that SHA.
+- Action: `gh run rerun --failed 29279581517` (infra retry).
