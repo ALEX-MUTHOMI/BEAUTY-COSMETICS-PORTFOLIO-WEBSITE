@@ -103,7 +103,8 @@ Write-Host "NEWMAN_IMAGE=$Image"
 Write-Host "NEWMAN_COLLECTION=$Collection"
 Write-Host "NEWMAN_ENVIRONMENT=$Environment"
 Write-Host "NEWMAN_REPORT=$Report"
-Invoke-Checked -Exe "bash" -CommandArgs @("scripts/ci/bootstrap_web_db.sh")
+# Windows-safe DB bootstrap (avoid host bash/WSL dependency).
+Invoke-Checked -Exe "docker" -CommandArgs @("compose", "exec", "-T", "web", "poetry", "run", "python", "manage.py", "migrate", "--noinput")
 Invoke-Checked -Exe "docker" -CommandArgs @("compose", "exec", "-T", "web", "poetry", "run", "python", "manage.py", "seed_api_acceptance_data")
 Invoke-Checked -Exe "docker" -CommandArgs @("compose", "exec", "-T", "web", "poetry", "run", "python", "manage.py", "seed_marketing_catalog")
 Invoke-Checked -Exe "docker" -CommandArgs $newmanArgs

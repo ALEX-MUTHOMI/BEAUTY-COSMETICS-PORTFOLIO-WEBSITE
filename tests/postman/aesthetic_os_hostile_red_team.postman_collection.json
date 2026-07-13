@@ -1,0 +1,380 @@
+{
+  "info": {
+    "_postman_id": "a11c0de5-red1-4eam-9f01-hostilecollection",
+    "name": "AestheticOS Hostile Red Team (Money Path)",
+    "description": "Hostile-only Newman collection: auth mismatch STK, concurrent hold race, webhook idempotency storm. Fake providers only. Never run against production.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "function nextAllowedDate(offsetDays, allowedJsWeekdays) {",
+          "  const now = new Date();",
+          "  let candidate = new Date(now.getTime() + offsetDays * 24 * 60 * 60 * 1000);",
+          "  while (!allowedJsWeekdays.includes(candidate.getDay())) {",
+          "    candidate = new Date(candidate.getTime() + 24 * 60 * 60 * 1000);",
+          "  }",
+          "  return candidate.toISOString().slice(0, 10);",
+          "}",
+          "if (!pm.environment.get('hostile_run_id')) {",
+          "  const runId = 'hostile-' + String(Date.now());",
+          "  pm.environment.set('hostile_run_id', runId);",
+          "  const normalDate = nextAllowedDate(90, [1, 4, 5, 6]);",
+          "  pm.environment.set('hostile_date', normalDate);",
+          "  pm.environment.set('hostile_hold_key_a', runId + '-hold-a');",
+          "  pm.environment.set('hostile_hold_key_b', runId + '-hold-b');",
+          "  pm.environment.set('hostile_checkout_key', runId + '-checkout');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('hostile suite never 5xx', function () {",
+          "  pm.expect(pm.response.code, pm.info.requestName).to.be.below(500);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "00 Bootstrap",
+      "item": [
+        {
+          "name": "CSRF Bootstrap",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('csrf ok', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.environment.set('csrf_token', json.csrf_token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{base_url}}/api/csrf/"
+          }
+        },
+        {
+          "name": "Catalog Services",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('catalog services available', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  const services = json.services || json.results || [];",
+                  "  pm.expect(services).to.be.an('array').and.not.empty;",
+                  "  const svc = services.find((s) => s.name && String(s.name).includes('API Acceptance')) || services[0];",
+                  "  pm.environment.set('service_public_id', svc.public_id || svc.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Forwarded-Proto", "value": "https" }
+            ],
+            "url": "{{base_url}}/api/bookings/catalog/services/"
+          }
+        },
+        {
+          "name": "Normal Service Availability",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('availability slot chosen', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const availability = pm.response.json().availability;",
+                  "  pm.expect(availability).to.be.an('array').and.not.empty;",
+                  "  const day = availability.find((c) => c.slots && c.slots.length) || availability[0];",
+                  "  pm.expect(day.slots).to.be.an('array').and.not.empty;",
+                  "  pm.environment.set('hostile_starts_at', day.slots[0].starts_at);",
+                  "  pm.environment.set('resource_public_id', day.slots[0].resource_public_id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-Forwarded-Proto", "value": "https" }
+            ],
+            "url": "{{base_url}}/api/bookings/availability/?selection_type=normal&service_public_id={{service_public_id}}&start_date={{hostile_date}}&end_date={{hostile_date}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2.1 Auth Mismatch STK Bypass",
+      "item": [
+        {
+          "name": "Guest Hold",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('hold created or conflict', function () {",
+                  "  pm.expect([200, 201, 409]).to.include(pm.response.code);",
+                  "  if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    const booking = json.booking || json;",
+                  "    pm.environment.set('hostile_public_booking_id', booking.booking_public_id || booking.public_id || booking.public_booking_id || '');",
+                  "    pm.environment.set('hostile_booking_token', booking.status_token || booking.token || json.status_token || '');",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRFToken", "value": "{{csrf_token}}" },
+              { "key": "Cookie", "value": "csrftoken={{csrf_token}}" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Referer", "value": "{{csrf_referer}}" },
+              { "key": "X-Forwarded-Proto", "value": "https" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotency_key\": \"{{hostile_hold_key_a}}\",\n  \"selection_type\": \"normal\",\n  \"service_public_id\": \"{{service_public_id}}\",\n  \"resource_public_id\": \"{{resource_public_id}}\",\n  \"starts_at\": \"{{hostile_starts_at}}\",\n  \"customer\": {\n    \"full_name\": \"Hostile Guest\",\n    \"email\": \"hostile.guest.{{hostile_run_id}}@example.invalid\",\n    \"phone\": \"+254711000001\"\n  }\n}"
+            },
+            "url": "{{base_url}}/api/bookings/holds/"
+          }
+        },
+        {
+          "name": "Guest attempts owner CheckoutMpesaSTKView without session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('anonymous STK on customer session route is denied', function () {",
+                  "  // Fail-closed: unauthenticated/invalid STK must not succeed (2xx).",
+                  "  pm.expect([400, 401, 403]).to.include(pm.response.code);",
+                  "  pm.expect(pm.response.code).to.be.below(500);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRFToken", "value": "{{csrf_token}}" },
+              { "key": "Cookie", "value": "csrftoken={{csrf_token}}" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Referer", "value": "{{csrf_referer}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"checkout_session_id\": \"00000000-0000-4000-8000-000000000001\",\n  \"idempotency_key\": \"{{hostile_checkout_key}}-stk\"\n}"
+            },
+            "url": "{{base_url}}/api/bookings/checkout/mpesa/stk/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2.2 Race Double Booking",
+      "item": [
+        {
+          "name": "Race Hold A",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('race A status recorded', function () {",
+                  "  pm.environment.set('hostile_race_a', String(pm.response.code));",
+                  "  pm.expect([200, 201, 409, 400]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRFToken", "value": "{{csrf_token}}" },
+              { "key": "Cookie", "value": "csrftoken={{csrf_token}}" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Referer", "value": "{{csrf_referer}}" },
+              { "key": "X-Forwarded-Proto", "value": "https" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotency_key\": \"{{hostile_hold_key_a}}-race\",\n  \"selection_type\": \"normal\",\n  \"service_public_id\": \"{{service_public_id}}\",\n  \"resource_public_id\": \"{{resource_public_id}}\",\n  \"starts_at\": \"{{hostile_starts_at}}\",\n  \"customer\": {\n    \"full_name\": \"Race Alpha\",\n    \"email\": \"race.a.{{hostile_run_id}}@example.invalid\",\n    \"phone\": \"+254711000002\"\n  }\n}"
+            },
+            "url": "{{base_url}}/api/bookings/holds/"
+          }
+        },
+        {
+          "name": "Race Hold B same slot",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('race B status recorded', function () {",
+                  "  pm.environment.set('hostile_race_b', String(pm.response.code));",
+                  "  pm.expect([200, 201, 409, 400]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('at most one hold wins the slot', function () {",
+                  "  const a = pm.environment.get('hostile_race_a');",
+                  "  const b = String(pm.response.code);",
+                  "  const success = (code) => code === '200' || code === '201';",
+                  "  if (success(a) && success(b)) {",
+                  "    pm.expect.fail('both race holds succeeded — exclusion constraint failed');",
+                  "  }",
+                  "  pm.expect(success(a) || success(b) || a === '409' || b === '409' || a === '400' || b === '400').to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRFToken", "value": "{{csrf_token}}" },
+              { "key": "Cookie", "value": "csrftoken={{csrf_token}}" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Referer", "value": "{{csrf_referer}}" },
+              { "key": "X-Forwarded-Proto", "value": "https" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotency_key\": \"{{hostile_hold_key_b}}-race\",\n  \"selection_type\": \"normal\",\n  \"service_public_id\": \"{{service_public_id}}\",\n  \"resource_public_id\": \"{{resource_public_id}}\",\n  \"starts_at\": \"{{hostile_starts_at}}\",\n  \"customer\": {\n    \"full_name\": \"Race Beta\",\n    \"email\": \"race.b.{{hostile_run_id}}@example.invalid\",\n    \"phone\": \"+254711000003\"\n  }\n}"
+            },
+            "url": "{{base_url}}/api/bookings/holds/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2.3 Webhook Idempotency Storm",
+      "item": [
+        {
+          "name": "Webhook hit 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('webhook accepted-class response', function () {",
+                  "  pm.expect([200, 202, 400, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Body\": {\n    \"stkCallback\": {\n      \"MerchantRequestID\": \"{{seeded_merchant_request_id}}\",\n      \"CheckoutRequestID\": \"{{seeded_callback_request_id}}\",\n      \"ResultCode\": 0,\n      \"ResultDesc\": \"The service request is processed successfully.\",\n      \"CallbackMetadata\": {\n        \"Item\": [\n          { \"Name\": \"Amount\", \"Value\": 1 },\n          { \"Name\": \"MpesaReceiptNumber\", \"Value\": \"HOSTILE{{hostile_run_id}}\" },\n          { \"Name\": \"PhoneNumber\", \"Value\": 254711000001 }\n        ]\n      }\n    }\n  }\n}"
+            },
+            "url": "{{base_url}}/api/checkout/mpesa/webhook/"
+          }
+        },
+        {
+          "name": "Webhook hit 2 duplicate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('duplicate webhook still ok for Daraja', function () {",
+                  "  pm.expect([200, 202, 400, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Body\": {\n    \"stkCallback\": {\n      \"MerchantRequestID\": \"{{seeded_merchant_request_id}}\",\n      \"CheckoutRequestID\": \"{{seeded_callback_request_id}}\",\n      \"ResultCode\": 0,\n      \"ResultDesc\": \"The service request is processed successfully.\",\n      \"CallbackMetadata\": {\n        \"Item\": [\n          { \"Name\": \"Amount\", \"Value\": 1 },\n          { \"Name\": \"MpesaReceiptNumber\", \"Value\": \"HOSTILE{{hostile_run_id}}\" },\n          { \"Name\": \"PhoneNumber\", \"Value\": 254711000001 }\n        ]\n      }\n    }\n  }\n}"
+            },
+            "url": "{{base_url}}/api/checkout/mpesa/webhook/"
+          }
+        },
+        {
+          "name": "Webhook hit 3 duplicate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('third duplicate webhook still ok for Daraja', function () {",
+                  "  pm.expect([200, 202, 400, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Body\": {\n    \"stkCallback\": {\n      \"MerchantRequestID\": \"{{seeded_merchant_request_id}}\",\n      \"CheckoutRequestID\": \"{{seeded_callback_request_id}}\",\n      \"ResultCode\": 0,\n      \"ResultDesc\": \"The service request is processed successfully.\",\n      \"CallbackMetadata\": {\n        \"Item\": [\n          { \"Name\": \"Amount\", \"Value\": 1 },\n          { \"Name\": \"MpesaReceiptNumber\", \"Value\": \"HOSTILE{{hostile_run_id}}\" },\n          { \"Name\": \"PhoneNumber\", \"Value\": 254711000001 }\n        ]\n      }\n    }\n  }\n}"
+            },
+            "url": "{{base_url}}/api/checkout/mpesa/webhook/"
+          }
+        }
+      ]
+    }
+  ]
+}

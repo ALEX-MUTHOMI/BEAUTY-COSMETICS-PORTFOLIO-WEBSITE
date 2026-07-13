@@ -68,14 +68,18 @@ the staff scoping decision explicit.
 
 ## Staff Scoping Decision
 
-Current product policy: **Option A - Global Staff Access Is Current Product Policy**.
+Current product policy: **Role-scoped staff portal (owner / receptionist / beautician)**.
 
 Meaning:
 
-- Active staff with the required permission can access staff portal booking
-  read models globally.
-- Staff A / Staff B row ownership is not a current requirement because no
-  assignment/branch/resource ownership policy is present.
+- **Owner / receptionist** with required permissions can access global day schedules,
+  assign beauticians, and confirm fulfillment (`fulfillment_status` — independent of
+  financial `Booking.status`).
+- **Beautician** accounts only see bookings where `assigned_staff` is themselves.
+- Receipt PDF download requires `download_staff_receipt` (owner). Payment **status**
+  may be visible via `view_staff_payment_summary` without PDF access.
+- Payments desk requires `view_staff_payments_desk`.
+- Guest checkout does **not** offer beautician selection (portal assignment only).
 - Non-staff, inactive staff, expired staff sessions, and staff without required
   permissions remain denied.
 - If per-beautician/per-resource scoping becomes a product requirement, it must

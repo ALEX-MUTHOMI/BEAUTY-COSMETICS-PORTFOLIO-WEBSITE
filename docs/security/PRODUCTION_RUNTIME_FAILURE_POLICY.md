@@ -11,7 +11,9 @@ for that tree. Production readiness is a separate bar (four gates):
 2. **Money-path** — staging Daraja STK + webhook, Beat running, receipt email
    to a real inbox, deep `/api/health-check/`.
 3. **Staff / ops** — provisioned staff login, live bookings, reauth → contact
-   reveal, password reset, synthetic desk path.
+   reveal, password reset, synthetic desk path. Local HTTP desks require
+   `SECURE_SSL_REDIRECT=False` (see `docs/ops/STAFF_PORTAL_PROVISIONING.md`);
+   staging/prod keep `True` so Secure session/CSRF cookies work on TLS only.
 4. **Runtime / cutover** — live Sentry (FE+BE) with existing PII scrubbers,
    alerts, deploy config gates, backups + restore drill, WAF/CDN, incident
    runbook practice.
