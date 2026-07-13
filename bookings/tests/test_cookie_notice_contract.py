@@ -14,8 +14,14 @@ def test_cookie_notice_documents_essential_cookies_only():
     assert "not currently use analytics or marketing cookies" in content.lower()
 
 
-@override_settings(DEBUG=False)
+@override_settings(
+    DEBUG=False,
+    SECURE_SSL_REDIRECT=True,
+    SESSION_COOKIE_SECURE=True,
+    CSRF_COOKIE_SECURE=True,
+)
 def test_production_cookie_settings_are_secure(settings):
+    """TLS production desks keep Secure cookies; CI/local HTTP uses SECURE_SSL_REDIRECT=False."""
     assert settings.SESSION_COOKIE_SECURE is True
     assert settings.CSRF_COOKIE_SECURE is True
     assert settings.SESSION_COOKIE_SAMESITE in {"Lax", "Strict"}

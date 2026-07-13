@@ -9,6 +9,7 @@ Last green baseline before this train: `a031d80` (staff audit migration + Melis 
 
 | SHA | Commit intent | Run | Gate that failed | Fingerprint |
 |-----|---------------|-----|------------------|-------------|
+| `ba59836` | Move Windows `.venv` mask out of CI compose | [29278739517](https://github.com/ALEX-MUTHOMI/aesthetic-os/actions/runs/29278739517) | **bookings-unit** | `test_production_cookie_settings_are_secure` still assumed `DEBUG=False` ⇒ Secure cookies; settings now key Secure flags off `SECURE_SSL_REDIRECT` (CI=False) |
 | `e1008f9` | turbo_pass stderr / Bandit / secret-hygiene harden | [29278112805](https://github.com/ALEX-MUTHOMI/aesthetic-os/actions/runs/29278112805) | **django-smoke** | Poetry: empty `linux_venv_mask` at `/app/.venv` → recreate → `Permission denied` |
 | `055151c` | Compose Windows `.venv` mask (in main compose) | [29259957276](https://github.com/ALEX-MUTHOMI/aesthetic-os/actions/runs/29259957276) | **lint-security** | Bandit Medium×2 — `urlopen` in `bookings/services/staff_oauth.py:79` (B310) |
 | `965e54c` | Ops docs + hostile Newman/ZAP tooling | [29257979549](https://github.com/ALEX-MUTHOMI/aesthetic-os/actions/runs/29257979549) | **lint-security** | Same Bandit B310 on staff OAuth `urlopen` |
@@ -32,25 +33,33 @@ required job failed — cascade, not independent regressions.
 
 ### 2) Poetry Permission denied on `/app/.venv` (`e1008f9`)
 
-- **Cause:** Windows-local workaround `linux_venv_mask:/app/.venv` was added to
-  **canonical** `docker-compose.yml`. CI Linux runners mount an empty named
-  volume there. Poetry (`POETRY_VIRTUALENVS_CREATE=false` image) still sees a
-  broken in-project `.venv` and tries to recreate it → EACCES.
-- **Why local turbo_pass passed:** Local volume was chmod’d + `poetry install`’d
-  into the mask — CI starts cold every job.
-- **Corrective design:** Keep the mask **out** of CI compose. Move to
-  `docker-compose.windows.yml` and opt-in via local `COMPOSE_FILE` only.
+- **Cause:** Windows-local workaround `linux_venv_mask:/app/.venv` was in
+  canonical `docker-compose.yml`. CI mounts an empty named volume; Poetry tries
+  to recreate a broken in-project `.venv` → EACCES.
+- **Fix in `ba59836`:** Mask moved to `docker-compose.windows.yml` (local opt-in).
 
-## Passed gates on latest failed SHA (`e1008f9`)
+### 3) Cookie Secure contract vs CI HTTP (`ba59836`)
 
-- `validate` — Poetry lock/files OK
-- `lint-security` — black/isort/ruff/bandit/secret hygiene OK (post-nosec)
+- **Cause:** Staff desk hardening keys `SESSION_COOKIE_SECURE` /
+  `CSRF_COOKIE_SECURE` off `SECURE_SSL_REDIRECT` so local/CI HTTP desks work.
+  `test_cookie_notice_contract.test_production_cookie_settings_are_secure` still
+  only flipped `DEBUG=False` and expected Secure=True.
+- **Evidence on `ba59836`:** validate, lint-security, django-smoke, frontend,
+  billing/checkout/api/cass all green; bookings-unit 358 passed / 1 failed.
+- **Fix:** Override Secure + SSL redirect True in that production contract test
+  (aligned with `test_staff_session_cookie_posture`).
 
-## Remediation commit intent (this follow-up)
+## Passed gates unlocked by compose fix (`ba59836`)
 
-1. Strip `linux_venv_mask` from `docker-compose.yml`.
-2. Ship `docker-compose.windows.yml` for Windows bind-mount hosts only.
-3. Re-push `development` and watch full Secure Enterprise CI to green.
+- `validate`, `lint-security`, `django-smoke`, `frontend-test`, `billing-unit`,
+  `checkout-unit`, `tests-api-unit`, `cass-calendar-service` — all green
+- Remaining blocker was bookings cookie contract (above)
+
+## Remediation
+
+1. `ba59836` — Move Windows `.venv` mask out of CI compose.
+2. Follow-up commit — align cookie notice Secure-flag contract with SSL-redirect posture.
+3. Watch full Secure Enterprise CI to green.
 
 ## Operator notes
 
