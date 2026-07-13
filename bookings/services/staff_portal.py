@@ -4,9 +4,10 @@ from datetime import date, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.utils import timezone
 
 from billing.models import LedgerTransaction
@@ -23,6 +24,7 @@ from bookings.models import (
     StaffActionAuditEvent,
 )
 from bookings.privacy import decrypt_value, safe_display_name
+from bookings.services.staff_roles import is_beautician, scope_bookings_queryset
 from checkout.models import CheckoutSession
 
 EAT = ZoneInfo("Africa/Nairobi")
@@ -87,7 +89,14 @@ def _base_booking_queryset():
     return (
         Booking.objects.filter(status__in=BOOKING_BLOCKING_STATUSES)
         .exclude(hold_expires_at__isnull=False, hold_expires_at__lte=timezone.now())
-        .select_related("customer_profile", "service", "resource", "full_package")
+        .select_related(
+            "customer_profile",
+            "service",
+            "resource",
+            "full_package",
+            "assigned_staff",
+            "assigned_staff__staff_profile",
+        )
         .prefetch_related(
             "service_items",
             Prefetch("notifications", queryset=BookingNotification.objects.order_by("-created_at")),
@@ -99,7 +108,14 @@ def _base_booking_queryset():
 
 def _all_booking_queryset():
     return (
-        Booking.objects.select_related("customer_profile", "service", "resource", "full_package")
+        Booking.objects.select_related(
+            "customer_profile",
+            "service",
+            "resource",
+            "full_package",
+            "assigned_staff",
+            "assigned_staff__staff_profile",
+        )
         .prefetch_related(
             "service_items",
             Prefetch("notifications", queryset=BookingNotification.objects.order_by("-created_at")),
@@ -181,6 +197,7 @@ def _payment_status(booking):
 
 def _appointment_row(booking):
     customer = booking.customer_profile
+    assigned = booking.assigned_staff
     return {
         "booking_reference": str(booking.public_id),
         "public_booking_id": str(booking.public_id),
@@ -195,6 +212,7 @@ def _appointment_row(booking):
             "email": "available",
         },
         "booking_status": booking.status,
+        "fulfillment_status": booking.fulfillment_status,
         "payment_status": _payment_status(booking),
         "receipt_status": _receipt_status(booking),
         "reminder_status": _reminder_status(booking),
@@ -202,20 +220,50 @@ def _appointment_row(booking):
         "reschedule_status": "requested" if booking.status == Booking.Status.RESCHEDULE_REQUESTED else "none",
         "no_refund_policy_acknowledged": bool(booking.no_refund_policy_accepted_at),
         "created_at_eat": _eat_datetime(booking.created_at),
+        "assigned_staff_id": assigned.pk if assigned else None,
+        "assigned_staff_email": getattr(assigned, "email", None) if assigned else None,
+        "assigned_staff_display_name": (
+            _safe_text(getattr(getattr(assigned, "staff_profile", None), "display_name", None) or "")
+            or (str(assigned.email).split("@", 1)[0] if assigned else None)
+        ),
     }
 
 
-def get_daily_schedule(date_value, filters=None):
+def _apply_assigned_filter(bookings, *, staff_user=None, assigned_to=""):
+    bookings = scope_bookings_queryset(bookings, staff_user) if staff_user is not None else bookings
+    assigned_to = _safe_text(assigned_to or "", max_length=64).lower()
+    if not assigned_to or staff_user is None:
+        return bookings
+    if is_beautician(staff_user):
+        # Beauticians are forced to their own assignments regardless of query.
+        return bookings.filter(assigned_staff_id=staff_user.pk)
+    if assigned_to == "me":
+        return bookings.filter(assigned_staff_id=staff_user.pk)
+    if assigned_to == "unassigned":
+        return bookings.filter(assigned_staff__isnull=True)
+    # UUID or numeric staff id
+    return bookings.filter(assigned_staff_id=assigned_to)
+
+
+def get_daily_schedule(date_value, filters=None, *, staff_user=None):
     local_date = _parse_date(date_value)
     filters = filters or {}
     bookings = _base_booking_queryset().filter(local_booking_date=local_date)
+    bookings = _apply_assigned_filter(
+        bookings,
+        staff_user=staff_user,
+        assigned_to=filters.get("assigned_to", ""),
+    )
     status = _safe_text(filters.get("status", ""), max_length=32)
     booking_type = _safe_text(filters.get("booking_type", ""), max_length=32)
     if status:
         bookings = bookings.filter(status=status)
     if booking_type in {Booking.BookingType.NORMAL, Booking.BookingType.URGENT, Booking.BookingType.FULL_PACKAGE}:
         bookings = bookings.filter(booking_type=booking_type)
-    rows = [_appointment_row(booking) for booking in bookings[:500]]
+    rows = [
+        _appointment_row(booking)
+        for booking in bookings.select_related("assigned_staff", "assigned_staff__staff_profile")[:500]
+    ]
     return {
         "local_date": local_date.isoformat(),
         "timezone": "Africa/Nairobi",
@@ -267,8 +315,10 @@ def _get_booking(public_booking_id):
     return booking
 
 
-def get_booking_detail(public_booking_id, *, include_payment=False):
+def get_booking_detail(public_booking_id, *, include_payment=False, staff_user=None):
     booking = _get_booking(public_booking_id)
+    if staff_user is not None and is_beautician(staff_user) and booking.assigned_staff_id != staff_user.pk:
+        raise StaffBookingNotFound
     payload = _appointment_row(booking)
     payload.update(
         {
@@ -405,3 +455,115 @@ def get_staff_receipt_pdf(public_booking_id, *, staff_user, ip_address="", user_
     )
     filename = f"receipt-{booking.public_id}.pdf"
     return pdf, filename
+
+
+ALLOWED_FULFILLMENT_STATUSES = {
+    Booking.FulfillmentStatus.ATTENDED,
+    Booking.FulfillmentStatus.IN_SERVICE,
+    Booking.FulfillmentStatus.COMPLETED,
+    Booking.FulfillmentStatus.NO_SHOW,
+    Booking.FulfillmentStatus.NOT_STARTED,
+}
+
+
+def set_booking_fulfillment(public_booking_id, *, staff_user, fulfillment_status):
+    """
+    Update desk fulfillment only — never mutates financial Booking.status.
+    Beauticians may not fulfill peers' bookings even if mis-granted confirm perm.
+    """
+    status = _safe_text(fulfillment_status, max_length=32)
+    if status not in ALLOWED_FULFILLMENT_STATUSES:
+        raise StaffPortalValidationError("Invalid fulfillment status.")
+    booking = _get_booking(public_booking_id)
+    if is_beautician(staff_user) and booking.assigned_staff_id != staff_user.pk:
+        raise StaffBookingNotFound
+    if booking.fulfillment_status == status:
+        return _appointment_row(booking)
+    booking.fulfillment_status = status
+    booking.fulfillment_updated_at = timezone.now()
+    booking.fulfillment_updated_by = staff_user
+    booking.save(
+        update_fields=[
+            "fulfillment_status",
+            "fulfillment_updated_at",
+            "fulfillment_updated_by",
+            "updated_at",
+        ]
+    )
+    StaffActionAuditEvent.objects.create(
+        staff=staff_user,
+        booking=booking,
+        action=StaffActionAuditEvent.Action.ATTENDANCE_CONFIRM,
+        reason=f"Fulfillment set to {status}",
+        metadata_redacted={
+            "booking_reference": str(booking.public_id),
+            "fulfillment_status": status,
+        },
+    )
+    return _appointment_row(booking)
+
+
+def assign_booking_staff(public_booking_id, *, staff_user, assigned_staff_id=None):
+    booking = _get_booking(public_booking_id)
+    User = get_user_model()
+    assignee = None
+    if assigned_staff_id is not None and str(assigned_staff_id).strip() != "":
+        assignee = User.objects.filter(pk=assigned_staff_id, is_staff=True, is_active=True).first()
+        if not assignee:
+            raise StaffPortalValidationError("Assigned staff is unavailable.")
+    booking.assigned_staff = assignee
+    booking.save(update_fields=["assigned_staff", "updated_at"])
+    StaffActionAuditEvent.objects.create(
+        staff=staff_user,
+        booking=booking,
+        action=StaffActionAuditEvent.Action.STAFF_ASSIGN,
+        reason="Staff assignment updated",
+        metadata_redacted={
+            "booking_reference": str(booking.public_id),
+            "assigned_staff_id": str(assignee.pk) if assignee else None,
+        },
+    )
+    return _appointment_row(booking)
+
+
+STAFF_SEARCH_MIN_QUERY_LENGTH = 3
+
+
+def search_staff_bookings(q, *, staff_user, limit=50):
+    query = _safe_text(q, max_length=80)
+    if len(query) < STAFF_SEARCH_MIN_QUERY_LENGTH:
+        raise StaffPortalValidationError("Search query must be at least 3 characters.")
+    bookings = scope_bookings_queryset(_all_booking_queryset(), staff_user)
+    filters = Q(customer_profile__full_name_display__icontains=query)
+    try:
+        parsed = uuid.UUID(query)
+        filters |= Q(public_id=parsed)
+    except ValueError:
+        filters |= Q(public_id__icontains=query)
+    # Receipt / provider refs live on related receipt when present.
+    filters |= Q(receipt__receipt_number__icontains=query)
+    rows = [
+        _appointment_row(booking)
+        for booking in bookings.filter(filters).distinct()[: max(1, min(int(limit or 50), 100))]
+    ]
+    return {"query": query, "count": len(rows), "appointments": rows}
+
+
+def list_assignable_beauticians(limit=20):
+    """Return active staff with beautician role for assignment UI (max ~10 expected)."""
+    from bookings.models import StaffProfile
+
+    profiles = (
+        StaffProfile.objects.select_related("user")
+        .filter(role=StaffProfile.Role.BEAUTICIAN, user__is_active=True, user__is_staff=True)
+        .order_by("display_name", "user__email")[: max(1, min(int(limit or 20), 20))]
+    )
+    return [
+        {
+            "id": profile.user_id,
+            "email": profile.user.email,
+            "display_name": _safe_text(profile.display_name or profile.user.email.split("@", 1)[0]),
+            "role": profile.role,
+        }
+        for profile in profiles
+    ]

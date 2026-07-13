@@ -488,6 +488,7 @@ class CustomerProfile(AuditMixin):
                 name="bk_cust_email_phone_idx",
             ),
             models.Index(fields=["erased_at"], name="booking_customer_erased_idx"),
+            models.Index(fields=["full_name_display"], name="bk_cust_display_name_idx"),
         ]
 
     @classmethod
@@ -614,6 +615,14 @@ class Booking(AuditMixin):
         SUNDAY_URGENT = "sunday_urgent", "Sunday Urgent"
         FULL_PACKAGE = "full_package", "Full Package"
 
+    class FulfillmentStatus(models.TextChoices):
+        # Desk fulfillment is independent of financial/lifecycle `status`.
+        NOT_STARTED = "not_started", "Not Started"
+        ATTENDED = "attended", "Attended"
+        IN_SERVICE = "in_service", "In Service"
+        COMPLETED = "completed", "Completed"
+        NO_SHOW = "no_show", "No Show"
+
     # public_id is the only customer-facing identifier; internal UUIDs must not
     # be exposed in public lookup/status flows.
     public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
@@ -627,12 +636,34 @@ class Booking(AuditMixin):
         blank=True,
         related_name="bookings",
     )
+    assigned_staff = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_bookings",
+        help_text="Beautician (or staff) assigned for people routing — independent of resource capacity.",
+    )
     # Persist UTC-aware datetimes only. Africa/Nairobi conversion belongs in
     # policy/presentation code before save.
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField()
     local_booking_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=32, choices=Status.choices, default=Status.REQUESTED)
+    fulfillment_status = models.CharField(
+        max_length=32,
+        choices=FulfillmentStatus.choices,
+        default=FulfillmentStatus.NOT_STARTED,
+        db_index=True,
+    )
+    fulfillment_updated_at = models.DateTimeField(null=True, blank=True)
+    fulfillment_updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="fulfillment_updates",
+    )
     booking_type = models.CharField(max_length=32, choices=BookingType.choices, default=BookingType.NORMAL)
     total_duration_minutes = models.PositiveSmallIntegerField(default=0)
     total_price_snapshot = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
@@ -679,6 +710,8 @@ class Booking(AuditMixin):
             models.Index(
                 fields=["booking_type", "local_booking_date", "status"], name="bookings_type_local_status_idx"
             ),
+            models.Index(fields=["assigned_staff", "local_booking_date"], name="bookings_assigned_date_idx"),
+            models.Index(fields=["fulfillment_status", "local_booking_date"], name="bookings_fulfill_date_idx"),
         ]
         permissions = [
             ("view_staff_portal", "Can view staff booking portal schedule"),
@@ -686,6 +719,10 @@ class Booking(AuditMixin):
             ("view_staff_payment_summary", "Can view staff payment summary"),
             ("view_staff_contact_details", "Can reveal staff contact details"),
             ("manage_staff_booking_notes", "Can manage staff booking notes"),
+            ("confirm_staff_attendance", "Can confirm staff booking fulfillment / attendance"),
+            ("assign_staff_booking", "Can assign bookings to beauticians"),
+            ("download_staff_receipt", "Can download staff booking receipt PDF"),
+            ("view_staff_payments_desk", "Can access staff payments desk"),
         ]
 
     def clean(self):
@@ -1365,6 +1402,8 @@ class StaffActionAuditEvent(AuditMixin):
         CONTACT_REVEAL = "contact_reveal", "Contact Reveal"
         STATUS_OVERRIDE = "status_override", "Status Override"
         RECEIPT_DOWNLOAD = "receipt_download", "Receipt Download"
+        ATTENDANCE_CONFIRM = "attendance_confirm", "Attendance Confirm"
+        STAFF_ASSIGN = "staff_assign", "Staff Assign"
 
     staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -1416,6 +1455,40 @@ class StaffSecurityAudit(AuditMixin):
             models.Index(fields=["event_type", "created_at"], name="staff_sec_event_time_idx"),
             models.Index(fields=["staff_user", "created_at"], name="staff_sec_user_time_idx"),
         ]
+
+
+class StaffProfile(AuditMixin):
+    """Role profile for staff portal RBAC (owner / receptionist / beautician)."""
+
+    class Role(models.TextChoices):
+        OWNER = "owner", "Owner"
+        RECEPTIONIST = "receptionist", "Receptionist"
+        BEAUTICIAN = "beautician", "Beautician"
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="staff_profile",
+    )
+    role = models.CharField(max_length=32, choices=Role.choices, default=Role.RECEPTIONIST, db_index=True)
+    bookable_resource = models.ForeignKey(
+        "BookableResource",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="staff_profiles",
+        help_text="Optional link to a beautician BookableResource for capacity continuity.",
+    )
+    display_name = models.CharField(max_length=80, blank=True)
+
+    class Meta:
+        db_table = "booking_staff_profiles"
+        indexes = [
+            models.Index(fields=["role"], name="staff_profile_role_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.role}:{getattr(self.user, 'email', self.pk)}"
 
 
 class StaffPasswordResetChallenge(AuditMixin):

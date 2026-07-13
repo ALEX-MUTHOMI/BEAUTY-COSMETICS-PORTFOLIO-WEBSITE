@@ -25,7 +25,7 @@ def test_staff_receipt_pdf_permission_missing_receipt_and_happy_path(settings, t
     from bookings.tests.test_booking_checkout_contract import _held_booking
 
     missing = Client()
-    staff_login(missing, permissions=["view_staff_payment_summary"])
+    staff_login(missing, permissions=["download_staff_receipt"])
     unpaid = _held_booking(key="staff-receipt-missing")
     assert missing.get(staff_receipt_url(unpaid), secure=True).status_code == 404
 
@@ -42,7 +42,10 @@ def test_staff_receipt_pdf_permission_missing_receipt_and_happy_path(settings, t
     monkeypatch.setattr(ReceiptPDFService, "ensure_artifact", staticmethod(counting_ensure))
 
     permitted = Client()
-    staff_login(permitted, permissions=["view_staff_booking", "view_staff_payment_summary"])
+    staff_login(
+        permitted,
+        permissions=["view_staff_booking", "view_staff_payment_summary", "download_staff_receipt"],
+    )
     first = permitted.get(staff_receipt_url(booking), secure=True)
     second = permitted.get(staff_receipt_url(booking), secure=True)
 
@@ -95,7 +98,7 @@ def test_staff_receipt_pdf_uses_short_lived_cache_when_generating(settings, tmp_
     monkeypatch.setattr(ReceiptPDFService, "ensure_artifact", staticmethod(counting_ensure))
 
     permitted = Client()
-    staff_login(permitted, permissions=["view_staff_payment_summary"])
+    staff_login(permitted, permissions=["download_staff_receipt"])
     first = permitted.get(staff_receipt_url(booking), secure=True)
     second = permitted.get(staff_receipt_url(booking), secure=True)
 

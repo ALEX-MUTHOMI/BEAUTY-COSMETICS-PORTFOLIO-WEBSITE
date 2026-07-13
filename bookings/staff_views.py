@@ -1,7 +1,7 @@
 import json
 
 from django.http import HttpResponse, JsonResponse
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from bookings.models import StaffSecurityAudit
 from bookings.services.staff_auth import (
@@ -14,12 +14,16 @@ from bookings.services.staff_auth import (
 from bookings.services.staff_portal import (
     StaffBookingNotFound,
     StaffPortalValidationError,
+    assign_booking_staff,
     get_booking_detail,
     get_daily_schedule,
     get_payment_summary,
     get_staff_receipt_pdf,
     get_weekly_overview,
+    list_assignable_beauticians,
     reveal_contact,
+    search_staff_bookings,
+    set_booking_fulfillment,
 )
 from core.abuse import record_abuse_signal
 from core.throttling import route_throttle, staff_or_ip_identity
@@ -81,8 +85,8 @@ def _not_found():
     return _json({"detail": "Staff booking record is unavailable."}, status=404)
 
 
-def _validation_error():
-    return _json({"detail": "Staff booking request is invalid."}, status=400)
+def _validation_error(detail="Staff booking request is invalid."):
+    return _json({"detail": detail}, status=400)
 
 
 @require_GET
@@ -96,7 +100,9 @@ def staff_booking_schedule(request):
             filters={
                 "status": request.GET.get("status", ""),
                 "booking_type": request.GET.get("booking_type", ""),
+                "assigned_to": request.GET.get("assigned_to", ""),
             },
+            staff_user=request.user,
         )
     except StaffPortalValidationError:
         return _validation_error()
@@ -116,12 +122,33 @@ def staff_booking_week(request):
 
 
 @require_GET
+@route_throttle("staff_booking_search", key_builder=staff_or_ip_identity)
+def staff_booking_search(request):
+    denied = _require_staff_permission(request, "view_staff_portal")
+    if denied:
+        return denied
+    try:
+        payload = search_staff_bookings(request.GET.get("q", ""), staff_user=request.user)
+    except StaffPortalValidationError as exc:
+        return _validation_error(str(exc) or "Staff booking request is invalid.")
+    return _json(payload)
+
+
+@require_GET
+def staff_assignable_beauticians(request):
+    denied = _require_staff_permission(request, "assign_staff_booking")
+    if denied:
+        return denied
+    return _json({"beauticians": list_assignable_beauticians()})
+
+
+@require_GET
 def staff_booking_detail(request, public_booking_id):
     denied = _require_staff_permission(request, "view_staff_booking")
     if denied:
         return denied
     try:
-        payload = get_booking_detail(public_booking_id)
+        payload = get_booking_detail(public_booking_id, staff_user=request.user)
     except StaffBookingNotFound:
         return _not_found()
     return _json(payload)
@@ -133,6 +160,8 @@ def staff_booking_payment(request, public_booking_id):
     if denied:
         return denied
     try:
+        # Beautician scope: payment summary only if they can see the booking.
+        get_booking_detail(public_booking_id, staff_user=request.user)
         payload = get_payment_summary(public_booking_id)
     except StaffBookingNotFound:
         return _not_found()
@@ -142,7 +171,7 @@ def staff_booking_payment(request, public_booking_id):
 @require_GET
 @route_throttle("staff_receipt_download", key_builder=staff_or_ip_identity)
 def staff_booking_receipt_pdf(request, public_booking_id):
-    denied = _require_staff_permission(request, "view_staff_payment_summary")
+    denied = _require_staff_permission(request, "download_staff_receipt")
     if denied:
         return denied
     try:
@@ -168,13 +197,50 @@ def staff_booking_receipt_pdf(request, public_booking_id):
 
 
 @require_POST
+@route_throttle("staff_fulfillment", key_builder=staff_or_ip_identity)
+def staff_booking_fulfillment(request, public_booking_id):
+    denied = _require_staff_permission(request, "confirm_staff_attendance")
+    if denied:
+        return denied
+    payload = _request_payload(request)
+    try:
+        result = set_booking_fulfillment(
+            public_booking_id,
+            staff_user=request.user,
+            fulfillment_status=payload.get("fulfillment_status", ""),
+        )
+    except StaffBookingNotFound:
+        return _not_found()
+    except StaffPortalValidationError:
+        return _validation_error()
+    return _json(result)
+
+
+@require_http_methods(["POST", "PATCH"])
+@route_throttle("staff_assign", key_builder=staff_or_ip_identity)
+def staff_booking_assign(request, public_booking_id):
+    denied = _require_staff_permission(request, "assign_staff_booking")
+    if denied:
+        return denied
+    payload = _request_payload(request)
+    try:
+        result = assign_booking_staff(
+            public_booking_id,
+            staff_user=request.user,
+            assigned_staff_id=payload.get("assigned_staff_id"),
+        )
+    except StaffBookingNotFound:
+        return _not_found()
+    except StaffPortalValidationError:
+        return _validation_error()
+    return _json(result)
+
+
+@require_POST
 @route_throttle("staff_contact_reveal", key_builder=staff_or_ip_identity)
 def staff_booking_contact_access(request, public_booking_id):
     denied = _require_staff_permission(request, "view_staff_contact_details")
     if denied:
-        # A non-staff or under-permissioned caller probing a contact endpoint is
-        # materially different from a normal staff workflow. The score is
-        # route-scoped and still returns the same generic 403 for this request.
         record_abuse_signal(
             request,
             scope="staff_contact_reveal",

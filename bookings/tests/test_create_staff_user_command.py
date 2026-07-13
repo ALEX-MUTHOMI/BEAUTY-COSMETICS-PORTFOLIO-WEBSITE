@@ -18,6 +18,9 @@ def test_create_staff_user_command_grants_portal_permissions(capsys):
     assert user.has_perm("bookings.view_staff_booking")
     assert user.has_perm("bookings.view_staff_contact_details")
     assert user.has_perm("bookings.view_staff_payment_summary")
+    assert user.has_perm("bookings.download_staff_receipt")
+    assert user.has_perm("bookings.confirm_staff_attendance")
+    assert user.staff_profile.role == "owner"
     out = capsys.readouterr().out
     assert "/staff/login" in out
     assert "/staff/dashboard" in out
