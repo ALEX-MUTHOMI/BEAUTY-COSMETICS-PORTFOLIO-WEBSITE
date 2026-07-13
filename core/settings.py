@@ -53,12 +53,27 @@ if not DEBUG:
         "1",
         "t",
     )
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    # Cookie Secure flags follow TLS posture so local HTTP desks can authenticate
+    # when SECURE_SSL_REDIRECT=False without weakening true HTTPS deployments.
+    _cookie_secure_default = "True" if SECURE_SSL_REDIRECT else "False"
+    SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", _cookie_secure_default).lower() in (
+        "true",
+        "1",
+        "t",
+    )
+    CSRF_COOKIE_SECURE = os.environ.get("CSRF_COOKIE_SECURE", _cookie_secure_default).lower() in (
+        "true",
+        "1",
+        "t",
+    )
+    if SECURE_SSL_REDIRECT:
+        SECURE_HSTS_SECONDS = 31536000
+        SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+        SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Staff login CSRF failures get structured login_failed audits (csrf/session/transport).
+CSRF_FAILURE_VIEW = "bookings.staff_csrf.staff_aware_csrf_failure"
 
 
 # Application definition
@@ -213,10 +228,8 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_COOKIE_SAMESITE = "Strict"
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_HTTPONLY = False  # Set to False so standard DRF CSRF-token fetching works
-
-if not DEBUG:
-    CSRF_COOKIE_SECURE = True
-    SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+# Cookie Secure flags are set above with SECURE_SSL_REDIRECT so local HTTP desks work.
 
 # ==============================================================================
 # REDIS CACHE & MESSAGING SERVER CONNECTION
@@ -381,17 +394,32 @@ STAFF_GOOGLE_OAUTH_AUTH_URL = os.environ.get(
     "https://accounts.google.com/o/oauth2/v2/auth",
 )
 STAFF_GOOGLE_OAUTH_CLIENT_ID = os.environ.get("STAFF_GOOGLE_OAUTH_CLIENT_ID", "")
+STAFF_GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("STAFF_GOOGLE_OAUTH_CLIENT_SECRET", "")
 STAFF_GOOGLE_OAUTH_REDIRECT_URI = os.environ.get("STAFF_GOOGLE_OAUTH_REDIRECT_URI", "")
 STAFF_GOOGLE_OAUTH_SCOPE = os.environ.get("STAFF_GOOGLE_OAUTH_SCOPE", "openid email profile")
 STAFF_GOOGLE_OAUTH_RESPONSE_MODE = os.environ.get("STAFF_GOOGLE_OAUTH_RESPONSE_MODE", "")
+STAFF_GOOGLE_OAUTH_TOKEN_URL = os.environ.get(
+    "STAFF_GOOGLE_OAUTH_TOKEN_URL",
+    "https://oauth2.googleapis.com/token",
+)
+STAFF_GOOGLE_OAUTH_USERINFO_URL = os.environ.get(
+    "STAFF_GOOGLE_OAUTH_USERINFO_URL",
+    "https://openidconnect.googleapis.com/v1/userinfo",
+)
 STAFF_APPLE_OAUTH_AUTH_URL = os.environ.get(
     "STAFF_APPLE_OAUTH_AUTH_URL",
     "https://appleid.apple.com/auth/authorize",
 )
 STAFF_APPLE_OAUTH_CLIENT_ID = os.environ.get("STAFF_APPLE_OAUTH_CLIENT_ID", "")
+STAFF_APPLE_OAUTH_CLIENT_SECRET = os.environ.get("STAFF_APPLE_OAUTH_CLIENT_SECRET", "")
 STAFF_APPLE_OAUTH_REDIRECT_URI = os.environ.get("STAFF_APPLE_OAUTH_REDIRECT_URI", "")
 STAFF_APPLE_OAUTH_SCOPE = os.environ.get("STAFF_APPLE_OAUTH_SCOPE", "name email")
 STAFF_APPLE_OAUTH_RESPONSE_MODE = os.environ.get("STAFF_APPLE_OAUTH_RESPONSE_MODE", "form_post")
+STAFF_APPLE_OAUTH_TOKEN_URL = os.environ.get(
+    "STAFF_APPLE_OAUTH_TOKEN_URL",
+    "https://appleid.apple.com/auth/token",
+)
+STAFF_PORTAL_PUBLIC_ORIGIN = os.environ.get("STAFF_PORTAL_PUBLIC_ORIGIN", "http://localhost:3000")
 BOOKING_REMINDER_2H_ENABLED = os.environ.get("BOOKING_REMINDER_2H_ENABLED", "false")
 BOOKING_REMINDER_MAX_ATTEMPTS = int(os.environ.get("BOOKING_REMINDER_MAX_ATTEMPTS", "3"))
 
@@ -441,7 +469,13 @@ REST_FRAMEWORK = {
         "media_resolver": "60/min",
         "staff_contact_reveal": "6/min",
         "staff_receipt_download": "12/min",
+        "staff_login": "12/min",
         "staff_oauth_start": "20/min",
+        "staff_oauth_callback": "20/min",
+        "staff_password_reset": "8/min",
+        "staff_booking_search": "30/min",
+        "staff_fulfillment": "30/min",
+        "staff_assign": "30/min",
         # GDPR / Kenya DPA 2019 subject-rights intake (ticketed, not anonymous dump).
         "privacy_rights": "5/hour",
     },

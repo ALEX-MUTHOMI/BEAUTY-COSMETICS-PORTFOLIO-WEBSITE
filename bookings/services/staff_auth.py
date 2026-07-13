@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import secrets
@@ -16,12 +17,21 @@ from bookings.models import StaffPasswordResetChallenge, StaffSecurityAudit
 from bookings.privacy import normalize_email, redact_email
 from users.services import get_redis_client
 
+logger = logging.getLogger("bookings.staff_auth")
+
 GENERIC_INVALID_CREDENTIALS = "Invalid credentials."
 GENERIC_RATE_LIMITED = "Please try again later."
 GENERIC_SESSION_EXPIRED = "Staff session expired. Please sign in again."
 GENERIC_RESET_RESPONSE = "If the account exists, reset instructions have been sent."
 GENERIC_RESET_INVALID = "Password reset request is invalid or expired."
 GENERIC_REAUTH_REQUIRED = "Recent staff password confirmation required."
+
+# Structured login_failed reason classes (never passwords). Used in StaffSecurityAudit metadata.
+LOGIN_FAILURE_REASON_CSRF = "csrf"
+LOGIN_FAILURE_REASON_SESSION = "session"
+LOGIN_FAILURE_REASON_TRANSPORT = "transport"
+LOGIN_FAILURE_REASON_INVALID_CREDENTIALS = "invalid_credentials"
+LOGIN_FAILURE_REASON_LOCKOUT = "lockout"
 
 STAFF_PASSWORD_RESET_OUTBOX = []
 STAFF_PORTAL_PERMISSION_CODES = {
@@ -30,6 +40,10 @@ STAFF_PORTAL_PERMISSION_CODES = {
     "view_staff_contact_details",
     "view_staff_payment_summary",
     "view_staff_portal",
+    "confirm_staff_attendance",
+    "assign_staff_booking",
+    "download_staff_receipt",
+    "view_staff_payments_desk",
 }
 
 _COMMON_PATTERNS = (
@@ -121,13 +135,33 @@ def validate_staff_password(password, *, email="", display_name="", business_nam
 
 
 def audit_staff_event(event_type, *, staff_user=None, request=None, metadata=None):
-    return StaffSecurityAudit.objects.create(
+    """Persist a staff security audit row and emit a structured, secret-free log line."""
+    safe_meta = _safe_metadata(metadata)
+    event = StaffSecurityAudit.objects.create(
         staff_user=staff_user,
         event_type=event_type,
         ip_hash_hmac=_hash_or_blank(_client_ip(request)),
         user_agent_hash_hmac=_hash_or_blank(_user_agent(request)),
-        metadata_redacted=_safe_metadata(metadata),
+        metadata_redacted=safe_meta,
     )
+    # Durable ops signal: event type + redacted metadata only — never passwords/tokens/raw IP.
+    if event_type == StaffSecurityAudit.EventType.LOGIN_FAILURE:
+        logger.info(
+            "login_failed reason=%s audit_id=%s staff_user_id=%s meta=%s",
+            safe_meta.get("reason", "unknown"),
+            event.public_id,
+            getattr(staff_user, "pk", None) or "none",
+            json.dumps(safe_meta, sort_keys=True, default=str),
+        )
+    else:
+        logger.info(
+            "staff_security_audit event=%s audit_id=%s staff_user_id=%s meta=%s",
+            event_type,
+            event.public_id,
+            getattr(staff_user, "pk", None) or "none",
+            json.dumps(safe_meta, sort_keys=True, default=str),
+        )
+    return event
 
 
 def _risk_values(email, request):
@@ -153,7 +187,11 @@ def assert_login_not_throttled(email, request):
             audit_staff_event(
                 StaffSecurityAudit.EventType.LOGIN_RATE_LIMITED,
                 request=request,
-                metadata={"email_redacted": _redact_email_safe(email), "reason": "cooldown"},
+                metadata={
+                    "email_redacted": _redact_email_safe(email),
+                    "reason": LOGIN_FAILURE_REASON_LOCKOUT,
+                    "login_failed": True,
+                },
             )
             raise StaffAuthRateLimited
     except StaffAuthRateLimited:
@@ -162,17 +200,36 @@ def assert_login_not_throttled(email, request):
         audit_staff_event(
             StaffSecurityAudit.EventType.LOGIN_RATE_LIMITED,
             request=request,
-            metadata={"email_redacted": _redact_email_safe(email), "reason": "rate_limit_unavailable"},
+            metadata={
+                "email_redacted": _redact_email_safe(email),
+                "reason": LOGIN_FAILURE_REASON_LOCKOUT,
+                "detail": "rate_limit_unavailable",
+                "login_failed": True,
+            },
         )
         raise StaffAuthRateLimited
 
 
-def record_login_failure(email, request, *, staff_user=None):
+def record_login_failure(email, request, *, staff_user=None, reason=LOGIN_FAILURE_REASON_INVALID_CREDENTIALS):
+    # Normalize client-indistinguishable staff-gate failures under invalid_credentials.
+    audit_reason = (
+        LOGIN_FAILURE_REASON_INVALID_CREDENTIALS
+        if reason in {LOGIN_FAILURE_REASON_INVALID_CREDENTIALS, "not_staff"}
+        else reason
+    )
+    metadata = {
+        "email_redacted": _redact_email_safe(email),
+        "reason": audit_reason,
+        "channel": "password",
+        "login_failed": True,
+    }
+    if reason == "not_staff":
+        metadata["detail"] = "not_staff"
     audit_staff_event(
         StaffSecurityAudit.EventType.LOGIN_FAILURE,
         staff_user=staff_user,
         request=request,
-        metadata={"email_redacted": _redact_email_safe(email)},
+        metadata=metadata,
     )
     try:
         client = _redis()
@@ -248,8 +305,11 @@ def enforce_staff_session(request):
 
 
 def staff_profile(user):
+    from bookings.services.staff_roles import get_staff_role
+
     return {
         "display_name": _display_name(user),
+        "role": get_staff_role(user),
         "permissions": sorted(
             code
             for permission in user.get_all_permissions()

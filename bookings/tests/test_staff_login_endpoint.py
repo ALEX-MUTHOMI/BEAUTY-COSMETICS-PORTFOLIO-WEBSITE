@@ -53,6 +53,7 @@ def test_staff_apple_start_is_safe_when_not_configured():
 @pytest.mark.django_db
 @override_settings(
     STAFF_GOOGLE_OAUTH_CLIENT_ID="google-client-id",
+    STAFF_GOOGLE_OAUTH_CLIENT_SECRET="google-secret",
     STAFF_GOOGLE_OAUTH_REDIRECT_URI="https://api.example.test/api/staff/auth/google/callback/",
 )
 def test_staff_google_start_redirects_when_configured_and_sanitizes_next():
@@ -73,6 +74,7 @@ def test_staff_google_start_redirects_when_configured_and_sanitizes_next():
 @pytest.mark.django_db
 @override_settings(
     STAFF_APPLE_OAUTH_CLIENT_ID="apple-client-id",
+    STAFF_APPLE_OAUTH_CLIENT_SECRET="apple-secret",
     STAFF_APPLE_OAUTH_REDIRECT_URI="https://api.example.test/api/staff/auth/apple/callback/",
 )
 def test_staff_apple_start_redirects_when_configured():
