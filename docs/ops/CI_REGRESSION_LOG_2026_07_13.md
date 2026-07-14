@@ -109,3 +109,15 @@ Evidence index: `reports/ci/desk-phase3-matrix.txt` + `docs/ops/DESK_ACCEPTANCE_
 | Current Actions blocker | Jobs fail at **startup** (~2–3s, empty `runner_name`, no steps, log `BlobNotFound`) on private repo — treat as **Actions quota/runner provisioning**, not product regression |
 | Merge policy | **Hold** staging/main merge until a full Secure Enterprise run is green |
 | Dependabot | Deferred/blocked per `docs/ops/PENDING_PR_TRIAGE_2026_07_14.md` (#4/#5/#8 blocked) |
+
+## Self-hosted runner cutover (2026-07-14)
+
+Hosted minutes exhausted. Secure Enterprise CI now targets:
+
+`runs-on: [self-hosted, linux, aesthetic-os]`
+
+Ops: [`docs/ops/SELF_HOSTED_RUNNER.md`](SELF_HOSTED_RUNNER.md),
+`scripts/ci/start_self_hosted_runner_docker.ps1`,
+`scripts/ci/install_self_hosted_runner.sh`.
+
+Promotion resume: runner Idle → green PR #19 → merge staging → main.

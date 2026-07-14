@@ -56,6 +56,12 @@ env:
   DARAJA_TRANSACTION_DESC: ""
   DARAJA_TEST_MSISDN: ""
 
+# Self-hosted Linux runner (WSL2) — see docs/ops/SELF_HOSTED_RUNNER.md.
+# Avoids GitHub-hosted minute burn; jobs serialize on a single runner.
+defaults:
+  run:
+    shell: bash
+
 # =============================================================================
 # Fail-fast tiers (OWASP / CICD-SEC):
 #   T0 validate → lint-security
@@ -74,7 +80,7 @@ jobs:
   # --- T0 -------------------------------------------------------------------
   validate:
     name: validate
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -92,7 +98,7 @@ jobs:
 
   lint-security:
     name: lint-security
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 15
     needs: validate
     steps:
@@ -127,11 +133,14 @@ jobs:
   # --- T1 -------------------------------------------------------------------
   django-smoke:
     name: django-smoke
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 20
     needs: lint-security
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
 
       - name: Build Docker services with plain output
         run: docker compose --progress plain build web frontend
@@ -170,13 +179,15 @@ jobs:
   # --- T2 parallel ----------------------------------------------------------
   bookings-unit:
     name: bookings-unit
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 15
     needs: django-smoke
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
       - run: docker compose up -d --build
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
@@ -196,11 +207,13 @@ jobs:
 
   billing-unit:
     name: billing-unit
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 15
     needs: django-smoke
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
       - run: docker compose up -d --build
       - run: docker compose exec -T web poetry run pytest billing/tests
       - if: failure()
@@ -210,11 +223,13 @@ jobs:
 
   checkout-unit:
     name: checkout-unit
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 15
     needs: django-smoke
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
       - run: docker compose up -d --build
       - run: docker compose exec -T web poetry run pytest checkout/tests
       - if: failure()
@@ -224,13 +239,15 @@ jobs:
 
   tests-api-unit:
     name: tests-api-unit
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 15
     needs: django-smoke
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
       - run: docker compose up -d --build
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
@@ -250,13 +267,15 @@ jobs:
 
   cass-calendar-service:
     name: cass-calendar-service
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 15
     needs: django-smoke
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
       - run: docker compose up -d --build
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
@@ -287,11 +306,13 @@ jobs:
 
   frontend-test:
     name: frontend-test
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 15
     needs: django-smoke
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose --profile test down --volumes --remove-orphans || true
       - run: docker compose --profile test up -d --build frontend-test
       - name: npm dependency vulnerability audit (CICD-SEC-3)
         run: docker compose exec -T frontend-test npm audit --audit-level=high
@@ -307,7 +328,7 @@ jobs:
   # --- T3 money-path security (before heavy integration / load) -------------
   payment-security:
     name: payment-security
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 20
     needs:
       - bookings-unit
@@ -318,6 +339,8 @@ jobs:
       - frontend-test
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
       - run: docker compose up -d --build
       - run: docker compose exec -T web poetry run pytest tests/security
       - if: failure()
@@ -328,7 +351,7 @@ jobs:
   # --- T4 business lifecycle ------------------------------------------------
   checkout-billing-integration:
     name: checkout-billing-integration
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 20
     needs:
       - billing-unit
@@ -336,6 +359,8 @@ jobs:
       - payment-security
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
       - run: docker compose up -d --build
       - run: docker compose exec -T web poetry run pytest tests/integration
       - if: failure()
@@ -345,11 +370,13 @@ jobs:
 
   receipt-pipeline:
     name: receipt-pipeline
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 20
     needs: checkout-billing-integration
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
       - run: docker compose up -d --build
       - name: Run deterministic booking/billing/receipt pipeline
         run: |
@@ -371,7 +398,7 @@ jobs:
   # --- T5 contract + OWASP ZAP passive --------------------------------------
   newman-acceptance:
     name: newman-acceptance
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 20
     needs:
       - cass-calendar-service
@@ -383,6 +410,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
       - run: docker compose up -d --build
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
@@ -404,13 +433,15 @@ jobs:
 
   zap-passive-newman:
     name: zap-passive-newman
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 30
     needs: newman-acceptance
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
       - run: docker compose up -d --build
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
@@ -436,13 +467,15 @@ jobs:
   # --- T6 perf / load (after money-path security) ---------------------------
   payment-load-resilience:
     name: payment-load-resilience
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 30
     needs:
       - payment-security
       - receipt-pipeline
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
       - run: docker compose up -d --build
       - name: Run bounded fake-provider payment load tests
         run: |
@@ -457,13 +490,15 @@ jobs:
 
   notification-backlog-load:
     name: notification-backlog-load
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 30
     needs:
       - payment-security
       - receipt-pipeline
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
       - run: docker compose up -d --build
       - name: Run isolated 1000-notification backlog proof
         run: docker compose exec -T web poetry run pytest tests/load/test_notification_backlog_pressure.py -vv --durations=25
@@ -474,13 +509,15 @@ jobs:
 
   latency:
     name: latency
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 30
     needs:
       - payment-security
       - receipt-pipeline
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
       - run: docker compose up -d --build
       - run: docker compose exec -T web poetry run pytest tests/latency -m "latency" -vv
       - if: failure()
@@ -491,7 +528,7 @@ jobs:
   # --- T7 chaos -------------------------------------------------------------
   chaos:
     name: chaos
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 30
     needs:
       - payment-load-resilience
@@ -499,6 +536,8 @@ jobs:
       - latency
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml down --volumes --remove-orphans || true
       - name: Run Toxiproxy chaos gate (fake provider only)
         run: bash scripts/ci/run_chaos_toxiproxy.sh
       - if: failure()
@@ -510,7 +549,7 @@ jobs:
   # --- T8 certify + image ---------------------------------------------------
   cass-certification:
     name: cass-certification
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 10
     needs:
       - bookings-unit
@@ -543,7 +582,7 @@ jobs:
 
   docker-build:
     name: docker-build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 20
     needs:
       - chaos
@@ -558,7 +597,7 @@ jobs:
   # Opt-in only — real Daraja HTTP callback; never on push.
   daraja-sandbox-contract:
     name: daraja-sandbox-contract
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 30
     if: github.event_name == 'workflow_dispatch' && inputs.run_daraja_sandbox == 'true'
     needs: docker-build
@@ -577,6 +616,8 @@ jobs:
       DARAJA_TEST_MSISDN: ${{ secrets.DARAJA_TEST_MSISDN }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: docker compose down --volumes --remove-orphans || true
       - run: docker compose up -d --build web worker db redis
       - name: Run opt-in Daraja sandbox contract
         run: docker compose exec -T web poetry run pytest tests/external -m "daraja_sandbox" --run-external -vv
