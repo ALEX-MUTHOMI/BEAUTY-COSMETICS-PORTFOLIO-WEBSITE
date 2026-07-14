@@ -64,8 +64,12 @@ def _post_json(client, path, payload, csrf_token):
 
 
 def _assert_no_sensitive_contract_keys(payload):
-    rendered = json.dumps(payload, sort_keys=True).lower()
-    forbidden = [
+    """Reject sensitive *field names* and clear value leak markers.
+
+    Do not substring-scan opaque tokens (e.g. csrf_token): random entropy can
+    contain short fragments like ``otp`` and flake CI without a product leak.
+    """
+    forbidden_keys = {
         "ledger_id",
         "checkout_session_id",
         "provider_payload",
@@ -78,10 +82,25 @@ def _assert_no_sensitive_contract_keys(payload):
         "quarantine_key",
         "storage_secret",
         "traceback",
-        "/app/",
-    ]
-    for value in forbidden:
-        assert value not in rendered
+    }
+    forbidden_value_markers = ("/app/",)
+
+    def walk(node):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                assert str(key).lower() not in forbidden_keys
+                walk(value)
+            return
+        if isinstance(node, list):
+            for item in node:
+                walk(item)
+            return
+        if isinstance(node, str):
+            lowered = node.lower()
+            for marker in forbidden_value_markers:
+                assert marker not in lowered
+
+    walk(payload)
 
 
 @pytest.mark.django_db
