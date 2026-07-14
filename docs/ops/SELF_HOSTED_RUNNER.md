@@ -24,6 +24,8 @@ Docker Desktop already runs a Linux engine. Start a long-lived Linux runner cont
 .\scripts\ci\start_self_hosted_runner_docker.ps1
 ```
 
+Checkout stays on the **container Linux filesystem** (do not bind-mount `C:\...` as `RUNNER_WORKDIR` — NTFS makes `actions/setup-python` crawl). Base `docker-compose.yml` has no `.:/app` bind; local desk adds that via `docker-compose.windows.yml`. CI builds images and runs from the bake, so the host daemon does not need the runner checkout path.
+
 Checks:
 
 ```powershell

@@ -6,17 +6,17 @@
   Uses labels self-hosted,linux,aesthetic-os so Secure Enterprise CI (ci.yml) can schedule
   without GitHub-hosted minutes. Mounts the host Docker socket so compose jobs work.
 
-  WORKDIR is bind-mounted at the SAME path on host and in-container so compose
-  volume mounts like .:/app resolve on the Docker Desktop host (DinD-socket pattern).
+  Checkout stays on the container's Linux filesystem (fast). Do NOT bind-mount a Windows
+  NTFS path as RUNNER_WORKDIR — actions/setup-python extracts crawl. Compose uses
+  docker-compose.ci-selfhosted.yml (no .:/app) so the host daemon does not need the
+  checkout path.
 
   Never commit RUNNER_TOKEN. Token expires ~1 hour after creation.
 #>
 param(
     [string]$RunnerName = "aesthetic-os-docker",
     [string]$Image = "myoung34/github-runner:ubuntu-jammy",
-    [string]$ContainerName = "aesthetic-os-gha-runner",
-    # Linux-style path Docker Desktop accepts for Windows bind mounts
-    [string]$WorkDirLinux = "/c/Users/PC/aesthetic-os-gha-work"
+    [string]$ContainerName = "aesthetic-os-gha-runner"
 )
 
 $ErrorActionPreference = "Stop"
@@ -29,10 +29,6 @@ if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
     throw "docker is required."
 }
-
-# Windows host directory corresponding to /c/Users/PC/...
-$workWin = "C:\Users\PC\aesthetic-os-gha-work"
-New-Item -ItemType Directory -Force -Path $workWin | Out-Null
 
 Write-Host "Minting registration token (ephemeral)..."
 $tokenJson = gh api -X POST repos/ALEX-MUTHOMI/aesthetic-os/actions/runners/registration-token | ConvertFrom-Json
@@ -47,7 +43,7 @@ if ($existing) {
 
 Write-Host "Starting runner container $ContainerName"
 Write-Host "  labels: self-hosted,linux,aesthetic-os"
-Write-Host "  workdir: $WorkDirLinux  (host: $workWin)"
+Write-Host "  workdir: container-local (not Windows NTFS)"
 
 docker run -d --restart unless-stopped `
   --name $ContainerName `
@@ -55,13 +51,11 @@ docker run -d --restart unless-stopped `
   -e RUNNER_NAME="$RunnerName" `
   -e RUNNER_TOKEN="$token" `
   -e RUNNER_LABELS="self-hosted,linux,aesthetic-os" `
-  -e RUNNER_WORKDIR="$WorkDirLinux" `
   -e DISABLE_AUTO_UPDATE="true" `
   -v /var/run/docker.sock:/var/run/docker.sock `
-  -v "${WorkDirLinux}:${WorkDirLinux}" `
   $Image | Out-Null
 
-Start-Sleep -Seconds 10
+Start-Sleep -Seconds 12
 docker ps --filter "name=$ContainerName" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"
 Write-Host ""
 Write-Host "Verify Idle in GitHub: gh api repos/ALEX-MUTHOMI/aesthetic-os/actions/runners --jq .runners"

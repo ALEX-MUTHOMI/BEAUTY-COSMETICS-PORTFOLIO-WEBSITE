@@ -113,7 +113,8 @@ services:
         --max-requests-jitter $${GUNICORN_MAX_REQUESTS_JITTER:-50}
         core.wsgi:application
     volumes:
-      - .:/app:rw
+      # Live `.:/app` bind is local-only (see docker-compose.windows.yml).
+      # CI/self-hosted runners use the image build context only.
       - receipt_artifacts:/app/var/receipt-artifacts:rw
       - gallery_storage:/app/var/gallery-storage:rw
       - pytest_cache:/app/var/pytest-cache:rw
@@ -361,7 +362,6 @@ services:
     container_name: aesthetic_os_celery_worker
     command: celery -A core worker --loglevel=info -Q celery,express_auth,billing,dlq_billing
     volumes:
-      - .:/app:rw
       - receipt_artifacts:/app/var/receipt-artifacts:rw
       - pytest_cache:/app/var/pytest-cache:rw
     environment:
@@ -515,8 +515,6 @@ services:
     image: aesthetic_os_web_app:latest
     container_name: aesthetic_os_celery_beat
     command: celery -A core beat --loglevel=info
-    volumes:
-      - .:/app:rw
     environment:
       - DEBUG=${DEBUG:-False}
       - POETRY_VIRTUALENVS_CREATE=false
@@ -558,7 +556,6 @@ services:
     container_name: aesthetic_os_receipt_notification_worker
     command: celery -A core worker --loglevel=info -Q receipts --concurrency=${RECEIPT_WORKER_CONCURRENCY:-2}
     volumes:
-      - .:/app:rw
       - receipt_artifacts:/app/var/receipt-artifacts:rw
       - pytest_cache:/app/var/pytest-cache:rw
     environment:
@@ -631,7 +628,6 @@ services:
     container_name: aesthetic_os_gallery_worker
     command: celery -A core worker --loglevel=info -Q gallery --concurrency=${GALLERY_WORKER_CONCURRENCY:-1}
     volumes:
-      - .:/app:rw
       - gallery_storage:/app/var/gallery-storage:rw
       - pytest_cache:/app/var/pytest-cache:rw
     environment:
