@@ -60,10 +60,14 @@ cd ~/actions-runner && ./run.sh
 
 ## Job hygiene
 
-Self-hosted runners reuse disk. CI jobs:
+Self-hosted runners reuse disk **and** the same Docker engine as the local desk stack. Compose uses fixed `container_name` values (`aesthetic_os_redis`, etc.), so CI and a running desk cannot share those names.
 
-- `docker compose down --volumes --remove-orphans || true` **before** `up`
-- `if: always()` down after
+CI jobs call `bash scripts/ci/compose_reset.sh` before `up` and `if: always()` after. That script downs the Compose project **and** force-removes the fixed container names / shared network. Expect the desk stack to stop while CI runs; bring it back afterward:
+
+```powershell
+$env:COMPOSE_FILE='docker-compose.yml;docker-compose.windows.yml'
+docker compose up -d
+```
 
 Manual weekly (host):
 

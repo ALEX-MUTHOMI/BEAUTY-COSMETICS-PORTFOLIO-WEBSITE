@@ -140,7 +140,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
 
       - name: Build Docker services with plain output
         run: docker compose --progress plain build web frontend
@@ -174,7 +174,7 @@ jobs:
 
       - name: Stop Docker services
         if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
 
   # --- T2 parallel ----------------------------------------------------------
   bookings-unit:
@@ -187,7 +187,7 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
@@ -203,7 +203,7 @@ jobs:
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
 
   billing-unit:
     name: billing-unit
@@ -213,13 +213,13 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
       - run: docker compose exec -T web poetry run pytest billing/tests
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
 
   checkout-unit:
     name: checkout-unit
@@ -229,13 +229,13 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
       - run: docker compose exec -T web poetry run pytest checkout/tests
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
 
   tests-api-unit:
     name: tests-api-unit
@@ -247,7 +247,7 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
@@ -263,7 +263,7 @@ jobs:
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
 
   cass-calendar-service:
     name: cass-calendar-service
@@ -275,7 +275,7 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
@@ -302,7 +302,7 @@ jobs:
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
 
   frontend-test:
     name: frontend-test
@@ -312,7 +312,9 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose --profile test down --volumes --remove-orphans || true
+        run: |
+          bash scripts/ci/compose_reset.sh
+          docker compose --profile test down --volumes --remove-orphans || true
       - run: docker compose --profile test up -d --build frontend-test
       - name: npm dependency vulnerability audit (CICD-SEC-3)
         run: docker compose exec -T frontend-test npm audit --audit-level=high
@@ -323,7 +325,9 @@ jobs:
       - if: failure()
         run: docker compose logs --tail=300 frontend-test || true
       - if: always()
-        run: docker compose --profile test down --volumes --remove-orphans
+        run: |
+          docker compose --profile test down --volumes --remove-orphans || true
+          bash scripts/ci/compose_reset.sh
 
   # --- T3 money-path security (before heavy integration / load) -------------
   payment-security:
@@ -340,13 +344,13 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
       - run: docker compose exec -T web poetry run pytest tests/security
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
 
   # --- T4 business lifecycle ------------------------------------------------
   checkout-billing-integration:
@@ -360,13 +364,13 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
       - run: docker compose exec -T web poetry run pytest tests/integration
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
 
   receipt-pipeline:
     name: receipt-pipeline
@@ -376,7 +380,7 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
       - name: Run deterministic booking/billing/receipt pipeline
         run: |
@@ -393,7 +397,7 @@ jobs:
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
 
   # --- T5 contract + OWASP ZAP passive --------------------------------------
   newman-acceptance:
@@ -411,7 +415,7 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
@@ -429,7 +433,7 @@ jobs:
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
 
   zap-passive-newman:
     name: zap-passive-newman
@@ -441,7 +445,7 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
@@ -462,7 +466,7 @@ jobs:
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
 
   # --- T6 perf / load (after money-path security) ---------------------------
   payment-load-resilience:
@@ -475,7 +479,7 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
       - name: Run bounded fake-provider payment load tests
         run: |
@@ -486,7 +490,7 @@ jobs:
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
 
   notification-backlog-load:
     name: notification-backlog-load
@@ -498,14 +502,14 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
       - name: Run isolated 1000-notification backlog proof
         run: docker compose exec -T web poetry run pytest tests/load/test_notification_backlog_pressure.py -vv --durations=25
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
 
   latency:
     name: latency
@@ -517,13 +521,13 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
       - run: docker compose exec -T web poetry run pytest tests/latency -m "latency" -vv
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
 
   # --- T7 chaos -------------------------------------------------------------
   chaos:
@@ -537,14 +541,18 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml down --volumes --remove-orphans || true
+        run: |
+          bash scripts/ci/compose_reset.sh
+          docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml down --volumes --remove-orphans || true
       - name: Run Toxiproxy chaos gate (fake provider only)
         run: bash scripts/ci/run_chaos_toxiproxy.sh
       - if: failure()
         run: |
           docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml logs --tail=300 web worker db redis toxiproxy || true
       - if: always()
-        run: docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml down --volumes --remove-orphans
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml down --volumes --remove-orphans || true
+          bash scripts/ci/compose_reset.sh
 
   # --- T8 certify + image ---------------------------------------------------
   cass-certification:
@@ -617,11 +625,11 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
-        run: docker compose down --volumes --remove-orphans || true
+        run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build web worker db redis
       - name: Run opt-in Daraja sandbox contract
         run: docker compose exec -T web poetry run pytest tests/external -m "daraja_sandbox" --run-external -vv
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: bash scripts/ci/compose_reset.sh
