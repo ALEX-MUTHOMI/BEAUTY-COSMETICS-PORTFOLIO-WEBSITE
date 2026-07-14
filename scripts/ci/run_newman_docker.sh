@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+# Run Newman against the live Compose stack.
+#
+# Do NOT bind-mount checkout paths into the Newman container when CI runs on a
+# socket-mounted self-hosted runner: the host Docker daemon cannot see those
+# paths and creates empty directories (Newman then fails with EISDIR).
+# docker cp works from the runner filesystem into the ephemeral container.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -21,14 +27,23 @@ bash "${ROOT}/scripts/ci/bootstrap_web_db.sh"
 docker compose exec -T web poetry run python manage.py seed_api_acceptance_data
 docker compose exec -T web poetry run python manage.py seed_marketing_catalog
 
-docker run --rm --network host \
-  -v "${COLLECTION}:/etc/newman/collection.json:ro" \
-  -v "${ENVIRONMENT}:/etc/newman/environment.json:ro" \
-  -v "${REPORT_DIR}:/etc/newman/reports:rw" \
-  "${IMAGE}" run /etc/newman/collection.json \
-  -e /etc/newman/environment.json \
-  --bail \
-  --reporters cli,json \
-  --reporter-json-export /etc/newman/reports/newman-local.json
+cid="$(
+  docker create --network host --entrypoint sh "${IMAGE}" -c \
+    'mkdir -p /etc/newman/reports && \
+     newman run /etc/newman/collection.json \
+       -e /etc/newman/environment.json \
+       --bail \
+       --reporters cli,json \
+       --reporter-json-export /etc/newman/reports/newman-local.json'
+)"
+
+cleanup() { docker rm -f "${cid}" >/dev/null 2>&1 || true; }
+trap cleanup EXIT
+
+docker cp "${COLLECTION}" "${cid}:/etc/newman/collection.json"
+docker cp "${ENVIRONMENT}" "${cid}:/etc/newman/environment.json"
+
+docker start -a "${cid}"
+docker cp "${cid}:/etc/newman/reports/newman-local.json" "${REPORT_FILE}"
 
 echo "NEWMAN_RESULT=passed"
