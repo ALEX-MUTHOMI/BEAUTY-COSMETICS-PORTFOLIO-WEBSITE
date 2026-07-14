@@ -95,7 +95,7 @@ jobs:
     runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
@@ -114,7 +114,7 @@ jobs:
     timeout-minutes: 15
     needs: validate
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
@@ -149,7 +149,7 @@ jobs:
     timeout-minutes: 20
     needs: lint-security
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
@@ -197,7 +197,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
@@ -223,7 +223,7 @@ jobs:
     timeout-minutes: 15
     needs: django-smoke
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
@@ -239,7 +239,7 @@ jobs:
     timeout-minutes: 15
     needs: django-smoke
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
@@ -257,7 +257,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
@@ -285,7 +285,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
@@ -322,7 +322,7 @@ jobs:
     timeout-minutes: 15
     needs: django-smoke
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: |
           bash scripts/ci/compose_reset.sh
@@ -354,7 +354,7 @@ jobs:
       - cass-calendar-service
       - frontend-test
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
@@ -374,7 +374,7 @@ jobs:
       - checkout-unit
       - payment-security
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
@@ -390,7 +390,7 @@ jobs:
     timeout-minutes: 20
     needs: checkout-billing-integration
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
@@ -425,7 +425,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
@@ -458,7 +458,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
@@ -495,7 +495,7 @@ jobs:
       - payment-security
       - receipt-pipeline
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
@@ -521,7 +521,7 @@ jobs:
       - payment-security
       - receipt-pipeline
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
@@ -543,7 +543,7 @@ jobs:
       - payment-security
       - receipt-pipeline
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
@@ -566,7 +566,7 @@ jobs:
       - notification-backlog-load
       - latency
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: |
           bash scripts/ci/compose_reset.sh
@@ -600,7 +600,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Emit CASS certification report
         run: |
           mkdir -p reports/ci
@@ -628,7 +628,7 @@ jobs:
       - frontend-test
       - receipt-pipeline
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - run: docker build -t aesthetic-os-prod:latest .
       - run: docker compose config -q
 
@@ -653,7 +653,7 @@ jobs:
       DARAJA_TRANSACTION_DESC: ${{ secrets.DARAJA_TRANSACTION_DESC }}
       DARAJA_TEST_MSISDN: ${{ secrets.DARAJA_TEST_MSISDN }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build web worker db redis
