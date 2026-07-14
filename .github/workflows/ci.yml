@@ -18,8 +18,15 @@ on:
     branches:
       - staging
       - main
+  # Full fortress (load / ZAP / chaos / latency) — not on every PR (self-hosted serializes).
+  schedule:
+    - cron: "0 2 * * 1-5"
   workflow_dispatch:
     inputs:
+      run_full_fortress:
+        description: "Run full fortress (load/ZAP/chaos/latency/cass-cert)"
+        required: false
+        default: "false"
       run_daraja_sandbox:
         description: "Run opt-in Daraja sandbox contract tests"
         required: false
@@ -63,17 +70,22 @@ defaults:
     shell: bash
 
 # =============================================================================
-# Fail-fast tiers (OWASP / CICD-SEC):
+# Two lanes (self-hosted single runner):
+#
+# PROMOTION GATE (push / pull_request) — keep under ~60–90m serial:
 #   T0 validate → lint-security
 #   T1 django-smoke
-#   T2 domain units + frontend-test (parallel)
-#   T3 payment-security (money-path before heavy integration)
+#   T2 domain units + frontend-test
+#   T3 payment-security
 #   T4 checkout-billing-integration → receipt-pipeline
-#   T5 newman-acceptance → zap-passive-newman
-#   T6 latency / payment-load / notification-backlog (parallel)
-#   T7 chaos (Toxiproxy)
-#   T8 cass-certification → docker-build
-#   Opt-in: daraja-sandbox-contract only
+#   T5 newman-acceptance
+#   T8 docker-build
+#
+# FULL FORTRESS (schedule weeknights 02:00 UTC, or workflow_dispatch
+#   run_full_fortress=true) — adds:
+#   zap-passive-newman, payment-load, notification-backlog, latency,
+#   chaos, cass-certification
+#   Opt-in: daraja-sandbox-contract
 # =============================================================================
 
 jobs:
@@ -439,6 +451,9 @@ jobs:
     name: zap-passive-newman
     runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 30
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
     needs: newman-acceptance
     permissions:
       contents: read
@@ -473,6 +488,9 @@ jobs:
     name: payment-load-resilience
     runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 30
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
     needs:
       - payment-security
       - receipt-pipeline
@@ -496,6 +514,9 @@ jobs:
     name: notification-backlog-load
     runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 30
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
     needs:
       - payment-security
       - receipt-pipeline
@@ -515,6 +536,9 @@ jobs:
     name: latency
     runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 30
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
     needs:
       - payment-security
       - receipt-pipeline
@@ -534,6 +558,9 @@ jobs:
     name: chaos
     runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 30
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
     needs:
       - payment-load-resilience
       - notification-backlog-load
@@ -559,6 +586,9 @@ jobs:
     name: cass-certification
     runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 10
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
     needs:
       - bookings-unit
       - cass-calendar-service
@@ -592,11 +622,11 @@ jobs:
     name: docker-build
     runs-on: [self-hosted, linux, aesthetic-os]
     timeout-minutes: 20
+    # Promotion lane: do not wait on fortress-only jobs (skipped on PR/push).
     needs:
-      - chaos
+      - newman-acceptance
       - frontend-test
-      - cass-certification
-      - zap-passive-newman
+      - receipt-pipeline
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - run: docker build -t aesthetic-os-prod:latest .

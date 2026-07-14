@@ -81,7 +81,16 @@ Do **not** auto `prune -af` every job (slow + surprises).
 
 ## Parallelism
 
-One runner ⇒ jobs **serialize** (T2 units queue). Acceptable for unblock. Scale later with a second container/process using the same labels.
+One runner ⇒ jobs **serialize** (T2 units queue). Scale later with more containers using the same labels.
+
+## Two CI lanes
+
+| Lane | When | Jobs |
+|------|------|------|
+| **Promotion gate** | `push` / `pull_request` | validate → lint → django-smoke → units → frontend → payment-security → integration → receipt → newman → docker-build |
+| **Full fortress** | weeknights `02:00` UTC schedule, or Actions → Run workflow with `run_full_fortress=true` | adds ZAP passive, payment-load, notification-backlog, latency, chaos, cass-certification |
+
+Do not require fortress-only job names in branch protection for staging merges.
 
 ## Security
 
