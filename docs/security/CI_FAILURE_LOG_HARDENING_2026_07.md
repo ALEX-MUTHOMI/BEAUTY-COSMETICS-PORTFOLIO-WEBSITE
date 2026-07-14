@@ -18,8 +18,8 @@
 | **29045952897** | **ab666da** | **lint-security** | **black on `core/settings.py`** | **black format + preflight lint** |
 
 ## Production-grade prevention
-1. Always run `black` / `isort` / `ruff` on touched Python before push.
-2. Keep secret-hygiene exclusions for intentional scrubber patterns.
+1. Always run `.\scripts\ci\preflight_heal.ps1` before push (Docker Black/isort/ruff fix + secret_hygiene check-only).
+2. Keep secret-hygiene exclusions for intentional scrubber patterns. Never mute hits from the heal script.
 3. Never widen CORS/`IsAuthenticated` removal for guest STK — keep bind+HMAC.
 4. Document fail-closed controls in `HACKER_MINDSET_SECURE_EXECUTION_MATRIX.md`.
 5. Update Newman/pytest contracts when `/api/health-check/` payload shape changes.

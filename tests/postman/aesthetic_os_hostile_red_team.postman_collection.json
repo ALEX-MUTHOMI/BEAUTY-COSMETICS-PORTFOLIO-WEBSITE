@@ -58,7 +58,11 @@
                   "pm.test('csrf ok', function () {",
                   "  pm.response.to.have.status(200);",
                   "  const json = pm.response.json();",
+                  "  pm.expect(json.csrf_token).to.be.a('string').and.not.empty;",
                   "  pm.environment.set('csrf_token', json.csrf_token);",
+                  "  const cookie = pm.cookies.get('csrftoken');",
+                  "  if (cookie) { pm.environment.set('csrf_cookie', cookie); }",
+                  "  else { pm.environment.set('csrf_cookie', json.csrf_token); }",
                   "});"
                 ]
               }
@@ -113,8 +117,10 @@
                   "  pm.expect(availability).to.be.an('array').and.not.empty;",
                   "  const day = availability.find((c) => c.slots && c.slots.length) || availability[0];",
                   "  pm.expect(day.slots).to.be.an('array').and.not.empty;",
-                  "  pm.environment.set('hostile_starts_at', day.slots[0].starts_at);",
-                  "  pm.environment.set('resource_public_id', day.slots[0].resource_public_id);",
+                  "  // Prefer a later open slot — early slots are often already held by prior Newman runs.",
+                  "  const slot = day.slots[Math.min(day.slots.length - 1, 4)] || day.slots[0];",
+                  "  pm.environment.set('hostile_starts_at', slot.starts_at);",
+                  "  pm.environment.set('resource_public_id', slot.resource_public_id);",
                   "});"
                 ]
               }
@@ -160,7 +166,7 @@
             "header": [
               { "key": "Content-Type", "value": "application/json" },
               { "key": "X-CSRFToken", "value": "{{csrf_token}}" },
-              { "key": "Cookie", "value": "csrftoken={{csrf_token}}" },
+              { "key": "Cookie", "value": "csrftoken={{csrf_cookie}}" },
               { "key": "Accept", "value": "application/json" },
               { "key": "Referer", "value": "{{csrf_referer}}" },
               { "key": "X-Forwarded-Proto", "value": "https" }
@@ -194,7 +200,7 @@
             "header": [
               { "key": "Content-Type", "value": "application/json" },
               { "key": "X-CSRFToken", "value": "{{csrf_token}}" },
-              { "key": "Cookie", "value": "csrftoken={{csrf_token}}" },
+              { "key": "Cookie", "value": "csrftoken={{csrf_cookie}}" },
               { "key": "Accept", "value": "application/json" },
               { "key": "Referer", "value": "{{csrf_referer}}" }
             ],
@@ -231,7 +237,7 @@
             "header": [
               { "key": "Content-Type", "value": "application/json" },
               { "key": "X-CSRFToken", "value": "{{csrf_token}}" },
-              { "key": "Cookie", "value": "csrftoken={{csrf_token}}" },
+              { "key": "Cookie", "value": "csrftoken={{csrf_cookie}}" },
               { "key": "Accept", "value": "application/json" },
               { "key": "Referer", "value": "{{csrf_referer}}" },
               { "key": "X-Forwarded-Proto", "value": "https" }
@@ -273,7 +279,7 @@
             "header": [
               { "key": "Content-Type", "value": "application/json" },
               { "key": "X-CSRFToken", "value": "{{csrf_token}}" },
-              { "key": "Cookie", "value": "csrftoken={{csrf_token}}" },
+              { "key": "Cookie", "value": "csrftoken={{csrf_cookie}}" },
               { "key": "Accept", "value": "application/json" },
               { "key": "Referer", "value": "{{csrf_referer}}" },
               { "key": "X-Forwarded-Proto", "value": "https" }

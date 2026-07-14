@@ -29,10 +29,22 @@ def oauth_setting(provider: str, name: str, default: str = "") -> str:
     return str(getattr(settings, f"STAFF_{provider.upper()}_OAUTH_{name}", default) or "").strip()
 
 
+def _is_usable_oauth_secret(value: str) -> bool:
+    """Reject empty and .env.example placeholders so providers stay fail-closed."""
+    text = str(value or "").strip()
+    if not text:
+        return False
+    lowered = text.lower()
+    # Canonical local example tokens — never treat as live IdP credentials.
+    if lowered.startswith("replace-with-") or "replace-with-" in lowered:
+        return False
+    return True
+
+
 def provider_is_ready(provider: str) -> bool:
     return bool(
-        oauth_setting(provider, "CLIENT_ID")
-        and oauth_setting(provider, "CLIENT_SECRET")
+        _is_usable_oauth_secret(oauth_setting(provider, "CLIENT_ID"))
+        and _is_usable_oauth_secret(oauth_setting(provider, "CLIENT_SECRET"))
         and oauth_setting(provider, "REDIRECT_URI")
         and oauth_setting(provider, "AUTH_URL")
         and oauth_setting(provider, "TOKEN_URL")

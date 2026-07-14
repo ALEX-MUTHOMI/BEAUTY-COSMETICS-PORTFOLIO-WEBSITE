@@ -10,6 +10,15 @@ the full partitioned matrix.
 `secret_hygiene` / `oxlint` / `vue-tsc` / build. Discovering those on Actions
 wastes compute (lint-ladder process debt).
 
+**Before every push — Docker heal (same Poetry as CI):**
+
+```powershell
+.\scripts\ci\preflight_heal.ps1
+```
+
+Runs `black` / `isort` / `ruff --fix` inside `web`, then `secret_hygiene.py`
+**check-only** (fail-closed; never auto-suppress). Does **not** bump tool majors.
+
 **Fix — install hooks once:**
 
 ```powershell
@@ -18,6 +27,7 @@ wastes compute (lint-ladder process debt).
 
 | When | What runs |
 |------|-----------|
+| before push | `.\scripts\ci\preflight_heal.ps1` (format + secret hygiene in Docker) |
 | `git commit` | black, isort, ruff `--fix`, secret hygiene, oxlint |
 | `git push` | `.\scripts\ci\local_ci_mirror.ps1` (check-mode lint + `type-check`) |
 | GitHub Actions | Vitest, build, pytest partitions (heavy lifting) |

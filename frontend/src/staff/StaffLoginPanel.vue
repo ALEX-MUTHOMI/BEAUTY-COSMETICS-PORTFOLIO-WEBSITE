@@ -162,8 +162,8 @@ const props = withDefaults(
     csrfBootstrapFailed: false,
     nextPath: '/staff/dashboard',
     passwordResetPath: '/staff/forgot-password',
-    googleEnabled: true,
-    appleEnabled: true,
+    googleEnabled: false,
+    appleEnabled: false,
     signInHint: '',
   },
 )

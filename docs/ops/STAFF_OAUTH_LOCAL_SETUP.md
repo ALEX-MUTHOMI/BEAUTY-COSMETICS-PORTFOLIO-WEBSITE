@@ -51,9 +51,14 @@ NUXT_PUBLIC_STAFF_APPLE_ENABLED=true
 | Condition | Expected |
 |-----------|----------|
 | Secrets empty | `providers` false; start URLs **404** |
+| `.env.example` placeholders (`replace-with-*`) | Treated as empty — `providers` false; start **404** |
 | Google email not provisioned | Redirect `?signin=unavailable`; audit `staff_not_provisioned` |
 | Deactivated staff | Same as unprovisioned |
 | Flag true but secrets empty | Button disabled / “almost ready” |
+| Redirect URI mismatch vs GCP | Google `redirect_uri_mismatch` — fix GCP/env parity; do not thrash CSRF |
+
+**G2 local redirect URI (byte-for-byte):**
+`http://127.0.0.1:8000/api/staff/auth/google/callback/`
 
 ## Automated tests (no live IdP required)
 

@@ -27,7 +27,27 @@ APPLE_OAUTH_SETTINGS = {
 
 
 @pytest.mark.django_db
+@override_settings(
+    STAFF_GOOGLE_OAUTH_CLIENT_ID="",
+    STAFF_GOOGLE_OAUTH_CLIENT_SECRET="",
+    STAFF_APPLE_OAUTH_CLIENT_ID="",
+    STAFF_APPLE_OAUTH_CLIENT_SECRET="",
+)
 def test_staff_oauth_providers_booleans_only():
+    response = Client().get("/api/staff/auth/providers/", secure=True)
+    assert response.status_code == 200
+    assert response.json() == {"google": False, "apple": False}
+
+
+@pytest.mark.django_db
+@override_settings(
+    STAFF_GOOGLE_OAUTH_CLIENT_ID="replace-with-google-client-id",
+    STAFF_GOOGLE_OAUTH_CLIENT_SECRET="replace-with-google-client-secret",
+    STAFF_GOOGLE_OAUTH_REDIRECT_URI="http://127.0.0.1:8000/api/staff/auth/google/callback/",
+    STAFF_APPLE_OAUTH_CLIENT_ID="replace-with-apple-client-id",
+    STAFF_APPLE_OAUTH_CLIENT_SECRET="replace-with-apple-client-secret",
+)
+def test_staff_oauth_providers_reject_env_example_placeholders():
     response = Client().get("/api/staff/auth/providers/", secure=True)
     assert response.status_code == 200
     assert response.json() == {"google": False, "apple": False}

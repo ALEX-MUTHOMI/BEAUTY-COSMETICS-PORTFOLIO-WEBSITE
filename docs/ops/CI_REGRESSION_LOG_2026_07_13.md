@@ -81,3 +81,20 @@ See Actions: https://github.com/ALEX-MUTHOMI/aesthetic-os/actions/runs/292795815
   `pull access denied for aesthetic_os_web_app` when build aborted mid-bake.
 - django-smoke / lint-security / validate / checkout-unit still green on that SHA.
 - Action: `gh run rerun --failed 29279581517` (infra retry).
+
+## Desk reality local matrix (2026-07-14)
+
+Evidence index: `reports/ci/desk-phase3-matrix.txt` + `docs/ops/DESK_ACCEPTANCE_CHECKLIST.md`.
+
+| Gate | Result | Artifact |
+|------|--------|----------|
+| Password login @ `127.0.0.1:3000` | PASS | `reports/ci/desk-phase1a-password-login.txt` |
+| Google live | FAIL-CLOSED (`.env` `replace-with-*` placeholders) | `reports/ci/desk-phase1b-google-oauth.txt` |
+| `preflight_heal.ps1` | PASS | `reports/ci/preflight-heal-summary.md` |
+| turbo_pass | PASS (~1056s) | `reports/ci/turbo-pass-summary.md` |
+| Vitest staff | PASS 15/15 | `reports/ci/desk-phase3-vitest-staff.txt` |
+| Hostile Newman | PASS | `tests/postman/reports/newman-hostile-red-team.json` |
+| ZAP all-passive | PASS (`FAIL-NEW=0`; WARN Non-Storable triage) | `reports/security/zap/**` |
+| Actions (last pushed SHA) | success | [29280232120](https://github.com/ALEX-MUTHOMI/aesthetic-os/actions/runs/29280232120) on `b602045` |
+
+**Note:** Desk-reality code changes are local until pushed; do not claim Actions green for unpushed commits.
