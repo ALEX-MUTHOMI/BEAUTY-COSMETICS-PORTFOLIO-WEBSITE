@@ -1,4 +1,8 @@
 /**
+ * Module: landingContent
+ * Additional content helpers for landing pages.
+ */
+/**
  * @module
  * Contains the main content data and helpers for the landing page.
  * Includes packages, workflow steps, and social contact placeholders.
@@ -395,3 +399,4 @@ export function validateFeaturedDarkCardCanvas(
     canvas.titleColor === '#fcf8f5'
   )
 }
+
