@@ -80,7 +80,7 @@
                 </div>
               </NuxtLink>
             </div>
-            <SiteButton to="/book" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+            <SiteButton to="/services" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
           </div>
       </div>
     </section>
@@ -102,6 +102,7 @@
           :text="service.text"
           :image="service.image"
           :icon="service.icon"
+          :cta-to="service.ctaTo"
         />
       </div>
     </section>
@@ -124,7 +125,8 @@
           :featured="pkg.featured"
           :badge="pkg.badge"
           :days-label="pkg.daysLabel"
-          :cta-label="pkg.ctaLabel"
+          :cta-label="pkg.ctaLabel || 'Book this package'"
+          :cta-to="bookHrefForPackageName(pkg.name)"
         />
       </div>
     </section>
@@ -133,24 +135,27 @@
     <section id="singles" class="packages packages--singles home-section">
       <header class="section-head">
         <p class="label">Single treatments</p>
-        <h2>One service at a time</h2>
+        <h2>Book one specific treatment</h2>
         <p class="section-head__sub">
-          Mon, Thu–Sat. Pick one treatment — or
+          {{ SINGLE_DAYS_LABEL }}. Pick the exact treatment you want — or
           <NuxtLink :to="SERVICES_ROUTES.singleSessions" class="home-services-link">
-            view all singles and prices on our services page
+            browse every single treatment and price
           </NuxtLink>.
         </p>
       </header>
       <div class="packages__grid packages__grid--singles">
         <MellisPackageCard
-          v-for="treatment in singleTreatments"
+          v-for="treatment in singleHighlights"
           :key="treatment.name"
           :name="treatment.name"
-          :text="treatment.text"
+          :text="treatment.description"
           :price="treatment.price"
-          :includes="treatment.includes"
-          :days-label="treatment.daysLabel"
-          :cta-label="treatment.ctaLabel"
+          :includes="treatment.highlights"
+          :days-label="SINGLE_DAYS_LABEL"
+          :cta-label="`Book ${treatment.name}`"
+          :cta-to="bookHrefForTreatment(treatment.category, treatment.name)"
+          :details-to="`${SERVICES_ROUTES.page}#${treatment.category}`"
+          details-label="See all options"
         />
       </div>
     </section>
@@ -186,7 +191,7 @@
             <ul class="more__list">
               <li v-for="item in serviceList" :key="item">{{ item }}</li>
             </ul>
-            <SiteButton to="/book" variant="primary" class="more__cta">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+            <SiteButton to="/services" variant="primary" class="more__cta">{{ LANDING_PRIMARY_CTA }}</SiteButton>
             <p class="more__hint">Prices are listed above. Pay at checkout to confirm your slot.</p>
           </div>
         <div class="more__stats">
@@ -208,11 +213,18 @@
       </header>
       <div class="reviews__grid">
         <blockquote v-for="review in reviews" :key="review.name" class="review-card">
-          <img src="/images/quote.png" alt="" class="review-card__quote" aria-hidden="true" loading="lazy" decoding="async" />
           <div class="review-card__stars" aria-label="5 out of 5 stars">★★★★★</div>
           <p>{{ review.text }}</p>
           <footer>
-            <span class="review-card__avatar" aria-hidden="true">{{ review.initials }}</span>
+            <img
+              :src="review.photo"
+              alt=""
+              class="review-card__photo"
+              width="56"
+              height="56"
+              loading="lazy"
+              decoding="async"
+            />
             <div>
               <cite>{{ review.name }}</cite>
               <span>Customer</span>
@@ -244,7 +256,7 @@
     </section>
 
     <!-- Hours CTA -->
-    <section id="contact" class="cta home-section">
+    <section id="visit" class="cta home-section">
       <div class="cta__photo">
         <img src="/images/cta-bg.jpg" alt="" loading="lazy" decoding="async" width="1280" height="720" />
         <div class="cta__overlay" />
@@ -252,7 +264,7 @@
       <div class="cta__inner">
         <div class="cta__book">
           <h2>Ready when you are</h2>
-          <SiteButton to="/book" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+          <SiteButton to="/services" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
         </div>
         <div class="cta__hours">
             <img src="/images/icon-clock.png" alt="" width="40" height="40" />
@@ -290,10 +302,11 @@ import {
   LANDING_LOCATION_LABEL,
   LANDING_PRIMARY_CTA,
   packages,
-  singleTreatments,
+  SINGLE_DAYS_LABEL,
 } from '@/landing/landingContent'
 import { useLandingSeo } from '@/landing/useLandingSeo'
-import { getServiceSummaries } from '@/landing/servicesContent'
+import { getServiceSummaries, getSingleTreatmentHighlights } from '@/landing/servicesContent'
+import { bookHrefForPackageName, bookHrefForTreatment } from '@/landing/bookingHandoff'
 import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
 
 const activeSlide = ref(0)
@@ -338,6 +351,7 @@ onMounted(() => {
 })
 
 const services = getServiceSummaries()
+const singleHighlights = getSingleTreatmentHighlights()
 
 const serviceList = [
   'Deep Cleansing Facials',
@@ -360,17 +374,17 @@ const stats = [
 const reviews = [
   {
     name: 'Wanjiku M.',
-    initials: 'WM',
+    photo: '/images/testimonial-1.jpg',
     text: 'I come every month for a facial. My skin has improved and the room is always clean and quiet.',
   },
   {
     name: 'Sharon O.',
-    initials: 'SO',
+    photo: '/images/testimonial-2.jpg',
     text: 'Had my makeup done for a wedding. It stayed on all day and looked good in every photo.',
   },
   {
     name: 'Diana K.',
-    initials: 'DK',
+    photo: '/images/testimonial-3.jpg',
     text: 'The Saturday massage is something I look forward to each week. Easy to book and always on time.',
   },
 ]
@@ -386,12 +400,6 @@ const galleryImages = [
 
 definePageMeta({ layout: 'landing' })
 
-useHead({
-  htmlAttrs: {
-    class: 'is-loading',
-  },
-})
-
 useLandingSeo()
 </script>
 
@@ -404,11 +412,11 @@ useLandingSeo()
 
 .home-section {
   content-visibility: auto;
-  contain-intrinsic-size: auto 480px;
+  contain-intrinsic-size: auto 320px;
 }
 
 .label {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.22em;
   font: 600 0.72rem var(--font-body);
@@ -417,7 +425,7 @@ useLandingSeo()
 
 .section-head {
   width: var(--container);
-  margin: 0 auto 2rem;
+  margin: 0 auto 1.35rem;
   text-align: center;
   padding: 0 0.25rem;
 }
@@ -425,15 +433,15 @@ useLandingSeo()
 .section-head h2 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.85rem, 4vw, 2.65rem);
+  font-size: clamp(1.65rem, 3.5vw, 2.35rem);
   font-weight: 400;
   line-height: 1.25;
 }
 
 .section-head__sub {
   max-width: 52ch;
-  margin: 1rem auto 0;
-  font: 400 1rem/1.7 var(--font-body);
+  margin: 0.65rem auto 0;
+  font: 400 0.95rem/1.55 var(--font-body);
   color: var(--color-muted);
 }
 
@@ -457,8 +465,8 @@ useLandingSeo()
 .hero {
   position: relative;
   width: 100%;
-  height: min(88svh, 680px);
-  min-height: 460px;
+  height: min(72svh, 560px);
+  min-height: 380px;
   overflow: hidden;
   touch-action: pan-y;
   background: var(--color-ink);
@@ -590,7 +598,7 @@ useLandingSeo()
 
 /* Welcome — mobile-first single column */
 .welcome {
-  padding: clamp(3rem, 8vh, 6.5rem) 1rem;
+  padding: clamp(2rem, 5vh, 3.5rem) 1rem;
   position: relative;
   z-index: 1;
 }
@@ -729,7 +737,7 @@ useLandingSeo()
 
 /* Services — Mellis open grid, no boxed cards */
 .services {
-  padding: clamp(2.5rem, 7vh, 5rem) 1rem clamp(3.5rem, 9vh, 6.5rem);
+  padding: clamp(2rem, 5vh, 3.5rem) 1rem;
   background: var(--color-paper);
 }
 
@@ -738,13 +746,13 @@ useLandingSeo()
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2.5rem;
+  gap: 1.35rem;
 }
 
 /* More — standout band with visible spa photo */
 .more {
   position: relative;
-  padding: clamp(3.5rem, 9vh, 6.5rem) 1rem;
+  padding: clamp(2.25rem, 5vh, 3.75rem) 1rem;
   overflow: hidden;
   border-top: 4px solid var(--color-rose);
   border-bottom: 4px solid var(--color-rose);
@@ -845,17 +853,17 @@ useLandingSeo()
 
 .stat-card {
   background: #fff;
-  padding: 1.5rem 1.25rem;
+  padding: 1.1rem 1rem;
   text-align: center;
   border: 1px solid rgba(222, 150, 141, 0.25);
-  box-shadow: 0 12px 36px rgba(39, 37, 42, 0.1);
+  box-shadow: 0 8px 24px rgba(39, 37, 42, 0.08);
   height: 100%;
-  transition: transform 0.4s var(--ease-story), box-shadow 0.4s;
+  transition: transform 0.35s var(--ease-story), box-shadow 0.35s;
 }
 
 .stat-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 40px rgba(39, 37, 42, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(39, 37, 42, 0.1);
 }
 
 .stat-card img {
@@ -880,7 +888,7 @@ useLandingSeo()
 
 /* Steps — Mellis circle flow */
 .steps {
-  padding: clamp(4rem, 8vh, 6rem) 1.5rem;
+  padding: clamp(2.25rem, 5vh, 3.75rem) 1.25rem;
   background: var(--color-paper);
 }
 
@@ -890,8 +898,8 @@ useLandingSeo()
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2.5rem;
-  padding-top: 0.5rem;
+  gap: 1.35rem;
+  padding-top: 0.35rem;
 }
 
 .steps__flow::before {
@@ -900,7 +908,7 @@ useLandingSeo()
 
 /* Packages */
 .packages {
-  padding: clamp(2.5rem, 8vh, 6rem) 1rem;
+  padding: clamp(2rem, 5vh, 3.5rem) 1rem;
   background: var(--color-paper);
 }
 
@@ -909,9 +917,9 @@ useLandingSeo()
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
+  gap: 1.1rem;
   align-items: stretch;
-  padding-top: 1.25rem;
+  padding-top: 0.85rem;
 }
 
 .packages__grid > * {
@@ -924,7 +932,7 @@ useLandingSeo()
 
 .packages__grid--singles {
   grid-template-columns: 1fr;
-  padding-top: 1.25rem;
+  padding-top: 0.85rem;
 }
 
 .packages__grid--singles > * {
@@ -933,7 +941,7 @@ useLandingSeo()
 
 /* Reviews */
 .reviews {
-  padding: clamp(2.5rem, 8vh, 6rem) 1rem;
+  padding: clamp(2rem, 5vh, 3.5rem) 1rem;
 }
 
 .reviews__grid {
@@ -946,11 +954,11 @@ useLandingSeo()
 
 .review-card {
   margin: 0;
-  padding: 1.75rem 1.5rem;
+  padding: 1.25rem 1.15rem;
   background: var(--color-cream);
   position: relative;
   height: 100%;
-  transition: transform 0.4s var(--ease-story), box-shadow 0.4s;
+  transition: transform 0.35s var(--ease-story), box-shadow 0.35s;
 }
 
 .review-card:hover {
@@ -958,22 +966,16 @@ useLandingSeo()
   box-shadow: 0 12px 32px rgba(39, 37, 42, 0.08);
 }
 
-.review-card__quote {
-  width: 36px;
-  margin-bottom: 1rem;
-  opacity: 0.35;
-}
-
 .review-card__stars {
   color: var(--color-rose);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   letter-spacing: 0.15em;
-  margin-bottom: 1rem;
+  margin-bottom: 0.65rem;
 }
 
 .review-card p {
-  margin: 0 0 1.75rem;
-  font: 400 0.92rem/1.7 var(--font-body);
+  margin: 0 0 1.1rem;
+  font: 400 0.88rem/1.55 var(--font-body);
   color: var(--color-muted);
 }
 
@@ -983,16 +985,13 @@ useLandingSeo()
   gap: 0.85rem;
 }
 
-.review-card__avatar {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
+.review-card__photo {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: var(--color-rose);
-  color: #fff;
-  font: 600 0.8rem var(--font-body);
-  letter-spacing: 0.04em;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 12px rgba(39, 37, 42, 0.1);
   flex-shrink: 0;
 }
 
@@ -1010,7 +1009,7 @@ useLandingSeo()
 
 /* Gallery — static grid (no infinite scroll animation) */
 .gallery {
-  padding: clamp(4rem, 8vh, 6rem) 0;
+  padding: clamp(2.25rem, 5vh, 3.75rem) 0;
   background: var(--color-footer);
 }
 
@@ -1058,7 +1057,7 @@ useLandingSeo()
 /* CTA */
 .cta {
   position: relative;
-  padding: clamp(4rem, 9vh, 6.5rem) 1.5rem;
+  padding: clamp(2.5rem, 6vh, 4rem) 1.5rem;
   overflow: hidden;
 }
 
@@ -1139,13 +1138,13 @@ useLandingSeo()
 
 @media (min-width: 768px) {
   .hero {
-    height: min(78svh, 640px);
-    min-height: 480px;
+    height: min(68svh, 560px);
+    min-height: 420px;
   }
 
   .hero__content {
     justify-content: center;
-    padding: 2rem 1.5rem 4rem;
+    padding: 2rem 1.5rem 3rem;
   }
 
   .hero__eyebrow {
@@ -1154,7 +1153,7 @@ useLandingSeo()
   }
 
   .section-head {
-    margin-bottom: 3rem;
+    margin-bottom: 1.75rem;
   }
 
   .welcome {
@@ -1184,21 +1183,21 @@ useLandingSeo()
 
   .services__grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
+    gap: 1.35rem;
   }
 
   .packages__grid,
   .packages__grid--singles {
-    gap: 1.5rem;
+    gap: 1.15rem;
   }
 
   .reviews__grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem;
+    gap: 1rem;
   }
 
   .review-card {
-    padding: 2rem 1.75rem;
+    padding: 1.35rem 1.25rem;
   }
 
   .more__inner {
@@ -1223,8 +1222,8 @@ useLandingSeo()
 
 @media (min-width: 1024px) {
   .hero {
-    height: min(726px, 88vh);
-    min-height: 500px;
+    height: min(620px, 72vh);
+    min-height: 440px;
   }
 
   .welcome__inner {
@@ -1233,18 +1232,19 @@ useLandingSeo()
 
   .services__grid {
     grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
   }
 
   .steps__flow {
     grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
+    gap: 1.35rem;
   }
 
   .steps__flow::before {
     content: '';
     display: block;
     position: absolute;
-    top: 100px;
+    top: 80px;
     left: 18%;
     right: 18%;
     height: 2px;
@@ -1254,16 +1254,17 @@ useLandingSeo()
 
   .packages__grid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.75rem;
+    gap: 1.25rem;
   }
 
   .packages__grid--singles {
     grid-template-columns: repeat(4, 1fr);
+    gap: 1.1rem;
   }
 
   .reviews__grid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+    gap: 1.15rem;
   }
 }
 

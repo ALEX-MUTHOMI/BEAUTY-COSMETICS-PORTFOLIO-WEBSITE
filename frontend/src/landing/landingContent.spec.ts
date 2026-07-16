@@ -49,7 +49,7 @@ describe('landingContent', () => {
     expect(heroSlides[2]?.title).toBe('Makeup')
     heroSlides.forEach((slide) => {
       expect(slide.alt.length).toBeGreaterThan(10)
-      expect(slide.ctaTo).toBe('/book')
+      expect(slide.ctaTo).toBe('/services')
     })
   })
 

@@ -8,19 +8,27 @@
     </div>
     <h3 class="mellis-service__title">{{ name }}</h3>
     <p class="mellis-service__text">{{ text }}</p>
-    <SiteButton to="/book" variant="text">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+    <SiteButton :to="ctaTo" variant="text">{{ ctaLabel }}</SiteButton>
   </article>
 </template>
 
 <script setup lang="ts">
 import { LANDING_PRIMARY_CTA } from '@/landing/landingContent'
 
-defineProps<{
-  name: string
-  text: string
-  image: string
-  icon: string
-}>()
+withDefaults(
+  defineProps<{
+    name: string
+    text: string
+    image: string
+    icon: string
+    ctaTo?: string
+    ctaLabel?: string
+  }>(),
+  {
+    ctaTo: '/services',
+    ctaLabel: LANDING_PRIMARY_CTA,
+  },
+)
 </script>
 
 <style scoped>
@@ -35,9 +43,17 @@ defineProps<{
 
 .mellis-service__visual {
   position: relative;
-  width: 168px;
-  height: 168px;
-  margin: 0 auto 1.85rem;
+  width: 128px;
+  height: 128px;
+  margin: 0 auto 1.15rem;
+}
+
+@media (min-width: 768px) {
+  .mellis-service__visual {
+    width: 148px;
+    height: 148px;
+    margin-bottom: 1.35rem;
+  }
 }
 
 .mellis-service__photo {
@@ -61,8 +77,8 @@ defineProps<{
   transform: translateX(-50%);
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: var(--color-rose);
   border: 3px solid #fff;
@@ -70,24 +86,24 @@ defineProps<{
 }
 
 .mellis-service__icon {
-  width: 26px;
-  height: 26px;
+  width: 20px;
+  height: 20px;
   object-fit: contain;
   filter: brightness(0) invert(1);
 }
 
 .mellis-service__title {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.45rem;
   font-family: var(--font-display);
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--color-ink);
 }
 
 .mellis-service__text {
-  margin: 0 0 1.1rem;
+  margin: 0 0 0.75rem;
   max-width: 26ch;
-  font: 400 0.9rem/1.65 var(--font-body);
+  font: 400 0.86rem/1.55 var(--font-body);
   color: var(--color-muted);
 }
 </style>

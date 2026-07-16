@@ -28,9 +28,17 @@ defineProps<{
 
 .mellis-flow-step__visual {
   position: relative;
-  width: 200px;
-  height: 200px;
-  margin: 0 auto 1.75rem;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 1.15rem;
+}
+
+@media (min-width: 768px) {
+  .mellis-flow-step__visual {
+    width: 160px;
+    height: 160px;
+    margin-bottom: 1.35rem;
+  }
 }
 
 .mellis-flow-step__photo {
@@ -49,19 +57,19 @@ defineProps<{
   z-index: 2;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: var(--color-rose);
   color: #fff;
-  font: 600 0.8rem var(--font-body);
+  font: 600 0.75rem var(--font-body);
   box-shadow: 0 4px 12px rgba(222, 150, 141, 0.45);
 }
 
 .mellis-flow-step__title {
-  margin: 0 0 0.85rem;
+  margin: 0 0 0.5rem;
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--color-ink);
 }
@@ -69,7 +77,7 @@ defineProps<{
 .mellis-flow-step__text {
   margin: 0 auto;
   max-width: 30ch;
-  font: 400 0.9rem/1.7 var(--font-body);
+  font: 400 0.86rem/1.55 var(--font-body);
   color: var(--color-muted);
 }
 </style>

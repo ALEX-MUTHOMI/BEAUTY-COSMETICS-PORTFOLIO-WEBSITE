@@ -38,7 +38,7 @@ test.describe('Shee Aesthetics landing page', () => {
 
     await page.locator('#packages').scrollIntoViewIfNeeded()
     await expect(page.getByRole('heading', { name: /Full visits, Tuesday/i })).toBeVisible()
-    await expect(page.getByRole('heading', { name: /One service at a time/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Book one specific treatment/i })).toBeVisible()
     await expect(page.locator('.mellis-card__badge', { hasText: 'Most booked' })).toBeVisible()
 
     const cspViolations = consoleErrors.filter((e) =>

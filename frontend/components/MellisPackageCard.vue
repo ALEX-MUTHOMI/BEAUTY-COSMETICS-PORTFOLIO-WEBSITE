@@ -40,7 +40,7 @@ withDefaults(
   {
     daysLabel: 'Tue & Wed only',
     ctaLabel: LANDING_PRIMARY_CTA,
-    ctaTo: '/book',
+    ctaTo: '/services',
     detailsLabel: 'See all options',
   },
 )
@@ -56,16 +56,16 @@ withDefaults(
   height: 100%;
   width: 100%;
   min-width: 0;
-  padding: 2rem 1.25rem 1.75rem;
+  padding: 1.35rem 1.1rem 1.25rem;
   background: #fff;
   border: 1px solid var(--color-line);
   border-top: 3px solid var(--color-rose);
   box-shadow: var(--shadow-card);
   overflow: visible;
   transition:
-    transform 0.4s var(--ease-story),
-    box-shadow 0.4s var(--ease-story),
-    border-color 0.35s;
+    transform 0.35s var(--ease-story),
+    box-shadow 0.35s var(--ease-story),
+    border-color 0.3s;
 }
 
 .mellis-card::after {
@@ -79,16 +79,16 @@ withDefaults(
 }
 
 .mellis-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 22px 48px rgba(39, 37, 42, 0.12);
+  transform: translateY(-4px);
+  box-shadow: 0 14px 32px rgba(39, 37, 42, 0.1);
   border-top-color: var(--color-rose-dark);
 }
 
 .mellis-card--featured {
   background: var(--color-cream);
   border-top-width: 4px;
-  box-shadow: 0 18px 42px rgba(222, 150, 141, 0.18);
-  margin-top: 0.75rem;
+  box-shadow: 0 12px 28px rgba(222, 150, 141, 0.14);
+  margin-top: 0.5rem;
 }
 
 .mellis-card :deep(.site-btn) {
@@ -100,9 +100,9 @@ withDefaults(
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.75rem;
-  margin-top: 0.85rem;
-  padding: 0.35rem 0.5rem;
+  min-height: 2.5rem;
+  margin-top: 0.55rem;
+  padding: 0.25rem 0.4rem;
   font: 600 0.72rem var(--font-body);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -123,29 +123,29 @@ withDefaults(
 
 @media (max-width: 767px) {
   .mellis-card {
-    padding: 2.15rem 1.15rem 1.65rem;
+    padding: 1.35rem 1rem 1.15rem;
   }
 
   .mellis-card--featured {
-    padding-top: 2.35rem;
+    padding-top: 1.55rem;
   }
 
   .mellis-card__title {
-    font-size: 1.2rem;
+    font-size: 1.15rem;
   }
 
   .mellis-card__price {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
   }
 
   .mellis-card__text {
     max-width: none;
-    font-size: 0.88rem;
+    font-size: 0.86rem;
   }
 
   .mellis-card__includes li {
-    font-size: 0.84rem;
-    padding-left: 1.35rem;
+    font-size: 0.82rem;
+    padding-left: 1.25rem;
   }
 
   .mellis-card :deep(.site-btn) {
@@ -156,7 +156,7 @@ withDefaults(
 
 @media (min-width: 768px) {
   .mellis-card {
-    padding: 2.5rem 2rem 2.25rem;
+    padding: 1.6rem 1.4rem 1.45rem;
   }
 }
 
@@ -177,7 +177,7 @@ withDefaults(
 }
 
 .mellis-card__days {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.45rem;
   font: 600 0.68rem var(--font-body);
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -185,30 +185,30 @@ withDefaults(
 }
 
 .mellis-card__title {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.35rem;
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--color-ink);
 }
 
 .mellis-card__price {
-  margin: 0 0 1rem;
-  font: 700 1.65rem var(--font-display);
+  margin: 0 0 0.65rem;
+  font: 700 1.4rem var(--font-display);
   color: var(--color-rose-dark);
   line-height: 1.2;
 }
 
 .mellis-card__text {
-  margin: 0 0 1.25rem;
+  margin: 0 0 0.85rem;
   max-width: 28ch;
-  font: 400 0.9rem/1.65 var(--font-body);
+  font: 400 0.88rem/1.55 var(--font-body);
   color: var(--color-muted);
 }
 
 .mellis-card__includes {
   list-style: none;
-  margin: 0 0 1.75rem;
+  margin: 0 0 1.1rem;
   padding: 0;
   width: 100%;
   text-align: left;
@@ -216,8 +216,8 @@ withDefaults(
 
 .mellis-card__includes li {
   position: relative;
-  padding: 0.45rem 0 0.45rem 1.5rem;
-  font: 500 0.86rem var(--font-body);
+  padding: 0.3rem 0 0.3rem 1.35rem;
+  font: 500 0.84rem var(--font-body);
   color: var(--color-ink);
   border-bottom: 1px solid rgba(39, 37, 42, 0.06);
 }
@@ -230,7 +230,7 @@ withDefaults(
   content: '✓';
   position: absolute;
   left: 0;
-  top: 0.45rem;
+  top: 0.3rem;
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--color-rose);

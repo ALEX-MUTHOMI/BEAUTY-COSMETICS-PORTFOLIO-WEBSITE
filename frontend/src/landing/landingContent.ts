@@ -46,7 +46,7 @@ export const heroSlides: HeroSlide[] = [
     title: 'Spa Beauty',
     subtitle: 'Private rooms for facials, waxing, massage and makeup',
     cta: LANDING_PRIMARY_CTA,
-    ctaTo: '/book',
+    ctaTo: '/services',
   },
   {
     image: '/images/hero-2.jpg',
@@ -55,7 +55,7 @@ export const heroSlides: HeroSlide[] = [
     title: 'Massage',
     subtitle: 'Swedish and deep tissue for back, neck and shoulders',
     cta: LANDING_PRIMARY_CTA,
-    ctaTo: '/book',
+    ctaTo: '/services',
   },
   {
     image: '/images/hero-3.jpg',
@@ -64,7 +64,7 @@ export const heroSlides: HeroSlide[] = [
     title: 'Makeup',
     subtitle: 'Everyday polish and full glam for events',
     cta: LANDING_PRIMARY_CTA,
-    ctaTo: '/book',
+    ctaTo: '/services',
   },
 ]
 
@@ -72,7 +72,7 @@ export const flowSteps: FlowStep[] = [
   {
     num: '01',
     title: 'Choose online',
-    text: 'Pick your date, package or single treatment, and complete checkout to hold your slot.',
+    text: 'Pick your date, package or single treatment, and complete checkout to book your visit.',
     image: '/images/step-meeting.jpg',
   },
   {
@@ -101,6 +101,8 @@ export function isPackageDay(day: string): boolean {
   return PACKAGE_DAYS.some((d) => d.toLowerCase() === day.toLowerCase())
 }
 
+export const PACKAGE_BOOK_CTA = 'Book this package'
+
 export const packages: LandingPackage[] = [
   {
     name: 'Classic Full Package',
@@ -109,7 +111,7 @@ export const packages: LandingPackage[] = [
     badge: 'Most booked',
     featured: true,
     daysLabel: 'Tue & Wed only',
-    ctaLabel: LANDING_PRIMARY_CTA,
+    ctaLabel: PACKAGE_BOOK_CTA,
     includes: [
       'Deep cleansing facial',
       'Full body waxing',
@@ -123,7 +125,7 @@ export const packages: LandingPackage[] = [
     text: 'For events and photos. Brighten skin, shape brows and finish with soft glam.',
     price: 'From KES 8,500',
     daysLabel: 'Tue & Wed only',
-    ctaLabel: LANDING_PRIMARY_CTA,
+    ctaLabel: PACKAGE_BOOK_CTA,
     includes: [
       'Brightening facial',
       'Brow shaping & wax',
@@ -136,7 +138,7 @@ export const packages: LandingPackage[] = [
     text: 'When you need to switch off. Massage-led with wax and an express facial.',
     price: 'From KES 7,000',
     daysLabel: 'Tue & Wed only',
-    ctaLabel: LANDING_PRIMARY_CTA,
+    ctaLabel: PACKAGE_BOOK_CTA,
     includes: [
       'Deep tissue massage',
       'Back & shoulder wax',
