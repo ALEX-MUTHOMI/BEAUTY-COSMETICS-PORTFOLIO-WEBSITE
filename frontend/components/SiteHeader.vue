@@ -4,7 +4,7 @@
       <div class="site-header__top-inner">
         <div class="site-header__contact">
           <a href="mailto:bookings@sheeaesthetics.co.ke">bookings@sheeaesthetics.co.ke</a>
-          <NuxtLink to="/book" class="site-header__policy">Pay online to book</NuxtLink>
+          <NuxtLink to="/services" class="site-header__policy">Pay online to book</NuxtLink>
         </div>
         <div class="site-header__social" aria-label="Social links">
           <a :href="LANDING_INSTAGRAM_URL" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
@@ -28,7 +28,7 @@
         </nav>
 
         <div class="site-header__actions">
-          <SiteButton to="/book" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+          <SiteButton to="/services" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
         </div>
 
         <button
@@ -86,7 +86,7 @@
             <NuxtLink to="/#contact" @click="closeMenu">Contact</NuxtLink>
           </div>
 
-          <SiteButton to="/book" variant="primary" class="site-header__drawer-cta" @click="closeMenu">
+          <SiteButton to="/services" variant="primary" class="site-header__drawer-cta" @click="closeMenu">
             {{ LANDING_PRIMARY_CTA }}
           </SiteButton>
         </nav>

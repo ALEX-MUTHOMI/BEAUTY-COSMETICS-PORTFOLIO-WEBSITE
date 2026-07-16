@@ -14,7 +14,7 @@
         <NuxtLink to="/#welcome">About</NuxtLink>
         <NuxtLink to="/services">Our Services</NuxtLink>
         <NuxtLink :to="SERVICES_ROUTES.fullPackages">Packages</NuxtLink>
-        <NuxtLink to="/book">{{ LANDING_PRIMARY_CTA }}</NuxtLink>
+        <NuxtLink to="/services">{{ LANDING_PRIMARY_CTA }}</NuxtLink>
       </div>
 
       <div class="site-footer__col">
@@ -31,7 +31,7 @@
         <p class="site-footer__heading">Booking</p>
         <p class="site-footer__note">Appointments are confirmed after online payment only. No phone bookings.</p>
         <a href="mailto:bookings@sheeaesthetics.co.ke">bookings@sheeaesthetics.co.ke</a>
-        <NuxtLink to="/book">{{ LANDING_PRIMARY_CTA }}</NuxtLink>
+        <NuxtLink to="/services">{{ LANDING_PRIMARY_CTA }}</NuxtLink>
       </div>
     </div>
 

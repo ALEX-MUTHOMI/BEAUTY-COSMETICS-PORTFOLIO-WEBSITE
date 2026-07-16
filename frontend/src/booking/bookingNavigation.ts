@@ -13,7 +13,7 @@ export function resolveSafeBookingStatusPath(
   bookingPublicId: string,
 ): string {
   if (!isUuid(bookingPublicId)) {
-    return '/book'
+    return '/services'
   }
   const fallback = `/booking/status/${bookingPublicId}/`
   const candidate = String(statusUrl ?? '').trim()

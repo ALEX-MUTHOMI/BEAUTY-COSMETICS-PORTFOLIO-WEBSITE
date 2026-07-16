@@ -38,7 +38,7 @@ describe('resolveSafeBookingStatusPath — open redirect red team', () => {
   })
 
   it('falls back to /book when booking id is not a uuid', () => {
-    expect(resolveSafeBookingStatusPath('/booking/status/not-a-uuid/', 'not-a-uuid')).toBe('/book')
+    expect(resolveSafeBookingStatusPath('/booking/status/not-a-uuid/', 'not-a-uuid')).toBe('/services')
   })
 
   it('rejects javascript: and data: open-redirect payloads', () => {
