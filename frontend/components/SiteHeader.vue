@@ -1,5 +1,12 @@
 <template>
-  <header class="site-header" :class="{ 'site-header--menu-open': menuOpen }">
+  <header
+    ref="headerEl"
+    class="site-header"
+    :class="{
+      'site-header--menu-open': menuOpen,
+      'site-header--over-hero': overHero,
+    }"
+  >
     <div class="site-header__top">
       <div class="site-header__top-inner">
         <div class="site-header__contact">
@@ -16,7 +23,7 @@
 
     <div class="site-header__main">
       <div class="site-header__main-inner">
-        <SheeLogo class="site-header__logo" />
+        <SheeLogo class="site-header__logo" :variant="overHero ? 'light' : 'default'" />
 
         <nav class="site-header__nav" aria-label="Primary">
           <NuxtLink to="/">Home</NuxtLink>
@@ -96,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   LANDING_INSTAGRAM_URL,
   LANDING_LOCATION_LABEL,
@@ -104,18 +111,88 @@ import {
 } from '@/landing/landingContent'
 import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
 
+const route = useRoute()
 const menuOpen = ref(false)
+const headerEl = ref<HTMLElement | null>(null)
+const isHome = computed(() => route.path === '/')
+/** Assume over-hero on home until the observer says otherwise (avoids solid flash). */
+const heroInView = ref(isHome.value)
+const overHero = computed(() => isHome.value && heroInView.value && !menuOpen.value)
+
+let heroObserver: IntersectionObserver | null = null
+let headerResizeObserver: ResizeObserver | null = null
 
 function closeMenu() {
   menuOpen.value = false
+}
+
+function syncHeaderHeight() {
+  const height = headerEl.value?.offsetHeight ?? 0
+  if (height > 0) {
+    document.documentElement.style.setProperty('--site-header-height', `${height}px`)
+  }
+}
+
+function teardownHeroObserver() {
+  heroObserver?.disconnect()
+  heroObserver = null
+}
+
+function setupHeroObserver() {
+  teardownHeroObserver()
+  if (!import.meta.client || !isHome.value) {
+    heroInView.value = false
+    return
+  }
+
+  const hero = document.querySelector('[data-home-hero]')
+  if (!(hero instanceof HTMLElement)) {
+    heroInView.value = false
+    return
+  }
+
+  heroInView.value = true
+  heroObserver = new IntersectionObserver(
+    ([entry]) => {
+      if (!entry) return
+      // Stay frosted while any of the hero still occupies the upper viewport band.
+      heroInView.value = entry.isIntersecting && entry.boundingClientRect.bottom > 80
+    },
+    { root: null, threshold: [0, 0.05, 0.15, 0.35] },
+  )
+  heroObserver.observe(hero)
 }
 
 watch(menuOpen, (open) => {
   document.body.style.overflow = open ? 'hidden' : ''
 })
 
+watch(
+  () => route.path,
+  async () => {
+    closeMenu()
+    await nextTick()
+    syncHeaderHeight()
+    setupHeroObserver()
+  },
+)
+
+onMounted(async () => {
+  await nextTick()
+  syncHeaderHeight()
+  setupHeroObserver()
+
+  if (headerEl.value && typeof ResizeObserver !== 'undefined') {
+    headerResizeObserver = new ResizeObserver(() => syncHeaderHeight())
+    headerResizeObserver.observe(headerEl.value)
+  }
+})
+
 onUnmounted(() => {
   document.body.style.overflow = ''
+  teardownHeroObserver()
+  headerResizeObserver?.disconnect()
+  headerResizeObserver = null
 })
 </script>
 
@@ -125,6 +202,21 @@ onUnmounted(() => {
   top: 0;
   z-index: 50;
   background: var(--color-paper);
+  transition:
+    background-color 0.28s ease,
+    box-shadow 0.28s ease,
+    backdrop-filter 0.28s ease;
+}
+
+.site-header--over-hero {
+  background: rgba(39, 37, 42, 0.18);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow: none;
+}
+
+.site-header--over-hero .site-header__top {
+  display: none;
 }
 
 .site-header--menu-open {
@@ -198,6 +290,11 @@ onUnmounted(() => {
     0.65rem max(1rem, env(safe-area-inset-right, 0px))
     0.65rem max(1rem, env(safe-area-inset-left, 0px));
   border-bottom: 1px solid var(--color-line);
+  transition: border-color 0.28s ease;
+}
+
+.site-header--over-hero .site-header__main-inner {
+  border-bottom-color: rgba(255, 255, 255, 0.14);
 }
 
 .site-header__logo {
@@ -259,10 +356,21 @@ onUnmounted(() => {
   font: 600 0.75rem var(--font-body);
   letter-spacing: 0.16em;
   text-transform: uppercase;
+  text-shadow: none;
+  transition: color 0.2s ease;
 }
 
 .site-header__nav a:hover {
   color: var(--color-rose);
+}
+
+.site-header--over-hero .site-header__nav a {
+  color: rgba(255, 255, 255, 0.94);
+  text-shadow: 0 1px 12px rgba(39, 37, 42, 0.35);
+}
+
+.site-header--over-hero .site-header__nav a:hover {
+  color: #fff;
 }
 
 .site-header__menu-toggle {
@@ -285,6 +393,15 @@ onUnmounted(() => {
     border-color 0.25s,
     background-color 0.25s,
     visibility 0.2s;
+}
+
+.site-header--over-hero .site-header__menu-toggle {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.site-header--over-hero .site-header__menu-line {
+  background: #fff;
 }
 
 .site-header__menu-toggle--open {
@@ -463,6 +580,7 @@ onUnmounted(() => {
 
 @media (min-width: 960px) {
   .site-header__top { display: block; }
+  .site-header--over-hero .site-header__top { display: none; }
   .site-header__nav,
   .site-header__actions { display: flex; }
   .site-header__menu-toggle { display: none; }
@@ -493,6 +611,8 @@ onUnmounted(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .site-header,
+  .site-header__main-inner,
   .site-header__menu-line,
   .menu-fade-enter-active,
   .menu-fade-leave-active,

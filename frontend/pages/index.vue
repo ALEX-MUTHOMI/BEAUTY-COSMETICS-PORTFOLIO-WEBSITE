@@ -2,25 +2,41 @@
   <SiteLoader />
   <main class="home">
     <!-- Hero slider -->
-    <section class="hero" @touchstart.passive="onHeroTouchStart" @touchend.passive="onHeroTouchEnd">
+    <section
+      class="hero"
+      data-home-hero
+      :data-hero-service="currentHero.service"
+      @touchstart.passive="onHeroTouchStart"
+      @touchend.passive="onHeroTouchEnd"
+    >
       <div class="hero__track">
         <article
           v-for="(slide, index) in heroSlides"
-          :key="slide.image"
+          :key="slide.service"
           class="hero__slide"
           :class="{ 'hero__slide--active': activeSlide === index }"
+          :data-service="slide.service"
         >
-          <img
-            v-if="heroLoadedSlides.has(index)"
-            :src="slide.image"
-            :alt="slide.alt"
-            class="hero__bg"
-            :loading="index === 0 ? 'eager' : 'lazy'"
-            :fetchpriority="index === 0 ? 'high' : 'auto'"
-            decoding="async"
-            width="1400"
-            height="788"
-          />
+          <picture v-if="mountedHeroSlides.has(index)">
+            <source
+              v-if="slide.imageMobile && slide.imageMobile !== slide.image"
+              media="(max-width: 767px)"
+              :srcset="slide.imageMobile"
+            />
+            <img
+              :src="slide.image"
+              :srcset="slide.srcset"
+              :sizes="slide.sizes"
+              :alt="slide.alt"
+              class="hero__bg"
+              :style="{ objectPosition: slide.objectPosition }"
+              :loading="index === 0 ? 'eager' : 'lazy'"
+              :fetchpriority="index === 0 ? 'high' : 'auto'"
+              decoding="async"
+              :width="slide.width"
+              :height="slide.height"
+            />
+          </picture>
           <div class="hero__overlay" />
         </article>
       </div>
@@ -28,15 +44,18 @@
         <p class="hero__eyebrow">{{ currentHero.eyebrow }}</p>
         <h1 class="hero__title">{{ currentHero.title }}</h1>
         <p v-if="currentHero.subtitle" class="hero__subtitle">{{ currentHero.subtitle }}</p>
-        <SiteButton :to="currentHero.ctaTo" variant="primary">{{ currentHero.cta }}</SiteButton>
+        <!-- Desktop only: mobile uses the sticky book bar (avoids double CTA + clipped button). -->
+        <SiteButton :to="currentHero.ctaTo" variant="primary" class="hero__cta">
+          {{ currentHero.cta }}
+        </SiteButton>
       </div>
       <ol class="hero__pager" aria-label="Hero slides">
-        <li v-for="(_, index) in heroSlides" :key="index">
+        <li v-for="(slide, index) in heroSlides" :key="slide.service">
           <button
             type="button"
             class="hero__pager-dot"
             :class="{ 'hero__pager-dot--active': activeSlide === index }"
-            :aria-label="`Go to slide ${index + 1}`"
+            :aria-label="`Show ${slide.title} slide`"
             :aria-current="activeSlide === index ? 'true' : undefined"
             @click="goToSlide(index)"
           />
@@ -294,30 +313,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import {
   flowSteps,
-  heroSlides,
   LANDING_INSTAGRAM_URL,
   LANDING_LOCATION_LABEL,
   LANDING_PRIMARY_CTA,
   packages,
   SINGLE_DAYS_LABEL,
 } from '@/landing/landingContent'
+import { heroSlides, shouldMountHeroImage } from '@/landing/heroMedia'
 import { useLandingSeo } from '@/landing/useLandingSeo'
 import { getServiceSummaries, getSingleTreatmentHighlights } from '@/landing/servicesContent'
 import { bookHrefForPackageName, bookHrefForTreatment } from '@/landing/bookingHandoff'
 import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
 
 const activeSlide = ref(0)
-const heroLoadedSlides = ref(new Set<number>([0]))
+/** Mount active + next only — keeps concurrent first paints lean. */
+const mountedHeroSlides = computed(() => {
+  const set = new Set<number>()
+  heroSlides.forEach((_, index) => {
+    if (shouldMountHeroImage(activeSlide.value, index, heroSlides.length)) {
+      set.add(index)
+    }
+  })
+  return set
+})
 let heroTouchStartX = 0
 
 const currentHero = computed(() => heroSlides[activeSlide.value] ?? heroSlides[0]!)
-
-function markHeroSlideLoaded(index: number) {
-  heroLoadedSlides.value = new Set([...heroLoadedSlides.value, index])
-}
 
 function onHeroTouchStart(e: TouchEvent) {
   heroTouchStartX = e.changedTouches[0]?.clientX ?? 0
@@ -336,19 +360,7 @@ function onHeroTouchEnd(e: TouchEvent) {
 
 function goToSlide(index: number) {
   activeSlide.value = index
-  markHeroSlideLoaded(index)
 }
-
-onMounted(() => {
-  const preloadRest = () => {
-    heroSlides.forEach((_, index) => markHeroSlideLoaded(index))
-  }
-  if ('requestIdleCallback' in window) {
-    requestIdleCallback(preloadRest, { timeout: 5000 })
-  } else {
-    setTimeout(preloadRest, 2500)
-  }
-})
 
 const services = getServiceSummaries()
 const singleHighlights = getSingleTreatmentHighlights()
@@ -461,27 +473,21 @@ useLandingSeo()
   color: #fff;
 }
 
-/* Hero — mobile-first, edge-to-edge */
+/* Hero — full viewport under frosted header; still image plane (no Ken Burns) */
 .hero {
   position: relative;
   width: 100%;
-  height: min(72svh, 560px);
-  min-height: 380px;
+  margin-top: calc(-1 * var(--site-header-height, 4.5rem));
+  /* Stacked fallbacks — avoid max() with dvh (can invalidate the whole declaration). */
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  height: 100vh;
+  height: 100svh;
+  height: 100dvh;
   overflow: hidden;
   touch-action: pan-y;
   background: var(--color-ink);
-}
-
-.hero::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: clamp(3rem, 12vw, 5rem);
-  background: linear-gradient(to bottom, transparent, var(--color-paper));
-  z-index: 2;
-  pointer-events: none;
 }
 
 .hero__track {
@@ -494,7 +500,7 @@ useLandingSeo()
   inset: 0;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.35s ease, visibility 0.35s;
+  transition: opacity 0.4s ease, visibility 0.4s;
 }
 
 .hero__slide--active {
@@ -503,17 +509,32 @@ useLandingSeo()
   z-index: 1;
 }
 
+.hero__slide picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .hero__bg {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center center;
+  transform: none;
 }
 
 .hero__overlay {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(39, 37, 42, 0.42) 0%, rgba(39, 37, 42, 0.28) 45%, rgba(39, 37, 42, 0.62) 100%);
+    linear-gradient(
+      180deg,
+      rgba(39, 37, 42, 0.5) 0%,
+      rgba(39, 37, 42, 0.22) 40%,
+      rgba(39, 37, 42, 0.4) 70%,
+      rgba(39, 37, 42, 0.78) 100%
+    );
 }
 
 .hero__content {
@@ -525,7 +546,15 @@ useLandingSeo()
   align-items: center;
   justify-content: flex-end;
   text-align: center;
-  padding: 1.5rem 1.25rem clamp(3.5rem, 10vw, 4.5rem);
+  padding:
+    calc(var(--site-header-height, 4.5rem) + 1.25rem)
+    1.25rem
+    /* Clear sticky mobile book bar + pager so CTA/copy never clips */
+    calc(
+      var(--mobile-book-bar-height, 4.25rem)
+      + env(safe-area-inset-bottom, 0px)
+      + 3.25rem
+    );
   color: #fff;
   pointer-events: none;
 }
@@ -534,32 +563,43 @@ useLandingSeo()
   pointer-events: auto;
 }
 
+.hero__cta {
+  display: none;
+}
+
 .hero__eyebrow {
   margin: 0 0 0.5rem;
   font: 600 0.72rem var(--font-body);
   letter-spacing: 0.22em;
   text-transform: uppercase;
+  text-shadow: 0 1px 16px rgba(39, 37, 42, 0.45);
 }
 
 .hero__title {
   margin: 0 0 0.75rem;
   font-family: var(--font-script);
-  font-size: clamp(2.65rem, 13vw, 8rem);
+  font-size: clamp(2.75rem, 12vw, 7.5rem);
   font-weight: 400;
   line-height: 1;
   color: #fff;
+  text-shadow: 0 2px 28px rgba(39, 37, 42, 0.4);
 }
 
 .hero__subtitle {
-  max-width: 36ch;
-  margin: 0 0 1.75rem;
-  font: 400 1rem/1.65 var(--font-body);
-  color: rgba(255, 255, 255, 0.88);
+  max-width: 34ch;
+  margin: 0 0 0.35rem;
+  font: 400 0.98rem/1.6 var(--font-body);
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 14px rgba(39, 37, 42, 0.4);
 }
 
 .hero__pager {
   position: absolute;
-  bottom: clamp(1.25rem, 4vw, 2rem);
+  bottom: calc(
+    var(--mobile-book-bar-height, 4.25rem)
+    + env(safe-area-inset-bottom, 0px)
+    + 0.85rem
+  );
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -570,8 +610,8 @@ useLandingSeo()
   padding: 0.35rem 0.65rem;
   z-index: 4;
   border-radius: 999px;
-  background: rgba(39, 37, 42, 0.22);
-  backdrop-filter: blur(6px);
+  background: rgba(39, 37, 42, 0.32);
+  backdrop-filter: blur(8px);
 }
 
 .hero__pager-dot {
@@ -596,16 +636,17 @@ useLandingSeo()
   background: var(--color-rose) !important;
 }
 
-/* Welcome — mobile-first single column */
+/* Welcome — hard seam below full-bleed hero */
 .welcome {
-  padding: clamp(2rem, 5vh, 3.5rem) 1rem;
+  padding: clamp(2.75rem, 7vh, 4.25rem) 1rem clamp(2rem, 5vh, 3.5rem);
   position: relative;
   z-index: 1;
+  background: var(--color-paper);
 }
 
 @media (max-width: 767px) {
   .welcome {
-    padding-top: clamp(1.75rem, 5vh, 2.5rem);
+    padding-top: clamp(2.5rem, 6vh, 3.25rem);
   }
 }
 
@@ -1138,13 +1179,33 @@ useLandingSeo()
 
 @media (min-width: 768px) {
   .hero {
-    height: min(68svh, 560px);
-    min-height: 420px;
+    min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
+    height: 100vh;
+    height: 100svh;
+    height: 100dvh;
+  }
+
+  .hero__cta {
+    display: inline-flex;
+    margin-top: 1.35rem;
   }
 
   .hero__content {
-    justify-content: center;
-    padding: 2rem 1.5rem 3rem;
+    justify-content: flex-end;
+    padding:
+      calc(var(--site-header-height, 7rem) + 1.5rem)
+      1.5rem
+      clamp(4rem, 10vh, 5.5rem);
+  }
+
+  .hero__subtitle {
+    margin-bottom: 0;
+  }
+
+  .hero__pager {
+    bottom: clamp(1.5rem, 4vw, 2.25rem);
   }
 
   .hero__eyebrow {

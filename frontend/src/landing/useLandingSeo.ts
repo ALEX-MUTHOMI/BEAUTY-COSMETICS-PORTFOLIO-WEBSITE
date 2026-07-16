@@ -5,7 +5,7 @@ import {
   LANDING_LOCATION_LABEL,
 } from './landingContent'
 
-export const LANDING_OG_IMAGE = '/images/hero-1.jpg'
+export const LANDING_OG_IMAGE = '/images/hero-facial.jpg'
 
 const LANDING_TITLE =
   'Shee Aesthetics | Beauty Studio in Meru Town — Facials, Waxing, Massage & Makeup'

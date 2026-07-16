@@ -9,16 +9,6 @@ export interface LandingPackage {
   ctaLabel?: string
 }
 
-export interface HeroSlide {
-  image: string
-  alt: string
-  eyebrow: string
-  title: string
-  subtitle?: string
-  cta: string
-  ctaTo: string
-}
-
 export interface FlowStep {
   num: string
   title: string
@@ -38,35 +28,7 @@ export const PACKAGE_DAYS = ['Tuesday', 'Wednesday'] as const
 
 export const SINGLE_DAYS_LABEL = 'Mon · Thu – Sat'
 
-export const heroSlides: HeroSlide[] = [
-  {
-    image: '/images/hero-1.jpg',
-    alt: 'Spa treatment room with warm candlelight and towels',
-    eyebrow: LANDING_LOCATION_LABEL,
-    title: 'Spa Beauty',
-    subtitle: 'Private rooms for facials, waxing, massage and makeup',
-    cta: LANDING_PRIMARY_CTA,
-    ctaTo: '/services',
-  },
-  {
-    image: '/images/hero-2.jpg',
-    alt: 'Therapist performing a relaxing back massage',
-    eyebrow: 'Unwind properly',
-    title: 'Massage',
-    subtitle: 'Swedish and deep tissue for back, neck and shoulders',
-    cta: LANDING_PRIMARY_CTA,
-    ctaTo: '/services',
-  },
-  {
-    image: '/images/hero-3.jpg',
-    alt: 'Makeup artist applying lipstick during a glam session',
-    eyebrow: 'Look your best',
-    title: 'Makeup',
-    subtitle: 'Everyday polish and full glam for events',
-    cta: LANDING_PRIMARY_CTA,
-    ctaTo: '/services',
-  },
-]
+export { heroSlides, type HeroSlide } from './heroMedia'
 
 export const flowSteps: FlowStep[] = [
   {

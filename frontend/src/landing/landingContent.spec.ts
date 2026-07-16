@@ -40,16 +40,20 @@ describe('landingContent', () => {
     })
   })
 
-  it('maps hero slides to spa, massage, and makeup with accessible alt text', () => {
-    expect(heroSlides[0]?.image).toBe('/images/hero-1.jpg')
-    expect(heroSlides[1]?.image).toBe('/images/hero-2.jpg')
-    expect(heroSlides[2]?.image).toBe('/images/hero-3.jpg')
-    expect(heroSlides[0]?.title).toBe('Spa Beauty')
+  it('maps hero slides to facial, massage, and makeup with matching assets', () => {
+    expect(heroSlides[0]?.service).toBe('facial')
+    expect(heroSlides[1]?.service).toBe('massage')
+    expect(heroSlides[2]?.service).toBe('makeup')
+    expect(heroSlides[0]?.image).toBe('/images/hero-facial.jpg')
+    expect(heroSlides[1]?.image).toBe('/images/hero-massage.jpg')
+    expect(heroSlides[2]?.image).toBe('/images/hero-makeup.jpg')
+    expect(heroSlides[0]?.title).toBe('Facials')
     expect(heroSlides[1]?.title).toBe('Massage')
     expect(heroSlides[2]?.title).toBe('Makeup')
     heroSlides.forEach((slide) => {
       expect(slide.alt.length).toBeGreaterThan(10)
       expect(slide.ctaTo).toBe('/services')
+      expect(slide.image).toContain(`hero-${slide.service}`)
     })
   })
 
