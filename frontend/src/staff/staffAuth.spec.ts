@@ -234,10 +234,25 @@ describe('staff login panel', () => {
     })
 
     expect(wrapper.find('input[name="password"]').attributes('type')).toBe('password')
-    await wrapper.find('button.staff-login__text-btn').trigger('click')
+    await wrapper.find('button.staff-login__eye').trigger('click')
     expect(wrapper.find('input[name="password"]').attributes('type')).toBe('text')
+    expect(wrapper.find('button.staff-login__eye').attributes('aria-label')).toBe('Hide password')
     expect(storageContainsStaffSecrets(localStorage)).toBe(false)
     expect(storageContainsStaffSecrets(sessionStorage)).toBe(false)
+  })
+
+  it('prefers typed email name over a remembered greet name', async () => {
+    localStorage.setItem('shee.desk.greet', 'Desk')
+    const wrapper = mount(StaffLoginPanel, {
+      props: {
+        apiBaseUrl: 'https://api.example.com',
+        csrfToken: 'csrf-token',
+      },
+    })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('#staff-login-title').text()).toBe('Welcome back, Desk')
+    await wrapper.find('input[type="email"]').setValue('amina.k@example.com')
+    expect(wrapper.find('#staff-login-title').text()).toBe('Welcome back, Amina')
   })
 
   it('never maps missing CSRF to invalid credentials and offers retry', async () => {

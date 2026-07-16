@@ -87,7 +87,7 @@ describe('staff portal friendly copy and security boundaries', () => {
 
   it('renders dashboard, bookings, and payments without raw backend jargon', () => {
     const dashboard = mount(StaffDashboard, {
-      props: { appointments: sampleAppointments },
+      props: { appointments: sampleAppointments, capacity: { bookedClients: 2, maxClients: 5, remainingClients: 3 } },
       global: { stubs: globalStubs },
     })
     const bookings = mount(StaffBookingsWorkspace, {
@@ -100,13 +100,16 @@ describe('staff portal friendly copy and security boundaries', () => {
     })
     const rendered = `${dashboard.text()} ${bookings.text()} ${payments.text()}`
 
-    expect(rendered).toContain('Today at a glance')
+    expect(rendered).toMatch(/\bToday\b/)
+    expect(rendered).toContain('Spots left')
     expect(rendered).toContain("Today's payments")
-    expect(rendered).toContain('Day-scoped payment view')
+    expect(rendered).toContain("Today’s payments for the selected date")
     expect(rendered).toContain('Awaiting payment')
     expect(rendered).toContain('Payment confirmed')
+    expect(rendered).toContain('Visit status')
     expect(rendered).not.toMatch(/checkout session|correlation ID|provider payload/i)
     expect(rendered).not.toMatch(/\bledger\b/i)
+    expect(rendered).not.toMatch(/Fulfillment|Day-scoped payment view|Full-package day — up to/i)
   })
 
   it('renders skeleton and safe retry states for slow or failed staff data requests', () => {
@@ -157,20 +160,21 @@ describe('staff portal friendly copy and security boundaries', () => {
   it('renders gallery upload navigation with friendly states and no backend jargon', () => {
     const wrapper = mount(StaffGalleryWorkspace, { global: { stubs: globalStubs } })
 
-    expect(wrapper.text()).toContain('Checking image')
-    expect(wrapper.text()).toContain('Choose JPG, PNG, or WebP')
-    expect(wrapper.text()).toContain('Sensitive waxing image')
-    const uploadButton = wrapper.findAll('button').find((button) => button.text().includes('Upload'))
+    expect(wrapper.text()).toContain('Add photos for the website.')
+    expect(wrapper.text()).toContain('JPG, PNG, or WebP')
+    expect(wrapper.text()).toContain('Needs warning')
+    const uploadButton = wrapper.findAll('button').find((button) => button.text() === 'Upload')
     expect(uploadButton?.attributes('disabled')).toBeDefined()
-    expect(wrapper.text()).not.toMatch(/raw payload|checkout ID|receipt token|quarantine|storage key/i)
+    expect(wrapper.text()).not.toMatch(/raw payload|checkout ID|receipt token|quarantine|storage key|Checking image/i)
   })
 
   it('renders settings/security copy without low-level implementation detail', () => {
     const wrapper = mount(StaffSettingsSecurity, { global: { stubs: globalStubs } })
 
-    expect(wrapper.text()).toContain('Provider sign-in')
-    expect(wrapper.text()).toContain('not connected yet')
-    expect(wrapper.text()).not.toMatch(/csrf|jwt|cookie name|session key|correlation/i)
+    expect(wrapper.text()).toContain('Appearance')
+    expect(wrapper.text()).toContain('Reset password')
+    expect(wrapper.text()).toContain('Sign out')
+    expect(wrapper.text()).not.toMatch(/csrf|jwt|cookie name|session key|correlation|Google or Apple/i)
   })
 })
 

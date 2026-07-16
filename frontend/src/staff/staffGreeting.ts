@@ -35,17 +35,17 @@ export function writeStoredGreetName(name: string, storage: Storage = localStora
   }
 }
 
-export function timeOfDayLede(now = new Date()): string {
-  const hour = now.getHours()
-  if (hour < 12) return 'Good morning — sign in to your desk.'
-  if (hour < 17) return 'Good afternoon — sign in to your desk.'
-  return 'Good evening — sign in to your desk.'
+/** Login no longer shows a time-of-day lede; kept for call-site compat. */
+export function timeOfDayLede(_now = new Date()): string {
+  return ''
 }
 
 export function welcomeHeadline(storedName: string, typedEmail: string): string {
+  // Typed email wins so the headline updates live as staff enter their address.
   const live = firstNameFromEmail(typedEmail)
-  const name = storedName || live
-  if (name) return `Welcome back, ${name}`
+  if (live) return `Welcome back, ${live}`
+  const remembered = firstNameFromDisplay(storedName)
+  if (remembered) return `Welcome back, ${remembered}`
   return 'Welcome back'
 }
 

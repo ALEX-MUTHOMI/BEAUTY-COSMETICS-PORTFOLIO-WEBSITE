@@ -515,6 +515,71 @@ export async function postStaffContactAccess(
   }
 }
 
+export async function getStaffRescheduleQueue(
+  apiBaseUrl: string,
+  fetcher?: Fetcher,
+): Promise<StaffApiResult<{ count: number; appointments: StaffAppointment[] }>> {
+  const result = await staffFetch<Record<string, unknown>>(
+    apiBaseUrl,
+    '/api/staff/bookings/reschedule-queue/',
+    fetcher,
+  )
+  if (!result.ok || !result.data) {
+    return { ...result, data: undefined, message: result.message || 'Reschedule queue could not load.' }
+  }
+  const appointments = Array.isArray(result.data.appointments) ? result.data.appointments : []
+  return {
+    ...result,
+    data: {
+      count: Number(result.data.count || appointments.length),
+      appointments: appointments.map((row) => {
+        const mapped = mapAppointmentRow(row as Record<string, unknown>)
+        return {
+          ...mapped,
+          // local_date is queue-only; surface via service line when needed
+          service: mapped.service,
+        }
+      }),
+    },
+  }
+}
+
+export async function postStaffReschedule(
+  apiBaseUrl: string,
+  publicBookingId: string,
+  requestedStartsAt: string,
+  csrfToken: string,
+  reason = '',
+  fetcher: Fetcher = fetch,
+): Promise<StaffApiResult<StaffAppointment>> {
+  const response = await fetcher(
+    `${apiBase(apiBaseUrl)}/api/staff/bookings/${encodeURIComponent(publicBookingId)}/reschedule/`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        requested_starts_at: requestedStartsAt,
+        reason,
+      }),
+    },
+  )
+  const data = await safeJson(response)
+  if (!response.ok || typeof data !== 'object' || data === null) {
+    return {
+      ok: false,
+      status: response.status,
+      sessionExpired: response.status === 401 || response.status === 403,
+      message: 'Unable to reschedule booking.',
+    }
+  }
+  return { ok: true, status: response.status, data: mapAppointmentRow(data as Record<string, unknown>) }
+}
+
 export async function postStaffFulfillment(
   apiBaseUrl: string,
   publicBookingId: string,
@@ -541,7 +606,7 @@ export async function postStaffFulfillment(
       ok: false,
       status: response.status,
       sessionExpired: response.status === 401 || response.status === 403,
-      message: 'Fulfillment could not be updated.',
+      message: 'Visit status could not be updated.',
     }
   }
   return { ok: true, status: response.status, data: mapAppointmentRow(data as Record<string, unknown>) }

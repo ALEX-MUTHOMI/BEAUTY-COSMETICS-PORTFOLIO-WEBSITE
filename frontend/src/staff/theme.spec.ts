@@ -35,7 +35,12 @@ describe('staff theme preference security contract', () => {
 
     applyStaffTheme('dark', root)
     expect(root.getAttribute('data-staff-theme')).toBe('dark')
+    expect(root.style.colorScheme).toBe('dark')
     expect(nextStaffTheme('dark')).toBe('light')
     expect(nextStaffTheme('light')).toBe('dark')
+
+    applyStaffTheme('light', root)
+    expect(root.getAttribute('data-staff-theme')).toBe('light')
+    expect(root.style.colorScheme).toBe('light')
   })
 })

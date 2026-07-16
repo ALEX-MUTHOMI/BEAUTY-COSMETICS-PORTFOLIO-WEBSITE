@@ -1,81 +1,164 @@
 <template>
-  <StaffPortalShell title="Settings">
-    <section class="settings-grid">
-      <article>
-        <h2>Security</h2>
-        <p>Your staff session expires automatically. Use logout when leaving a shared device.</p>
-        <NuxtLink to="/staff/settings/security">Open security settings</NuxtLink>
-      </article>
-      <article>
-        <h2>Provider sign-in</h2>
-        <p>Google and Apple sign-in are not connected yet.</p>
-        <button type="button" disabled>Connect later</button>
-      </article>
-      <article>
-        <h2>Appearance</h2>
-        <p>Choose the calmer view for your studio lighting. This stores only a theme preference.</p>
+  <StaffPortalShell title="Settings" :api-base-url="apiBaseUrl">
+    <section class="settings-list" aria-label="Account settings">
+      <article class="settings-row">
+        <div>
+          <h2>Appearance</h2>
+          <p>Light or dark for your desk.</p>
+        </div>
         <StaffThemeToggle />
       </article>
-      <article>
-        <h2>Password</h2>
-        <p>Use a long staff passphrase. Password recovery is available from the sign-in page.</p>
-        <NuxtLink to="/staff/forgot-password">Reset password</NuxtLink>
+
+      <article class="settings-row">
+        <div>
+          <h2>Reset password</h2>
+          <p>We’ll email a reset link.</p>
+        </div>
+        <NuxtLink class="settings-link" to="/staff/forgot-password">Reset password</NuxtLink>
+      </article>
+
+      <article class="settings-row settings-row--signout">
+        <div>
+          <h2>Sign out</h2>
+          <p>Leave the desk on this device.</p>
+        </div>
+        <button type="button" class="settings-btn" :disabled="signingOut" @click="signOut">
+          {{ signingOut ? 'Signing out…' : 'Sign out' }}
+        </button>
       </article>
     </section>
   </StaffPortalShell>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+
+import { ensureBookingCsrfToken } from '../booking/bookingCsrf'
 import StaffPortalShell from './StaffPortalShell.vue'
 import StaffThemeToggle from './StaffThemeToggle.vue'
+import { postStaffLogout } from './staffPortalApi'
+
+const props = withDefaults(
+  defineProps<{
+    apiBaseUrl?: string
+  }>(),
+  { apiBaseUrl: '' },
+)
+
+const signingOut = ref(false)
+
+async function signOut() {
+  if (signingOut.value) return
+  signingOut.value = true
+  try {
+    const csrf = (await ensureBookingCsrfToken(props.apiBaseUrl || '', { forceRefresh: true })) || ''
+    if (csrf) await postStaffLogout(props.apiBaseUrl || '', csrf)
+  } catch {
+    // Still leave the desk.
+  } finally {
+    if (typeof window !== 'undefined') {
+      window.location.assign('/staff/login')
+    }
+  }
+}
 </script>
 
 <style scoped>
-.settings-grid {
+.settings-list {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  max-width: 36rem;
+}
+
+.settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 1rem;
+  padding: 1.1rem 1.15rem;
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.12));
+  border-radius: 0.85rem;
+  background: var(--color-paper, #fffcf8);
 }
 
-.settings-grid article {
-  padding: 1.2rem;
-  border: 1px solid rgba(55, 32, 22, 0.12);
-  border-radius: 28px;
-  background: rgba(255, 253, 248, 0.84);
+.settings-row h2,
+.settings-row p {
+  margin: 0;
+  font-family: var(--font-body, 'Manrope', sans-serif);
 }
 
-.settings-grid h2,
-.settings-grid p {
-  margin: 0 0 0.75rem;
+.settings-row h2 {
+  margin-bottom: 0.35rem;
+  font-family: var(--font-display, 'Libre Baskerville', Georgia, serif);
+  font-size: 1.2rem;
+  font-weight: 400;
 }
 
-.settings-grid a,
-.settings-grid button {
+.settings-row p {
+  color: var(--color-muted, #8a8580);
+  font-size: 0.92rem;
+}
+
+.settings-link,
+.settings-btn {
   min-height: 2.7rem;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   border: 0;
-  border-radius: 999px;
+  border-radius: 0.85rem;
   padding: 0 1rem;
-  color: #fffaf3;
-  background: #241611;
   text-decoration: none;
-  font-weight: 900;
+  font: 600 0.78rem/1 var(--font-body, 'Manrope', sans-serif);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
-.settings-grid button:disabled {
+.settings-link {
+  color: #fff;
+  background: #27272a;
+}
+
+.settings-btn {
+  color: #fff;
+  background: #965f57;
+}
+
+.settings-btn:hover:not(:disabled) {
+  background: #84534c;
+}
+
+.settings-btn:active:not(:disabled) {
+  background: #734842;
+}
+
+:global(html[data-staff-theme='dark']) .settings-link {
+  color: #0b0b0d;
+  background: #f4f4f5;
+}
+
+:global(html[data-staff-theme='dark']) .settings-btn {
+  color: #fff;
+  background: #b07a71;
+}
+
+.settings-btn:disabled {
   opacity: 0.55;
+  cursor: not-allowed;
 }
 
-@media (max-width: 1080px) {
-  .settings-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 560px) {
+  .settings-row {
+    flex-direction: column;
+    align-items: stretch;
   }
-}
 
-@media (max-width: 860px) {
-  .settings-grid {
-    grid-template-columns: 1fr;
+  .settings-link,
+  .settings-btn {
+    width: 100%;
   }
 }
 </style>

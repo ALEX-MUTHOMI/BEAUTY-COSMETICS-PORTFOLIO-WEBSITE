@@ -11,20 +11,20 @@
 @import '@fontsource/libre-baskerville/700.css';
 
 :root {
-  /* Warm stone / parchment surfaces; rose is accent-only (CTAs, links, status). */
-  --color-ink: #27272a;
-  --color-deep: #3d3a42;
-  --color-muted: #8a8580;
-  --color-cream: #f7f3ee;
-  --color-paper: #fffcf8;
-  --color-stone: #efeae3;
-  --color-parchment: #f4efe8;
-  --color-rose: #c98980;
-  --color-rose-dark: #b5746c;
-  --color-rose-soft: #f0e8e4;
-  --color-line: rgba(39, 37, 42, 0.1);
-  --color-footer: #27252a;
-  --color-overlay: rgba(39, 37, 42, 0.55);
+  /* Soft gray light desk — easier on the eyes than chalk-white paper. */
+  --color-ink: #2c2c30;
+  --color-deep: #3f3e43;
+  --color-muted: #7a7876;
+  --color-cream: #ebe9e8;
+  --color-paper: #f3f2f1;
+  --color-stone: #e4e2e1;
+  --color-parchment: #eeedec;
+  --color-rose: #b07a71;
+  --color-rose-dark: #965f57;
+  --color-rose-soft: #e9e2e0;
+  --color-line: rgba(44, 44, 48, 0.12);
+  --color-footer: #2c2c30;
+  --color-overlay: rgba(44, 44, 48, 0.5);
 
   --color-bg: var(--color-paper);
   --color-surface: var(--color-paper);
@@ -66,4 +66,40 @@
     --container: min(1170px, 100% - 2.5rem);
     --header-height: 5rem;
   }
+}
+
+/* Staff desk dark mode — lights-off near-black (pink brand accents stay). */
+html[data-staff-theme='dark'] {
+  color-scheme: dark;
+  --color-ink: #f4f4f5;
+  --color-deep: #e4e4e7;
+  --color-muted: #a1a1aa;
+  --color-cream: #0b0b0d;
+  --color-paper: #141416;
+  --color-stone: #1c1c1f;
+  --color-parchment: #111113;
+  --color-rose: #c98980;
+  --color-rose-dark: #b07a71;
+  --color-rose-soft: rgba(201, 137, 128, 0.14);
+  --color-line: rgba(244, 244, 245, 0.12);
+  --color-footer: #09090b;
+  --color-overlay: rgba(0, 0, 0, 0.62);
+  --shadow-card: 0 12px 36px rgba(0, 0, 0, 0.5);
+  --color-bg: var(--color-cream);
+  --color-surface: var(--color-paper);
+  --color-text: var(--color-ink);
+  --color-text-muted: var(--color-muted);
+  --color-accent: var(--color-rose);
+  --color-accent-strong: var(--color-rose-dark);
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+}
+
+html[data-staff-theme='dark'] body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+}
+
+html[data-staff-theme='light'] {
+  color-scheme: light;
 }

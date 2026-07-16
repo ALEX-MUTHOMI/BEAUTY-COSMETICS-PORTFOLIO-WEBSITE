@@ -1,61 +1,62 @@
 <template>
   <StaffPortalShell title="Gallery" :api-base-url="apiBaseUrl">
-    <section class="gallery-panel">
-      <div>
-        <p class="eyebrow">Portfolio manager</p>
-        <h2>Prepare images for the website.</h2>
-        <p>
-          Select a section, choose photos, then publish only after each image is ready. Sensitive
-          waxing images stay off the homepage and need a warning.
-        </p>
-      </div>
-      <button type="button" :disabled="!canUpload" @click="submitSelected">Upload selected images</button>
-    </section>
+    <div class="gallery-desk">
+      <header class="gallery-desk__intro">
+        <h2>Add photos for the website.</h2>
+        <p>Pick a section, choose photos, then upload.</p>
+      </header>
 
-    <section class="upload-flow" aria-label="Upload image to portfolio">
-      <label>
-        Website section
-        <select v-model="selectedCategoryId">
-          <option value="">Choose section</option>
-          <option v-for="category in categories" :key="category.publicId" :value="category.publicId">
-            {{ category.name }}
-          </option>
-        </select>
-      </label>
-      <label>
-        Detail section
-        <select v-model="selectedSubcategoryId">
-          <option value="">No detail section</option>
-          <option v-for="subcategory in selectedCategory?.subcategories || []" :key="subcategory.publicId" :value="subcategory.publicId">
-            {{ subcategory.name }}
-          </option>
-        </select>
-      </label>
-      <label>
-        Select images
-        <input type="file" accept="image/jpeg,image/png,image/webp" multiple @change="onFilesSelected" />
-      </label>
-      <p class="upload-note">{{ selectionCopy }}</p>
-      <p class="upload-note">{{ currentStateCopy }}</p>
-      <p v-if="selectedCategory?.isSensitiveDefault" class="sensitive-warning">
-        Sensitive waxing image: warning required before publishing.
-      </p>
-    </section>
-
-    <section class="gallery-grid" aria-label="Gallery categories">
-      <article v-for="category in categories" :key="category.publicId">
-        <div aria-hidden="true" />
-        <h3>{{ category.name }}</h3>
-        <p>
-          {{
-            category.isSensitiveDefault
-              ? 'Warning required before visitors see these images.'
-              : 'Safe for normal portfolio placement after review.'
-          }}
+      <section class="gallery-desk__form" aria-label="Upload photos">
+        <label>
+          Section
+          <select v-model="selectedCategoryId">
+            <option value="">Choose section</option>
+            <option v-for="category in categories" :key="category.publicId" :value="category.publicId">
+              {{ category.name }}
+            </option>
+          </select>
+        </label>
+        <label v-if="(selectedCategory?.subcategories || []).length">
+          Detail
+          <select v-model="selectedSubcategoryId">
+            <option value="">None</option>
+            <option
+              v-for="subcategory in selectedCategory?.subcategories || []"
+              :key="subcategory.publicId"
+              :value="subcategory.publicId"
+            >
+              {{ subcategory.name }}
+            </option>
+          </select>
+        </label>
+        <label class="gallery-desk__files">
+          Photos
+          <input type="file" accept="image/jpeg,image/png,image/webp" multiple @change="onFilesSelected" />
+        </label>
+        <p v-if="selectionCopy" class="gallery-desk__note">{{ selectionCopy }}</p>
+        <p v-if="selectedCategory?.isSensitiveDefault" class="gallery-desk__warn" role="status">
+          Needs a visitor warning before it goes live.
         </p>
-        <label><input type="checkbox" :disabled="category.isSensitiveDefault" /> Featured on homepage</label>
-      </article>
-    </section>
+        <p v-if="statusCopy" class="gallery-desk__note" role="status">{{ statusCopy }}</p>
+        <button type="button" class="gallery-desk__upload" :disabled="!canUpload || uploading" @click="submitSelected">
+          {{ uploading ? 'Uploading…' : 'Upload' }}
+        </button>
+      </section>
+
+      <section class="gallery-desk__sections" aria-label="Website sections">
+        <button
+          v-for="category in categories"
+          :key="category.publicId"
+          type="button"
+          class="gallery-chip"
+          :class="{ 'gallery-chip--active': selectedCategoryId === category.publicId }"
+          @click="selectedCategoryId = category.publicId"
+        >
+          <strong>{{ category.name }}</strong>
+          <span v-if="category.isSensitiveDefault">Needs warning</span>
+        </button>
+      </section>
+    </div>
   </StaffPortalShell>
 </template>
 
@@ -88,32 +89,43 @@ const categories = ref<StaffGalleryCategory[]>(props.initialCategories)
 const selectedCategoryId = ref('')
 const selectedSubcategoryId = ref('')
 const selectedFiles = ref<File[]>([])
-const currentStateCopy = ref('Checking image')
+const statusCopy = ref('')
+const uploading = ref(false)
 
 const selectedCategory = computed(() => categories.value.find((category) => category.publicId === selectedCategoryId.value))
 const selectionCopy = computed(() => {
   const count = selectedFiles.value.length
-  if (!count) return 'Choose JPG, PNG, or WebP images from your phone.'
-  return `${count} image${count === 1 ? '' : 's'} selected. Cap warnings appear before upload.`
+  if (!count) return 'JPG, PNG, or WebP from your phone.'
+  return `${count} photo${count === 1 ? '' : 's'} ready.`
 })
 const canUpload = computed(() => Boolean(selectedCategoryId.value && selectedFiles.value.length))
 
 function onFilesSelected(event: Event) {
   const input = event.target as HTMLInputElement
   selectedFiles.value = Array.from(input.files || [])
-  currentStateCopy.value = selectedFiles.value.length ? 'Preparing for website' : 'Checking image'
+  statusCopy.value = ''
 }
 
 async function submitSelected() {
-  if (!canUpload.value) return
-  currentStateCopy.value = 'Preparing for website'
-  for (const file of selectedFiles.value) {
-    const form = new FormData()
-    form.set('category_public_id', selectedCategoryId.value)
-    if (selectedSubcategoryId.value) form.set('subcategory_public_id', selectedSubcategoryId.value)
-    form.set('image', file)
-    const result = await postStaffGalleryImage(props.apiBaseUrl, form, props.csrfToken)
-    currentStateCopy.value = result.ok ? 'Ready to publish' : result.message || 'Could not use this image'
+  if (!canUpload.value || uploading.value) return
+  uploading.value = true
+  statusCopy.value = ''
+  try {
+    for (const file of selectedFiles.value) {
+      const form = new FormData()
+      form.set('category_public_id', selectedCategoryId.value)
+      if (selectedSubcategoryId.value) form.set('subcategory_public_id', selectedSubcategoryId.value)
+      form.set('image', file)
+      const result = await postStaffGalleryImage(props.apiBaseUrl, form, props.csrfToken)
+      if (!result.ok) {
+        statusCopy.value = result.message || 'Could not upload this photo.'
+        return
+      }
+    }
+    statusCopy.value = 'Photos uploaded.'
+    selectedFiles.value = []
+  } finally {
+    uploading.value = false
   }
 }
 
@@ -125,109 +137,136 @@ if (!props.initialCategories.length) {
 </script>
 
 <style scoped>
-.gallery-panel,
-.gallery-grid article,
-.upload-flow {
-  border: 1px solid rgba(55, 32, 22, 0.12);
-  border-radius: 28px;
-  background: rgba(255, 253, 248, 0.84);
-}
-
-.gallery-panel {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-  padding: 1.2rem;
-  margin-bottom: 1rem;
-}
-
-.eyebrow {
-  margin: 0 0 0.4rem;
-  color: #8a4f34;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.gallery-panel h2,
-.gallery-panel p,
-.gallery-grid h3,
-.gallery-grid p {
-  margin: 0.25rem 0;
-}
-
-.gallery-panel button {
-  min-height: 2.7rem;
-  border: 0;
-  border-radius: 999px;
-  padding: 0 1rem;
-}
-
-.upload-flow {
+.gallery-desk {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
-  padding: 1rem;
-  margin-bottom: 1rem;
 }
 
-.upload-flow label {
-  display: grid;
-  gap: 0.45rem;
-  color: #4b2d20;
-  font-weight: 800;
+.gallery-desk__intro h2 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display, 'Libre Baskerville', Georgia, serif);
+  font-size: clamp(1.35rem, 4vw, 1.75rem);
+  font-weight: 400;
 }
 
-.upload-flow select,
-.upload-flow input {
-  min-height: 2.7rem;
-  border: 1px solid rgba(55, 32, 22, 0.18);
-  border-radius: 16px;
-  padding: 0.6rem;
-  background: #fffaf4;
-}
-
-.upload-note,
-.sensitive-warning {
+.gallery-desk__intro p {
   margin: 0;
-  align-self: end;
-  color: #68402d;
+  color: var(--color-muted, #8a8580);
 }
 
-.sensitive-warning {
-  color: #8a2f1d;
-  font-weight: 900;
-}
-
-.gallery-grid {
+.gallery-desk__form {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 0.85rem;
+  padding: 1.1rem;
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.12));
+  background: var(--color-paper, #fffcf8);
 }
 
-.gallery-grid article {
-  padding: 1rem;
+.gallery-desk__form label {
+  display: grid;
+  gap: 0.4rem;
+  font: 600 0.78rem/1.2 var(--font-body, 'Manrope', sans-serif);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted, #8a8580);
 }
 
-.gallery-grid div {
-  aspect-ratio: 4 / 3;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #e9c6ab, #8a4f34);
+.gallery-desk__form select,
+.gallery-desk__form input[type='file'] {
+  min-height: 2.75rem;
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.14));
+  border-radius: 0;
+  padding: 0.55rem 0.75rem;
+  background: var(--color-cream, #f7f3ee);
+  color: var(--color-ink, #27272a);
+  font: 500 0.95rem/1.2 var(--font-body, 'Manrope', sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
 }
 
-@media (max-width: 960px) {
-  .gallery-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.gallery-desk__note {
+  margin: 0;
+  color: var(--color-muted, #8a8580);
+  font-size: 0.9rem;
+}
+
+.gallery-desk__warn {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  border-left: 3px solid var(--color-rose, #c98980);
+  background: color-mix(in srgb, var(--color-rose-soft, #f0e8e4) 55%, transparent);
+  color: var(--color-ink, #27272a);
+  font: 600 0.9rem/1.35 var(--font-body, 'Manrope', sans-serif);
+}
+
+.gallery-desk__upload {
+  min-height: 2.85rem;
+  border: 0;
+  color: #fff;
+  background: var(--color-rose, #c98980);
+  font: 600 0.78rem/1 var(--font-body, 'Manrope', sans-serif);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.gallery-desk__upload:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gallery-desk__sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.gallery-chip {
+  display: grid;
+  gap: 0.25rem;
+  min-height: 4.25rem;
+  padding: 0.9rem;
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.12));
+  background: var(--color-paper, #fffcf8);
+  color: var(--color-ink, #27272a);
+  text-align: left;
+  cursor: pointer;
+}
+
+.gallery-chip strong {
+  font: 600 0.95rem/1.2 var(--font-body, 'Manrope', sans-serif);
+}
+
+.gallery-chip span {
+  color: var(--color-rose-dark, #b5746c);
+  font-size: 0.8rem;
+}
+
+.gallery-chip--active {
+  border-color: var(--color-rose, #c98980);
+  background: color-mix(in srgb, var(--color-rose-soft, #f0e8e4) 45%, transparent);
+}
+
+@media (min-width: 900px) {
+  .gallery-desk {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    grid-template-areas:
+      'intro intro'
+      'form sections';
+    align-items: start;
   }
-}
 
-@media (max-width: 640px) {
-  .gallery-panel,
-  .gallery-grid,
-  .upload-flow {
+  .gallery-desk__intro {
+    grid-area: intro;
+  }
+
+  .gallery-desk__form {
+    grid-area: form;
+  }
+
+  .gallery-desk__sections {
+    grid-area: sections;
     grid-template-columns: 1fr;
-    display: grid;
   }
 }
 </style>

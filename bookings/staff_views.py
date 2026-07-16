@@ -21,9 +21,11 @@ from bookings.services.staff_portal import (
     get_staff_receipt_pdf,
     get_weekly_overview,
     list_assignable_beauticians,
+    list_open_reschedule_queue,
     reveal_contact,
     search_staff_bookings,
     set_booking_fulfillment,
+    staff_reschedule_booking,
 )
 from core.abuse import record_abuse_signal
 from core.throttling import route_throttle, staff_or_ip_identity
@@ -194,6 +196,35 @@ def staff_booking_receipt_pdf(request, public_booking_id):
     response["Cache-Control"] = "no-store"
     response["X-Content-Type-Options"] = "nosniff"
     return response
+
+
+@require_GET
+def staff_reschedule_queue(request):
+    denied = _require_staff_permission(request, "view_staff_portal")
+    if denied:
+        return denied
+    return _json(list_open_reschedule_queue(staff_user=request.user))
+
+
+@require_POST
+@route_throttle("staff_fulfillment", key_builder=staff_or_ip_identity)
+def staff_booking_reschedule(request, public_booking_id):
+    denied = _require_staff_permission(request, "confirm_staff_attendance")
+    if denied:
+        return denied
+    payload = _request_payload(request)
+    try:
+        result = staff_reschedule_booking(
+            public_booking_id,
+            staff_user=request.user,
+            requested_starts_at=payload.get("requested_starts_at", ""),
+            reason=payload.get("reason", ""),
+        )
+    except StaffBookingNotFound:
+        return _not_found()
+    except StaffPortalValidationError:
+        return _validation_error("Unable to reschedule booking.")
+    return _json(result)
 
 
 @require_POST

@@ -5,7 +5,7 @@
         Date
         <input v-model="selectedDate" type="date" @change="loadSchedule" />
       </label>
-      <p class="toolbar__hint">Day-scoped payment view for the selected date — change the date to review past days.</p>
+      <p class="toolbar__hint">Today’s payments for the selected date — change the date to review past days.</p>
     </section>
 
     <StaffPortalCards label="Payment overview" :cards="cards" :loading="showLoading" />
@@ -51,6 +51,7 @@ import { computed, onMounted, ref } from 'vue'
 import StaffPortalCards from './StaffPortalCards.vue'
 import StaffPortalShell from './StaffPortalShell.vue'
 import StaffStatusChip from './StaffStatusChip.vue'
+import { staffLocalDateIso } from './staffLocalDate'
 import { getDailySchedule, type StaffAppointment } from './staffPortalApi'
 import { receiptChipStatus } from './statusCopy'
 
@@ -71,13 +72,13 @@ const props = withDefaults(
   },
 )
 
-const selectedDate = ref(new Date().toISOString().slice(0, 10))
+const selectedDate = ref(staffLocalDateIso())
 const internalLoading = ref(false)
 const internalError = ref('')
 const payments = ref<StaffAppointment[]>([])
 
 const shellTitle = computed(() => {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = staffLocalDateIso()
   return selectedDate.value === today ? "Today's payments" : `Payments for ${selectedDate.value}`
 })
 
@@ -259,7 +260,7 @@ onMounted(() => {
 
 .payment-skeleton {
   min-height: 4rem;
-  background: linear-gradient(90deg, var(--color-rose-soft, #f5e8e6), #fff, var(--color-rose-soft, #f5e8e6));
+  background: linear-gradient(90deg, var(--color-rose-soft, #f5e8e6), var(--color-stone, #efeae3), var(--color-rose-soft, #f5e8e6));
   animation: staff-shimmer 1.2s ease-in-out infinite;
 }
 

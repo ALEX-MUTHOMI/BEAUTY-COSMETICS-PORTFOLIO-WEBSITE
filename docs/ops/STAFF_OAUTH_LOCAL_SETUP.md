@@ -1,5 +1,7 @@
 # Staff Google / Apple OAuth — local & staging setup (1B)
 
+**Option 2 (current product posture):** Password login is the reliable desk path. Google/Apple stay **fail-closed** until live credentials and `NUXT_PUBLIC_STAFF_*_ENABLED=true` are set. The login page never fakes a successful Google/Apple session.
+
 Provisioned staff only. Never auto-create accounts from Google/Apple.
 
 ## Prerequisites

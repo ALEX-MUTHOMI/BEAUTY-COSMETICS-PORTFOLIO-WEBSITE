@@ -1,5 +1,9 @@
 <template>
   <StaffPortalShell title="Bookings" :api-base-url="apiBaseUrl">
+    <nav class="bookings-shortcuts" aria-label="Booking shortcuts">
+      <NuxtLink class="bookings-shortcuts__link" to="/staff/reschedules">Moves</NuxtLink>
+      <NuxtLink v-if="showPaymentsLink" class="bookings-shortcuts__link" to="/staff/payments">Payments</NuxtLink>
+    </nav>
     <section class="toolbar" aria-label="Booking filters">
       <label>
         Date
@@ -33,6 +37,7 @@
       </label>
     </section>
     <p v-if="searchHint" class="search-hint" role="status">{{ searchHint }}</p>
+    <p v-if="dayChip" class="day-chip" role="status">{{ dayChip }}</p>
 
     <section v-if="showLoading" class="table-card table-card--state" aria-label="Loading bookings">
       <div v-for="index in 4" :key="index" class="skeleton-row" />
@@ -53,7 +58,7 @@
         <span>Code</span>
         <span>Service</span>
         <span>Booking</span>
-        <span>Fulfillment</span>
+        <span>Visit status</span>
         <span>Payment</span>
         <span>Actions</span>
       </div>
@@ -76,7 +81,14 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import StaffPortalShell from './StaffPortalShell.vue'
 import StaffStatusChip from './StaffStatusChip.vue'
-import { getDailySchedule, searchStaffBookings, type StaffAppointment } from './staffPortalApi'
+import { staffLocalDateIso } from './staffLocalDate'
+import {
+  canSeePaymentsDesk,
+  getDailySchedule,
+  getStaffMe,
+  searchStaffBookings,
+  type StaffAppointment,
+} from './staffPortalApi'
 
 const props = withDefaults(
   defineProps<{
@@ -95,17 +107,20 @@ const props = withDefaults(
   },
 )
 
-const selectedDate = ref(new Date().toISOString().slice(0, 10))
+const selectedDate = ref(staffLocalDateIso())
 const statusFilter = ref('')
 const assignedFilter = ref('')
 const searchQuery = ref('')
 const searchHint = ref('')
+const dayChip = ref('')
 const internalLoading = ref(false)
 const internalError = ref('')
 const bookings = ref<StaffAppointment[]>([])
 const searchMode = ref(false)
+const permissions = ref<string[] | null>(null)
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
+const showPaymentsLink = computed(() => canSeePaymentsDesk(permissions.value))
 const showLoading = computed(() => props.loading || internalLoading.value)
 const displayError = computed(() => props.errorMessage || internalError.value)
 const showError = computed(() => Boolean(displayError.value) && !showLoading.value)
@@ -144,12 +159,17 @@ async function loadSchedule() {
     if (!result.ok || !result.data) {
       internalError.value = result.message || 'Bookings could not load.'
       bookings.value = []
+      dayChip.value = ''
       return
     }
+    const max = result.data.capacity.maxClients
+    const left = result.data.capacity.remainingClients
+    dayChip.value = max <= 0 ? 'Closed today' : `${left} spots left · ${max} today`
     bookings.value = result.data.appointments
   } catch {
     internalError.value = 'Bookings could not load.'
     bookings.value = []
+    dayChip.value = ''
   } finally {
     internalLoading.value = false
   }
@@ -207,7 +227,9 @@ function reload() {
   void loadSchedule()
 }
 
-onMounted(() => {
+onMounted(async () => {
+  const me = await getStaffMe(props.apiBaseUrl)
+  if (me.ok && me.data) permissions.value = me.data.permissions
   void loadSchedule()
 })
 
@@ -217,6 +239,33 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.bookings-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 0 0 0.85rem;
+}
+
+.bookings-shortcuts__link {
+  min-height: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.9rem;
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.12));
+  color: var(--color-ink, #27272a);
+  background: color-mix(in srgb, var(--color-paper, #fff) 88%, transparent);
+  text-decoration: none;
+  font: 600 0.78rem/1 var(--font-body, 'Manrope', sans-serif);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.bookings-shortcuts__link:hover,
+.bookings-shortcuts__link:focus-visible {
+  border-color: var(--color-rose, #c98980);
+  outline: 0;
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -237,7 +286,15 @@ onUnmounted(() => {
   padding: 0.45rem 0.6rem;
   border-radius: 0.55rem;
   border: 1px solid color-mix(in srgb, var(--staff-ink, #2c2420) 14%, transparent);
-  background: color-mix(in srgb, var(--staff-surface, #f7f3ee) 88%, white);
+  background: var(--color-paper, #fffcf8);
+}
+
+.day-chip {
+  margin: 0.35rem 0 0.85rem;
+  padding: 0.65rem 0.85rem;
+  border-left: 3px solid var(--color-rose, #c98980);
+  background: color-mix(in srgb, var(--color-rose-soft, #f0e8e4) 50%, transparent);
+  font: 600 0.88rem/1.35 var(--font-body, 'Manrope', sans-serif);
 }
 
 .search-hint {
@@ -251,8 +308,8 @@ onUnmounted(() => {
   gap: 0.55rem;
   padding: 1rem 1.1rem;
   border-radius: 1.1rem;
-  background: color-mix(in srgb, var(--staff-surface, #f7f3ee) 92%, white);
-  border: 1px solid color-mix(in srgb, var(--staff-ink, #2c2420) 8%, transparent);
+  background: var(--color-paper, #fffcf8);
+  border: 1px solid var(--color-line, rgba(39, 37, 42, 0.1));
 }
 
 .table-card__head,

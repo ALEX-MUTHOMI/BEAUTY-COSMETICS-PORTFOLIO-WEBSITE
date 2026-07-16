@@ -26,11 +26,21 @@ urlpatterns = [
     path("bookings/week/", staff_views.staff_booking_week, name="staff-booking-week"),
     path("bookings/search/", staff_views.staff_booking_search, name="staff-booking-search"),
     path(
+        "bookings/reschedule-queue/",
+        staff_views.staff_reschedule_queue,
+        name="staff-reschedule-queue",
+    ),
+    path(
         "bookings/assignable/",
         staff_views.staff_assignable_beauticians,
         name="staff-assignable-beauticians",
     ),
     path("bookings/<str:public_booking_id>/", staff_views.staff_booking_detail, name="staff-booking-detail"),
+    path(
+        "bookings/<str:public_booking_id>/reschedule/",
+        staff_views.staff_booking_reschedule,
+        name="staff-booking-reschedule",
+    ),
     path(
         "bookings/<str:public_booking_id>/payment/",
         staff_views.staff_booking_payment,

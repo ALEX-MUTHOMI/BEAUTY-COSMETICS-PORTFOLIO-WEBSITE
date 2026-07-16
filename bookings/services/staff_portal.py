@@ -526,6 +526,83 @@ def assign_booking_staff(public_booking_id, *, staff_user, assigned_staff_id=Non
     return _appointment_row(booking)
 
 
+def staff_reschedule_booking(public_booking_id, *, staff_user, requested_starts_at, reason=""):
+    """Staff desk move — wraps domain reschedule without customer OTP."""
+    from django.utils.dateparse import parse_datetime
+
+    from bookings.services.rescheduling import BookingRescheduleService
+
+    booking = _get_booking(public_booking_id)
+    if is_beautician(staff_user) and booking.assigned_staff_id != staff_user.pk:
+        raise StaffBookingNotFound
+
+    starts = requested_starts_at
+    if isinstance(starts, str):
+        starts = parse_datetime(starts)
+    if starts is None:
+        raise StaffPortalValidationError("Choose a valid new start time.")
+    if timezone.is_naive(starts):
+        starts = timezone.make_aware(starts, EAT)
+
+    try:
+        BookingRescheduleService.staff_reschedule(
+            booking_public_id=str(booking.public_id),
+            requested_starts_at=starts,
+            reason=_safe_text(reason, max_length=255),
+            actor_user=staff_user,
+        )
+    except ValidationError as exc:
+        raise StaffPortalValidationError("Unable to reschedule booking.") from exc
+
+    refreshed = _get_booking(public_booking_id)
+    StaffActionAuditEvent.objects.create(
+        staff=staff_user,
+        booking=refreshed,
+        action=StaffActionAuditEvent.Action.ATTENDANCE_CONFIRM,
+        reason="Staff rescheduled booking",
+        metadata_redacted={
+            "booking_reference": str(refreshed.public_id),
+            "new_local_date": refreshed.local_booking_date.isoformat() if refreshed.local_booking_date else "",
+            "new_start_eat": _eat_time(refreshed.starts_at),
+        },
+    )
+    return _appointment_row(refreshed)
+
+
+def list_open_reschedule_queue(*, staff_user, days=7):
+    """Open customer move requests (any future day) + confirmed visits in the near window."""
+    today = timezone.now().astimezone(EAT).date()
+    end = today + timedelta(days=max(1, min(int(days), MAX_STAFF_RANGE_DAYS)))
+    # RESCHEDULE_REQUESTED is outside BOOKING_BLOCKING_STATUSES, so query via
+    # _all_booking_queryset for open move requests; confirmed stays on the blocking set.
+    scoped_all = scope_bookings_queryset(_all_booking_queryset(), staff_user)
+    scoped = scope_bookings_queryset(_base_booking_queryset(), staff_user)
+    # Requested moves should not fall off the desk after 7 days.
+    open_moves = scoped_all.filter(
+        status=Booking.Status.RESCHEDULE_REQUESTED,
+        local_booking_date__gte=today,
+    ).order_by(
+        "starts_at"
+    )[:50]
+    movable = scoped.filter(
+        status=Booking.Status.CONFIRMED,
+        local_booking_date__gte=today,
+        local_booking_date__lte=end,
+    ).order_by("starts_at")[:40]
+    seen = set()
+    rows = []
+    for booking in list(open_moves) + list(movable):
+        key = str(booking.public_id)
+        if key in seen:
+            continue
+        seen.add(key)
+        row = _appointment_row(booking)
+        row["local_date"] = booking.local_booking_date.isoformat() if booking.local_booking_date else ""
+        row["queue_kind"] = "requested" if booking.status == Booking.Status.RESCHEDULE_REQUESTED else "confirmed"
+        rows.append(row)
+    return {"count": len(rows), "appointments": rows}
+
+
 STAFF_SEARCH_MIN_QUERY_LENGTH = 3
 
 

@@ -10,10 +10,10 @@
           <span class="staff-login__logo-tag">Aesthetics</span>
         </span>
       </a>
+      <StaffThemeToggle variant="icon" />
     </header>
 
     <div class="staff-login__panel" :class="{ 'staff-login__panel--ready': panelReady }">
-      <p class="staff-login__lede">{{ lede }}</p>
       <h1 id="staff-login-title" class="staff-login__title" :key="headline">
         {{ headline }}
       </h1>
@@ -42,7 +42,7 @@
 
         <label class="staff-login__field" :class="{ 'is-focused': focusedField === 'password' }">
           <span>Password</span>
-          <span class="staff-login__password-row">
+          <span class="staff-login__password-wrap">
             <input
               v-model="password"
               autocomplete="current-password"
@@ -53,8 +53,32 @@
               @focus="focusedField = 'password'"
               @blur="focusedField = ''"
             />
-            <button type="button" class="staff-login__text-btn" @click="showPassword = !showPassword">
-              {{ showPassword ? 'Hide' : 'Show' }}
+            <button
+              type="button"
+              class="staff-login__eye"
+              :aria-label="showPassword ? 'Hide password' : 'Show password'"
+              :aria-pressed="showPassword"
+              @click="showPassword = !showPassword"
+            >
+              <svg v-if="!showPassword" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"
+                />
+                <circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7" />
+              </svg>
+              <svg v-else viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  d="M3 3l18 18M10.6 10.7a2.6 2.6 0 0 0 3.7 3.7M9.4 5.6A10.4 10.4 0 0 1 12 5.2c6 0 9.5 6 9.5 6a16.6 16.6 0 0 1-3.1 3.4M6.2 6.4A16.2 16.2 0 0 0 2.5 12s3.5 6 9.5 6c1.1 0 2.1-.2 3.1-.5"
+                />
+              </svg>
             </button>
           </span>
         </label>
@@ -98,7 +122,26 @@
           :aria-disabled="!googleReady"
           @click="onProviderClick('google', googleReady, $event)"
         >
-          <span class="staff-login__provider-icon staff-login__provider-icon--google" aria-hidden="true">G</span>
+          <span class="staff-login__provider-icon staff-login__provider-icon--google" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path
+                fill="#4285F4"
+                d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.4c-.3 1.5-1.1 2.7-2.4 3.6v3h3.9c2.3-2.1 3.6-5.2 3.6-8.7z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.5 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1C3.4 21.3 7.4 24 12 24z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.4 14.4c-.2-.7-.4-1.4-.4-2.4s.1-1.7.4-2.4V6.5H1.4C.5 8.3 0 10.1 0 12s.5 3.7 1.4 5.5l4-3.1z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4C17.9 1.1 15.2 0 12 0 7.4 0 3.4 2.7 1.4 6.5l4 3.1C6.3 6.8 8.9 4.8 12 4.8z"
+              />
+            </svg>
+          </span>
           Continue with Google
         </a>
         <a
@@ -109,10 +152,10 @@
           @click="onProviderClick('apple', appleReady, $event)"
         >
           <span class="staff-login__provider-icon staff-login__provider-icon--apple" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18">
               <path
                 fill="currentColor"
-                d="M16.7 12.6c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.7-1.3-.1-2.5.8-3.1.8-.7 0-1.7-.7-2.8-.7-1.4 0-2.8.9-3.5 2.2-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.6 2.1 2.7 2.1 1.1 0 1.5-.7 2.8-.7s1.7.7 2.8.7c1.2 0 1.9-1 2.6-2 .8-1.1 1.1-2.2 1.1-2.3-.1 0-2.1-.8-2.1-3.7zM14.4 6.5c.6-.7 1-1.7.9-2.7-0.9.1-1.9.6-2.5 1.3-.6.6-1.1 1.6-1 2.6 1 .1 1.9-.5 2.6-1.2z"
+                d="M16.365 12.24c-.03-2.3 1.88-3.4 1.97-3.46-1.08-1.57-2.75-1.79-3.34-1.81-1.42-.14-2.77.84-3.49.84-.72 0-1.84-.82-3.03-.8-1.56.02-3 0.91-3.8 2.3-1.62 2.81-.41 6.97 1.16 9.25.77 1.12 1.69 2.37 2.9 2.33 1.16-.05 1.6-.75 3.01-.75 1.4 0 1.8.75 3.03.72 1.25-.02 2.05-1.14 2.81-2.27.89-1.29 1.25-2.54 1.27-2.6-.03-.01-2.43-.93-2.49-3.75zM14.5 5.63c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.66 1.37-.58.68-1.09 1.77-.95 2.81 1.01.08 2.04-.51 2.67-1.29z"
               />
             </svg>
           </span>
@@ -139,12 +182,9 @@ import {
   staffApiHostMismatch,
   staffPasswordLogin,
 } from './staffAuth'
-import {
-  readStoredGreetName,
-  timeOfDayLede,
-  welcomeHeadline,
-  writeStoredGreetName,
-} from './staffGreeting'
+import { readStoredGreetName, welcomeHeadline, writeStoredGreetName } from './staffGreeting'
+import StaffThemeToggle from './StaffThemeToggle.vue'
+import { applyStaffTheme, resolveStaffTheme } from './theme'
 
 const props = withDefaults(
   defineProps<{
@@ -191,9 +231,9 @@ const clickGate = createClickGate(1200)
 const googleLoginUrl = computed(() => buildStaffGoogleLoginUrl(props.apiBaseUrl, props.nextPath))
 const appleLoginUrl = computed(() => buildStaffAppleLoginUrl(props.apiBaseUrl, props.nextPath))
 const headline = computed(() => welcomeHeadline(storedName.value, email.value))
-const lede = computed(() => timeOfDayLede())
 
 onMounted(() => {
+  applyStaffTheme(resolveStaffTheme())
   storedName.value = readStoredGreetName()
   if (props.signInHint) {
     statusMessage.value = props.signInHint
@@ -241,18 +281,15 @@ function onEmailInput() {
 
 async function loadProviders() {
   const providers = await fetchStaffOAuthProviders(props.apiBaseUrl)
-  googleReady.value = providers.google && props.googleEnabled !== false
-  appleReady.value = providers.apple && props.appleEnabled !== false
+  googleReady.value = Boolean(providers.google && props.googleEnabled)
+  appleReady.value = Boolean(providers.apple && props.appleEnabled)
 }
 
-function onProviderClick(provider: 'google' | 'apple', ready: boolean, event: MouseEvent) {
+function onProviderClick(_provider: 'google' | 'apple', ready: boolean, event: MouseEvent) {
   if (ready) return
   event.preventDefault()
   statusTone.value = 'neutral'
-  statusMessage.value =
-    provider === 'google'
-      ? 'Google sign-in is almost ready. Use email for now.'
-      : 'Apple sign-in is almost ready. Use email for now.'
+  statusMessage.value = 'Use email for now.'
 }
 
 function markRetryableFailure(message: string) {
@@ -328,13 +365,15 @@ async function submitLogin() {
 .staff-login {
   --desk-ink: var(--color-ink, #27272a);
   --desk-muted: var(--color-muted, #8a8580);
-  --desk-rose: var(--color-rose, #c98980);
-  --desk-rose-deep: var(--color-rose-dark, #b5746c);
-  --desk-blush: var(--color-rose-soft, #f0e8e4);
-  --desk-paper: var(--color-paper, #fffcf8);
-  --desk-stone: var(--color-stone, #efeae3);
-  --desk-parchment: var(--color-parchment, #f4efe8);
+  --desk-rose: var(--color-rose, #b07a71);
+  --desk-rose-deep: var(--color-rose-dark, #965f57);
+  --desk-blush: var(--color-rose-soft, #e9e2e0);
+  --desk-paper: var(--color-paper, #f3f2f1);
+  --desk-cream: var(--color-cream, #ebe9e8);
+  --desk-stone: var(--color-stone, #e4e2e1);
+  --desk-parchment: var(--color-parchment, #eeedec);
   --desk-line: var(--color-line, rgba(39, 37, 42, 0.12));
+  --desk-field: color-mix(in srgb, var(--desk-paper) 70%, var(--desk-cream));
   --desk-ease: var(--ease-story, cubic-bezier(0.22, 1, 0.36, 1));
 
   position: relative;
@@ -345,7 +384,8 @@ async function submitLogin() {
   color: var(--desk-ink);
   font-family: var(--font-body, 'Manrope', ui-sans-serif, system-ui, sans-serif);
   background:
-    linear-gradient(168deg, var(--desk-paper) 0%, #ffffff 38%, var(--desk-parchment) 100%);
+    radial-gradient(ellipse 55% 45% at 88% 8%, color-mix(in srgb, var(--desk-rose) 18%, transparent), transparent 70%),
+    linear-gradient(168deg, var(--desk-paper) 0%, var(--desk-cream, var(--desk-paper)) 42%, var(--desk-parchment) 100%);
   overflow: hidden;
 }
 
@@ -355,8 +395,8 @@ async function submitLogin() {
   height: 48vh;
   z-index: -1;
   background:
-    radial-gradient(ellipse 50% 60% at 82% 12%, rgba(201, 137, 128, 0.12), transparent 74%),
-    radial-gradient(ellipse 42% 50% at 8% 36%, rgba(239, 234, 227, 0.7), transparent 72%);
+    radial-gradient(ellipse 50% 60% at 82% 12%, color-mix(in srgb, var(--desk-rose) 16%, transparent), transparent 74%),
+    radial-gradient(ellipse 42% 50% at 8% 36%, color-mix(in srgb, var(--desk-blush) 55%, transparent), transparent 72%);
   animation: staff-login-glow 22s var(--desk-ease) infinite alternate;
   pointer-events: none;
 }
@@ -364,6 +404,8 @@ async function submitLogin() {
 .staff-login__header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   padding: 1.35rem clamp(1.25rem, 4vw, 2.75rem);
   animation: staff-login-rise 0.65s var(--desk-ease) both;
 }
@@ -381,7 +423,8 @@ async function submitLogin() {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background-color: var(--desk-rose);
+  /* Brand rose mark — never inverted by dark theme. */
+  background-color: #c98980;
   background-image: url('/images/logo-mark.png');
   background-repeat: no-repeat;
   background-position: center;
@@ -429,14 +472,6 @@ async function submitLogin() {
   transform: translateY(0);
 }
 
-.staff-login__lede {
-  margin: 0;
-  color: var(--desk-muted);
-  font-size: 0.95rem;
-  line-height: 1.5;
-  letter-spacing: 0.01em;
-}
-
 .staff-login__title {
   margin: 0;
   font-family: var(--font-display, 'Libre Baskerville', Georgia, serif);
@@ -471,10 +506,11 @@ async function submitLogin() {
   width: 100%;
   min-height: 3rem;
   border: 1px solid var(--desk-line);
-  border-radius: 0;
+  border-radius: 0.85rem;
   padding: 0 0.95rem;
-  background: rgba(255, 255, 255, 0.92);
-  color: inherit;
+  background: var(--desk-field);
+  color: var(--desk-ink);
+  caret-color: var(--desk-rose);
   font: 1rem/1.2 var(--font-body, 'Manrope', ui-sans-serif, system-ui, sans-serif);
   transition:
     border-color 0.25s ease,
@@ -482,38 +518,60 @@ async function submitLogin() {
     background 0.25s ease;
 }
 
+.staff-login input::placeholder {
+  color: var(--desk-muted);
+}
+
 .staff-login input:focus {
   outline: 0;
   border-color: var(--desk-rose);
-  box-shadow: 0 0 0 3px rgba(201, 137, 128, 0.16);
-  background: #fff;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--desk-rose) 22%, transparent);
+  background: var(--desk-paper);
 }
 
-.staff-login__password-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.5rem;
-  align-items: center;
+.staff-login__password-wrap {
+  position: relative;
+  display: block;
 }
 
-.staff-login__text-btn {
-  min-height: 3rem;
-  border: 1px solid var(--desk-line);
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--desk-ink);
-  padding: 0 0.9rem;
+.staff-login__password-wrap input {
+  padding-right: 3rem;
+}
+
+.staff-login__eye {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  transform: translateY(-50%);
+  width: 2.4rem;
+  height: 2.4rem;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--desk-muted);
   cursor: pointer;
-  font: 600 0.85rem/1 var(--font-body, 'Manrope', ui-sans-serif, system-ui, sans-serif);
+  padding: 0;
+}
+
+.staff-login__eye:hover,
+.staff-login__eye:focus-visible {
+  color: var(--desk-ink);
+  outline: 0;
+  background: color-mix(in srgb, var(--desk-rose) 12%, transparent);
 }
 
 .staff-login__primary,
-.staff-login__provider {
-  min-height: 3.15rem;
+.staff-login__provider,
+.staff-login__retry {
+  min-height: 3.05rem;
   display: inline-flex;
   justify-content: center;
   align-items: center;
   gap: 0.7rem;
   padding: 0 1.15rem;
+  border-radius: 0.85rem;
   text-decoration: none;
   font: 600 0.95rem/1 var(--font-body, 'Manrope', ui-sans-serif, system-ui, sans-serif);
   cursor: pointer;
@@ -527,16 +585,10 @@ async function submitLogin() {
 
 .staff-login__retry {
   width: 100%;
-  min-height: 2.75rem;
   margin: 0;
   border: 1px solid var(--desk-line);
   background: transparent;
   color: var(--desk-ink);
-  font: 600 0.9rem/1 var(--font-body, 'Manrope', ui-sans-serif, system-ui, sans-serif);
-  cursor: pointer;
-  transition:
-    border-color 0.2s var(--desk-ease),
-    color 0.2s var(--desk-ease);
 }
 
 .staff-login__retry:hover:not(:disabled) {
@@ -552,26 +604,34 @@ async function submitLogin() {
 .staff-login__primary {
   border: 0;
   color: #fff;
-  background: var(--desk-rose);
-  box-shadow: 0 6px 18px rgba(201, 137, 128, 0.18);
+  background: var(--desk-rose-deep, #965f57);
+  box-shadow: 0 6px 16px rgba(150, 95, 87, 0.22);
   letter-spacing: 0.02em;
 }
 
 .staff-login__primary:hover:not(:disabled) {
-  background: var(--desk-rose-deep);
+  background: #84534c;
+  color: #fff;
   transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(181, 116, 108, 0.22);
+  box-shadow: 0 8px 18px rgba(132, 83, 76, 0.28);
+}
+
+.staff-login__primary:active:not(:disabled) {
+  background: #734842;
+  color: #fff;
+  transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(115, 72, 66, 0.24);
 }
 
 .staff-login__primary:focus-visible {
   outline: 0;
   box-shadow:
-    0 0 0 3px rgba(201, 137, 128, 0.28),
-    0 6px 18px rgba(201, 137, 128, 0.18);
+    0 0 0 3px rgba(176, 122, 113, 0.35),
+    0 6px 16px rgba(150, 95, 87, 0.22);
 }
 
 .staff-login__primary:disabled {
-  opacity: 0.72;
+  opacity: 0.62;
   cursor: wait;
   box-shadow: none;
   transform: none;
@@ -600,13 +660,13 @@ async function submitLogin() {
 
 .staff-login__provider {
   border: 1px solid var(--desk-line);
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--desk-field);
   color: var(--desk-ink);
 }
 
 .staff-login__provider:hover {
   border-color: color-mix(in srgb, var(--desk-ink) 28%, transparent);
-  background: #fff;
+  background: var(--desk-paper);
   transform: translateY(-1px);
 }
 
@@ -628,22 +688,21 @@ async function submitLogin() {
   display: inline-grid;
   place-items: center;
   border-radius: 50%;
-  font-size: 0.78rem;
-  font-weight: 700;
   line-height: 1;
 }
 
 .staff-login__provider-icon--google {
-  color: #fff;
-  background: #1a73e8;
+  background: #fff;
+  border: 1px solid rgba(39, 37, 42, 0.12);
 }
 
 .staff-login__provider-icon--apple {
-  color: #fff;
-  background: #111;
+  color: #111;
+  background: #fff;
+  border: 1px solid rgba(39, 37, 42, 0.12);
 }
 
-.staff-login__provider-icon--apple svg {
+.staff-login__provider-icon svg {
   display: block;
 }
 
@@ -722,10 +781,61 @@ async function submitLogin() {
   }
 }
 
-@media (max-width: 420px) {
-  .staff-login__password-row {
-    grid-template-columns: 1fr;
-  }
+:global(html[data-staff-theme='dark']) .staff-login {
+  --desk-ink: var(--color-ink);
+  --desk-muted: var(--color-muted);
+  --desk-rose: var(--color-rose);
+  --desk-rose-deep: var(--color-rose-dark);
+  --desk-blush: var(--color-rose-soft);
+  --desk-paper: var(--color-paper);
+  --desk-cream: var(--color-cream);
+  --desk-parchment: var(--color-parchment);
+  --desk-stone: var(--color-stone);
+  --desk-line: var(--color-line);
+  --desk-field: var(--color-stone);
+  background:
+    radial-gradient(ellipse 50% 40% at 90% 0%, color-mix(in srgb, var(--color-rose) 16%, transparent), transparent 68%),
+    linear-gradient(168deg, var(--color-cream) 0%, var(--color-paper) 52%, var(--color-parchment) 100%);
+}
+
+:global(html[data-staff-theme='dark']) .staff-login__atmosphere {
+  background:
+    radial-gradient(ellipse 48% 55% at 80% 10%, color-mix(in srgb, var(--color-rose) 14%, transparent), transparent 72%),
+    radial-gradient(ellipse 36% 42% at 10% 38%, color-mix(in srgb, var(--color-rose) 6%, transparent), transparent 70%);
+}
+
+:global(html[data-staff-theme='dark']) .staff-login__provider-icon--google,
+:global(html[data-staff-theme='dark']) .staff-login__provider-icon--apple {
+  background: #fff;
+  border-color: rgba(244, 244, 245, 0.2);
+}
+
+:global(html[data-staff-theme='dark']) .staff-login__provider-icon--apple {
+  color: #111;
+}
+
+:global(html[data-staff-theme='dark']) .staff-login__status--error {
+  color: #f0b4aa;
+}
+
+:global(html[data-staff-theme='dark']) .staff-login__status--ok {
+  color: #a8c9b2;
+}
+
+:global(html[data-staff-theme='dark']) .staff-login .staff-login__primary {
+  background: #b07a71;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+
+:global(html[data-staff-theme='dark']) .staff-login .staff-login__primary:hover:not(:disabled) {
+  background: #c98980;
+  color: #fff;
+}
+
+:global(html[data-staff-theme='dark']) .staff-login .staff-login__primary:active:not(:disabled) {
+  background: #965f57;
+  color: #fff;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -21,8 +21,23 @@ const STATUS_COPY: Record<string, string> = {
   retry_scheduled: 'Retry scheduled',
   failed_final: 'Needs attention',
   full_package: 'Full-package day',
-  normal: 'Normal service day',
+  normal: 'Service day',
   closed: 'Closed',
+  not_started: 'Not started',
+  requested: 'Reschedule requested',
+  none: 'No move needed',
+}
+
+/** Plain day banner for the desk (capacity comes from the schedule API). */
+export function dayCapacityBanner(dayType: string, maxClients: number): string {
+  const normalized = String(dayType || '').toLowerCase()
+  if (normalized.includes('closed') || maxClients <= 0) {
+    return 'Closed today — no client bookings.'
+  }
+  if (normalized.includes('full') || normalized.includes('package')) {
+    return `Full-package day — up to ${maxClients || 3} clients.`
+  }
+  return `Service day — up to ${maxClients || 5} clients.`
 }
 
 const INTERNAL_WORDS = /\b(ledger|checkout session|correlation|provider payload|merchantrequest|checkoutrequest)\b/i

@@ -126,3 +126,63 @@ class BookingRescheduleService:
                 return booking
         except (Booking.DoesNotExist, IntegrityError, ValueError, TypeError) as exc:
             raise ValidationError(GENERIC_RESCHEDULE_ERROR) from exc
+
+    @classmethod
+    def staff_reschedule(cls, *, booking_public_id, requested_starts_at, reason="", actor_user=None):
+        """Move a confirmed booking from the staff desk (no customer OTP)."""
+        try:
+            with transaction.atomic():
+                booking = (
+                    Booking.objects.select_for_update(of=("self",))
+                    .select_related("service", "resource", "customer_profile")
+                    .get(public_id=booking_public_id)
+                )
+                if booking.status not in {
+                    Booking.Status.CONFIRMED,
+                    Booking.Status.RESCHEDULE_REQUESTED,
+                }:
+                    raise ValidationError(GENERIC_RESCHEDULE_ERROR)
+
+                starts_at = _normalize_start(requested_starts_at)
+                ends_at = starts_at + timedelta(minutes=booking.service.duration_minutes)
+                policy = _policy()
+                _validate_policy(booking, starts_at, policy)
+
+                original_starts_at = booking.starts_at
+                original_ends_at = booking.ends_at
+                reschedule_request = create_reschedule_request(
+                    booking=booking,
+                    requested_starts_at=starts_at,
+                    requested_ends_at=ends_at,
+                    reason=reason or "staff_desk_move",
+                )
+
+                booking.starts_at = starts_at
+                booking.ends_at = ends_at
+                booking.reschedule_count += 1
+                booking.status = Booking.Status.CONFIRMED
+                booking.save(update_fields=["starts_at", "ends_at", "reschedule_count", "status", "updated_at"])
+
+                reschedule_request.status = BookingRescheduleRequest.Status.ACCEPTED
+                reschedule_request.save(update_fields=["status", "updated_at"])
+                cancel_pending_reminders(booking)
+                schedule_booking_reminders(booking)
+                actor_email = getattr(actor_user, "email", "") or ""
+                BookingAuditEvent.objects.create(
+                    booking=booking,
+                    old_status=Booking.Status.CONFIRMED,
+                    new_status=Booking.Status.CONFIRMED,
+                    reason="staff_rescheduled",
+                    actor_type="staff",
+                    metadata_redacted={
+                        "old_date": original_starts_at.date().isoformat(),
+                        "new_date": starts_at.date().isoformat(),
+                        "old_time": original_starts_at.astimezone(NAIROBI).strftime("%H:%M"),
+                        "new_time": starts_at.astimezone(NAIROBI).strftime("%H:%M"),
+                        "original_duration_minutes": int((original_ends_at - original_starts_at).total_seconds() / 60),
+                        "actor_email_domain": actor_email.split("@")[-1] if "@" in actor_email else "",
+                    },
+                )
+                return booking
+        except (Booking.DoesNotExist, IntegrityError, ValueError, TypeError) as exc:
+            raise ValidationError(GENERIC_RESCHEDULE_ERROR) from exc

@@ -1,13 +1,18 @@
 <template>
-  <main class="staff-reset-page">
-    <section>
+  <main class="staff-auth-page">
+    <header class="staff-auth-page__header">
       <StaffSheeBrand to="/staff/login" size="sm" />
-      <p class="eyebrow">Staff recovery</p>
-      <h1>Choose a new staff password</h1>
-      <p class="lead">Use the reset token from your recovery email. Passwords must be at least 15 characters.</p>
+      <StaffThemeToggle variant="icon" />
+    </header>
+
+    <section class="staff-auth-page__card">
+      <p class="eyebrow">Staff desk</p>
+      <h1>Choose a new password</h1>
+      <p class="lead">Paste the code from your email. Use at least 15 characters.</p>
+
       <form @submit.prevent="submit">
         <label>
-          Reset token
+          Reset code
           <input v-model="token" autocomplete="one-time-code" required :disabled="submitting" />
         </label>
         <label>
@@ -19,24 +24,42 @@
             type="password"
             required
             :disabled="submitting"
+            @input="onPasswordInput"
           />
         </label>
-        <p v-if="message" role="status" aria-live="polite">{{ message }}</p>
-        <button type="submit" :disabled="submitting || !token.trim() || password.length < 15">
-          {{ submitting ? 'Resetting…' : 'Reset password' }}
+        <label>
+          Confirm password
+          <input
+            v-model="confirm"
+            autocomplete="new-password"
+            minlength="15"
+            type="password"
+            required
+            :disabled="submitting"
+            @input="onPasswordInput"
+          />
+        </label>
+        <p v-if="hint" class="status status--error" role="status" aria-live="polite">{{ hint }}</p>
+        <p v-if="message" class="status" role="status" aria-live="polite">{{ message }}</p>
+        <button type="submit" :disabled="submitting || !canSubmit">
+          {{ submitting ? 'Updating…' : 'Update password' }}
         </button>
       </form>
-      <NuxtLink to="/staff/login">Back to sign in</NuxtLink>
+
+      <NuxtLink class="back" to="/staff/login">Back to sign in</NuxtLink>
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import StaffSheeBrand from '../../src/staff/StaffSheeBrand.vue'
+import StaffThemeToggle from '../../src/staff/StaffThemeToggle.vue'
 import { ensureBookingCsrfToken } from '../../src/booking/bookingCsrf'
 import { confirmStaffPasswordReset } from '../../src/staff/staffAuth'
+import { clientStaffPasswordHint, mapStaffPasswordApiMessage } from '../../src/staff/staffPasswordHints'
+import { applyStaffTheme, resolveStaffTheme } from '../../src/staff/theme'
 
 definePageMeta({ layout: false })
 useHead({
@@ -50,34 +73,57 @@ const apiBaseUrl = String(runtimeConfig.public.apiBaseUrl || '')
 
 const token = ref('')
 const password = ref('')
+const confirm = ref('')
 const submitting = ref(false)
 const message = ref('')
+const hint = ref('')
+
+const canSubmit = computed(() => {
+  if (!token.value.trim()) return false
+  if (clientStaffPasswordHint(password.value, { confirm: confirm.value })) return false
+  return password.value.length >= 15 && password.value === confirm.value
+})
 
 onMounted(() => {
+  applyStaffTheme(resolveStaffTheme())
   const fromQuery = route.query.token
   if (typeof fromQuery === 'string' && fromQuery.trim()) {
     token.value = fromQuery.trim()
   }
 })
 
+function onPasswordInput() {
+  message.value = ''
+  hint.value = clientStaffPasswordHint(password.value, { confirm: confirm.value }) || ''
+}
+
 async function submit() {
-  if (submitting.value || !token.value.trim() || password.value.length < 15) return
+  const clientHint = clientStaffPasswordHint(password.value, { confirm: confirm.value })
+  if (clientHint) {
+    hint.value = clientHint
+    return
+  }
+  if (submitting.value || !token.value.trim()) return
   submitting.value = true
   message.value = ''
+  hint.value = ''
   try {
-    const csrfToken = (await ensureBookingCsrfToken(apiBaseUrl)) || ''
+    const csrfToken = (await ensureBookingCsrfToken(apiBaseUrl, { forceRefresh: true })) || ''
     if (!csrfToken) {
-      message.value = 'We could not reset the password. Please try again.'
+      message.value = 'We could not update the password. Please try again.'
       return
     }
     const result = await confirmStaffPasswordReset(apiBaseUrl, token.value, password.value, csrfToken)
-    message.value = result.message
     if (result.ok) {
       password.value = ''
+      confirm.value = ''
+      message.value = 'Password updated. Sign in with your new password.'
       await navigateTo('/staff/login')
+      return
     }
+    message.value = mapStaffPasswordApiMessage(result.message)
   } catch {
-    message.value = 'Password reset request is invalid or expired.'
+    message.value = 'This reset link is invalid or expired.'
   } finally {
     submitting.value = false
   }
@@ -85,86 +131,144 @@ async function submit() {
 </script>
 
 <style scoped>
-.staff-reset-page {
+.staff-auth-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
-  place-items: center;
-  padding: 1rem;
+  grid-template-rows: auto 1fr;
+  padding: 1rem clamp(1rem, 4vw, 2rem) 2rem;
   color: var(--color-ink);
   font-family: var(--font-body);
   background:
-    radial-gradient(circle at 18% 14%, rgba(222, 150, 141, 0.22), transparent 18rem),
-    linear-gradient(165deg, var(--color-cream), #fff 50%, var(--color-rose-soft));
+    radial-gradient(ellipse 50% 40% at 88% 0%, color-mix(in srgb, var(--color-rose) 14%, transparent), transparent 70%),
+    linear-gradient(168deg, var(--color-cream) 0%, var(--color-paper) 48%, var(--color-parchment) 100%);
 }
 
-.staff-reset-page section {
-  width: min(100%, 32rem);
-  display: grid;
+.staff-auth-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 1rem;
-  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.staff-auth-page__card {
+  width: min(100%, 26rem);
+  margin: 0 auto;
+  align-self: start;
+  display: grid;
+  gap: 0.95rem;
+  padding: 1.35rem 1.25rem 1.5rem;
   border: 1px solid var(--color-line);
-  background: color-mix(in srgb, var(--color-paper) 94%, transparent);
+  border-radius: 1rem;
+  background: var(--color-paper);
   box-shadow: var(--shadow-card);
 }
 
-.staff-reset-page .eyebrow {
+.eyebrow {
   margin: 0;
   color: var(--color-rose-dark);
   text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font: 600 0.72rem/1.2 var(--font-body);
+  letter-spacing: 0.14em;
+  font: 600 0.7rem/1.2 var(--font-body);
 }
 
-.staff-reset-page h1 {
+.staff-auth-page h1 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  font-size: clamp(1.7rem, 5vw, 2.15rem);
+  font-weight: 400;
   line-height: 1.15;
 }
 
-.staff-reset-page .lead,
-.staff-reset-page p[role='status'] {
+.lead,
+.status {
   margin: 0;
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.status--error {
+  color: #8a3a36;
+}
+
+form,
+label {
+  display: grid;
+  gap: 0.55rem;
+}
+
+label {
+  font: 600 0.78rem/1.2 var(--font-body);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--color-muted);
 }
 
-.staff-reset-page form,
-.staff-reset-page label {
-  display: grid;
-  gap: 0.7rem;
+input,
+button {
+  min-height: 3rem;
+  border-radius: 0.85rem;
 }
 
-.staff-reset-page input,
-.staff-reset-page button {
-  min-height: 2.8rem;
-  border-radius: 0;
-}
-
-.staff-reset-page input {
+input {
   border: 1px solid var(--color-line);
-  padding: 0 1rem;
-  background: var(--color-paper);
+  padding: 0 0.95rem;
+  background: var(--color-stone);
   color: var(--color-ink);
   font: 1rem var(--font-body);
+  text-transform: none;
+  letter-spacing: normal;
 }
 
-.staff-reset-page button {
+input:focus {
+  outline: 0;
+  border-color: var(--color-rose);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-rose) 22%, transparent);
+  background: var(--color-paper);
+}
+
+button {
   border: 0;
-  background: var(--color-rose);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+  background: var(--color-rose-dark);
   color: #fff;
-  font: 600 0.78rem/1 var(--font-body);
-  letter-spacing: 0.12em;
+  font: 600 0.82rem/1 var(--font-body);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
 }
 
-.staff-reset-page button:disabled {
+button:hover:not(:disabled) {
+  background: #84534c;
+}
+
+button:active:not(:disabled) {
+  background: #734842;
+}
+
+button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.staff-reset-page a {
+.back {
   color: var(--color-muted);
   font: 0.92rem var(--font-body);
+  text-decoration: none;
+}
+
+.back:hover {
+  color: var(--color-ink);
+}
+
+@media (min-width: 720px) {
+  .staff-auth-page__card {
+    align-self: center;
+  }
 }
 </style>

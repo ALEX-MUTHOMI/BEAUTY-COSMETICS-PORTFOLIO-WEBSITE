@@ -23,7 +23,9 @@ export function readStoredStaffTheme(storage: Pick<Storage, 'getItem'> | undefin
 }
 
 export function applyStaffTheme(theme: StaffTheme, root: HTMLElement | undefined = globalThis.document?.documentElement) {
-  root?.setAttribute('data-staff-theme', theme)
+  if (!root) return
+  root.setAttribute('data-staff-theme', theme)
+  root.style.colorScheme = theme
 }
 
 export function resolveStaffTheme(

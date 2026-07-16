@@ -65,6 +65,23 @@
         <p v-if="assignMessage" class="payment-panel__copy" role="status">{{ assignMessage }}</p>
       </section>
 
+      <section v-if="canReschedule" class="assign-panel" aria-label="Reschedule visit">
+        <p class="eyebrow">Reschedule</p>
+        <p class="payment-panel__copy">Choose a new start time (Africa/Nairobi business hours).</p>
+        <label>
+          New start
+          <input v-model="rescheduleStartsAt" type="datetime-local" />
+        </label>
+        <label>
+          Note (optional)
+          <input v-model.trim="rescheduleReason" type="text" maxlength="120" placeholder="Moved at client request" />
+        </label>
+        <button type="button" :disabled="rescheduleSaving || !rescheduleStartsAt" @click="saveReschedule">
+          {{ rescheduleSaving ? 'Saving move…' : 'Confirm new time' }}
+        </button>
+        <p v-if="rescheduleMessage" class="payment-panel__copy" role="status">{{ rescheduleMessage }}</p>
+      </section>
+
       <div v-if="revealedContact" class="contact-reveal" role="status">
         <p><strong>Email</strong> {{ revealedContact.email }}</p>
         <p><strong>Phone</strong> {{ revealedContact.phone }}</p>
@@ -118,6 +135,7 @@ import {
   postStaffAssign,
   postStaffContactAccess,
   postStaffFulfillment,
+  postStaffReschedule,
   type StaffBookingDetailData,
   type StaffPaymentSummary,
 } from './staffPortalApi'
@@ -146,6 +164,10 @@ const fulfillmentSaving = ref(false)
 const beauticians = ref<{ id: string; email: string; displayName: string; role: string }[]>([])
 const assignSelection = ref<string | null>(null)
 const assignMessage = ref('')
+const rescheduleStartsAt = ref('')
+const rescheduleReason = ref('')
+const rescheduleSaving = ref(false)
+const rescheduleMessage = ref('')
 
 const demoDetail: StaffBookingDetailData = {
   publicBookingId: 'demo',
@@ -176,6 +198,13 @@ const canConfirm = computed(() => {
 const canAssign = computed(() => {
   if (!props.apiBaseUrl || !props.publicBookingId) return false
   return canAssignStaff(permissions.value)
+})
+const canReschedule = computed(() => {
+  if (!detail.value) return false
+  const status = String(detail.value.bookingStatus || '').toLowerCase()
+  if (!['confirmed', 'reschedule_requested'].includes(status)) return false
+  if (!props.apiBaseUrl || !props.publicBookingId) return true
+  return canConfirmAttendance(permissions.value)
 })
 
 if (!props.publicBookingId) {
@@ -287,14 +316,56 @@ async function markCompleted() {
     }
     const result = await postStaffFulfillment(props.apiBaseUrl, props.publicBookingId, 'completed', csrfToken)
     if (!result.ok || !result.data) {
-      errorMessage.value = result.message || 'Fulfillment could not be updated.'
+      errorMessage.value = result.message || 'Visit status could not be updated.'
       return
     }
     detail.value = { ...detail.value, fulfillmentStatus: result.data.fulfillmentStatus || 'completed' }
   } catch {
-    errorMessage.value = 'Fulfillment could not be updated.'
+    errorMessage.value = 'Visit status could not be updated.'
   } finally {
     fulfillmentSaving.value = false
+  }
+}
+
+async function saveReschedule() {
+  if (!detail.value || !rescheduleStartsAt.value) return
+  if (!props.apiBaseUrl || !props.publicBookingId) {
+    rescheduleMessage.value = 'New time saved (demo).'
+    return
+  }
+  if (!canReschedule.value) return
+  rescheduleSaving.value = true
+  rescheduleMessage.value = ''
+  try {
+    const csrfToken = await ensureBookingCsrfToken(props.apiBaseUrl)
+    if (!csrfToken) {
+      rescheduleMessage.value = 'Could not reach the desk. Refresh and try again.'
+      return
+    }
+    // datetime-local has no offset; send as Africa/Nairobi (+03:00) wall time.
+    const isoLocal = `${rescheduleStartsAt.value}:00+03:00`
+    const result = await postStaffReschedule(
+      props.apiBaseUrl,
+      props.publicBookingId,
+      isoLocal,
+      csrfToken,
+      rescheduleReason.value,
+    )
+    if (!result.ok || !result.data) {
+      rescheduleMessage.value = result.message || 'Unable to reschedule booking.'
+      return
+    }
+    detail.value = {
+      ...detail.value,
+      time: result.data.time || detail.value.time,
+      bookingStatus: result.data.bookingStatus || 'confirmed',
+    }
+    rescheduleMessage.value = 'Visit moved successfully.'
+    rescheduleReason.value = ''
+  } catch {
+    rescheduleMessage.value = 'Unable to reschedule booking.'
+  } finally {
+    rescheduleSaving.value = false
   }
 }
 

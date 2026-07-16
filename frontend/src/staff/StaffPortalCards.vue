@@ -40,7 +40,7 @@ defineProps<{
   padding: 1.1rem 1.15rem;
   border: 1px solid var(--color-line, rgba(39, 37, 42, 0.1));
   border-radius: 0;
-  background: color-mix(in srgb, var(--color-paper, #fff) 90%, transparent);
+  background: var(--color-paper, #fffcf8);
   box-shadow: var(--shadow-card, 0 0 40px rgba(39, 37, 42, 0.05));
   font-family: var(--font-body, 'Manrope', sans-serif);
 }
@@ -74,7 +74,7 @@ defineProps<{
 .portal-card--skeleton strong {
   min-height: 1rem;
   border-radius: 0;
-  background: linear-gradient(90deg, var(--color-rose-soft, #f5e8e6), #fff, var(--color-rose-soft, #f5e8e6));
+  background: linear-gradient(90deg, var(--color-rose-soft, #f5e8e6), var(--color-stone, #efeae3), var(--color-rose-soft, #f5e8e6));
   animation: staff-shimmer 1.2s ease-in-out infinite;
 }
 

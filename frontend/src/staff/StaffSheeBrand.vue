@@ -45,12 +45,13 @@ const linkAttrs = computed(() => (props.to ? { href: props.to } : {}))
   height: 2.75rem;
   flex-shrink: 0;
   border-radius: 50%;
-  background-color: var(--color-rose, #de968d);
+  /* Brand rose mark — never inverted by dark theme. */
+  background-color: #c98980;
   background-image: url('/images/logo-mark.png');
   background-repeat: no-repeat;
   background-position: center;
   background-size: 1.55rem 1.55rem;
-  box-shadow: 0 4px 14px rgba(222, 150, 141, 0.35);
+  box-shadow: 0 4px 14px rgba(201, 137, 128, 0.35);
 }
 
 .staff-shee-brand__text {
