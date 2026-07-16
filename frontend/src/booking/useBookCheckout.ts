@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, ref, watch, type Ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
 import { createClickGate } from '@/staff/botGuard'
 import { ensureBookingCsrfToken } from './bookingCsrf'
 import type { BookingCustomerValidation } from './bookingCustomer'
@@ -90,9 +90,14 @@ export function useBookCheckout(
     attemptNonce.value = createBookingAttemptNonce()
     step.value = 'details'
     submitError.value = null
-    void loadPolicyText()
+    if (!policyText.value) void loadPolicyText()
     clickGate.finish('open-details')
   }
+
+  onMounted(() => {
+    // Prefetch while client picks date/time so details opens without policy flash.
+    void loadPolicyText()
+  })
 
   function backToPick() {
     if (submitGovernor.isInFlight) {

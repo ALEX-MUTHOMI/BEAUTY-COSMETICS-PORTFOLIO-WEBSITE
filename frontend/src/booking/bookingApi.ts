@@ -40,6 +40,39 @@ export function safeApiText(value: unknown, maxLength = 128): string {
   return cleaned.slice(0, maxLength)
 }
 
+function parseRetryAfterSeconds(response: Response): number {
+  const raw = response.headers.get('Retry-After')
+  if (!raw) return 2
+  const asInt = Number(raw)
+  if (Number.isFinite(asInt) && asInt >= 0) {
+    return Math.min(Math.max(Math.ceil(asInt), 1), 30)
+  }
+  const when = Date.parse(raw)
+  if (!Number.isNaN(when)) {
+    const sec = Math.ceil((when - Date.now()) / 1000)
+    return Math.min(Math.max(sec, 1), 30)
+  }
+  return 2
+}
+
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Aborted', 'AbortError'))
+      return
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort)
+      resolve()
+    }, ms)
+    const onAbort = () => {
+      clearTimeout(timer)
+      reject(new DOMException('Aborted', 'AbortError'))
+    }
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
+}
+
 export async function publicBookingGet<T>(
   apiBaseUrl: string,
   path: string,
@@ -50,27 +83,42 @@ export async function publicBookingGet<T>(
   const base = trimApiBaseUrl(apiBaseUrl)
   const search = new URLSearchParams(params).toString()
   const url = `${base}${path}${search ? `?${search}` : ''}`
+  const maxAttempts = 3
 
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      // Anonymous catalog/calendar/availability reads do not need cookies.
-      credentials: options?.credentials ?? 'omit',
-      headers: { Accept: 'application/json' },
-      signal: options?.signal,
-    })
-    if (response.status === 429) return { error: GENERIC_BOOKING_THROTTLE_ERROR }
-    if (!response.ok) return { error: GENERIC_BOOKING_API_ERROR }
-    const payload: unknown = await response.json()
-    const data = parse(payload)
-    if (!data) return { error: GENERIC_BOOKING_API_ERROR }
-    return { data }
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        // Anonymous catalog/calendar/availability reads do not need cookies.
+        credentials: options?.credentials ?? 'omit',
+        headers: { Accept: 'application/json' },
+        signal: options?.signal,
+      })
+      if (response.status === 429) {
+        if (attempt < maxAttempts - 1) {
+          await sleep(parseRetryAfterSeconds(response) * 1000, options?.signal)
+          continue
+        }
+        return { error: GENERIC_BOOKING_THROTTLE_ERROR }
+      }
+      if (!response.ok) return { error: GENERIC_BOOKING_API_ERROR }
+      const payload: unknown = await response.json()
+      const data = parse(payload)
+      if (!data) return { error: GENERIC_BOOKING_API_ERROR }
+      return { data }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return { error: GENERIC_BOOKING_API_ERROR }
+      }
+      if (attempt < maxAttempts - 1) {
+        await sleep(1000 * (attempt + 1), options?.signal).catch(() => undefined)
+        continue
+      }
       return { error: GENERIC_BOOKING_API_ERROR }
     }
-    return { error: GENERIC_BOOKING_API_ERROR }
   }
+
+  return { error: GENERIC_BOOKING_API_ERROR }
 }
 
 export type PublicBookingPostResult<T> =

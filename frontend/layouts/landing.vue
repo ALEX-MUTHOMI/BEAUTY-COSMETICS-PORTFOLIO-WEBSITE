@@ -1,17 +1,34 @@
 <template>
-  <div class="landing-shell">
+  <div class="landing-shell" :class="{ 'landing-shell--no-book-bar': !showMobileBookBar }">
     <SiteHeader />
     <slot />
     <SiteFooter />
 
-    <aside class="mobile-book-bar" aria-label="Quick booking">
-      <SiteButton to="/book" variant="primary" class="mobile-book-bar__cta">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+    <aside
+      v-if="showMobileBookBar"
+      class="mobile-book-bar"
+      aria-label="Quick booking"
+    >
+      <SiteButton to="/services" variant="primary" class="mobile-book-bar__cta">
+        {{ LANDING_PRIMARY_CTA }}
+      </SiteButton>
     </aside>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { LANDING_PRIMARY_CTA } from '@/landing/landingContent'
+
+const route = useRoute()
+
+/** Hide quick-book bar on transactional booking flows so Continue/Confirm stay tappable. */
+const showMobileBookBar = computed(() => {
+  const path = route.path || ''
+  if (path === '/book' || path.startsWith('/book/')) return false
+  if (path.startsWith('/booking/')) return false
+  return true
+})
 
 useHead({
   meta: [

@@ -141,7 +141,7 @@ def catalog_resolve_handoff(request):
 
 
 @require_GET
-@route_throttle("availability")
+@route_throttle("booking_calendar")
 def booking_calendar(request):
     selection_type = str(request.GET.get("selection_type") or "normal")
     try:

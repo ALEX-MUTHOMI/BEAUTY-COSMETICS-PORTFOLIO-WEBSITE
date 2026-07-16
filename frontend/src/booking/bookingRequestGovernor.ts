@@ -19,7 +19,7 @@ export const BOOKING_CLIENT_LIMITS = {
 } as const
 
 export const GENERIC_BOOKING_THROTTLE_ERROR =
-  'Too many requests. Please wait a moment and try again.'
+  'Please wait a moment and try again.'
 
 export class BookingRequestGovernor {
   private calendarLoadToken = 0

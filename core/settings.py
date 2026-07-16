@@ -458,8 +458,10 @@ REST_FRAMEWORK = {
         "checkout_create": "10/min",
         "checkout_detail": "60/min",
         "csrf_bootstrap": "30/min",
-        "catalog_resolve": "15/min",
-        "availability": "30/min",
+        # Public browse reads — split calendar vs slots so parallel clients don't starve each other.
+        "catalog_resolve": "60/min",
+        "booking_calendar": "90/min",
+        "availability": "90/min",
         "booking_hold": "5/min",
         "booking_checkout": "8/min",
         "booking_guest_stk": "3/min",

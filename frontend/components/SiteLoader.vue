@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -33,9 +33,21 @@ const props = withDefaults(
   },
 )
 
-const visible = ref(true)
-
 const LOADER_SESSION_KEY = 'shee-loader-done'
+
+/** SiteLoader alone owns html.is-loading — never set it permanently via page useHead. */
+const alreadyDone =
+  import.meta.client && typeof sessionStorage !== 'undefined'
+    ? sessionStorage.getItem(LOADER_SESSION_KEY) === '1'
+    : false
+
+const visible = ref(!alreadyDone)
+
+useHead({
+  htmlAttrs: {
+    class: computed(() => (visible.value ? 'is-loading' : undefined)),
+  },
+})
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -55,21 +67,25 @@ function preload(src: string, timeoutMs = 1800): Promise<void> {
   ])
 }
 
-onMounted(() => {
-  if (sessionStorage.getItem(LOADER_SESSION_KEY) === '1') {
-    visible.value = false
+function markReady() {
+  visible.value = false
+  if (import.meta.client) {
     document.documentElement.classList.add('site-ready')
     document.documentElement.classList.remove('is-loading')
+  }
+}
+
+onMounted(() => {
+  if (alreadyDone || sessionStorage.getItem(LOADER_SESSION_KEY) === '1') {
+    markReady()
     return
   }
 
   const started = Date.now()
-  const maxWait = props.minDuration + 900
+  const maxWait = props.minDuration + 1500
 
   const dismiss = () => {
-    visible.value = false
-    document.documentElement.classList.add('site-ready')
-    document.documentElement.classList.remove('is-loading')
+    markReady()
     sessionStorage.setItem(LOADER_SESSION_KEY, '1')
   }
 
@@ -85,7 +101,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  document.documentElement.classList.remove('is-loading')
+  if (import.meta.client) {
+    document.documentElement.classList.remove('is-loading')
+  }
 })
 </script>
 

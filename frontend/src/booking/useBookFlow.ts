@@ -132,6 +132,10 @@ export function useBookFlow(handoff: Ref<ResolvedBookHandoff | null>, apiBaseUrl
     selectedSlot.value = slot
   }
 
+  function retryLoad() {
+    void loadCalendar()
+  }
+
   watch(handoff, () => {
     if (handoff.value) void loadCalendar()
     else {
@@ -163,5 +167,7 @@ export function useBookFlow(handoff: Ref<ResolvedBookHandoff | null>, apiBaseUrl
     canContinue,
     selectDate,
     selectSlot,
+    retryLoad,
+    loadCalendar,
   }
 }

@@ -30,7 +30,7 @@
         @submit.prevent="retryStk"
       >
         <label>
-          M-Pesa phone (must match the number used at booking)
+          M-Pesa phone (same number as at booking)
           <input
             v-model="retryPhone"
             autocomplete="tel"
@@ -47,7 +47,7 @@
 
       <div class="book-status__actions">
         <SiteButton to="/" variant="outline">Home</SiteButton>
-        <SiteButton to="/book" variant="primary">Book again</SiteButton>
+        <SiteButton to="/services" variant="primary">Book again</SiteButton>
       </div>
     </section>
   </main>
@@ -103,7 +103,7 @@ const headline = computed(() => {
   }
   if (snapshot.value.paymentStatus === 'payment_failed') return 'Payment not completed'
   if (snapshot.value.paymentStatus === 'payment_pending') return 'Complete M-Pesa payment'
-  if (snapshot.value.bookingStatus === 'held') return 'Hold active'
+  if (snapshot.value.bookingStatus === 'held') return 'Finish payment to confirm'
   return 'Booking update'
 })
 
@@ -154,7 +154,7 @@ async function retryStk() {
   if (!canRetryStk.value || retrying.value) return
   const checkoutId = checkoutPublicId.value || readCheckoutIdFromSession()
   if (!checkoutId) {
-    stkMessage.value = 'Open this page from the booking flow to retry payment, or book again.'
+    stkMessage.value = 'Payment retry isn’t available here. Book again or contact the studio.'
     return
   }
   retrying.value = true
