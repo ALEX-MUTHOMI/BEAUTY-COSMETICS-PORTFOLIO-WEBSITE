@@ -5,54 +5,48 @@
         <p class="label">{{ pageIntro.eyebrow }}</p>
         <h1>{{ pageIntro.title }}</h1>
         <p class="services-hero__lead">{{ pageIntro.lead }}</p>
-        <p class="services-hero__note">{{ pageIntro.note }}</p>
       </div>
     </header>
 
-    <div class="services-day-banner" role="note" aria-label="Booking days">
-      <div class="services-day-banner__inner">
-        <p class="services-day-banner__item services-day-banner__item--package">
-          <strong>Tue &amp; Wed</strong>
-          <span>Full packages only</span>
-        </p>
-        <p class="services-day-banner__divider" aria-hidden="true">|</p>
-        <p class="services-day-banner__item services-day-banner__item--single">
-          <strong>{{ SINGLE_DAYS_LABEL }}</strong>
-          <span>Single treatments</span>
-        </p>
-      </div>
-    </div>
-
-    <nav class="services-paths" aria-label="Choose how you want to book">
-      <a
-        href="#full-packages"
-        class="services-path services-path--primary"
-        @click="scrollToSection('full-packages', $event)"
-      >
-        <span class="services-path__icon" aria-hidden="true">◆</span>
-        <span class="services-path__copy">
-          <strong>Full package</strong>
-          <span>Tue &amp; Wed · facial, wax, massage &amp; makeup in one visit</span>
-        </span>
-      </a>
-      <a
-        href="#single-sessions"
-        class="services-path"
-        @click="scrollToSection('single-sessions', $event)"
-      >
-        <span class="services-path__icon" aria-hidden="true">◇</span>
-        <span class="services-path__copy">
-          <strong>Single treatment</strong>
-          <span>{{ SINGLE_DAYS_LABEL }} · one service (wax, massage, facial or makeup)</span>
-        </span>
-      </a>
-    </nav>
+    <section class="services-chooser" aria-label="Choose how you want to book">
+      <p class="services-chooser__days" role="note" aria-label="Booking days">
+        <span>Tue &amp; Wed packages</span>
+        <span class="services-chooser__days-sep" aria-hidden="true">·</span>
+        <span>{{ SINGLE_DAYS_LABEL }} singles</span>
+      </p>
+      <nav class="services-paths">
+        <a
+          href="#full-packages"
+          class="services-path services-path--primary"
+          @click="scrollToSection('full-packages', $event)"
+        >
+          <span class="services-path__icon" aria-hidden="true">◆</span>
+          <span class="services-path__copy">
+            <strong>Full package</strong>
+            <span>Facial, wax, massage &amp; makeup</span>
+          </span>
+        </a>
+        <a
+          href="#single-sessions"
+          class="services-path"
+          @click="scrollToSection('single-sessions', $event)"
+        >
+          <span class="services-path__icon" aria-hidden="true">◇</span>
+          <span class="services-path__copy">
+            <strong>Single treatment</strong>
+            <span>One service of your choice</span>
+          </span>
+        </a>
+      </nav>
+    </section>
 
     <section id="full-packages" class="services-packages">
       <header class="services-section-head">
-        <p class="label">Package days</p>
-        <h2>Full visits, Tuesday &amp; Wednesday</h2>
-        <p class="services-section-head__sub">{{ packageDaySubhead }}</p>
+        <p class="label">Full packages</p>
+        <h2>Complete visits in one booking</h2>
+        <p class="services-section-head__sub">
+          Every treatment in one private room, without rushing between appointments.
+        </p>
       </header>
       <div class="services-packages__grid">
         <MellisPackageCard
@@ -65,7 +59,7 @@
           :featured="pkg.featured"
           :badge="pkg.badge"
           :days-label="pkg.daysLabel"
-          :cta-label="pkg.ctaLabel"
+          :cta-label="pkg.ctaLabel || 'Book this package'"
           :cta-to="bookHrefForPackageName(pkg.name)"
         />
       </div>
@@ -74,138 +68,118 @@
     <section id="single-sessions" class="services-packages services-packages--singles">
       <header class="services-section-head">
         <p class="label">Single treatments</p>
-        <h2>One service at a time</h2>
+        <h2>Select a treatment</h2>
         <p class="services-section-head__sub">
-          {{ SINGLE_DAYS_LABEL }}. Pick a facial, wax, massage or makeup when that is all you need.
+          Choose a category, pick the exact treatment you want, then book.
         </p>
       </header>
-      <div class="services-packages__grid services-packages__grid--singles">
-        <MellisPackageCard
-          v-for="treatment in singleTreatments"
-          :key="treatment.name"
-          :name="treatment.name"
-          :text="treatment.text"
-          :price="treatment.price"
-          :includes="treatment.includes"
-          :days-label="treatment.daysLabel"
-          :cta-label="treatment.ctaLabel"
-          :details-to="categoryHrefForSingle(treatment.name)"
-          details-label="See all options and prices"
-        />
-      </div>
 
-      <div id="treatments" class="services-picker" aria-label="All treatments and prices">
-        <header class="services-section-head services-section-head--compact">
-          <p class="label">All treatments &amp; prices</p>
-          <h2>Pick your exact treatment</h2>
-          <p class="services-section-head__sub">
-            Need something specific? Choose a category, tap a card to select, then book.
-          </p>
-          <p class="services-menu-upsell">
-            Visiting Tue or Wed?
-            <a href="#full-packages" @click="scrollToSection('full-packages', $event)">
-              See full packages
-            </a>
-            — several of these treatments are included from KES 12,000.
-          </p>
-        </header>
-
-      <div
-        class="services-tabs"
-        role="tablist"
-        aria-label="Service categories"
-      >
-        <button
-          v-for="category in serviceCategories"
-          :id="`tab-${category.id}`"
-          :key="category.id"
-          type="button"
-          role="tab"
-          class="services-tab"
-          :class="{ 'services-tab--active': activeCategoryId === category.id }"
-          :aria-selected="activeCategoryId === category.id"
-          :aria-controls="`panel-${category.id}`"
-          @click="selectCategory(category.id)"
+      <div id="treatments" class="services-picker" aria-label="Treatments and prices">
+        <div
+          class="services-tabs"
+          role="tablist"
+          aria-label="Service categories"
         >
-          <span class="services-tab__icon-wrap" aria-hidden="true">
-            <img :src="category.icon" alt="" class="services-tab__icon" width="22" height="22" />
-          </span>
-          <span class="services-tab__label">{{ category.cardTitle }}</span>
-        </button>
-      </div>
-
-      <div class="services-panel-wrap">
-        <Transition name="panel-fade" mode="out-in">
-          <div
-            :id="`panel-${activeCategory.id}`"
-            :key="activeCategoryId"
-            role="tabpanel"
-            class="services-panel"
-            :class="`services-panel--${activeCategory.id}`"
-            :aria-labelledby="`tab-${activeCategory.id}`"
+          <button
+            v-for="category in serviceCategories"
+            :id="`tab-${category.id}`"
+            :key="category.id"
+            type="button"
+            role="tab"
+            class="services-tab"
+            :class="{ 'services-tab--active': activeCategoryId === category.id }"
+            :aria-selected="activeCategoryId === category.id"
+            :aria-controls="`panel-${category.id}`"
+            @click="selectCategory(category.id)"
           >
-            <div class="services-panel__inner">
-              <div class="services-panel__intro">
-                <div class="services-panel__visual">
-                  <img
-                    :src="activeCategory.image"
-                    :alt="activeCategory.imageAlt"
-                    class="services-panel__photo"
-                    loading="lazy"
-                    decoding="async"
-                    width="400"
-                    height="400"
+            <span class="services-tab__icon-wrap" aria-hidden="true">
+              <img :src="category.icon" alt="" class="services-tab__icon" width="22" height="22" />
+            </span>
+            <span class="services-tab__label">{{ category.cardTitle }}</span>
+          </button>
+        </div>
+
+        <div class="services-panel-wrap">
+          <Transition name="panel-fade" mode="out-in">
+            <div
+              :id="`panel-${activeCategory.id}`"
+              :key="activeCategoryId"
+              role="tabpanel"
+              class="services-panel"
+              :class="`services-panel--${activeCategory.id}`"
+              :aria-labelledby="`tab-${activeCategory.id}`"
+            >
+              <div class="services-panel__inner">
+                <div class="services-panel__intro">
+                  <div class="services-panel__visual">
+                    <img
+                      :src="activeCategory.image"
+                      :alt="activeCategory.imageAlt"
+                      class="services-panel__photo"
+                      loading="lazy"
+                      decoding="async"
+                      width="400"
+                      height="400"
+                    />
+                    <span class="services-panel__icon-wrap" aria-hidden="true">
+                      <img :src="activeCategory.icon" alt="" width="26" height="26" />
+                    </span>
+                  </div>
+                  <div class="services-panel__copy">
+                    <p class="label">{{ activeCategory.daysNote }}</p>
+                    <h2>{{ activeCategory.name }}</h2>
+                    <p class="services-panel__text">{{ activeCategory.intro }}</p>
+                    <p class="services-panel__hint">
+                      Tap a treatment below to select it, then book your visit.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="services-panel__grid">
+                  <ServiceTreatmentCard
+                    v-for="(treatment, index) in activeCategory.treatments"
+                    :key="treatment.name"
+                    :name="treatment.name"
+                    :description="treatment.description"
+                    :duration="treatment.duration"
+                    :price="treatment.price"
+                    :highlights="treatment.highlights"
+                    :index="index"
+                    :variant="activeCategory.id"
+                    :selected="selectedTreatmentName === treatment.name"
+                    @select="selectTreatment(treatment.name)"
                   />
-                  <span class="services-panel__icon-wrap" aria-hidden="true">
-                    <img :src="activeCategory.icon" alt="" width="26" height="26" />
-                  </span>
                 </div>
-                <div class="services-panel__copy">
-                  <p class="label">{{ activeCategory.daysNote }}</p>
-                  <h2>{{ activeCategory.name }}</h2>
-                  <p class="services-panel__text">{{ activeCategory.intro }}</p>
-                  <p class="services-panel__hint">
-                    Tap a treatment below to select it, then book your visit.
+
+                <div class="services-panel__book" :class="{ 'services-panel__book--ready': selectedTreatmentName }">
+                  <p v-if="selectedTreatmentName" class="services-panel__chosen">
+                    You selected <strong>{{ selectedTreatmentName }}</strong>
                   </p>
+                  <p v-else class="services-panel__chosen services-panel__chosen--muted">
+                    Select a treatment above to continue
+                  </p>
+                  <SiteButton
+                    :to="treatmentBookHref"
+                    variant="primary"
+                    class="services-panel__cta"
+                    :class="{ 'services-panel__cta--disabled': !selectedTreatmentName }"
+                  >
+                    {{
+                      selectedTreatmentName
+                        ? `Book ${selectedTreatmentName}`
+                        : LANDING_PRIMARY_CTA
+                    }}
+                  </SiteButton>
                 </div>
-              </div>
-
-              <div class="services-panel__grid">
-                <ServiceTreatmentCard
-                  v-for="(treatment, index) in activeCategory.treatments"
-                  :key="treatment.name"
-                  :name="treatment.name"
-                  :description="treatment.description"
-                  :duration="treatment.duration"
-                  :price="treatment.price"
-                  :highlights="treatment.highlights"
-                  :index="index"
-                  :variant="activeCategory.id"
-                  :selected="selectedTreatmentName === treatment.name"
-                  @select="selectTreatment(treatment.name)"
-                />
-              </div>
-
-              <div class="services-panel__book" :class="{ 'services-panel__book--ready': selectedTreatmentName }">
-                <p v-if="selectedTreatmentName" class="services-panel__chosen">
-                  You selected <strong>{{ selectedTreatmentName }}</strong>
-                </p>
-                <p v-else class="services-panel__chosen services-panel__chosen--muted">
-                  Select a treatment above to continue
-                </p>
-                <SiteButton
-                  :to="treatmentBookHref"
-                  variant="primary"
-                  class="services-panel__cta"
-                  :class="{ 'services-panel__cta--disabled': !selectedTreatmentName }"
-                >
-                  {{ LANDING_PRIMARY_CTA }}
-                </SiteButton>
               </div>
             </div>
-          </div>
-        </Transition>
-      </div>
+          </Transition>
+        </div>
+
+        <p class="services-packages-link">
+          Prefer a full visit?
+          <a href="#full-packages" @click="scrollToSection('full-packages', $event)">See packages</a>
+        </p>
       </div>
     </section>
 
@@ -214,7 +188,8 @@
         <h2>Ready when you are</h2>
         <p>Full package or single treatment — book online and pay to confirm your slot.</p>
         <div class="services-cta__actions">
-          <SiteButton to="/book" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+          <SiteButton to="/services#full-packages" variant="primary">View packages</SiteButton>
+          <SiteButton to="/services#single-sessions" variant="outline">View singles</SiteButton>
         </div>
       </div>
     </section>
@@ -225,9 +200,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import {
   LANDING_PRIMARY_CTA,
-  packageDaySubhead,
   packages,
-  singleTreatments,
   SINGLE_DAYS_LABEL,
 } from '@/landing/landingContent'
 import {
@@ -235,7 +208,6 @@ import {
   serviceCategories,
 } from '@/landing/servicesContent'
 import {
-  categoryHrefForSingle,
   isServiceCategoryId,
   parseServicesHash,
   type ServiceCategoryId,
@@ -369,9 +341,8 @@ useHead({
 .services-hero {
   position: relative;
   overflow: hidden;
-  padding: clamp(1.75rem, 5vh, 3.25rem) max(1rem, env(safe-area-inset-left)) 1.25rem;
+  padding: 1rem max(1rem, env(safe-area-inset-left)) 0.5rem;
   background: #fff;
-  border-bottom: 1px solid var(--color-line);
 }
 
 .services-hero::before {
@@ -403,106 +374,61 @@ useHead({
 }
 
 .services-hero h1 {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.35rem;
   font-family: var(--font-display);
-  font-size: clamp(2rem, 5vw, 2.85rem);
+  font-size: clamp(1.65rem, 4.5vw, 2.45rem);
   font-weight: 400;
   line-height: 1.2;
   color: var(--color-ink);
 }
 
 .services-hero__lead {
-  margin: 0 0 0.5rem;
-  font: 400 1.05rem/1.75 var(--font-body);
+  margin: 0;
+  font: 400 0.95rem/1.55 var(--font-body);
   color: var(--color-muted);
 }
 
-.services-hero__note {
-  margin: 0;
-  font: 600 0.82rem var(--font-body);
-  letter-spacing: 0.03em;
-  color: var(--color-ink);
-}
-
-.services-day-banner {
+/* One chooser: day caption + path tiles */
+.services-chooser {
   width: var(--container);
-  margin: 0 auto;
-  padding: 0.75rem max(1rem, env(safe-area-inset-left)) 0;
-}
-
-.services-day-banner__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.65rem;
-  padding: 0.85rem 1rem;
+  margin: 0.35rem auto 0;
+  padding: 0.75rem 0.85rem;
   border: 1px solid var(--color-line);
   border-radius: 2px;
-  background: #fafafa;
+  background: #fff;
 }
 
-.services-day-banner__item {
+.services-chooser__days {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.1rem;
-  margin: 0;
+  justify-content: center;
+  gap: 0.25rem 0.4rem;
+  margin: 0 0 0.65rem;
+  font: 500 0.72rem/1.4 var(--font-body);
+  letter-spacing: 0.02em;
+  color: var(--color-muted);
   text-align: center;
 }
 
-.services-day-banner__item strong {
-  font: 700 0.78rem var(--font-body);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-ink);
-}
-
-.services-day-banner__item span {
-  font: 500 0.78rem var(--font-body);
-  color: var(--color-muted);
-}
-
-.services-day-banner__item--package strong {
-  color: var(--color-rose-dark);
-}
-
-.services-day-banner__divider {
-  display: none;
-  margin: 0;
+.services-chooser__days-sep {
   color: var(--color-line);
-  font-weight: 300;
 }
 
-@media (min-width: 480px) {
-  .services-day-banner__inner {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem 1rem;
-  }
-
-  .services-day-banner__divider {
-    display: block;
-  }
-}
-
-/* Booking path navigator */
 .services-paths {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.65rem;
-  width: var(--container);
-  margin: 0 auto;
-  padding: 1rem max(1rem, env(safe-area-inset-left)) 0.5rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
 }
 
 .services-path {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  min-height: 3.25rem;
-  padding: 0.95rem 1rem;
+  gap: 0.55rem;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.7rem;
   border: 1px solid var(--color-line);
   border-radius: 2px;
   background: #fff;
@@ -553,8 +479,8 @@ useHead({
 }
 
 .services-path__icon {
+  display: none;
   flex-shrink: 0;
-  display: grid;
   place-items: center;
   width: 2.25rem;
   height: 2.25rem;
@@ -567,24 +493,25 @@ useHead({
 .services-path__copy {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.1rem;
   min-width: 0;
 }
 
 .services-path__copy strong {
-  font: 700 0.88rem var(--font-body);
-  letter-spacing: 0.04em;
+  font: 700 0.8rem var(--font-body);
+  letter-spacing: 0.03em;
   color: var(--color-ink);
 }
 
 .services-path__copy span {
-  font: 400 0.8rem/1.4 var(--font-body);
+  font: 400 0.72rem/1.35 var(--font-body);
   color: var(--color-muted);
 }
 
 /* Package sections — unified neutral sections, no heavy pink blocks */
 .services-packages {
-  padding: clamp(1.75rem, 4vh, 3rem) max(1rem, env(safe-area-inset-left));
+  padding: clamp(1.75rem, 4vh, 2.75rem) max(1rem, env(safe-area-inset-left));
+  margin-top: 0.5rem;
   background: #fff;
   scroll-margin-top: calc(var(--header-height) + 0.5rem);
 }
@@ -596,48 +523,45 @@ useHead({
 
 .services-packages--singles .services-picker {
   width: var(--container);
-  margin: 1.5rem auto 0;
+  margin: 0.85rem auto 0;
   padding: 0 0 0.5rem;
   scroll-margin-top: calc(var(--header-height) + 0.5rem);
 }
 
-.services-menu-upsell {
-  margin: 1rem 0 0;
-  font: 500 0.88rem/1.6 var(--font-body);
+.services-packages-link {
+  margin: 1.25rem 0 0;
+  text-align: center;
+  font: 500 0.88rem/1.5 var(--font-body);
   color: var(--color-muted);
 }
 
-.services-menu-upsell a {
+.services-packages-link a {
   font-weight: 700;
   color: var(--color-rose-dark);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-.services-menu-upsell a:hover {
+.services-packages-link a:hover {
   color: var(--color-rose);
 }
 
-.services-menu-upsell a:focus-visible {
+.services-packages-link a:focus-visible {
   outline: 2px solid var(--color-rose);
   outline-offset: 2px;
 }
 
 .services-section-head {
   width: var(--container);
-  margin: 0 auto 0.5rem;
+  margin: 0 auto 0.35rem;
   max-width: 40rem;
   text-align: center;
 }
 
-.services-section-head--compact {
-  margin-bottom: 1rem;
-}
-
 .services-section-head h2 {
-  margin: 0 0 0.65rem;
+  margin: 0 0 0.4rem;
   font-family: var(--font-display);
-  font-size: clamp(1.55rem, 3.5vw, 2rem);
+  font-size: clamp(1.45rem, 3.2vw, 1.9rem);
   font-weight: 400;
   line-height: 1.25;
   color: var(--color-ink);
@@ -645,17 +569,17 @@ useHead({
 
 .services-section-head__sub {
   margin: 0;
-  font: 400 0.95rem/1.7 var(--font-body);
+  font: 400 0.9rem/1.55 var(--font-body);
   color: var(--color-muted);
 }
 
 .services-packages__grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
+  gap: 1.25rem;
   width: var(--container);
   margin: 0 auto;
-  padding-top: 1.25rem;
+  padding-top: 0.85rem;
   align-items: stretch;
 }
 
@@ -939,18 +863,36 @@ useHead({
 
 .services-cta__actions {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: 0.75rem;
 }
 
+.services-cta__actions :deep(.site-btn) {
+  min-width: 11rem;
+}
+
 @media (max-width: 767px) {
-  .services-hero h1 {
-    font-size: clamp(1.65rem, 7vw, 2rem);
+  .services-hero {
+    padding: 0.85rem max(1rem, env(safe-area-inset-left)) 0.35rem;
   }
 
-  .services-path__copy span {
-    font-size: 0.78rem;
+  .services-hero h1 {
+    font-size: clamp(1.5rem, 6.5vw, 1.85rem);
+  }
+
+  .services-chooser {
+    margin-top: 0.25rem;
+    margin-left: max(1rem, env(safe-area-inset-left));
+    margin-right: max(1rem, env(safe-area-inset-right));
+    width: auto;
+    max-width: none;
+  }
+
+  .services-packages {
+    margin-top: 1.25rem;
+    padding-top: 1.75rem;
   }
 
   .services-packages__grid {
@@ -967,9 +909,45 @@ useHead({
 }
 
 @media (min-width: 640px) {
+  .services-hero {
+    padding: clamp(1.25rem, 3.5vh, 2rem) max(1rem, env(safe-area-inset-left)) 0.75rem;
+  }
+
+  .services-chooser {
+    margin-top: 0.65rem;
+    padding: 1rem 1.1rem;
+  }
+
+  .services-chooser__days {
+    margin-bottom: 0.85rem;
+    font-size: 0.78rem;
+  }
+
   .services-paths {
-    grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
+  }
+
+  .services-path {
+    min-height: 3.25rem;
+    padding: 0.9rem 1rem;
+    gap: 0.85rem;
+  }
+
+  .services-path__icon {
+    display: grid;
+  }
+
+  .services-path__copy strong {
+    font-size: 0.88rem;
+  }
+
+  .services-path__copy span {
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  .services-packages {
+    margin-top: 1.5rem;
   }
 
   .services-tabs {

@@ -32,12 +32,12 @@ test.describe('Services page security and IA', () => {
 
     await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Packages' }).click()
     await expect(page).toHaveURL(/\/services#full-packages/)
-    await expect(page.getByRole('heading', { name: /Full visits, Tuesday/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Complete visits in one booking/i })).toBeVisible()
 
     await page.goto(BASE_URL, { waitUntil: 'networkidle' })
     await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Singles' }).click()
     await expect(page).toHaveURL(/\/services#single-sessions/)
-    await expect(page.getByRole('heading', { name: /One service at a time/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /^Select a treatment$/i })).toBeVisible()
   })
 
   test('serves strict security headers on services page', async ({ request }) => {

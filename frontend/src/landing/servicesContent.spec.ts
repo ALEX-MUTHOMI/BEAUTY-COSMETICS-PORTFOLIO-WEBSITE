@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  getSingleTreatmentHighlights,
   SERVICES_PAGE_INTRO,
   serviceCategories,
   validateServiceCategories,
 } from './servicesContent'
+import { bookHrefForTreatment } from './bookingHandoff'
+import { SERVICE_CATEGORY_IDS } from './servicesNavigation'
 
 describe('servicesContent', () => {
   it('defines four service categories with detailed treatments', () => {
@@ -22,6 +25,24 @@ describe('servicesContent', () => {
     expect(serviceCategories.find((c) => c.id === 'massage')?.treatments.length).toBeGreaterThanOrEqual(3)
     expect(serviceCategories.find((c) => c.id === 'waxing')?.treatments.length).toBeGreaterThanOrEqual(5)
     expect(serviceCategories.find((c) => c.id === 'makeup')?.treatments.length).toBeGreaterThanOrEqual(3)
-    expect(SERVICES_PAGE_INTRO.note.toLowerCase()).toMatch(/tue|package/)
+    expect(SERVICES_PAGE_INTRO.title).toMatch(/how would you like to visit/i)
+    expect(SERVICES_PAGE_INTRO.lead.toLowerCase()).toMatch(/private/)
+    expect(SERVICES_PAGE_INTRO).not.toHaveProperty('note')
+  })
+
+  it('surfaces one directly-bookable specific treatment per category', () => {
+    const highlights = getSingleTreatmentHighlights()
+    expect(highlights).toHaveLength(serviceCategories.length)
+    expect(highlights.map((h) => h.category)).toEqual([...SERVICE_CATEGORY_IDS])
+
+    for (const highlight of highlights) {
+      const category = serviceCategories.find((c) => c.id === highlight.category)
+      expect(category?.treatments.some((t) => t.name === highlight.name)).toBe(true)
+
+      // Each highlight must deep-link to a clean /book/{category}/{treatment} path,
+      // never fall back to the generic services entry.
+      const href = bookHrefForTreatment(highlight.category, highlight.name)
+      expect(href.startsWith(`/book/${highlight.category}/`)).toBe(true)
+    }
   })
 })

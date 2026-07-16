@@ -4,6 +4,7 @@ import {
   SINGLE_DAYS_LABEL,
   assertSafeDisplayText,
 } from './landingContent'
+import { SERVICES_ROUTES, type ServiceCategoryId } from './servicesNavigation'
 
 export interface ServiceTreatment {
   name: string
@@ -28,8 +29,7 @@ export interface ServiceCategory {
 export const SERVICES_PAGE_INTRO = {
   eyebrow: LANDING_LOCATION_LABEL,
   title: 'How would you like to visit?',
-  lead: 'Full packages on Tuesday and Wednesday, or a single treatment Mon · Thu – Sat. Every visit is in a private, calm room.',
-  note: `Full packages: Tue & Wed only. Single treatments: ${SINGLE_DAYS_LABEL}.`,
+  lead: 'Every visit is in a private, calm room.',
 }
 
 export const serviceCategories: ServiceCategory[] = [
@@ -189,7 +189,7 @@ export const serviceCategories: ServiceCategory[] = [
       {
         name: 'Full body wax',
         description:
-          'Legs, underarms, brows and chosen body areas in one visit. Included in Tuesday & Wednesday packages.',
+          'Legs, underarms, brows and chosen body areas in one visit. Also included in full packages.',
         duration: '90 min',
         price: 'From KES 6,500',
         highlights: ['Package favourite', 'Head-to-toe smooth', 'Single appointment'],
@@ -243,12 +243,49 @@ export const serviceCategories: ServiceCategory[] = [
   },
 ]
 
+export interface SingleTreatmentHighlight {
+  category: ServiceCategoryId
+  categoryName: string
+  name: string
+  description: string
+  duration: string
+  price: string
+  highlights: string[]
+}
+
+/** One marquee, directly-bookable treatment per category for the homepage singles rail. */
+const SINGLE_HIGHLIGHT_PICKS: Record<string, string> = {
+  facials: 'Deep cleansing facial',
+  massage: 'Back, neck & shoulders',
+  waxing: 'Full leg',
+  makeup: 'Soft glam',
+}
+
+export function getSingleTreatmentHighlights(): SingleTreatmentHighlight[] {
+  return serviceCategories.map((category) => {
+    const pick = SINGLE_HIGHLIGHT_PICKS[category.id]
+    const treatment =
+      category.treatments.find((t) => t.name === pick) ?? category.treatments[0]!
+    return {
+      category: category.id as ServiceCategoryId,
+      categoryName: category.cardTitle,
+      name: treatment.name,
+      description: treatment.description,
+      duration: treatment.duration,
+      price: treatment.price,
+      highlights: treatment.highlights,
+    }
+  })
+}
+
 export function getServiceSummaries() {
   return serviceCategories.map((category) => ({
+    id: category.id,
     name: category.cardTitle,
     text: category.intro.split('.')[0] + '.',
     image: category.image,
     icon: category.icon,
+    ctaTo: `${SERVICES_ROUTES.page}#${category.id}`,
   }))
 }
 

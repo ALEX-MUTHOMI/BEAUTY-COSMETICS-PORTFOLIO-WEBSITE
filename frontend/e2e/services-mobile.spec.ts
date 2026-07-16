@@ -12,15 +12,37 @@ test.describe('Services page mobile UX', () => {
     await expect(page.locator('.mobile-book-bar')).toBeVisible()
     await expect(page.getByRole('heading', { name: /How would you like to visit/i, level: 1 })).toBeVisible()
     await expect(page.getByRole('note', { name: 'Booking days' })).toBeVisible()
+    await expect(page.locator('.services-chooser')).toBeVisible()
   })
 
-  test('uses single-column package grids and 2x2 category tabs', async ({ page }) => {
+  test('keeps both path tiles in the first viewport', async ({ page }) => {
+    await page.goto(`${BASE_URL}/services`, { waitUntil: 'networkidle' })
+
+    const fullPackage = page.getByRole('link', { name: /Full package/i })
+    const single = page.getByRole('link', { name: /Single treatment/i })
+    await expect(fullPackage).toBeVisible()
+    await expect(single).toBeVisible()
+
+    const viewport = page.viewportSize()
+    expect(viewport).toBeTruthy()
+    const fullBox = await fullPackage.boundingBox()
+    const singleBox = await single.boundingBox()
+    expect(fullBox).toBeTruthy()
+    expect(singleBox).toBeTruthy()
+
+    // Side-by-side tiles: both visible without scrolling past a full-screen first card
+    expect(fullBox!.y + fullBox!.height).toBeLessThanOrEqual(viewport!.height)
+    expect(singleBox!.y + singleBox!.height).toBeLessThanOrEqual(viewport!.height)
+    expect(Math.abs(fullBox!.y - singleBox!.y)).toBeLessThan(24)
+    expect(fullBox!.height).toBeGreaterThanOrEqual(44)
+    expect(singleBox!.height).toBeGreaterThanOrEqual(44)
+  })
+
+  test('shows 2x2 category tabs under a single singles header', async ({ page }) => {
     await page.goto(`${BASE_URL}/services#single-sessions`, { waitUntil: 'networkidle' })
 
-    const singlesGrid = page.locator('.services-packages__grid--singles')
-    await singlesGrid.scrollIntoViewIfNeeded()
-    const gridCols = await singlesGrid.evaluate((el) => getComputedStyle(el).gridTemplateColumns)
-    expect(gridCols.split(' ').length).toBe(1)
+    await expect(page.getByRole('heading', { name: /^Select a treatment$/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Pick your exact treatment/i })).toHaveCount(0)
 
     const tabs = page.getByRole('tablist', { name: 'Service categories' })
     await tabs.scrollIntoViewIfNeeded()
@@ -44,22 +66,18 @@ test.describe('Services page mobile UX', () => {
     await expect(page.locator('.services-panel__book--ready')).toBeVisible()
   })
 
-  test('single card details link opens allowlisted waxing tab', async ({ page }) => {
-    await page.goto(`${BASE_URL}/services#single-sessions`, { waitUntil: 'networkidle' })
+  test('waxing tab deep-link selects the waxing category', async ({ page }) => {
+    await page.goto(`${BASE_URL}/services#waxing`, { waitUntil: 'networkidle' })
 
-    const waxingCard = page.locator('.mellis-card').filter({
-      has: page.getByRole('heading', { name: 'Waxing', level: 3 }),
-    })
-    await waxingCard.getByRole('link', { name: /See all options and prices/i }).click()
-    await expect(page).toHaveURL(/#waxing/)
     await expect(page.getByRole('tab', { name: 'Waxing', selected: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Waxing/i, level: 2 })).toBeVisible()
   })
 
-  test('path cards meet minimum touch height', async ({ page }) => {
+  test('path tiles meet minimum touch height', async ({ page }) => {
     await page.goto(`${BASE_URL}/services`, { waitUntil: 'networkidle' })
 
     const fullPackagePath = page.getByRole('link', { name: /Full package/i })
     const box = await fullPackagePath.boundingBox()
-    expect(box?.height ?? 0).toBeGreaterThanOrEqual(52)
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)
   })
 })
