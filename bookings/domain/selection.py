@@ -23,6 +23,7 @@ class BookableSelection:
     name: str
     duration_minutes: int
     policy_profile: PolicyProfile
+    turnaround_minutes: int = 0
 
     @classmethod
     def from_parts(
@@ -33,6 +34,7 @@ class BookableSelection:
         slug: str,
         name: str,
         duration_minutes: int,
+        turnaround_minutes: int = 0,
     ) -> BookableSelection:
         return cls(
             selection_type=selection_type,
@@ -41,6 +43,7 @@ class BookableSelection:
             name=name,
             duration_minutes=duration_minutes,
             policy_profile=POLICY_PROFILE_BY_SELECTION_TYPE[selection_type],
+            turnaround_minutes=max(0, int(turnaround_minutes or 0)),
         )
 
     def to_api_payload(self) -> dict:
@@ -50,6 +53,7 @@ class BookableSelection:
             "slug": self.slug,
             "name": self.name,
             "duration_minutes": self.duration_minutes,
+            "turnaround_minutes": self.turnaround_minutes,
         }
 
     @property

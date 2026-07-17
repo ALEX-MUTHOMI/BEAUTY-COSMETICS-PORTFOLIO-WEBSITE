@@ -166,6 +166,8 @@ class BookingHoldService:
                     resource=resource,
                     selection_type="normal",
                     duration_minutes=service.duration_minutes + service.buffer_after_minutes,
+                    yield_duration_minutes=service.duration_minutes,
+                    turnaround_minutes=service.buffer_before_minutes + service.buffer_after_minutes,
                 )
                 if not _available_for_start(service, resource, starts_at_utc):
                     raise ValidationError(GENERIC_UNAVAILABLE)
@@ -260,6 +262,8 @@ class BookingHoldService:
                     resource=resource,
                     selection_type="normal",
                     duration_minutes=summary.total_duration_minutes + summary.buffer_after_minutes,
+                    yield_duration_minutes=summary.total_duration_minutes,
+                    turnaround_minutes=summary.buffer_before_minutes + summary.buffer_after_minutes,
                 )
                 if not cls._bundle_available_for_start(summary, resource, starts_at_utc):
                     raise ValidationError(GENERIC_UNAVAILABLE)
@@ -322,6 +326,8 @@ class BookingHoldService:
                     selection_type="full_package",
                     package=summary.full_package,
                     duration_minutes=summary.total_duration_minutes + summary.buffer_after_minutes,
+                    yield_duration_minutes=summary.total_duration_minutes,
+                    turnaround_minutes=summary.buffer_before_minutes + summary.buffer_after_minutes,
                 )
                 if not cls._full_package_available_for_start(summary, resource, starts_at_utc):
                     raise ValidationError(GENERIC_UNAVAILABLE)

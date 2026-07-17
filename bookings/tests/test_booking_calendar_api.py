@@ -104,8 +104,8 @@ def test_calendar_shows_capacity_remaining_on_available_normal_day():
 
     day = payload["days"][0]
     assert day["status"] == STATUS_AVAILABLE
-    assert day["capacity"]["max"] == 5
-    assert day["capacity"]["remaining"] == 5
+    assert day["capacity"]["max"] == 12
+    assert day["capacity"]["remaining"] == 12
     assert day["slot_count"] > 0
 
 
@@ -113,17 +113,19 @@ def test_calendar_shows_capacity_remaining_on_available_normal_day():
 def test_calendar_marks_day_capacity_full_when_max_clients_reached():
     service, resource, customer = create_service_resource_customer()
     monday = _future_weekday(0)
-    for hour in range(5):
+    # 60m service → dynamic max 12
+    for hour in range(12):
         create_booking(
             service=service,
             resource=resource,
             customer_profile=customer,
             starts_at=timezone.make_aware(
-                timezone.datetime.combine(monday, timezone.datetime.min.time().replace(hour=7 + hour)),
+                timezone.datetime.combine(monday, timezone.datetime.min.time().replace(hour=7 + (hour % 12))),
                 timezone.get_current_timezone(),
             ),
             status=Booking.Status.CONFIRMED,
             local_booking_date=monday,
+            idempotency_key=f"cal-full-{monday.isoformat()}-{hour}",
         )
 
     payload = BookingCalendarService.build_calendar(

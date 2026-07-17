@@ -30,9 +30,26 @@ def test_calendar_policy_marks_single_weekdays_offered():
     policy = CalendarPolicy.for_date(selection=selection, local_date=monday)
     assert policy.offered is True
     assert policy.day_type == BookingDayPolicy.DayType.NORMAL
-    assert policy.max_clients == 5
+    # 60m + 0 turnaround → floor(720/60)=12 dynamic yield
+    assert policy.max_clients == 12
     assert policy.normal_bookings_allowed is True
     assert policy.full_package_allowed is False
+
+
+@pytest.mark.django_db
+def test_calendar_policy_dynamic_max_for_short_single():
+    selection = BookableSelection(
+        selection_type="normal",
+        public_id=UUID("00000000-0000-4000-8000-000000000099"),
+        slug="half-leg",
+        name="Half leg",
+        duration_minutes=45,
+        policy_profile="single",
+        turnaround_minutes=15,
+    )
+    monday = date(2026, 7, 6)
+    policy = CalendarPolicy.for_date(selection=selection, local_date=monday)
+    assert policy.max_clients == 12
 
 
 @pytest.mark.django_db

@@ -7,6 +7,7 @@ from datetime import date, time
 
 from bookings.domain.calendar import weekdays_for_policy_profile
 from bookings.domain.selection import BookableSelection, PolicyProfile
+from bookings.domain.yield_scheduling import resolve_day_client_cap
 from bookings.models import BookingDayPolicy
 from bookings.services.day_policy import default_policy_for_date
 from bookings.services.service_day_rules import lookup_service_day_rule
@@ -28,8 +29,21 @@ class CalendarDayPolicy:
         *,
         policy: BookingDayPolicy,
         offered: bool,
+        selection: BookableSelection | None = None,
     ) -> CalendarDayPolicy:
-        max_clients = 0 if policy.day_type == BookingDayPolicy.DayType.CLOSED else policy.max_clients
+        if policy.day_type == BookingDayPolicy.DayType.CLOSED:
+            max_clients = 0
+        elif selection is not None:
+            max_clients = resolve_day_client_cap(
+                selection_type=selection.selection_type,
+                max_clients_policy=policy.max_clients,
+                business_start=policy.business_start_time,
+                business_end=policy.business_end_time,
+                duration_minutes=selection.duration_minutes,
+                turnaround_minutes=selection.turnaround_minutes,
+            )
+        else:
+            max_clients = policy.max_clients
         return cls(
             day_type=policy.day_type,
             offered=offered,
@@ -58,10 +72,15 @@ class CalendarPolicy:
 
         Phase 3b: studio day policy + policy_profile weekday gate.
         Phase 3e: optional per-slug overrides.
+        Hybrid yield: singles get dynamic max_clients from duration + turnaround.
         """
         base = default_policy_for_date(local_date)
         offered = local_date.weekday() in weekdays_for_policy_profile(selection.policy_profile)
-        policy = CalendarDayPolicy.from_booking_day_policy(policy=base, offered=offered)
+        policy = CalendarDayPolicy.from_booking_day_policy(
+            policy=base,
+            offered=offered,
+            selection=selection,
+        )
         rule = lookup_service_day_rule(selection=selection, local_date=local_date)
         if not rule:
             return policy

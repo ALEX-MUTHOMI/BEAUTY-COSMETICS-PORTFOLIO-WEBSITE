@@ -7,6 +7,11 @@ from django.db.models import Q
 from django.utils import timezone
 
 from bookings.domain.day_policy import built_in_policy_for_weekday
+from bookings.domain.yield_scheduling import (
+    filter_candidates_to_free_intervals,
+    generate_duration_stepped_anchors,
+    resolve_day_client_cap,
+)
 from bookings.models import (
     BlackoutPeriod,
     BookableResource,
@@ -17,6 +22,7 @@ from bookings.models import (
     Service,
 )
 from bookings.services.bundles import get_full_package_summary, validate_service_bundle
+from bookings.services.day_policy import default_policy_for_date
 
 BUSINESS_TZ = ZoneInfo("Africa/Nairobi")
 MAX_AVAILABILITY_RANGE_DAYS = 14
@@ -258,6 +264,8 @@ class AvailabilityService:
                             bookings,
                             blackouts,
                             policy,
+                            selection_type=summary.selection_type,
+                            day_policy=day_policy,
                         )
                     )
             results.append({"date": day.isoformat(), "timezone": "Africa/Nairobi", "slots": day_slots})
@@ -310,8 +318,10 @@ class AvailabilityService:
         blackouts = cls._blackouts(resource_ids, query_start_utc, query_end_utc)
 
         results = []
+        day_policies = {row.weekday: row for row in BookingDayPolicy.objects.filter(is_active=True)}
         for offset in range(range_days):
             day = start_day + timedelta(days=offset)
+            day_policy = day_policies.get(day.weekday()) or built_in_policy_for_weekday(day.weekday())
             day_slots = []
             if not (booking_type == "normal" and day.weekday() == BusinessHours.Weekday.SUNDAY):
                 for resource in resources:
@@ -324,6 +334,8 @@ class AvailabilityService:
                             bookings,
                             blackouts,
                             policy,
+                            selection_type="normal" if booking_type == "normal" else booking_type,
+                            day_policy=day_policy,
                         )
                     )
             results.append({"date": day.isoformat(), "timezone": "Africa/Nairobi", "slots": day_slots})
@@ -401,25 +413,66 @@ class AvailabilityService:
         )
 
     @classmethod
-    def _slots_for_resource_day(cls, service, resource, day, business_hours, bookings, blackouts, policy):
-        opens_at, closes_at = cls._hours_for_day(day, business_hours)
+    def _slots_for_resource_day(
+        cls,
+        service,
+        resource,
+        day,
+        business_hours,
+        bookings,
+        blackouts,
+        policy,
+        *,
+        selection_type="normal",
+        day_policy=None,
+    ):
+        day_policy = day_policy or default_policy_for_date(day)
+        opens_at, closes_at = cls._hours_for_day(day, business_hours, day_policy=day_policy)
         if not opens_at or not closes_at:
             return []
 
         business_start = datetime.combine(day, opens_at, tzinfo=BUSINESS_TZ)
         business_end = datetime.combine(day, closes_at, tzinfo=BUSINESS_TZ)
-        if cls._capacity_reached(resource, day, bookings, policy):
+        turnaround = int(getattr(service, "buffer_before_minutes", 0) or 0) + int(
+            getattr(service, "buffer_after_minutes", 0) or 0
+        )
+        max_clients = resolve_day_client_cap(
+            selection_type=selection_type,
+            max_clients_policy=day_policy.max_clients,
+            business_start=opens_at,
+            business_end=closes_at,
+            duration_minutes=int(getattr(service, "duration_minutes", 0) or 0),
+            turnaround_minutes=turnaround,
+        )
+        if cls._capacity_reached(resource, day, bookings, max_clients):
             return []
 
         busy = cls._busy_intervals_for_day(resource, day, bookings, blackouts)
         free = subtract_intervals([(business_start, business_end)], busy)
-        candidates = generate_candidates_from_free_intervals(
-            free,
-            service.duration_minutes,
-            service.buffer_before_minutes,
-            service.buffer_after_minutes,
-            policy.slot_interval_minutes,
-        )
+
+        if selection_type == "full_package":
+            anchors = generate_duration_stepped_anchors(
+                business_start,
+                business_end,
+                service.duration_minutes,
+                service.buffer_before_minutes,
+                service.buffer_after_minutes,
+                max_clients,
+            )
+            candidates = filter_candidates_to_free_intervals(
+                anchors,
+                free,
+                service.buffer_before_minutes,
+                service.buffer_after_minutes,
+            )
+        else:
+            candidates = generate_candidates_from_free_intervals(
+                free,
+                service.duration_minutes,
+                service.buffer_before_minutes,
+                service.buffer_after_minutes,
+                policy.slot_interval_minutes,
+            )
         return [
             {
                 "starts_at": starts_at.isoformat(),
@@ -433,7 +486,12 @@ class AvailabilityService:
         ]
 
     @staticmethod
-    def _hours_for_day(day, business_hours):
+    def _hours_for_day(day, business_hours, day_policy=None):
+        # Prefer BookingDayPolicy hours so availability matches hold validation.
+        if day_policy is not None:
+            if day_policy.day_type == BookingDayPolicy.DayType.CLOSED or day_policy.max_clients <= 0:
+                return None, None
+            return day_policy.business_start_time, day_policy.business_end_time
         if business_hours:
             if business_hours.is_closed:
                 return None, None
@@ -444,14 +502,16 @@ class AvailabilityService:
         return defaults
 
     @staticmethod
-    def _capacity_reached(resource, day, bookings, policy):
+    def _capacity_reached(resource, day, bookings, max_clients):
+        if max_clients <= 0:
+            return True
         count = 0
         for booking in bookings:
             if booking.resource_id != resource.id:
                 continue
             if booking.starts_at.astimezone(BUSINESS_TZ).date() == day:
                 count += 1
-        return count >= policy.max_daily_bookings
+        return count >= max_clients
 
     @staticmethod
     def _busy_intervals_for_day(resource, day, bookings, blackouts):

@@ -45,7 +45,18 @@ def _active_count(local_date, resource):
     return queryset.exclude(status=Booking.Status.HELD, hold_expires_at__lte=now).count()
 
 
-def lock_and_validate_day_capacity(*, starts_at, resource, selection_type, package=None, duration_minutes=0):
+def lock_and_validate_day_capacity(
+    *,
+    starts_at,
+    resource,
+    selection_type,
+    package=None,
+    duration_minutes=0,
+    yield_duration_minutes=None,
+    turnaround_minutes=0,
+):
+    from bookings.domain.yield_scheduling import resolve_day_client_cap
+
     local_date = local_date_for_start(starts_at)
     policy = validate_day_policy_for_selection(
         selection_type=selection_type,
@@ -53,20 +64,29 @@ def lock_and_validate_day_capacity(*, starts_at, resource, selection_type, packa
         package=package,
         duration_minutes=duration_minutes,
     )
+    yield_duration = int(yield_duration_minutes) if yield_duration_minutes is not None else 0
+    effective_max = resolve_day_client_cap(
+        selection_type=selection_type,
+        max_clients_policy=policy.max_clients,
+        business_start=policy.business_start_time,
+        business_end=policy.business_end_time,
+        duration_minutes=yield_duration,
+        turnaround_minutes=int(turnaround_minutes or 0),
+    )
     with transaction.atomic():
         state, _created = BookingDayState.objects.select_for_update().get_or_create(
             local_date=local_date,
             defaults={
                 "policy_snapshot_type": policy.day_type,
-                "max_clients_snapshot": policy.max_clients,
+                "max_clients_snapshot": effective_max,
                 "status": BookingDayState.Status.OPEN,
             },
         )
         state = BookingDayState.objects.select_for_update().get(pk=state.pk)
         count = _active_count(local_date, resource)
-        if count >= policy.max_clients:
+        if count >= effective_max:
             state.active_client_count_snapshot = count
-            state.max_clients_snapshot = policy.max_clients
+            state.max_clients_snapshot = effective_max
             state.policy_snapshot_type = policy.day_type
             state.status = BookingDayState.Status.FULL
             state.save(
@@ -80,9 +100,9 @@ def lock_and_validate_day_capacity(*, starts_at, resource, selection_type, packa
             )
             raise ValidationError("Availability unavailable.")
         state.active_client_count_snapshot = count + 1
-        state.max_clients_snapshot = policy.max_clients
+        state.max_clients_snapshot = effective_max
         state.policy_snapshot_type = policy.day_type
-        state.status = BookingDayState.Status.FULL if count + 1 >= policy.max_clients else BookingDayState.Status.OPEN
+        state.status = BookingDayState.Status.FULL if count + 1 >= effective_max else BookingDayState.Status.OPEN
         state.save(
             update_fields=[
                 "active_client_count_snapshot",

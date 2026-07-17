@@ -46,22 +46,26 @@ def resolve_calendar_selection(
             raise ValidationError(GENERIC_CALENDAR_ERROR)
         summary = get_full_package_summary(full_package_public_id)
         package = summary.full_package
+        turnaround = summary.buffer_before_minutes + summary.buffer_after_minutes
         return BookableSelection.from_parts(
             selection_type="full_package",
             public_id=package.public_id,
             slug=package.slug,
             name=safe_public_text(package.name),
             duration_minutes=package.duration_minutes,
+            turnaround_minutes=turnaround,
         )
 
     if not has_service:
         raise ValidationError(GENERIC_CALENDAR_ERROR)
     summary = validate_service_bundle([service_public_id])
     service = summary.items[0].service
+    turnaround = summary.buffer_before_minutes + summary.buffer_after_minutes
     return BookableSelection.from_parts(
         selection_type="normal",
         public_id=UUID(str(service.id)),
         slug=service.slug,
         name=safe_public_text(service.name),
         duration_minutes=service.duration_minutes,
+        turnaround_minutes=turnaround,
     )

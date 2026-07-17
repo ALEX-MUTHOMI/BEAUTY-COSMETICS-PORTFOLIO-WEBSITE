@@ -36,22 +36,26 @@ def resolve_catalog_selection(*, selection_type: str, slug: str) -> BookableSele
             package = FullPackage.objects.get(slug=normalized_slug, is_active=True)
         except FullPackage.DoesNotExist as exc:
             raise ValidationError(GENERIC_RESOLVE_ERROR) from exc
+        turnaround = int(getattr(package, "buffer_after_minutes", 0) or 0)
         return BookableSelection.from_parts(
             selection_type="full_package",
             public_id=package.public_id,
             slug=package.slug,
             name=safe_public_text(package.name),
             duration_minutes=package.duration_minutes,
+            turnaround_minutes=turnaround,
         )
 
     try:
         service = Service.objects.select_related("category_ref").get(slug=normalized_slug, is_active=True)
     except Service.DoesNotExist as exc:
         raise ValidationError(GENERIC_RESOLVE_ERROR) from exc
+    turnaround = int(service.buffer_before_minutes or 0) + int(service.buffer_after_minutes or 0)
     return BookableSelection.from_parts(
         selection_type="normal",
         public_id=UUID(str(service.id)),
         slug=service.slug,
         name=safe_public_text(service.name),
         duration_minutes=service.duration_minutes,
+        turnaround_minutes=turnaround,
     )
