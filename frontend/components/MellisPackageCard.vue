@@ -1,17 +1,25 @@
 <template>
   <article
     class="mellis-card"
-    :class="{ 'mellis-card--featured': featured }"
+    :class="{
+      'mellis-card--featured': featured,
+      'mellis-card--single': variant === 'single',
+    }"
   >
     <p v-if="badge" class="mellis-card__badge">{{ badge }}</p>
     <p v-if="daysLabel" class="mellis-card__days">{{ daysLabel }}</p>
     <h3 class="mellis-card__title">{{ name }}</h3>
     <p class="mellis-card__price">{{ price }}</p>
-    <p class="mellis-card__text">{{ text }}</p>
-    <ul class="mellis-card__includes" aria-label="What's included">
-      <li v-for="item in includes" :key="item">{{ item }}</li>
+    <p v-if="variant !== 'single'" class="mellis-card__text">{{ text }}</p>
+    <p v-else class="mellis-card__text mellis-card__text--tight">{{ text }}</p>
+    <ul
+      v-if="visibleIncludes.length"
+      class="mellis-card__includes"
+      aria-label="What's included"
+    >
+      <li v-for="item in visibleIncludes" :key="item">{{ item }}</li>
     </ul>
-    <SiteButton :to="ctaTo" :variant="featured ? 'primary' : 'outline'">
+    <SiteButton :to="ctaTo" :variant="featured || variant === 'single' ? 'primary' : 'outline'">
       {{ ctaLabel }}
     </SiteButton>
     <NuxtLink v-if="detailsTo" :to="detailsTo" class="mellis-card__details">
@@ -21,9 +29,10 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { LANDING_PRIMARY_CTA } from '@/landing/landingContent'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     name: string
     text: string
@@ -36,13 +45,20 @@ withDefaults(
     ctaTo?: string
     detailsTo?: string
     detailsLabel?: string
+    /** package = full visit card; single = lean treatment tile for carousel */
+    variant?: 'package' | 'single'
   }>(),
   {
     daysLabel: 'Tue & Wed only',
     ctaLabel: LANDING_PRIMARY_CTA,
     ctaTo: '/services',
     detailsLabel: 'See all options',
+    variant: 'package',
   },
+)
+
+const visibleIncludes = computed(() =>
+  props.variant === 'single' ? props.includes.slice(0, 3) : props.includes,
 )
 </script>
 
@@ -91,6 +107,74 @@ withDefaults(
   margin-top: 0.5rem;
 }
 
+/* Lean singles tile — no watermark, left-aligned, denser for carousel */
+.mellis-card--single {
+  align-items: flex-start;
+  text-align: left;
+  padding: 1.1rem 1rem 1rem;
+  border: 0;
+  border-top: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 24px rgba(39, 37, 42, 0.06);
+}
+
+.mellis-card--single::after {
+  display: none;
+}
+
+.mellis-card--single:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(39, 37, 42, 0.1);
+}
+
+.mellis-card--single .mellis-card__days {
+  color: var(--color-muted);
+  letter-spacing: 0.12em;
+}
+
+.mellis-card--single .mellis-card__title {
+  font-size: 1.15rem;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.mellis-card--single .mellis-card__price {
+  font-size: 1.2rem;
+  margin-bottom: 0.45rem;
+}
+
+.mellis-card--single .mellis-card__text--tight {
+  max-width: none;
+  margin-bottom: 0.65rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.mellis-card--single .mellis-card__includes {
+  margin-bottom: 0.85rem;
+}
+
+.mellis-card--single .mellis-card__includes li {
+  padding-top: 0.22rem;
+  padding-bottom: 0.22rem;
+  font-size: 0.8rem;
+  border-bottom: 0;
+}
+
+.mellis-card--single :deep(.site-btn) {
+  width: 100%;
+  max-width: none;
+  margin-top: auto;
+}
+
+.mellis-card--single .mellis-card__details {
+  width: 100%;
+  justify-content: flex-start;
+  margin-top: 0.35rem;
+  min-height: 2rem;
+}
+
 .mellis-card :deep(.site-btn) {
   width: 100%;
   max-width: 14rem;
@@ -122,7 +206,7 @@ withDefaults(
 }
 
 @media (max-width: 767px) {
-  .mellis-card {
+  .mellis-card:not(.mellis-card--single) {
     padding: 1.35rem 1rem 1.15rem;
   }
 
@@ -130,33 +214,41 @@ withDefaults(
     padding-top: 1.55rem;
   }
 
-  .mellis-card__title {
+  .mellis-card:not(.mellis-card--single) .mellis-card__title {
     font-size: 1.15rem;
   }
 
-  .mellis-card__price {
+  .mellis-card:not(.mellis-card--single) .mellis-card__price {
     font-size: 1.35rem;
   }
 
-  .mellis-card__text {
+  .mellis-card:not(.mellis-card--single) .mellis-card__text {
     max-width: none;
     font-size: 0.86rem;
   }
 
-  .mellis-card__includes li {
+  .mellis-card:not(.mellis-card--single) .mellis-card__includes li {
     font-size: 0.82rem;
     padding-left: 1.25rem;
   }
 
-  .mellis-card :deep(.site-btn) {
+  .mellis-card:not(.mellis-card--single) :deep(.site-btn) {
     max-width: none;
     margin-top: auto;
   }
 }
 
 @media (min-width: 768px) {
-  .mellis-card {
+  .mellis-card:not(.mellis-card--single) {
     padding: 1.6rem 1.4rem 1.45rem;
+  }
+
+  .mellis-card--single {
+    padding: 1.25rem 1.2rem 1.15rem;
+  }
+
+  .mellis-card--single .mellis-card__title {
+    font-size: 1.3rem;
   }
 }
 

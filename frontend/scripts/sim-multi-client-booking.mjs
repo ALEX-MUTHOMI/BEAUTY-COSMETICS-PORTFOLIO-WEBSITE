@@ -75,7 +75,7 @@ async function runClient(client) {
   // SSR may still include html.is-loading (SiteLoader owns clearing it client-side).
   // Gate failure on missing hero/marketing chrome, not on the class string in HTML/CSS.
   const hasHomeChrome =
-    /Spa Beauty|Your hour to unwind|Book your visit|Shee Aesthetics/i.test(page.text)
+    /Shee|Your hour to unwind|Book your visit|Shee Aesthetics/i.test(page.text)
   const hasBookChrome =
     /Pick your day|Next open dates|How would you like to visit|Spa Beauty|Shee/i.test(page.text)
   if (client.path === '/' && !hasHomeChrome) {

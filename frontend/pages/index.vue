@@ -1,11 +1,16 @@
 <template>
   <SiteLoader />
   <main class="home">
-    <!-- Hero slider -->
+    <!-- Hero carousel — brand-first; service line rotates with the image -->
     <section
       class="hero"
       data-home-hero
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Shee studio highlights"
       :data-hero-service="currentHero.service"
+      tabindex="0"
+      @keydown="onHeroKeydown"
       @touchstart.passive="onHeroTouchStart"
       @touchend.passive="onHeroTouchEnd"
     >
@@ -16,6 +21,7 @@
           class="hero__slide"
           :class="{ 'hero__slide--active': activeSlide === index }"
           :data-service="slide.service"
+          :aria-hidden="activeSlide === index ? undefined : 'true'"
         >
           <picture v-if="mountedHeroSlides.has(index)">
             <source
@@ -40,27 +46,46 @@
           <div class="hero__overlay" />
         </article>
       </div>
-      <div class="hero__content">
+      <div class="hero__content" aria-live="polite">
         <p class="hero__eyebrow">{{ currentHero.eyebrow }}</p>
-        <h1 class="hero__title">{{ currentHero.title }}</h1>
+        <h1 class="hero__title">Shee</h1>
+        <p class="hero__service">{{ currentHero.title }}</p>
         <p v-if="currentHero.subtitle" class="hero__subtitle">{{ currentHero.subtitle }}</p>
         <!-- Desktop only: mobile uses the sticky book bar (avoids double CTA + clipped button). -->
         <SiteButton :to="currentHero.ctaTo" variant="primary" class="hero__cta">
           {{ currentHero.cta }}
         </SiteButton>
       </div>
-      <ol class="hero__pager" aria-label="Hero slides">
-        <li v-for="(slide, index) in heroSlides" :key="slide.service">
-          <button
-            type="button"
-            class="hero__pager-dot"
-            :class="{ 'hero__pager-dot--active': activeSlide === index }"
-            :aria-label="`Show ${slide.title} slide`"
-            :aria-current="activeSlide === index ? 'true' : undefined"
-            @click="goToSlide(index)"
-          />
-        </li>
-      </ol>
+      <div class="hero__controls">
+        <button
+          type="button"
+          class="hero__nav hero__nav--prev"
+          aria-label="Previous slide"
+          @click="goToSlide((activeSlide - 1 + heroSlides.length) % heroSlides.length)"
+        >
+          ‹
+        </button>
+        <ol class="hero__pager" aria-label="Hero slides">
+          <li v-for="(slide, index) in heroSlides" :key="slide.service">
+            <button
+              type="button"
+              class="hero__pager-dot"
+              :class="{ 'hero__pager-dot--active': activeSlide === index }"
+              :aria-label="`Show ${slide.title} slide`"
+              :aria-current="activeSlide === index ? 'true' : undefined"
+              @click="goToSlide(index)"
+            />
+          </li>
+        </ol>
+        <button
+          type="button"
+          class="hero__nav hero__nav--next"
+          aria-label="Next slide"
+          @click="goToSlide((activeSlide + 1) % heroSlides.length)"
+        >
+          ›
+        </button>
+      </div>
     </section>
 
     <!-- Welcome -->
@@ -122,6 +147,7 @@
           :image="service.image"
           :icon="service.icon"
           :cta-to="service.ctaTo"
+          :cta-label="service.ctaLabel"
         />
       </div>
     </section>
@@ -150,8 +176,8 @@
       </div>
     </section>
 
-    <!-- Single treatments -->
-    <section id="singles" class="packages packages--singles home-section">
+    <!-- Single treatments — snap carousel on mobile, calm 2-up on desktop -->
+    <section id="singles" class="singles home-section">
       <header class="section-head">
         <p class="label">Single treatments</p>
         <h2>Book one specific treatment</h2>
@@ -162,20 +188,38 @@
           </NuxtLink>.
         </p>
       </header>
-      <div class="packages__grid packages__grid--singles">
-        <MellisPackageCard
-          v-for="treatment in singleHighlights"
-          :key="treatment.name"
-          :name="treatment.name"
-          :text="treatment.description"
-          :price="treatment.price"
-          :includes="treatment.highlights"
-          :days-label="SINGLE_DAYS_LABEL"
-          :cta-label="`Book ${treatment.name}`"
-          :cta-to="bookHrefForTreatment(treatment.category, treatment.name)"
-          :details-to="`${SERVICES_ROUTES.page}#${treatment.category}`"
-          details-label="See all options"
-        />
+
+      <div class="singles__rail-wrap">
+        <div
+          ref="singlesRail"
+          class="singles__rail"
+          role="list"
+          aria-label="Single treatment highlights"
+        >
+          <MellisPackageCard
+            v-for="treatment in singleHighlights"
+            :key="treatment.name"
+            variant="single"
+            :name="treatment.name"
+            :text="treatment.description"
+            :price="treatment.price"
+            :includes="treatment.highlights"
+            :days-label="SINGLE_DAYS_LABEL"
+            :cta-label="`Book ${treatment.name}`"
+            :cta-to="bookHrefForTreatment(treatment.category, treatment.name)"
+            :details-to="`${SERVICES_ROUTES.page}#${treatment.category}`"
+            details-label="See all options"
+          />
+        </div>
+        <div class="singles__nav" aria-label="Browse treatments">
+          <button type="button" class="singles__nav-btn" aria-label="Scroll treatments left" @click="scrollSingles(-1)">
+            ‹
+          </button>
+          <p class="singles__hint">Swipe for more treatments</p>
+          <button type="button" class="singles__nav-btn" aria-label="Scroll treatments right" @click="scrollSingles(1)">
+            ›
+          </button>
+        </div>
       </div>
     </section>
 
@@ -291,15 +335,15 @@
             <div class="cta__hours-grid">
               <div>
                 <h3>Monday</h3>
-                <p>9:00 am – 6:00 pm</p>
+                <p>7:00 am – 7:00 pm · singles</p>
               </div>
               <div>
                 <h3>Tue &amp; Wed</h3>
-                <p>Full packages only</p>
+                <p>7:00 am – 7:00 pm · packages</p>
               </div>
               <div>
                 <h3>Thu – Sat</h3>
-                <p>8:00 am – 7:00 pm</p>
+                <p>7:00 am – 7:00 pm · singles</p>
               </div>
               <div>
                 <h3>Sunday</h3>
@@ -329,7 +373,7 @@ import { bookHrefForPackageName, bookHrefForTreatment } from '@/landing/bookingH
 import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
 
 const activeSlide = ref(0)
-/** Mount active + next only — keeps concurrent first paints lean. */
+/** Mount active + neighbours — avoids blank ink flashes on swipe / pager jumps. */
 const mountedHeroSlides = computed(() => {
   const set = new Set<number>()
   heroSlides.forEach((_, index) => {
@@ -340,20 +384,35 @@ const mountedHeroSlides = computed(() => {
   return set
 })
 let heroTouchStartX = 0
+let heroTouchStartY = 0
 
 const currentHero = computed(() => heroSlides[activeSlide.value] ?? heroSlides[0]!)
 
 function onHeroTouchStart(e: TouchEvent) {
   heroTouchStartX = e.changedTouches[0]?.clientX ?? 0
+  heroTouchStartY = e.changedTouches[0]?.clientY ?? 0
 }
 
 function onHeroTouchEnd(e: TouchEvent) {
   const endX = e.changedTouches[0]?.clientX ?? 0
-  const delta = heroTouchStartX - endX
-  if (Math.abs(delta) < 48) return
-  if (delta > 0) {
+  const endY = e.changedTouches[0]?.clientY ?? 0
+  const deltaX = heroTouchStartX - endX
+  const deltaY = heroTouchStartY - endY
+  // Prefer vertical scroll; only swipe carousel on clear horizontal intent.
+  if (Math.abs(deltaX) < 56 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return
+  if (deltaX > 0) {
     goToSlide((activeSlide.value + 1) % heroSlides.length)
   } else {
+    goToSlide((activeSlide.value - 1 + heroSlides.length) % heroSlides.length)
+  }
+}
+
+function onHeroKeydown(e: KeyboardEvent) {
+  if (e.key === 'ArrowRight') {
+    e.preventDefault()
+    goToSlide((activeSlide.value + 1) % heroSlides.length)
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault()
     goToSlide((activeSlide.value - 1 + heroSlides.length) % heroSlides.length)
   }
 }
@@ -364,6 +423,14 @@ function goToSlide(index: number) {
 
 const services = getServiceSummaries()
 const singleHighlights = getSingleTreatmentHighlights()
+const singlesRail = ref<HTMLElement | null>(null)
+
+function scrollSingles(direction: -1 | 1) {
+  const rail = singlesRail.value
+  if (!rail) return
+  const step = Math.min(rail.clientWidth * 0.85, 320)
+  rail.scrollBy({ left: direction * step, behavior: 'smooth' })
+}
 
 const serviceList = [
   'Deep Cleansing Facials',
@@ -549,11 +616,11 @@ useLandingSeo()
   padding:
     calc(var(--site-header-height, 4.5rem) + 1.25rem)
     1.25rem
-    /* Clear sticky mobile book bar + pager so CTA/copy never clips */
+    /* Clear sticky mobile book bar + carousel controls with real breathing room */
     calc(
       var(--mobile-book-bar-height, 4.25rem)
       + env(safe-area-inset-bottom, 0px)
-      + 3.25rem
+      + 6.75rem
     );
   color: #fff;
   pointer-events: none;
@@ -576,48 +643,88 @@ useLandingSeo()
 }
 
 .hero__title {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.2rem;
   font-family: var(--font-script);
-  font-size: clamp(2.75rem, 12vw, 7.5rem);
+  font-size: clamp(3.4rem, 14vw, 8.25rem);
   font-weight: 400;
-  line-height: 1;
+  line-height: 0.92;
   color: #fff;
   text-shadow: 0 2px 28px rgba(39, 37, 42, 0.4);
 }
 
+.hero__service {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 2.6vw, 1.55rem);
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.94);
+  text-shadow: 0 1px 16px rgba(39, 37, 42, 0.4);
+}
+
 .hero__subtitle {
   max-width: 34ch;
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.85rem;
   font: 400 0.98rem/1.6 var(--font-body);
   color: rgba(255, 255, 255, 0.9);
   text-shadow: 0 1px 14px rgba(39, 37, 42, 0.4);
 }
 
-.hero__pager {
+.hero__controls {
   position: absolute;
   bottom: calc(
     var(--mobile-book-bar-height, 4.25rem)
     + env(safe-area-inset-bottom, 0px)
-    + 0.85rem
+    + 1.35rem
   );
   left: 50%;
   transform: translateX(-50%);
+  z-index: 4;
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.35rem;
+  pointer-events: auto;
+}
+
+.hero__nav {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(39, 37, 42, 0.4);
+  color: #fff;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hero__nav:hover {
+  background: rgba(176, 122, 113, 0.85);
+}
+
+.hero__pager {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   list-style: none;
   margin: 0;
-  padding: 0.35rem 0.65rem;
-  z-index: 4;
+  padding: 0.35rem 0.55rem;
   border-radius: 999px;
-  background: rgba(39, 37, 42, 0.32);
+  background: rgba(39, 37, 42, 0.36);
   backdrop-filter: blur(8px);
 }
 
 .hero__pager-dot {
+  position: relative;
   display: block;
-  width: 7px;
-  height: 7px;
+  width: 0.55rem;
+  height: 0.55rem;
   padding: 0;
   border: none;
   border-radius: 999px;
@@ -627,12 +734,19 @@ useLandingSeo()
   transition: width 0.2s ease, background-color 0.2s ease;
 }
 
+/* Expand hit target without enlarging the visual dot. */
+.hero__pager-dot::before {
+  content: '';
+  position: absolute;
+  inset: -0.7rem;
+}
+
 .hero__pager-dot:hover {
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .hero__pager-dot--active {
-  width: 1.35rem;
+  width: 1.45rem;
   background: var(--color-rose) !important;
 }
 
@@ -980,6 +1094,80 @@ useLandingSeo()
   min-width: 0;
 }
 
+/* Singles — horizontal snap rail (mobile density) → 2-up editorial (desktop) */
+.singles {
+  padding: clamp(2rem, 5vh, 3.5rem) 0;
+  background:
+    linear-gradient(180deg, rgba(248, 235, 232, 0.55) 0%, var(--color-paper) 48%, var(--color-paper) 100%);
+}
+
+.singles .section-head {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.singles__rail-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.singles__rail {
+  display: flex;
+  gap: 0.85rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1rem;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.35rem 1rem 1.1rem;
+  scrollbar-width: none;
+}
+
+.singles__rail::-webkit-scrollbar {
+  display: none;
+}
+
+.singles__rail > * {
+  flex: 0 0 min(78vw, 17.5rem);
+  scroll-snap-align: start;
+  min-width: 0;
+}
+
+.singles__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 0.1rem;
+  padding-bottom: 0.25rem;
+}
+
+.singles__hint {
+  margin: 0;
+  font: 600 0.68rem var(--font-body);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.singles__nav-btn {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-ink);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.singles__nav-btn:hover {
+  border-color: var(--color-rose);
+  color: var(--color-rose-dark);
+}
+
 /* Reviews */
 .reviews {
   padding: clamp(2rem, 5vh, 3.5rem) 1rem;
@@ -1204,7 +1392,7 @@ useLandingSeo()
     margin-bottom: 0;
   }
 
-  .hero__pager {
+  .hero__controls {
     bottom: clamp(1.5rem, 4vw, 2.25rem);
   }
 
@@ -1247,9 +1435,31 @@ useLandingSeo()
     gap: 1.35rem;
   }
 
-  .packages__grid,
-  .packages__grid--singles {
+  .packages__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.15rem;
+  }
+
+  .packages__grid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    max-width: 22rem;
+    justify-self: center;
+    width: 100%;
+  }
+
+  .singles__rail {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    scroll-padding-inline: 1.5rem;
+    gap: 1rem;
+  }
+
+  .singles__rail > * {
+    flex-basis: min(42vw, 20rem);
+  }
+
+  .singles__hint {
+    display: none;
   }
 
   .reviews__grid {
@@ -1283,8 +1493,13 @@ useLandingSeo()
 
 @media (min-width: 1024px) {
   .hero {
-    height: min(620px, 72vh);
-    min-height: 440px;
+    /* Keep full-bleed studio hero — never letterbox on large screens. */
+    min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
+    height: 100vh;
+    height: 100svh;
+    height: 100dvh;
   }
 
   .welcome__inner {
@@ -1318,9 +1533,38 @@ useLandingSeo()
     gap: 1.25rem;
   }
 
-  .packages__grid--singles {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.1rem;
+  .singles .section-head {
+    width: var(--container);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .singles__rail-wrap {
+    width: var(--container);
+    margin: 0 auto;
+    padding: 0 0.25rem;
+  }
+
+  .singles__rail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.15rem;
+    overflow: visible;
+    scroll-snap-type: none;
+    padding: 0.35rem 0 0.25rem;
+  }
+
+  .singles__rail > * {
+    flex: none;
+    width: auto;
+  }
+
+  .singles__nav {
+    display: none;
+  }
+
+  .singles__hint {
+    display: none;
   }
 
   .reviews__grid {

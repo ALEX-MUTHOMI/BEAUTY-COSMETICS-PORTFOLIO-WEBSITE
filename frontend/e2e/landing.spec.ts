@@ -23,7 +23,7 @@ test.describe('Shee Aesthetics landing page', () => {
 
     await expect(page.locator('.site-loader')).toHaveCount(0, { timeout: 5000 })
 
-    await expect(page.getByRole('heading', { name: 'Spa Beauty', level: 1 })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Shee', level: 1 })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Your hour to unwind', level: 2 })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible()
 
@@ -60,7 +60,7 @@ test.describe('Shee Aesthetics landing page', () => {
     const gridCols = await servicesGrid.evaluate((el) => getComputedStyle(el).gridTemplateColumns)
     expect(gridCols.split(' ').length).toBe(1)
 
-    await expect(page.getByRole('heading', { name: 'Spa Beauty', level: 1 })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Shee', level: 1 })).toBeVisible()
   })
 
   test('serves strict security headers with nonce-aware CSP', async ({ request }) => {

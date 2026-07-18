@@ -71,7 +71,7 @@ async function runVisit(browser, client) {
         document.documentElement.classList.contains('is-loading'),
       )
       const heroVisible = await page
-        .getByRole('heading', { name: 'Spa Beauty', level: 1 })
+        .getByRole('heading', { name: 'Shee', level: 1 })
         .isVisible()
         .catch(() => false)
       const ctaVisible = await page

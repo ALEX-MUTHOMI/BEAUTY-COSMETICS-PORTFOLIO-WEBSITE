@@ -6,7 +6,7 @@
  * - Landscape-first assets; per-slide object-position keeps the treatment action in frame.
  * - No Ken Burns / scale motion on the image plane — stillness = trust for beauty brands.
  * - Stable filenames so a Meru photographer can drop replacements later.
- * - Only the active (+ next) slides mount images to keep concurrent visits light.
+ * - Only the active (+ neighbour) slides mount images to keep concurrent visits light.
  */
 
 export type HeroService = 'facial' | 'massage' | 'makeup'
@@ -68,9 +68,9 @@ export const heroSlides: HeroSlide[] = [
     height: 1800,
     srcset: heroSrcset('/images/hero-massage.jpg'),
     sizes: HERO_SIZES,
-    objectPosition: 'center 42%',
+    objectPosition: 'center 30%',
     alt: 'Therapist applying warm oil during a back massage',
-    eyebrow: 'Unwind properly',
+    eyebrow: LOCATION,
     title: 'Massage',
     subtitle: 'Swedish and deep tissue for back, neck and shoulders',
     cta: CTA,
@@ -86,9 +86,9 @@ export const heroSlides: HeroSlide[] = [
     height: 1067,
     srcset: heroSrcset('/images/hero-makeup.jpg'),
     sizes: HERO_SIZES,
-    objectPosition: 'center 35%',
+    objectPosition: 'center 32%',
     alt: 'Makeup artist applying lipstick during a private glam session',
-    eyebrow: 'Look your best',
+    eyebrow: LOCATION,
     title: 'Makeup',
     subtitle: 'Everyday polish and full glam for events',
     cta: CTA,
@@ -106,10 +106,12 @@ export function getHeroLcpHref(): string {
   return heroSlides[0]?.image ?? '/images/hero-facial.jpg'
 }
 
-/** Active slide + next slide should mount; others stay unloaded. */
+/** Active slide + neighbours mount so crossfade never flashes an empty ink plane. */
 export function shouldMountHeroImage(activeIndex: number, index: number, total: number): boolean {
+  if (total <= 0) return false
   if (index === activeIndex) return true
   if (index === (activeIndex + 1) % total) return true
+  if (index === (activeIndex - 1 + total) % total) return true
   return false
 }
 
