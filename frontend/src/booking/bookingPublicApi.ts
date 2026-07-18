@@ -261,6 +261,33 @@ export function formatSlotLabel(startsAt: string): string {
   }
 }
 
+/** Nairobi hour band label for hour-view grouping (e.g. "7 AM"). */
+export function formatSlotHourBand(startsAt: string): string {
+  try {
+    return new Intl.DateTimeFormat('en-KE', {
+      timeZone: 'Africa/Nairobi',
+      hour: 'numeric',
+      hour12: true,
+    }).format(new Date(startsAt))
+  } catch {
+    return ''
+  }
+}
+
+/** Start–end range from backend slot fields — never invent times. */
+export function formatSlotRange(startsAt: string, endsAt: string): string {
+  const start = formatSlotLabel(startsAt)
+  const end = formatSlotLabel(endsAt)
+  if (!start) return ''
+  if (!end) return start
+  return `${start} – ${end}`
+}
+
+export function isSameBookingSlot(a: BookingSlot | null, b: BookingSlot | null): boolean {
+  if (!a || !b) return false
+  return a.startsAt === b.startsAt && a.resourcePublicId === b.resourcePublicId
+}
+
 export function dayStatusLabel(day: CalendarDay): string {
   if (day.status === 'available') {
     return day.slot_count === 1 ? '1 slot' : `${day.slot_count} slots`
