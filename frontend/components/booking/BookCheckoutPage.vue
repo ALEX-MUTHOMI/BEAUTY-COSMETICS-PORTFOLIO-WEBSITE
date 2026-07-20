@@ -111,9 +111,9 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, toRef, watch, type Ref } from 'vue'
-import BookingCustomerPanel from '~/components/booking/BookingCustomerPanel.vue'
-import BookingFloCalendar from '~/components/booking/BookingFloCalendar.vue'
-import BookingFloSlots from '~/components/booking/BookingFloSlots.vue'
+import BookingCustomerPanel from './BookingCustomerPanel.vue'
+import BookingFloCalendar from './BookingFloCalendar.vue'
+import BookingFloSlots from './BookingFloSlots.vue'
 import { useBookCheckout } from '@/booking/useBookCheckout'
 import { useBookFlow } from '@/booking/useBookFlow'
 import { GENERIC_BOOKING_THROTTLE_ERROR } from '@/booking/bookingRequestGovernor'

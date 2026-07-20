@@ -33,9 +33,7 @@ export function clientStaffPasswordHint(
     return 'That password is too common.'
   }
 
-  const emailLocal = String(options.email || '')
-    .split('@', 1)[0]
-    .trim()
+  const emailLocal = (String(options.email || '').split('@', 1)[0] ?? '').trim()
   const emailNorm = normalizePasswordHintInput(emailLocal)
   if (emailNorm.length >= 4 && compact.includes(emailNorm)) {
     return 'Don’t use your name or email in the password.'
