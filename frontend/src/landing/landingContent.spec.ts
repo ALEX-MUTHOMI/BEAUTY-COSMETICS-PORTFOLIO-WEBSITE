@@ -40,20 +40,22 @@ describe('landingContent', () => {
     })
   })
 
-  it('maps hero slides to facial, massage, and makeup with matching assets', () => {
-    expect(heroSlides[0]?.service).toBe('facial')
-    expect(heroSlides[1]?.service).toBe('massage')
-    expect(heroSlides[2]?.service).toBe('makeup')
+  it('maps hero slides to four Shee script titles', () => {
+    expect(heroSlides.map((s) => s.service)).toEqual(['facial', 'massage', 'waxing', 'makeup'])
+    expect(heroSlides.map((s) => s.headline)).toEqual([
+      'Shee Facials',
+      'Shee Massage',
+      'Shee Waxing',
+      'Shee Makeup',
+    ])
     expect(heroSlides[0]?.image).toBe('/images/hero-facial.jpg')
     expect(heroSlides[1]?.image).toBe('/images/hero-massage.jpg')
-    expect(heroSlides[2]?.image).toBe('/images/hero-makeup.jpg')
-    expect(heroSlides[0]?.title).toBe('Facials')
-    expect(heroSlides[1]?.title).toBe('Massage')
-    expect(heroSlides[2]?.title).toBe('Makeup')
+    expect(heroSlides[2]?.image).toContain('wax')
+    expect(heroSlides[3]?.image).toBe('/images/hero-makeup.jpg')
     heroSlides.forEach((slide) => {
       expect(slide.alt.length).toBeGreaterThan(10)
-      expect(slide.ctaTo).toBe('/services')
-      expect(slide.image).toContain(`hero-${slide.service}`)
+      expect(slide.eyebrow.toLowerCase()).toContain('unwind')
+      expect(slide.headline.toLowerCase()).not.toContain('meru')
     })
   })
 
