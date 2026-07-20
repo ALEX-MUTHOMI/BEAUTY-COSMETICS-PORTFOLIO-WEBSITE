@@ -13,8 +13,6 @@
 </template>
 
 <script setup lang="ts">
-import { LANDING_PRIMARY_CTA } from '@/landing/landingContent'
-
 withDefaults(
   defineProps<{
     name: string
@@ -26,7 +24,7 @@ withDefaults(
   }>(),
   {
     ctaTo: '/services',
-    ctaLabel: LANDING_PRIMARY_CTA,
+    ctaLabel: 'View treatments',
   },
 )
 </script>

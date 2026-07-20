@@ -286,6 +286,7 @@ export function getServiceSummaries() {
     image: category.image,
     icon: category.icon,
     ctaTo: `${SERVICES_ROUTES.page}#${category.id}`,
+    ctaLabel: `View ${category.cardTitle.toLowerCase()}`,
   }))
 }
 

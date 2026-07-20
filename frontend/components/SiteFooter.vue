@@ -14,15 +14,14 @@
         <NuxtLink to="/#welcome">About</NuxtLink>
         <NuxtLink to="/services">Our Services</NuxtLink>
         <NuxtLink :to="SERVICES_ROUTES.fullPackages">Packages</NuxtLink>
-        <NuxtLink to="/services">{{ LANDING_PRIMARY_CTA }}</NuxtLink>
       </div>
 
       <div class="site-footer__col">
         <p class="site-footer__heading">Timing</p>
         <ul class="site-footer__hours">
-          <li><strong>Monday</strong> 9:00 am – 6:00 pm · singles</li>
-          <li><strong>Tue &amp; Wed</strong> Full packages only</li>
-          <li><strong>Thu – Sat</strong> 8:00 am – 7:00 pm · singles</li>
+          <li><strong>Monday</strong> 7:00 am – 7:00 pm · singles</li>
+          <li><strong>Tue &amp; Wed</strong> 7:00 am – 7:00 pm · packages</li>
+          <li><strong>Thu – Sat</strong> 7:00 am – 7:00 pm · singles</li>
           <li><strong>Sunday</strong> Closed</li>
         </ul>
       </div>
