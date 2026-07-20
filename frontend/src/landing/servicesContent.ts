@@ -29,7 +29,7 @@ export interface ServiceCategory {
 export const SERVICES_PAGE_INTRO = {
   eyebrow: LANDING_LOCATION_LABEL,
   title: 'How would you like to visit?',
-  lead: 'Every visit is in a private, calm room.',
+  lead: 'Packages Tue & Wed. Singles Mon, Thu–Sat.',
 }
 
 export const serviceCategories: ServiceCategory[] = [
@@ -251,6 +251,7 @@ export interface SingleTreatmentHighlight {
   duration: string
   price: string
   highlights: string[]
+  image: string
 }
 
 /** One marquee, directly-bookable treatment per category for the homepage singles rail. */
@@ -274,16 +275,24 @@ export function getSingleTreatmentHighlights(): SingleTreatmentHighlight[] {
       duration: treatment.duration,
       price: treatment.price,
       highlights: treatment.highlights,
+      image: category.image,
     }
   })
 }
 
 export function getServiceSummaries() {
+  const showcaseById: Record<string, string> = {
+    facials: '/images/showcase-facial.jpg',
+    massage: '/images/showcase-massage.jpg',
+    waxing: '/images/showcase-waxing.jpg',
+    makeup: '/images/showcase-makeup.jpg',
+  }
+
   return serviceCategories.map((category) => ({
     id: category.id,
     name: category.cardTitle,
     text: category.intro.split('.')[0] + '.',
-    image: category.image,
+    image: showcaseById[category.id] ?? category.image,
     icon: category.icon,
     ctaTo: `${SERVICES_ROUTES.page}#${category.id}`,
     ctaLabel: `View ${category.cardTitle.toLowerCase()}`,
