@@ -7,11 +7,10 @@
     }"
   >
     <p v-if="badge" class="mellis-card__badge">{{ badge }}</p>
-    <p v-if="daysLabel" class="mellis-card__days">{{ daysLabel }}</p>
+    <p v-if="daysLabel && variant !== 'single'" class="mellis-card__days">{{ daysLabel }}</p>
     <h3 class="mellis-card__title">{{ name }}</h3>
     <p class="mellis-card__price">{{ price }}</p>
     <p v-if="variant !== 'single'" class="mellis-card__text">{{ text }}</p>
-    <p v-else class="mellis-card__text mellis-card__text--tight">{{ text }}</p>
     <ul
       v-if="visibleIncludes.length"
       class="mellis-card__includes"
@@ -58,7 +57,7 @@ const props = withDefaults(
 )
 
 const visibleIncludes = computed(() =>
-  props.variant === 'single' ? props.includes.slice(0, 3) : props.includes,
+  props.variant === 'single' ? props.includes.slice(0, 2) : props.includes,
 )
 </script>
 
@@ -107,16 +106,16 @@ const visibleIncludes = computed(() =>
   margin-top: 0.5rem;
 }
 
-/* Lean singles tile — no watermark, left-aligned, denser for carousel */
+/* Lean singles tile — title + price + 2 bullets + calm Select */
 .mellis-card--single {
   align-items: flex-start;
   text-align: left;
-  padding: 1.1rem 1rem 1rem;
-  border: 0;
-  border-top: 0;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 8px 24px rgba(39, 37, 42, 0.06);
+  padding: 1rem 0.95rem 0.95rem;
+  border: 1px solid var(--color-line);
+  border-top: 3px solid var(--color-rose);
+  border-radius: 0;
+  background: #fff;
+  box-shadow: var(--shadow-card);
 }
 
 .mellis-card--single::after {
@@ -124,41 +123,30 @@ const visibleIncludes = computed(() =>
 }
 
 .mellis-card--single:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 30px rgba(39, 37, 42, 0.1);
-}
-
-.mellis-card--single .mellis-card__days {
-  color: var(--color-muted);
-  letter-spacing: 0.12em;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(39, 37, 42, 0.09);
 }
 
 .mellis-card--single .mellis-card__title {
-  font-size: 1.15rem;
-  font-weight: 400;
+  font-size: 1.05rem;
+  font-weight: 700;
   line-height: 1.25;
+  margin-bottom: 0.2rem;
 }
 
 .mellis-card--single .mellis-card__price {
-  font-size: 1.2rem;
-  margin-bottom: 0.45rem;
-}
-
-.mellis-card--single .mellis-card__text--tight {
-  max-width: none;
-  margin-bottom: 0.65rem;
-  font-size: 0.82rem;
-  line-height: 1.45;
+  font-size: 1.05rem;
+  margin-bottom: 0.55rem;
 }
 
 .mellis-card--single .mellis-card__includes {
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.75rem;
 }
 
 .mellis-card--single .mellis-card__includes li {
-  padding-top: 0.22rem;
-  padding-bottom: 0.22rem;
-  font-size: 0.8rem;
+  padding-top: 0.18rem;
+  padding-bottom: 0.18rem;
+  font-size: 0.78rem;
   border-bottom: 0;
 }
 
@@ -166,12 +154,13 @@ const visibleIncludes = computed(() =>
   width: 100%;
   max-width: none;
   margin-top: auto;
+  min-height: 2.5rem;
 }
 
 .mellis-card--single .mellis-card__details {
   width: 100%;
   justify-content: flex-start;
-  margin-top: 0.35rem;
+  margin-top: 0.25rem;
   min-height: 2rem;
 }
 
@@ -207,40 +196,56 @@ const visibleIncludes = computed(() =>
 
 @media (max-width: 767px) {
   .mellis-card:not(.mellis-card--single) {
-    padding: 1.35rem 1rem 1.15rem;
+    padding: 1.25rem 1rem 1.1rem;
   }
 
   .mellis-card--featured {
-    padding-top: 1.55rem;
+    padding-top: 1.5rem;
   }
 
   .mellis-card:not(.mellis-card--single) .mellis-card__title {
-    font-size: 1.15rem;
+    font-size: 1.12rem;
+    line-height: 1.25;
   }
 
   .mellis-card:not(.mellis-card--single) .mellis-card__price {
-    font-size: 1.35rem;
+    font-size: 1.28rem;
   }
 
   .mellis-card:not(.mellis-card--single) .mellis-card__text {
     max-width: none;
-    font-size: 0.86rem;
+    font-size: 0.84rem;
+    line-height: 1.45;
   }
 
   .mellis-card:not(.mellis-card--single) .mellis-card__includes li {
-    font-size: 0.82rem;
-    padding-left: 1.25rem;
+    font-size: 0.8rem;
+    padding-left: 1.2rem;
+    padding-top: 0.28rem;
+    padding-bottom: 0.28rem;
   }
 
   .mellis-card:not(.mellis-card--single) :deep(.site-btn) {
     max-width: none;
+    width: 100%;
     margin-top: auto;
+    min-height: 2.75rem;
+  }
+
+  .mellis-card__details {
+    min-height: 2.25rem;
+  }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  .mellis-card:not(.mellis-card--single) {
+    padding: 1.3rem 1.05rem 1.15rem;
   }
 }
 
 @media (min-width: 768px) {
   .mellis-card:not(.mellis-card--single) {
-    padding: 1.6rem 1.4rem 1.45rem;
+    padding: 1.5rem 1.3rem 1.35rem;
   }
 
   .mellis-card--single {
@@ -248,7 +253,17 @@ const visibleIncludes = computed(() =>
   }
 
   .mellis-card--single .mellis-card__title {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
+  }
+
+  .mellis-card:not(.mellis-card--single) :deep(.site-btn) {
+    max-width: 14rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mellis-card:not(.mellis-card--single) {
+    padding: 1.65rem 1.4rem 1.45rem;
   }
 }
 
