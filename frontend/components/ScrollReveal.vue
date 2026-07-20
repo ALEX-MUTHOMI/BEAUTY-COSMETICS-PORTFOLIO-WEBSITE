@@ -23,7 +23,7 @@ const props = withDefaults(
     /** Reveal immediately (e.g. hero-adjacent content after loader). */
     immediate?: boolean
   }>(),
-  { variant: 'up', delay: 0, threshold: 0.08, immediate: false },
+  { variant: 'up', delay: 0, threshold: 0.12, immediate: false },
 )
 
 const root = ref<HTMLElement | null>(null)
@@ -60,7 +60,7 @@ onMounted(() => {
     ([entry]) => {
       if (entry?.isIntersecting) reveal()
     },
-    { threshold: props.threshold, rootMargin: '0px 0px -8% 0px' },
+    { threshold: props.threshold, rootMargin: '0px 0px -12% 0px' },
   )
 
   observer.observe(root.value)

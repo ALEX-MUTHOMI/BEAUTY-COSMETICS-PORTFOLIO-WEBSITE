@@ -70,7 +70,7 @@ function preload(src: string, timeoutMs = 1800): Promise<void> {
 function markReady() {
   visible.value = false
   if (import.meta.client) {
-    document.documentElement.classList.add('site-ready')
+    document.documentElement.classList.add('site-ready', 'site-motion')
     document.documentElement.classList.remove('is-loading')
   }
 }
