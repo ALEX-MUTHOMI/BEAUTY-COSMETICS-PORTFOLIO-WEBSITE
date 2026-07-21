@@ -9,6 +9,7 @@ import {
   packageDayHeadline,
   packageDayUrgency,
   packages,
+  getFeaturedPackages,
   singleTreatments,
   validateLandingPackages,
   validateTreatmentCards,
@@ -64,6 +65,12 @@ describe('landingContent', () => {
     const featured = packages.find((p) => p.featured)
     expect(featured?.badge).toBeTruthy()
     expect(featured?.includes.length).toBeGreaterThanOrEqual(4)
+  })
+
+  it('returns a single featured package for the home rail', () => {
+    const home = getFeaturedPackages()
+    expect(home).toHaveLength(1)
+    expect(home[0]?.featured).toBe(true)
   })
 
   it('offers single treatments on non-package days', () => {

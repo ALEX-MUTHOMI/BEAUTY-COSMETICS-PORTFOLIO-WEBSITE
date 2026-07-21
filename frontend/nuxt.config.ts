@@ -78,6 +78,8 @@ export default defineNuxtConfig({
         'frame-src': [
           "'self'",
           'https://challenges.cloudflare.com/turnstile/',
+          'https://www.google.com/',
+          'https://maps.google.com/',
         ],
       },
       crossOriginEmbedderPolicy: 'unsafe-none',

@@ -115,6 +115,13 @@ export function getFeaturedPackages(list: LandingPackage[] = packages): LandingP
   return featured.length > 0 ? featured : list.slice(0, 1)
 }
 
+export const LANDING_MAPS_URL =
+  'https://www.google.com/maps/search/?api=1&query=Shee+Aesthetics+Meru+Town+Kenya'
+
+/** Light embed for the homepage visit band (no API key). */
+export const LANDING_MAPS_EMBED_URL =
+  'https://maps.google.com/maps?q=Shee+Aesthetics+Meru+Town+Kenya&hl=en&z=15&output=embed'
+
 export const singleTreatments: LandingPackage[] = [
   {
     name: 'Facial',
