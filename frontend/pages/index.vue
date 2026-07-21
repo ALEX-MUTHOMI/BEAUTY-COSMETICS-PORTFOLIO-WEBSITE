@@ -1,34 +1,27 @@
 <template>
   <SiteLoader />
   <main class="home">
-    <!-- Hero carousel — brand-first; service line rotates with the image -->
+    <!-- Hero — Mellis-style fade gallery (Parisienne title + Manrope eyebrow + rose CTA) -->
     <section
       class="hero"
       data-home-hero
       role="region"
-      aria-roledescription="carousel"
-      aria-label="Shee studio highlights"
+      aria-label="Shee studio gallery"
       :data-hero-service="currentHero.service"
-      tabindex="0"
-      @keydown="onHeroKeydown"
-      @touchstart.passive="onHeroTouchStart"
-      @touchend.passive="onHeroTouchEnd"
+      :style="{
+        '--hero-crossfade-ms': `${HERO_CROSSFADE_MS}ms`,
+        '--hero-copy-fade-ms': `${HERO_COPY_FADE_MS}ms`,
+      }"
     >
-      <div class="hero__track">
+      <div class="hero__track" aria-hidden="true">
         <article
           v-for="(slide, index) in heroSlides"
           :key="slide.service"
           class="hero__slide"
           :class="{ 'hero__slide--active': activeSlide === index }"
           :data-service="slide.service"
-          :aria-hidden="activeSlide === index ? undefined : 'true'"
         >
           <picture v-if="mountedHeroSlides.has(index)">
-            <source
-              v-if="slide.imageMobile && slide.imageMobile !== slide.image"
-              media="(max-width: 767px)"
-              :srcset="slide.imageMobile"
-            />
             <img
               :src="slide.image"
               :srcset="slide.srcset"
@@ -43,278 +36,306 @@
               :height="slide.height"
             />
           </picture>
-          <div class="hero__overlay" />
         </article>
       </div>
+      <div class="hero__overlay" aria-hidden="true" />
       <div class="hero__content" aria-live="polite">
-        <p class="hero__eyebrow">{{ currentHero.eyebrow }}</p>
-        <h1 class="hero__title">Shee</h1>
-        <p class="hero__service">{{ currentHero.title }}</p>
-        <p v-if="currentHero.subtitle" class="hero__subtitle">{{ currentHero.subtitle }}</p>
-        <!-- Desktop only: mobile uses the sticky book bar (avoids double CTA + clipped button). -->
-        <SiteButton :to="currentHero.ctaTo" variant="primary" class="hero__cta">
-          {{ currentHero.cta }}
-        </SiteButton>
-      </div>
-      <div class="hero__controls">
-        <button
-          type="button"
-          class="hero__nav hero__nav--prev"
-          aria-label="Previous slide"
-          @click="goToSlide((activeSlide - 1 + heroSlides.length) % heroSlides.length)"
-        >
-          ‹
-        </button>
-        <ol class="hero__pager" aria-label="Hero slides">
-          <li v-for="(slide, index) in heroSlides" :key="slide.service">
-            <button
-              type="button"
-              class="hero__pager-dot"
-              :class="{ 'hero__pager-dot--active': activeSlide === index }"
-              :aria-label="`Show ${slide.title} slide`"
-              :aria-current="activeSlide === index ? 'true' : undefined"
-              @click="goToSlide(index)"
+        <Transition name="hero-copy">
+          <div :key="currentHero.service" class="hero__copy">
+            <img
+              src="/images/logo-mark.png"
+              alt=""
+              class="hero__mark"
+              width="48"
+              height="48"
+              aria-hidden="true"
             />
-          </li>
-        </ol>
-        <button
-          type="button"
-          class="hero__nav hero__nav--next"
-          aria-label="Next slide"
-          @click="goToSlide((activeSlide + 1) % heroSlides.length)"
-        >
-          ›
-        </button>
+            <p class="hero__eyebrow">{{ currentHero.eyebrow }}</p>
+            <h1 class="hero__title">{{ currentHero.headline }}</h1>
+            <SiteButton :to="HERO_CTA.to" variant="primary" class="hero__cta">
+              {{ HERO_CTA.label }}
+            </SiteButton>
+          </div>
+        </Transition>
       </div>
+      <div class="hero__dots" role="tablist" aria-label="Gallery slides">
+        <button
+          v-for="(slide, index) in heroSlides"
+          :key="`dot-${slide.service}`"
+          type="button"
+          class="hero__dot"
+          :class="{ 'hero__dot--active': activeSlide === index }"
+          role="tab"
+          :aria-selected="activeSlide === index"
+          :aria-label="slide.headline"
+          @click="goToHeroSlide(index)"
+        />
+      </div>
+      <!-- Soft wave seam into paper — structure, not ash fog -->
+      <svg class="hero__wave" viewBox="0 0 1440 72" preserveAspectRatio="none" aria-hidden="true">
+        <path
+          fill="var(--color-paper)"
+          d="M0,32 C240,72 480,0 720,28 C960,56 1200,8 1440,36 L1440,72 L0,72 Z"
+        />
+      </svg>
     </section>
 
-    <!-- Welcome -->
+    <!-- Welcome — short story only; booking paths come after how-it-works -->
     <section id="welcome" class="welcome home-section">
       <div class="welcome__inner">
-        <div class="welcome__media-wrap">
-          <div class="welcome__media">
-            <div class="welcome__mirror" aria-hidden="true">
-              <img src="/images/welcome.jpg" alt="Spa treatment room with candles and warm lighting" class="welcome__photo" loading="lazy" decoding="async" width="800" height="800" />
+        <ScrollReveal variant="fade" :delay="40">
+          <div class="welcome__media-wrap">
+            <div class="welcome__media">
+              <div class="welcome__mirror" aria-hidden="true">
+                <img src="/images/welcome.jpg" alt="Spa treatment room with candles and warm lighting" class="welcome__photo" loading="lazy" decoding="async" width="800" height="800" />
+              </div>
+              <img src="/images/flower.png" alt="" class="welcome__flower" aria-hidden="true" loading="lazy" decoding="async" width="100" height="100" />
             </div>
-            <img src="/images/flower.png" alt="" class="welcome__flower" aria-hidden="true" loading="lazy" decoding="async" width="100" height="100" />
           </div>
-        </div>
-        <div class="welcome__copy">
+        </ScrollReveal>
+        <ScrollReveal variant="up" :delay="120">
+          <div class="welcome__copy">
             <p class="label">{{ LANDING_LOCATION_LABEL }}</p>
             <h2>Your hour to unwind</h2>
             <p class="welcome__text">
-              A private studio for facials, waxing, massage and makeup. Soft light, clean rooms,
-              and therapists who take their time with every client.
+              Clean rooms, soft light, and therapists who take their time.
             </p>
-            <div class="welcome__offers">
-              <NuxtLink :to="SERVICES_ROUTES.fullPackages" class="welcome__offer-btn">
-                <img src="/images/icon-offer.png" alt="" width="46" height="46" />
-                <div>
-                  <h3>Full glow days</h3>
-                  <p>Tuesday and Wednesday. Facial, waxing, massage and makeup in one relaxed visit.</p>
-                  <span class="welcome__offer-action">See packages</span>
-                </div>
-              </NuxtLink>
-              <NuxtLink :to="SERVICES_ROUTES.singleSessions" class="welcome__offer-btn">
-                <img src="/images/icon-gift.png" alt="" width="48" height="48" />
-                <div>
-                  <h3>Single sessions</h3>
-                  <p>Monday and Thursday through Saturday when you only need one treatment today.</p>
-                  <span class="welcome__offer-action">See singles</span>
-                </div>
-              </NuxtLink>
-            </div>
-            <SiteButton to="/services" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+            <SiteButton to="/services" variant="primary" class="welcome__cta">{{ LANDING_PRIMARY_CTA }}</SiteButton>
           </div>
+        </ScrollReveal>
       </div>
     </section>
 
-    <!-- Services -->
+    <!-- Treatments — photo showcase; headline stays brand-simple -->
     <section id="services" class="services home-section">
-      <header class="section-head">
-        <p class="label">Our treatments</p>
-        <h2>Facials, waxing, massage &amp; makeup</h2>
-        <p class="section-head__sub">
+      <ScrollReveal variant="up">
+        <header class="section-head">
+          <p class="label">The studio</p>
+          <h2>Our treatments</h2>
+        </header>
+      </ScrollReveal>
+      <div class="services__grid">
+        <ScrollReveal
+          v-for="(service, index) in services"
+          :key="service.name"
+          variant="up"
+          :delay="100 + index * 90"
+        >
+          <MellisServiceCard
+            :name="service.name"
+            :image="service.image"
+            :cta-to="service.ctaTo"
+            cta-label="Explore"
+          />
+        </ScrollReveal>
+      </div>
+      <ScrollReveal variant="fade" :delay="160">
+        <p class="services__footer">
           <NuxtLink to="/services" class="home-services-link">View packages and full pricing</NuxtLink>
         </p>
-      </header>
-      <div class="services__grid">
-        <MellisServiceCard
-          v-for="service in services"
-          :key="service.name"
-          :name="service.name"
-          :text="service.text"
-          :image="service.image"
-          :icon="service.icon"
-          :cta-to="service.ctaTo"
-          :cta-label="service.ctaLabel"
-        />
+      </ScrollReveal>
+    </section>
+
+    <!-- How it works — before packages so booking flow is clear first -->
+    <section class="steps home-section">
+      <ScrollReveal variant="up">
+        <header class="section-head">
+          <p class="label">How booking works</p>
+          <h2>Three simple steps</h2>
+        </header>
+      </ScrollReveal>
+      <ScrollReveal variant="up" :delay="120">
+        <ol class="steps__compact" aria-label="Booking steps">
+          <li v-for="step in flowSteps" :key="`compact-${step.title}`">
+            <span class="steps__compact-num" aria-hidden="true">{{ step.num }}</span>
+            <div>
+              <strong>{{ step.title }}</strong>
+              <p>{{ step.text }}</p>
+            </div>
+          </li>
+        </ol>
+      </ScrollReveal>
+      <div class="steps__flow">
+        <ScrollReveal
+          v-for="(step, index) in flowSteps"
+          :key="step.title"
+          variant="up"
+          :delay="100 + index * 120"
+        >
+          <MellisFlowStep
+            :num="step.num"
+            :title="step.title"
+            :text="step.text"
+            :image="step.image"
+          />
+        </ScrollReveal>
       </div>
     </section>
 
-    <!-- Full packages — after services for mobile booking flow -->
+    <!-- Visit path — two doors only; catalogs live on /services -->
+    <section id="visit-path" class="visit-path home-section">
+      <ScrollReveal variant="up">
+        <header class="section-head">
+          <p class="label">Book a visit</p>
+          <h2>How would you like to visit?</h2>
+        </header>
+      </ScrollReveal>
+      <div class="visit-path__grid">
+        <ScrollReveal variant="up" :delay="80">
+          <NuxtLink :to="SERVICES_ROUTES.fullPackages" class="visit-path__door">
+            <p class="visit-path__days">Tue &amp; Wed</p>
+            <h3 class="visit-path__title">Full glow days</h3>
+            <p class="visit-path__text">One booking for facial, waxing, massage and makeup.</p>
+            <span class="visit-path__action">See packages</span>
+          </NuxtLink>
+        </ScrollReveal>
+        <ScrollReveal variant="up" :delay="160">
+          <NuxtLink :to="SERVICES_ROUTES.singleSessions" class="visit-path__door">
+            <p class="visit-path__days">{{ SINGLE_DAYS_LABEL }}</p>
+            <h3 class="visit-path__title">Single sessions</h3>
+            <p class="visit-path__text">Book one treatment when that is all you need today.</p>
+            <span class="visit-path__action">See singles</span>
+          </NuxtLink>
+        </ScrollReveal>
+      </div>
+    </section>
+
+    <!-- Featured packages only -->
     <section id="packages" class="packages home-section">
-      <header class="section-head">
-        <p class="label">Package days</p>
-        <h2>Full visits, Tuesday &amp; Wednesday</h2>
-        <p class="section-head__sub">One private room. Every treatment done while you unwind.</p>
-      </header>
-      <div class="packages__grid">
-        <MellisPackageCard
-          v-for="pkg in packages"
+      <ScrollReveal variant="up">
+        <header class="section-head">
+          <p class="label">Package days</p>
+          <h2>Full visits, Tuesday &amp; Wednesday</h2>
+        </header>
+      </ScrollReveal>
+      <div class="packages__grid packages__grid--featured">
+        <ScrollReveal
+          v-for="(pkg, index) in featuredPackages"
           :key="pkg.name"
-          :name="pkg.name"
-          :text="pkg.text"
-          :price="pkg.price"
-          :includes="pkg.includes"
-          :featured="pkg.featured"
-          :badge="pkg.badge"
-          :days-label="pkg.daysLabel"
-          :cta-label="pkg.ctaLabel || 'Book this package'"
-          :cta-to="bookHrefForPackageName(pkg.name)"
-        />
-      </div>
-    </section>
-
-    <!-- Single treatments — snap carousel on mobile, calm 2-up on desktop -->
-    <section id="singles" class="singles home-section">
-      <header class="section-head">
-        <p class="label">Single treatments</p>
-        <h2>Book one specific treatment</h2>
-        <p class="section-head__sub">
-          {{ SINGLE_DAYS_LABEL }}. Pick the exact treatment you want — or
-          <NuxtLink :to="SERVICES_ROUTES.singleSessions" class="home-services-link">
-            browse every single treatment and price
-          </NuxtLink>.
-        </p>
-      </header>
-
-      <div class="singles__rail-wrap">
-        <div
-          ref="singlesRail"
-          class="singles__rail"
-          role="list"
-          aria-label="Single treatment highlights"
+          variant="up"
+          :delay="80 + index * 100"
         >
           <MellisPackageCard
-            v-for="treatment in singleHighlights"
-            :key="treatment.name"
-            variant="single"
-            :name="treatment.name"
-            :text="treatment.description"
-            :price="treatment.price"
-            :includes="treatment.highlights"
-            :days-label="SINGLE_DAYS_LABEL"
-            :cta-label="`Book ${treatment.name}`"
-            :cta-to="bookHrefForTreatment(treatment.category, treatment.name)"
-            :details-to="`${SERVICES_ROUTES.page}#${treatment.category}`"
-            details-label="See all options"
+            :name="pkg.name"
+            :text="pkg.text"
+            :price="pkg.price"
+            :includes="pkg.includes"
+            :featured="pkg.featured"
+            :badge="pkg.badge"
+            :days-label="pkg.daysLabel"
+            :cta-label="pkg.ctaLabel || 'Book this package'"
+            :cta-to="bookHrefForPackageName(pkg.name)"
           />
-        </div>
-        <div class="singles__nav" aria-label="Browse treatments">
-          <button type="button" class="singles__nav-btn" aria-label="Scroll treatments left" @click="scrollSingles(-1)">
-            ‹
-          </button>
-          <p class="singles__hint">Swipe for more treatments</p>
-          <button type="button" class="singles__nav-btn" aria-label="Scroll treatments right" @click="scrollSingles(1)">
-            ›
-          </button>
-        </div>
+        </ScrollReveal>
       </div>
+      <ScrollReveal variant="fade" :delay="120">
+        <p class="packages__footer">
+          <NuxtLink :to="SERVICES_ROUTES.fullPackages" class="home-services-link">
+            See all packages
+          </NuxtLink>
+        </p>
+      </ScrollReveal>
     </section>
 
-    <!-- How it works — Mellis flow -->
-    <section class="steps home-section">
-      <header class="section-head">
-        <p class="label">How booking works</p>
-        <h2>Three simple steps</h2>
-      </header>
-      <div class="steps__flow">
-        <MellisFlowStep
-          v-for="step in flowSteps"
-          :key="step.title"
-          :num="step.num"
-          :title="step.title"
-          :text="step.text"
-          :image="step.image"
-        />
-      </div>
-    </section>
-
-    <!-- More we do -->
-    <section class="more home-section">
+    <!-- More we do — desktop atmosphere band (hidden on phones to cut scroll) -->
+    <section class="more home-section home-section--desktop-only">
       <div class="more__bg" aria-hidden="true">
         <img src="/images/more-bg.jpg" alt="" loading="lazy" decoding="async" width="1280" height="720" />
         <div class="more__bg-overlay" />
       </div>
       <div class="more__inner">
-        <div class="more__panel">
+        <ScrollReveal variant="left" :delay="60">
+          <div class="more__panel">
             <p class="label">The studio</p>
-            <h2>Everything you need in one calm visit</h2>
+            <h2>A calm place to glow</h2>
             <ul class="more__list">
               <li v-for="item in serviceList" :key="item">{{ item }}</li>
             </ul>
             <SiteButton to="/services" variant="primary" class="more__cta">{{ LANDING_PRIMARY_CTA }}</SiteButton>
-            <p class="more__hint">Prices are listed above. Pay at checkout to confirm your slot.</p>
+            <p class="more__hint">Pay at checkout to confirm your slot.</p>
           </div>
+        </ScrollReveal>
         <div class="more__stats">
-          <article v-for="stat in stats" :key="stat.label" class="stat-card">
-            <img :src="stat.icon" alt="" width="48" height="48" loading="lazy" decoding="async" />
-            <span class="stat-card__num">{{ stat.value }}</span>
-            <span class="stat-card__label">{{ stat.label }}</span>
-          </article>
+          <ScrollReveal
+            v-for="(stat, index) in stats"
+            :key="stat.label"
+            variant="scale"
+            :delay="80 + index * 70"
+          >
+            <article class="stat-card">
+              <img :src="stat.icon" alt="" width="48" height="48" loading="lazy" decoding="async" />
+              <span class="stat-card__num">{{ stat.value }}</span>
+              <span class="stat-card__label">{{ stat.label }}</span>
+            </article>
+          </ScrollReveal>
         </div>
       </div>
     </section>
 
-    <!-- Testimonials -->
-    <section class="reviews home-section">
-      <header class="section-head">
-        <p class="label">Client stories</p>
-        <h2>What our clients say</h2>
-        <p class="section-head__sub">Visits from Meru Town and across the county. Facials, waxing, massage and makeup.</p>
-      </header>
+    <!-- Testimonials — desktop only on phones (filler scroll) -->
+    <section class="reviews home-section home-section--desktop-only">
+      <ScrollReveal variant="up">
+        <header class="section-head">
+          <p class="label">Client stories</p>
+          <h2>What our clients say</h2>
+          <p class="section-head__sub">Visits from Meru Town and across the county.</p>
+        </header>
+      </ScrollReveal>
       <div class="reviews__grid">
-        <blockquote v-for="review in reviews" :key="review.name" class="review-card">
-          <div class="review-card__stars" aria-label="5 out of 5 stars">★★★★★</div>
-          <p>{{ review.text }}</p>
-          <footer>
-            <img
-              :src="review.photo"
-              alt=""
-              class="review-card__photo"
-              width="56"
-              height="56"
-              loading="lazy"
-              decoding="async"
-            />
-            <div>
-              <cite>{{ review.name }}</cite>
-              <span>Customer</span>
-            </div>
-          </footer>
-        </blockquote>
+        <ScrollReveal
+          v-for="(review, index) in reviews"
+          :key="review.name"
+          variant="up"
+          :delay="70 + index * 80"
+        >
+          <blockquote class="review-card">
+            <div class="review-card__stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <p>{{ review.text }}</p>
+            <footer>
+              <img
+                :src="review.photo"
+                alt=""
+                class="review-card__photo"
+                width="56"
+                height="56"
+                loading="lazy"
+                decoding="async"
+              />
+              <div>
+                <cite>{{ review.name }}</cite>
+                <span>Customer</span>
+              </div>
+            </footer>
+          </blockquote>
+        </ScrollReveal>
       </div>
     </section>
 
-    <!-- Gallery -->
-    <section id="gallery" class="gallery home-section">
-      <header class="section-head section-head--light">
-        <p class="label">On Instagram</p>
-        <h2>@shee_aesthetics</h2>
-      </header>
+    <!-- Gallery — desktop only on phones -->
+    <section id="gallery" class="gallery home-section home-section--desktop-only">
+      <ScrollReveal variant="fade">
+        <header class="section-head section-head--light">
+          <p class="label">On Instagram</p>
+          <h2>@shee_aesthetics</h2>
+        </header>
+      </ScrollReveal>
       <div class="gallery__grid" aria-label="Studio photos">
-        <a
+        <ScrollReveal
           v-for="(img, index) in galleryImages"
           :key="img"
-          :href="LANDING_INSTAGRAM_URL"
-          class="gallery__item"
-          target="_blank"
-          rel="noopener noreferrer"
-          :aria-label="`View studio photo ${index + 1} on Instagram`"
+          variant="scale"
+          :delay="40 + index * 50"
         >
-          <img :src="img" alt="" loading="lazy" decoding="async" width="400" height="400" />
-        </a>
+          <a
+            :href="LANDING_INSTAGRAM_URL"
+            class="gallery__item"
+            target="_blank"
+            rel="noopener noreferrer"
+            :aria-label="`View studio photo ${index + 1} on Instagram`"
+          >
+            <img :src="img" alt="" loading="lazy" decoding="async" width="400" height="400" />
+          </a>
+        </ScrollReveal>
       </div>
     </section>
 
@@ -324,12 +345,13 @@
         <img src="/images/cta-bg.jpg" alt="" loading="lazy" decoding="async" width="1280" height="720" />
         <div class="cta__overlay" />
       </div>
-      <div class="cta__inner">
-        <div class="cta__book">
-          <h2>Ready when you are</h2>
-          <SiteButton to="/services" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
-        </div>
-        <div class="cta__hours">
+      <ScrollReveal variant="up" :delay="60">
+        <div class="cta__inner">
+          <div class="cta__book">
+            <h2>Ready when you are</h2>
+            <SiteButton to="/services" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+          </div>
+          <div class="cta__hours">
             <img src="/images/icon-clock.png" alt="" width="40" height="40" />
             <p class="label">Opening Hours</p>
             <div class="cta__hours-grid">
@@ -351,29 +373,29 @@
               </div>
             </div>
           </div>
-      </div>
+        </div>
+      </ScrollReveal>
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import {
   flowSteps,
+  getFeaturedPackages,
   LANDING_INSTAGRAM_URL,
   LANDING_LOCATION_LABEL,
   LANDING_PRIMARY_CTA,
-  packages,
   SINGLE_DAYS_LABEL,
 } from '@/landing/landingContent'
-import { heroSlides, shouldMountHeroImage } from '@/landing/heroMedia'
+import { HERO_COPY_FADE_MS, HERO_CROSSFADE_MS, HERO_CTA, HERO_FADE_MS, heroSlides, shouldMountHeroImage } from '@/landing/heroMedia'
 import { useLandingSeo } from '@/landing/useLandingSeo'
-import { getServiceSummaries, getSingleTreatmentHighlights } from '@/landing/servicesContent'
-import { bookHrefForPackageName, bookHrefForTreatment } from '@/landing/bookingHandoff'
+import { getServiceSummaries } from '@/landing/servicesContent'
+import { bookHrefForPackageName } from '@/landing/bookingHandoff'
 import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
 
 const activeSlide = ref(0)
-/** Mount active + neighbours — avoids blank ink flashes on swipe / pager jumps. */
 const mountedHeroSlides = computed(() => {
   const set = new Set<number>()
   heroSlides.forEach((_, index) => {
@@ -383,54 +405,53 @@ const mountedHeroSlides = computed(() => {
   })
   return set
 })
-let heroTouchStartX = 0
-let heroTouchStartY = 0
 
 const currentHero = computed(() => heroSlides[activeSlide.value] ?? heroSlides[0]!)
 
-function onHeroTouchStart(e: TouchEvent) {
-  heroTouchStartX = e.changedTouches[0]?.clientX ?? 0
-  heroTouchStartY = e.changedTouches[0]?.clientY ?? 0
+let heroTimer: ReturnType<typeof setInterval> | null = null
+
+function advanceHero() {
+  if (typeof document !== 'undefined' && document.hidden) return
+  activeSlide.value = (activeSlide.value + 1) % heroSlides.length
 }
 
-function onHeroTouchEnd(e: TouchEvent) {
-  const endX = e.changedTouches[0]?.clientX ?? 0
-  const endY = e.changedTouches[0]?.clientY ?? 0
-  const deltaX = heroTouchStartX - endX
-  const deltaY = heroTouchStartY - endY
-  // Prefer vertical scroll; only swipe carousel on clear horizontal intent.
-  if (Math.abs(deltaX) < 56 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return
-  if (deltaX > 0) {
-    goToSlide((activeSlide.value + 1) % heroSlides.length)
-  } else {
-    goToSlide((activeSlide.value - 1 + heroSlides.length) % heroSlides.length)
-  }
-}
-
-function onHeroKeydown(e: KeyboardEvent) {
-  if (e.key === 'ArrowRight') {
-    e.preventDefault()
-    goToSlide((activeSlide.value + 1) % heroSlides.length)
-  } else if (e.key === 'ArrowLeft') {
-    e.preventDefault()
-    goToSlide((activeSlide.value - 1 + heroSlides.length) % heroSlides.length)
-  }
-}
-
-function goToSlide(index: number) {
+function goToHeroSlide(index: number) {
   activeSlide.value = index
+  startHeroAutoplay()
 }
+
+function startHeroAutoplay() {
+  stopHeroAutoplay()
+  if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return
+  }
+  heroTimer = setInterval(advanceHero, HERO_FADE_MS)
+}
+
+function stopHeroAutoplay() {
+  if (heroTimer) {
+    clearInterval(heroTimer)
+    heroTimer = null
+  }
+}
+
+function onHeroVisibility() {
+  if (document.hidden) stopHeroAutoplay()
+  else startHeroAutoplay()
+}
+
+onMounted(() => {
+  startHeroAutoplay()
+  document.addEventListener('visibilitychange', onHeroVisibility)
+})
+
+onUnmounted(() => {
+  stopHeroAutoplay()
+  document.removeEventListener('visibilitychange', onHeroVisibility)
+})
 
 const services = getServiceSummaries()
-const singleHighlights = getSingleTreatmentHighlights()
-const singlesRail = ref<HTMLElement | null>(null)
-
-function scrollSingles(direction: -1 | 1) {
-  const rail = singlesRail.value
-  if (!rail) return
-  const step = Math.min(rail.clientWidth * 0.85, 320)
-  rail.scrollBy({ left: direction * step, behavior: 'smooth' })
-}
+const featuredPackages = getFeaturedPackages()
 
 const serviceList = [
   'Deep Cleansing Facials',
@@ -512,9 +533,11 @@ useLandingSeo()
 .section-head h2 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.65rem, 3.5vw, 2.35rem);
+  font-size: clamp(1.85rem, 4vw, 2.65rem);
   font-weight: 400;
-  line-height: 1.25;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
 }
 
 .section-head__sub {
@@ -540,39 +563,35 @@ useLandingSeo()
   color: #fff;
 }
 
-/* Hero — full viewport under frosted header; still image plane (no Ken Burns) */
+/* Hero — full photo + wave seam into paper (no ash fog) */
 .hero {
   position: relative;
   width: 100%;
-  margin-top: calc(-1 * var(--site-header-height, 4.5rem));
-  /* Stacked fallbacks — avoid max() with dvh (can invalidate the whole declaration). */
-  min-height: 100vh;
-  min-height: 100svh;
-  min-height: 100dvh;
-  height: 100vh;
-  height: 100svh;
-  height: 100dvh;
+  height: min(78svh, 40rem);
+  height: min(78dvh, 40rem);
+  min-height: 28rem;
   overflow: hidden;
-  touch-action: pan-y;
   background: var(--color-ink);
+  --hero-crossfade-ms: 1800ms;
+  --hero-copy-fade-ms: 1100ms;
 }
 
 .hero__track {
-  height: 100%;
-  position: relative;
+  position: absolute;
+  inset: 0;
 }
 
 .hero__slide {
   position: absolute;
   inset: 0;
   opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.4s ease, visibility 0.4s;
+  transition: opacity var(--hero-crossfade-ms) cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity;
+  pointer-events: none;
 }
 
 .hero__slide--active {
   opacity: 1;
-  visibility: visible;
   z-index: 1;
 }
 
@@ -588,20 +607,33 @@ useLandingSeo()
   height: 100%;
   object-fit: cover;
   object-position: center center;
-  transform: none;
+  transform: scale(1.05);
+  transition: transform var(--hero-crossfade-ms) cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.hero__slide--active .hero__bg {
+  transform: scale(1);
 }
 
 .hero__overlay {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(39, 37, 42, 0.5) 0%,
-      rgba(39, 37, 42, 0.22) 40%,
-      rgba(39, 37, 42, 0.4) 70%,
-      rgba(39, 37, 42, 0.78) 100%
-    );
+  z-index: 2;
+  pointer-events: none;
+  background: rgba(39, 37, 42, 0.3);
+}
+
+.hero__wave {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  z-index: 5;
+  width: 100%;
+  height: clamp(2.5rem, 6vw, 4.5rem);
+  display: block;
+  pointer-events: none;
 }
 
 .hero__content {
@@ -611,156 +643,155 @@ useLandingSeo()
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   text-align: center;
   padding:
-    calc(var(--site-header-height, 4.5rem) + 1.25rem)
+    1.5rem
     1.25rem
-    /* Clear sticky mobile book bar + carousel controls with real breathing room */
-    calc(
-      var(--mobile-book-bar-height, 4.25rem)
-      + env(safe-area-inset-bottom, 0px)
-      + 6.75rem
-    );
+    calc(var(--mobile-book-bar-height, 4.25rem) + 3rem);
   color: #fff;
   pointer-events: none;
+}
+
+.hero__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 100%;
+  position: relative;
 }
 
 .hero__content :deep(.site-btn) {
   pointer-events: auto;
 }
 
-.hero__cta {
-  display: none;
+.hero-copy-enter-active,
+.hero-copy-leave-active {
+  transition:
+    opacity var(--hero-copy-fade-ms) cubic-bezier(0.22, 1, 0.36, 1),
+    transform var(--hero-copy-fade-ms) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hero-copy-leave-active {
+  position: absolute;
+  inset-inline: 0;
+  margin-inline: auto;
+}
+
+.hero-copy-enter-from {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.hero-copy-leave-to {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+.hero__mark {
+  display: block;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0 0 0.85rem;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  opacity: 0.95;
 }
 
 .hero__eyebrow {
-  margin: 0 0 0.5rem;
-  font: 600 0.72rem var(--font-body);
+  margin: 0 0 0.55rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.3;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  text-shadow: 0 1px 16px rgba(39, 37, 42, 0.45);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .hero__title {
-  margin: 0 0 0.2rem;
+  margin: 0 0 1.35rem;
+  max-width: 14ch;
   font-family: var(--font-script);
-  font-size: clamp(3.4rem, 14vw, 8.25rem);
+  font-size: clamp(2.75rem, 11vw, 4.75rem);
   font-weight: 400;
-  line-height: 0.92;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
   color: #fff;
-  text-shadow: 0 2px 28px rgba(39, 37, 42, 0.4);
+  text-align: center;
+  text-shadow: 0 2px 28px rgba(20, 16, 18, 0.35);
 }
 
-.hero__service {
-  margin: 0 0 0.65rem;
-  font-family: var(--font-display);
-  font-size: clamp(1.05rem, 2.6vw, 1.55rem);
-  font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.94);
-  text-shadow: 0 1px 16px rgba(39, 37, 42, 0.4);
+.hero__cta {
+  display: inline-flex;
+  min-height: 2.85rem;
+  padding: 0.9rem 1.85rem !important;
+  border-radius: 0 !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.16em !important;
 }
 
-.hero__subtitle {
-  max-width: 34ch;
-  margin: 0 0 0.85rem;
-  font: 400 0.98rem/1.6 var(--font-body);
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 14px rgba(39, 37, 42, 0.4);
-}
-
-.hero__controls {
+.hero__dots {
   position: absolute;
-  bottom: calc(
-    var(--mobile-book-bar-height, 4.25rem)
-    + env(safe-area-inset-bottom, 0px)
-    + 1.35rem
-  );
   left: 50%;
-  transform: translateX(-50%);
+  bottom: calc(var(--mobile-book-bar-height, 4.25rem) + 2.75rem);
   z-index: 4;
   display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  pointer-events: auto;
+  gap: 0.45rem;
+  transform: translateX(-50%);
 }
 
-.hero__nav {
-  display: grid;
-  place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
+.hero__dot {
+  width: 0.5rem;
+  height: 0.5rem;
   padding: 0;
   border: 0;
-  border-radius: 999px;
-  background: rgba(39, 37, 42, 0.4);
-  color: #fff;
-  font-size: 1.35rem;
-  line-height: 1;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
   cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.25s ease, transform 0.25s ease;
 }
 
-.hero__nav:hover {
-  background: rgba(176, 122, 113, 0.85);
+.hero__dot--active {
+  background: #fff;
+  transform: scale(1.15);
 }
 
-.hero__pager {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  list-style: none;
-  margin: 0;
-  padding: 0.35rem 0.55rem;
-  border-radius: 999px;
-  background: rgba(39, 37, 42, 0.36);
-  backdrop-filter: blur(8px);
+.hero__dot:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
 }
 
-.hero__pager-dot {
-  position: relative;
-  display: block;
-  width: 0.55rem;
-  height: 0.55rem;
-  padding: 0;
-  border: none;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.45);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: width 0.2s ease, background-color 0.2s ease;
-}
-
-/* Expand hit target without enlarging the visual dot. */
-.hero__pager-dot::before {
-  content: '';
+.sr-only {
   position: absolute;
-  inset: -0.7rem;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.hero__pager-dot:hover {
-  background: rgba(255, 255, 255, 0.8);
-}
-
-.hero__pager-dot--active {
-  width: 1.45rem;
-  background: var(--color-rose) !important;
-}
-
-/* Welcome — hard seam below full-bleed hero */
+/* Welcome — calm seam under spa hero */
 .welcome {
-  padding: clamp(2.75rem, 7vh, 4.25rem) 1rem clamp(2rem, 5vh, 3.5rem);
+  padding: clamp(2rem, 5vh, 3.5rem) 1rem clamp(2rem, 5vh, 3.5rem);
   position: relative;
   z-index: 1;
+  margin-top: 0;
   background: var(--color-paper);
 }
 
 @media (max-width: 767px) {
   .welcome {
     padding-top: clamp(2.5rem, 6vh, 3.25rem);
+  }
+
+  /* Hero + sticky bar already book — keep welcome focused on paths */
+  .welcome__cta {
+    display: none;
   }
 }
 
@@ -815,13 +846,6 @@ useLandingSeo()
   pointer-events: none;
 }
 
-.welcome__offers {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.25rem;
-  margin-bottom: 1.75rem;
-}
-
 .welcome__copy h2 {
   margin: 0 0 1.25rem;
   font-family: var(--font-display);
@@ -836,72 +860,24 @@ useLandingSeo()
   color: var(--color-muted);
 }
 
-.welcome__offer-btn {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-  width: 100%;
-  padding: 1.15rem 1.25rem;
-  border: 1px solid var(--color-line);
-  border-left: 3px solid var(--color-rose);
-  background: #fff;
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-@media (hover: hover) {
-  .welcome__offer-btn {
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-
-  .welcome__offer-btn:hover {
-    border-color: var(--color-rose);
-    box-shadow: 0 10px 28px rgba(39, 37, 42, 0.08);
-  }
-}
-
-.welcome__offer-btn:focus-visible {
-  outline: 2px solid var(--color-rose);
-  outline-offset: 2px;
-}
-
-.welcome__offer-btn h3 {
-  margin: 0 0 0.35rem;
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--color-ink);
-}
-
-.welcome__offer-btn p {
-  margin: 0;
-  font: 400 0.88rem/1.55 var(--font-body);
-  color: var(--color-muted);
-}
-
-.welcome__offer-action {
-  display: inline-block;
-  margin-top: 0.65rem;
-  font: 600 0.72rem var(--font-body);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-rose);
-}
-
-/* Services — Mellis open grid, no boxed cards */
+/* Treatments — photo showcase (not a list of names in the headline) */
 .services {
-  padding: clamp(2rem, 5vh, 3.5rem) 1rem;
-  background: var(--color-paper);
+  padding: clamp(2.5rem, 6vh, 4rem) 1rem;
+  background: var(--color-cream);
 }
 
 .services__grid {
   width: var(--container);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.35rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem 0.85rem;
+}
+
+.services__footer {
+  width: var(--container);
+  margin: 1.75rem auto 0;
+  text-align: center;
 }
 
 /* More — standout band with visible spa photo */
@@ -1041,17 +1017,63 @@ useLandingSeo()
   color: var(--color-muted);
 }
 
-/* Steps — Mellis circle flow */
+/* Steps — compact numbered list on phones; circle flow from tablet up */
 .steps {
-  padding: clamp(2.25rem, 5vh, 3.75rem) 1.25rem;
+  padding: clamp(2rem, 5vh, 3.5rem) 1.25rem;
   background: var(--color-paper);
+}
+
+.steps__compact {
+  list-style: none;
+  width: var(--container);
+  margin: 0 auto;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.steps__compact li {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.85rem 0.9rem;
+  background: #fff;
+  border: 1px solid var(--color-line);
+}
+
+.steps__compact-num {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  background: var(--color-rose);
+  color: #fff;
+  font: 600 0.78rem var(--font-body);
+  letter-spacing: 0.04em;
+}
+
+.steps__compact strong {
+  display: block;
+  margin: 0.1rem 0 0.25rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.steps__compact p {
+  margin: 0;
+  font: 400 0.84rem/1.45 var(--font-body);
+  color: var(--color-muted);
 }
 
 .steps__flow {
   position: relative;
   width: var(--container);
   margin: 0 auto;
-  display: grid;
+  display: none;
   grid-template-columns: 1fr;
   gap: 1.35rem;
   padding-top: 0.35rem;
@@ -1059,6 +1081,23 @@ useLandingSeo()
 
 .steps__flow::before {
   display: none;
+}
+
+@media (min-width: 768px) {
+  .steps__compact {
+    display: none;
+  }
+
+  .steps__flow {
+    display: grid;
+  }
+}
+
+/* Cut brochure filler on phones — keep booking path short */
+@media (max-width: 767px) {
+  .home-section--desktop-only {
+    display: none !important;
+  }
 }
 
 /* Packages */
@@ -1072,100 +1111,122 @@ useLandingSeo()
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.1rem;
+  gap: 1rem;
   align-items: stretch;
   padding-top: 0.85rem;
 }
 
-.packages__grid > * {
-  min-width: 0;
+.packages__grid--featured {
+  max-width: 26rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.packages--singles {
+.packages__grid > * {
+  min-width: 0;
+  height: 100%;
+}
+
+.packages__footer {
+  width: var(--container);
+  margin: 1.5rem auto 0;
+  text-align: center;
+}
+
+/* Visit path — two clear booking doors */
+.visit-path {
+  padding: clamp(2.25rem, 5vh, 3.75rem) 1rem;
   background: var(--color-cream);
 }
 
-.packages__grid--singles {
+.visit-path__grid {
+  width: var(--container);
+  margin: 0 auto;
+  display: grid;
   grid-template-columns: 1fr;
-  padding-top: 0.85rem;
+  gap: 1rem;
 }
 
-.packages__grid--singles > * {
+.visit-path__grid > * {
+  height: 100%;
   min-width: 0;
 }
 
-/* Singles — horizontal snap rail (mobile density) → 2-up editorial (desktop) */
-.singles {
-  padding: clamp(2rem, 5vh, 3.5rem) 0;
-  background:
-    linear-gradient(180deg, rgba(248, 235, 232, 0.55) 0%, var(--color-paper) 48%, var(--color-paper) 100%);
-}
-
-.singles .section-head {
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-
-.singles__rail-wrap {
-  position: relative;
-  width: 100%;
-}
-
-.singles__rail {
+.visit-path__door {
   display: flex;
-  gap: 0.85rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-padding-inline: 1rem;
-  -webkit-overflow-scrolling: touch;
-  padding: 0.35rem 1rem 1.1rem;
-  scrollbar-width: none;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 100%;
+  padding: 1.5rem 1.35rem;
+  background: #fff;
+  border: 1px solid var(--color-line);
+  border-left: 3px solid var(--color-rose);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.singles__rail::-webkit-scrollbar {
-  display: none;
+@media (hover: hover) {
+  .visit-path__door:hover {
+    border-color: var(--color-rose);
+    box-shadow: 0 12px 32px rgba(39, 37, 42, 0.08);
+  }
+
+  .visit-path__door:hover .visit-path__action {
+    color: var(--color-rose-dark);
+  }
 }
 
-.singles__rail > * {
-  flex: 0 0 min(78vw, 17.5rem);
-  scroll-snap-align: start;
-  min-width: 0;
+.visit-path__door:focus-visible {
+  outline: 2px solid var(--color-rose);
+  outline-offset: 3px;
 }
 
-.singles__nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.65rem;
-  margin-top: 0.1rem;
-  padding-bottom: 0.25rem;
-}
-
-.singles__hint {
-  margin: 0;
+.visit-path__days {
+  margin: 0 0 0.55rem;
   font: 600 0.68rem var(--font-body);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
+  color: var(--color-rose);
+}
+
+.visit-path__title {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 3vw, 1.65rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-ink);
+}
+
+.visit-path__text {
+  margin: 0 0 1.15rem;
+  flex: 1;
+  font: 400 0.95rem/1.55 var(--font-body);
   color: var(--color-muted);
 }
 
-.singles__nav-btn {
-  display: grid;
-  place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border: 1px solid var(--color-line);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--color-ink);
-  font-size: 1.3rem;
-  line-height: 1;
-  cursor: pointer;
+.visit-path__action {
+  font: 700 0.68rem var(--font-body);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-rose);
 }
 
-.singles__nav-btn:hover {
-  border-color: var(--color-rose);
-  color: var(--color-rose-dark);
+@media (min-width: 768px) {
+  .visit-path__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+.services__grid > *,
+.reviews__grid > *,
+.more__stats > *,
+.steps__flow > *,
+.gallery__grid > * {
+  height: 100%;
+  min-width: 0;
 }
 
 /* Reviews */
@@ -1354,11 +1415,6 @@ useLandingSeo()
 
 /* Tablet and up — progressive enhancement */
 @media (min-width: 640px) {
-  .welcome__offers {
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-  }
-
   .cta__hours-grid {
     grid-template-columns: 1fr 1fr;
     gap: 1.25rem;
@@ -1367,38 +1423,24 @@ useLandingSeo()
 
 @media (min-width: 768px) {
   .hero {
-    min-height: 100vh;
-    min-height: 100svh;
-    min-height: 100dvh;
-    height: 100vh;
-    height: 100svh;
-    height: 100dvh;
-  }
-
-  .hero__cta {
-    display: inline-flex;
-    margin-top: 1.35rem;
+    height: min(72vh, 42rem);
+    min-height: 30rem;
   }
 
   .hero__content {
-    justify-content: flex-end;
-    padding:
-      calc(var(--site-header-height, 7rem) + 1.5rem)
-      1.5rem
-      clamp(4rem, 10vh, 5.5rem);
+    padding: 2rem 1.5rem 3.25rem;
   }
 
-  .hero__subtitle {
-    margin-bottom: 0;
+  .hero__dots {
+    bottom: 2.75rem;
   }
 
-  .hero__controls {
-    bottom: clamp(1.5rem, 4vw, 2.25rem);
+  .hero__title {
+    font-size: clamp(3.5rem, 6vw, 5.5rem);
   }
 
   .hero__eyebrow {
-    font-size: 0.85rem;
-    letter-spacing: 0.32em;
+    font-size: 0.78rem;
   }
 
   .section-head {
@@ -1425,7 +1467,8 @@ useLandingSeo()
 
   .services,
   .reviews,
-  .packages {
+  .packages,
+  .visit-path {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
@@ -1436,30 +1479,8 @@ useLandingSeo()
   }
 
   .packages__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 1.15rem;
-  }
-
-  .packages__grid > :last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-    max-width: 22rem;
-    justify-self: center;
-    width: 100%;
-  }
-
-  .singles__rail {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-    scroll-padding-inline: 1.5rem;
-    gap: 1rem;
-  }
-
-  .singles__rail > * {
-    flex-basis: min(42vw, 20rem);
-  }
-
-  .singles__hint {
-    display: none;
   }
 
   .reviews__grid {
@@ -1493,13 +1514,8 @@ useLandingSeo()
 
 @media (min-width: 1024px) {
   .hero {
-    /* Keep full-bleed studio hero — never letterbox on large screens. */
-    min-height: 100vh;
-    min-height: 100svh;
-    min-height: 100dvh;
-    height: 100vh;
-    height: 100svh;
-    height: 100dvh;
+    height: min(78vh, 46rem);
+    min-height: 34rem;
   }
 
   .welcome__inner {
@@ -1528,43 +1544,13 @@ useLandingSeo()
     z-index: 0;
   }
 
-  .packages__grid {
+  .packages__grid:not(.packages__grid--featured) {
     grid-template-columns: repeat(3, 1fr);
     gap: 1.25rem;
   }
 
-  .singles .section-head {
-    width: var(--container);
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .singles__rail-wrap {
-    width: var(--container);
-    margin: 0 auto;
-    padding: 0 0.25rem;
-  }
-
-  .singles__rail {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.15rem;
-    overflow: visible;
-    scroll-snap-type: none;
-    padding: 0.35rem 0 0.25rem;
-  }
-
-  .singles__rail > * {
-    flex: none;
-    width: auto;
-  }
-
-  .singles__nav {
-    display: none;
-  }
-
-  .singles__hint {
-    display: none;
+  .packages__grid--featured {
+    grid-template-columns: 1fr;
   }
 
   .reviews__grid {
@@ -1577,11 +1563,17 @@ useLandingSeo()
   .hero__slide,
   .hero__bg,
   .hero__content,
+  .hero-copy-enter-active,
+  .hero-copy-leave-active,
   .stat-card,
   .package-card,
   .review-card {
     animation: none !important;
     transition: none !important;
+  }
+
+  .hero__bg {
+    transform: none !important;
   }
 }
 </style>

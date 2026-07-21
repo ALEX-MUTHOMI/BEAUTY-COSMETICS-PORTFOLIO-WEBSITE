@@ -34,19 +34,19 @@ export const flowSteps: FlowStep[] = [
   {
     num: '01',
     title: 'Choose online',
-    text: 'Pick your date, package or single treatment, and complete checkout to book your visit.',
+    text: 'Pick a date, treatment or package, then check out.',
     image: '/images/step-meeting.jpg',
   },
   {
     num: '02',
     title: 'Your treatment',
-    text: 'Arrive a few minutes early. Your therapist walks you through each step in a private room.',
+    text: 'Arrive a few minutes early. Your therapist guides each step.',
     image: '/images/step-treatment.jpg',
   },
   {
     num: '03',
     title: 'Leave glowing',
-    text: 'Your booking is confirmed once payment clears. A receipt lands in your inbox.',
+    text: 'Payment confirms your slot. A receipt arrives by email.',
     image: '/images/step-finalizing.jpg',
   },
 ]
@@ -54,10 +54,10 @@ export const flowSteps: FlowStep[] = [
 export const packageDayHeadline = 'Full Package Days'
 
 export const packageDaySubhead =
-  'Tuesdays and Wednesdays are for clients who want the full Shee visit. Every treatment in one private room, without rushing between appointments.'
+  'Tuesdays and Wednesdays for full visits — facial, wax, massage and makeup in one booking.'
 
 export const packageDayUrgency =
-  'We keep these days for packages only. Slots are limited each week.'
+  'Package days only. Slots are limited each week.'
 
 export function isPackageDay(day: string): boolean {
   return PACKAGE_DAYS.some((d) => d.toLowerCase() === day.toLowerCase())
@@ -79,7 +79,6 @@ export const packages: LandingPackage[] = [
       'Full body waxing',
       '60-minute massage',
       'Event-ready makeup',
-      'Private treatment room',
     ],
   },
   {
@@ -109,6 +108,12 @@ export const packages: LandingPackage[] = [
     ],
   },
 ]
+
+/** Homepage shows featured packages only — full catalog lives on /services. */
+export function getFeaturedPackages(list: LandingPackage[] = packages): LandingPackage[] {
+  const featured = list.filter((p) => p.featured)
+  return featured.length > 0 ? featured : list.slice(0, 1)
+}
 
 export const singleTreatments: LandingPackage[] = [
   {

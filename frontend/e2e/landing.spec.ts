@@ -34,12 +34,20 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(logoLink.locator('.shee-logo__name')).toHaveText('Shee')
 
     await expect(page.getByRole('heading', { name: 'Choose online', level: 3 })).toBeVisible()
-    await expect(page.getByRole('heading', { name: /Facials, waxing, massage/i, level: 2 })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Our treatments', level: 2 })).toBeVisible()
+    await expect(page.locator('#services .treat-tile')).toHaveCount(4)
+
+    await page.locator('#visit-path').scrollIntoViewIfNeeded()
+    await expect(page.getByRole('heading', { name: 'How would you like to visit?', level: 2 })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Full glow days/i })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Single sessions/i })).toBeVisible()
 
     await page.locator('#packages').scrollIntoViewIfNeeded()
     await expect(page.getByRole('heading', { name: /Full visits, Tuesday/i })).toBeVisible()
-    await expect(page.getByRole('heading', { name: /Book one specific treatment/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Book one specific treatment/i })).toHaveCount(0)
+    await expect(page.locator('#packages .mellis-card')).toHaveCount(1)
     await expect(page.locator('.mellis-card__badge', { hasText: 'Most booked' })).toBeVisible()
+    await expect(page.getByRole('link', { name: /See all packages/i })).toBeVisible()
 
     const cspViolations = consoleErrors.filter((e) =>
       /content security policy|refused to execute|refused to load/i.test(e),
