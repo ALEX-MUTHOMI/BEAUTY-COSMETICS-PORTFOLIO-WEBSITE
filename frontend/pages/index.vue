@@ -106,34 +106,85 @@
       </div>
     </section>
 
-    <!-- Treatments — photo showcase; headline stays brand-simple -->
-    <section id="services" class="services home-section">
+    <!-- Our work — Pinterest masonry; primary proof for new clients -->
+    <section id="our-work" class="work home-section">
       <ScrollReveal variant="up">
         <header class="section-head">
-          <p class="label">The studio</p>
-          <h2>Our treatments</h2>
+          <p class="label">Our work</p>
+          <h2>Clients by Shee</h2>
         </header>
       </ScrollReveal>
-      <div class="services__grid">
-        <ScrollReveal
-          v-for="(service, index) in services"
-          :key="service.name"
-          variant="up"
-          :delay="100 + index * 90"
+      <div class="work__masonry" aria-label="Shee client and studio work">
+        <a
+          v-for="(img, index) in workImages"
+          :key="img.id"
+          :href="LANDING_INSTAGRAM_URL"
+          class="work__tile"
+          :class="`work__tile--${img.shape}`"
+          target="_blank"
+          rel="noopener noreferrer"
+          :aria-label="img.alt"
         >
-          <MellisServiceCard
-            :name="service.name"
-            :image="service.image"
-            :cta-to="service.ctaTo"
-            cta-label="Explore"
+          <img
+            :src="img.src"
+            :alt="img.alt"
+            class="work__photo"
+            loading="lazy"
+            decoding="async"
+            :width="img.width"
+            :height="img.height"
+            :fetchpriority="index < 2 ? 'low' : 'auto'"
           />
-        </ScrollReveal>
+        </a>
       </div>
-      <ScrollReveal variant="fade" :delay="160">
-        <p class="services__footer">
-          <NuxtLink to="/services" class="home-services-link">View packages and full pricing</NuxtLink>
+      <ScrollReveal variant="fade" :delay="80">
+        <p class="work__footer">
+          <a
+            :href="LANDING_INSTAGRAM_URL"
+            class="home-services-link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            More on Instagram
+          </a>
         </p>
       </ScrollReveal>
+    </section>
+
+    <!-- Treatments — Mellis atmosphere: fixed photo, content scrolls over it -->
+    <section id="services" class="offer home-section">
+      <div class="offer__bg" aria-hidden="true">
+        <div class="offer__fixed">
+          <img
+            src="/images/hero-massage.jpg"
+            alt=""
+            class="offer__photo"
+            width="1920"
+            height="1280"
+            decoding="async"
+            fetchpriority="low"
+          />
+          <div class="offer__veil" />
+        </div>
+      </div>
+      <div class="offer__inner">
+        <div class="offer__copy">
+          <p class="offer__label">What we offer</p>
+          <h2>A calm spa experience at Shee Aesthetics</h2>
+          <p class="offer__text">Facials, waxing, massage and makeup — under one roof in Meru Town.</p>
+          <NuxtLink to="/services" class="offer__play" aria-label="View packages and full pricing">
+            <span class="offer__play-icon" aria-hidden="true" />
+          </NuxtLink>
+        </div>
+        <ul class="offer__list" aria-label="Treatment highlights">
+          <li v-for="item in offerItems" :key="item.label">
+            <NuxtLink :to="item.to" class="offer__item">
+              <span class="offer__check" aria-hidden="true" />
+              {{ item.label }}
+            </NuxtLink>
+          </li>
+        </ul>
+      </div>
     </section>
 
     <!-- How it works — before packages so booking flow is clear first -->
@@ -200,80 +251,45 @@
       </div>
     </section>
 
-    <!-- Featured packages only -->
+    <!-- Featured package — copy + card band -->
     <section id="packages" class="packages home-section">
-      <ScrollReveal variant="up">
-        <header class="section-head">
-          <p class="label">Package days</p>
-          <h2>Full visits, Tuesday &amp; Wednesday</h2>
-        </header>
-      </ScrollReveal>
-      <div class="packages__grid packages__grid--featured">
-        <ScrollReveal
-          v-for="(pkg, index) in featuredPackages"
-          :key="pkg.name"
-          variant="up"
-          :delay="80 + index * 100"
-        >
-          <MellisPackageCard
-            :name="pkg.name"
-            :text="pkg.text"
-            :price="pkg.price"
-            :includes="pkg.includes"
-            :featured="pkg.featured"
-            :badge="pkg.badge"
-            :days-label="pkg.daysLabel"
-            :cta-label="pkg.ctaLabel || 'Book this package'"
-            :cta-to="bookHrefForPackageName(pkg.name)"
-          />
-        </ScrollReveal>
-      </div>
-      <ScrollReveal variant="fade" :delay="120">
-        <p class="packages__footer">
-          <NuxtLink :to="SERVICES_ROUTES.fullPackages" class="home-services-link">
-            See all packages
-          </NuxtLink>
-        </p>
-      </ScrollReveal>
-    </section>
-
-    <!-- More we do — desktop atmosphere band (hidden on phones to cut scroll) -->
-    <section class="more home-section home-section--desktop-only">
-      <div class="more__bg" aria-hidden="true">
-        <img src="/images/more-bg.jpg" alt="" loading="lazy" decoding="async" width="1280" height="720" />
-        <div class="more__bg-overlay" />
-      </div>
-      <div class="more__inner">
-        <ScrollReveal variant="left" :delay="60">
-          <div class="more__panel">
-            <p class="label">The studio</p>
-            <h2>A calm place to glow</h2>
-            <ul class="more__list">
-              <li v-for="item in serviceList" :key="item">{{ item }}</li>
-            </ul>
-            <SiteButton to="/services" variant="primary" class="more__cta">{{ LANDING_PRIMARY_CTA }}</SiteButton>
-            <p class="more__hint">Pay at checkout to confirm your slot.</p>
+      <div class="packages__band">
+        <ScrollReveal variant="up" :delay="40">
+          <div class="packages__copy">
+            <p class="label">Package days</p>
+            <h2>Full visits, Tuesday &amp; Wednesday</h2>
+            <p class="packages__sub">{{ packageDaySubhead }}</p>
+            <p class="packages__note">{{ packageDayUrgency }}</p>
+            <NuxtLink :to="SERVICES_ROUTES.fullPackages" class="home-services-link packages__all">
+              See all packages
+            </NuxtLink>
           </div>
         </ScrollReveal>
-        <div class="more__stats">
+        <div class="packages__card-wrap">
           <ScrollReveal
-            v-for="(stat, index) in stats"
-            :key="stat.label"
-            variant="scale"
-            :delay="80 + index * 70"
+            v-for="(pkg, index) in featuredPackages"
+            :key="pkg.name"
+            variant="up"
+            :delay="100 + index * 80"
           >
-            <article class="stat-card">
-              <img :src="stat.icon" alt="" width="48" height="48" loading="lazy" decoding="async" />
-              <span class="stat-card__num">{{ stat.value }}</span>
-              <span class="stat-card__label">{{ stat.label }}</span>
-            </article>
+            <MellisPackageCard
+              :name="pkg.name"
+              :text="pkg.text"
+              :price="pkg.price"
+              :includes="pkg.includes"
+              :featured="pkg.featured"
+              :badge="pkg.badge"
+              :days-label="pkg.daysLabel"
+              :cta-label="pkg.ctaLabel || 'Book this package'"
+              :cta-to="bookHrefForPackageName(pkg.name)"
+            />
           </ScrollReveal>
         </div>
       </div>
     </section>
 
-    <!-- Testimonials — desktop only on phones (filler scroll) -->
-    <section class="reviews home-section home-section--desktop-only">
+    <!-- Testimonials — short proof for new clients (mobile + desktop) -->
+    <section class="reviews home-section">
       <ScrollReveal variant="up">
         <header class="section-head">
           <p class="label">Client stories</p>
@@ -311,70 +327,60 @@
       </div>
     </section>
 
-    <!-- Gallery — desktop only on phones -->
-    <section id="gallery" class="gallery home-section home-section--desktop-only">
-      <ScrollReveal variant="fade">
-        <header class="section-head section-head--light">
-          <p class="label">On Instagram</p>
-          <h2>@shee_aesthetics</h2>
-        </header>
-      </ScrollReveal>
-      <div class="gallery__grid" aria-label="Studio photos">
-        <ScrollReveal
-          v-for="(img, index) in galleryImages"
-          :key="img"
-          variant="scale"
-          :delay="40 + index * 50"
-        >
-          <a
-            :href="LANDING_INSTAGRAM_URL"
-            class="gallery__item"
-            target="_blank"
-            rel="noopener noreferrer"
-            :aria-label="`View studio photo ${index + 1} on Instagram`"
-          >
-            <img :src="img" alt="" loading="lazy" decoding="async" width="400" height="400" />
-          </a>
-        </ScrollReveal>
-      </div>
-    </section>
-
-    <!-- Hours CTA -->
-    <section id="visit" class="cta home-section">
-      <div class="cta__photo">
-        <img src="/images/cta-bg.jpg" alt="" loading="lazy" decoding="async" width="1280" height="720" />
-        <div class="cta__overlay" />
-      </div>
-      <ScrollReveal variant="up" :delay="60">
-        <div class="cta__inner">
-          <div class="cta__book">
-            <h2>Ready when you are</h2>
-            <SiteButton to="/services" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
-          </div>
-          <div class="cta__hours">
-            <img src="/images/icon-clock.png" alt="" width="40" height="40" />
-            <p class="label">Opening Hours</p>
-            <div class="cta__hours-grid">
+    <!-- Visit — split hours + clipped map -->
+    <section id="visit" class="visit-map home-section">
+      <div class="visit-map__inner">
+        <ScrollReveal variant="up" :delay="40">
+          <div class="visit-map__hours-panel">
+            <div class="visit-map__card-head">
+              <h2>Opening Hours</h2>
+              <img src="/images/icon-clock.png" alt="" width="40" height="40" />
+            </div>
+            <dl class="visit-map__hours">
               <div>
-                <h3>Monday</h3>
-                <p>7:00 am – 7:00 pm · singles</p>
+                <dt>Monday</dt>
+                <dd>7:00 am – 7:00 pm · singles</dd>
               </div>
               <div>
-                <h3>Tue &amp; Wed</h3>
-                <p>7:00 am – 7:00 pm · packages</p>
+                <dt>Tue &amp; Wed</dt>
+                <dd>7:00 am – 7:00 pm · packages</dd>
               </div>
               <div>
-                <h3>Thu – Sat</h3>
-                <p>7:00 am – 7:00 pm · singles</p>
+                <dt>Thu – Sat</dt>
+                <dd>7:00 am – 7:00 pm · singles</dd>
               </div>
               <div>
-                <h3>Sunday</h3>
-                <p>Closed</p>
+                <dt>Sunday</dt>
+                <dd>Closed</dd>
               </div>
+            </dl>
+            <p class="visit-map__place">{{ LANDING_LOCATION_LABEL }}</p>
+            <div class="visit-map__actions">
+              <SiteButton to="/services" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+              <a
+                :href="LANDING_MAPS_URL"
+                class="visit-map__maps"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Open in Maps
+              </a>
             </div>
           </div>
+        </ScrollReveal>
+        <div class="visit-map__map-panel">
+          <div class="visit-map__frame-wrap">
+            <iframe
+              class="visit-map__frame"
+              title="Shee Aesthetics location map"
+              :src="LANDING_MAPS_EMBED_URL"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              allowfullscreen
+            />
+          </div>
         </div>
-      </ScrollReveal>
+      </div>
     </section>
   </main>
 </template>
@@ -386,14 +392,30 @@ import {
   getFeaturedPackages,
   LANDING_INSTAGRAM_URL,
   LANDING_LOCATION_LABEL,
+  LANDING_MAPS_EMBED_URL,
+  LANDING_MAPS_URL,
   LANDING_PRIMARY_CTA,
+  packageDaySubhead,
+  packageDayUrgency,
   SINGLE_DAYS_LABEL,
 } from '@/landing/landingContent'
+import { fetchHomeWorkGallery, STATIC_HOME_WORK } from '@/landing/homeWorkGallery'
 import { HERO_COPY_FADE_MS, HERO_CROSSFADE_MS, HERO_CTA, HERO_FADE_MS, heroSlides, shouldMountHeroImage } from '@/landing/heroMedia'
 import { useLandingSeo } from '@/landing/useLandingSeo'
-import { getServiceSummaries } from '@/landing/servicesContent'
 import { bookHrefForPackageName } from '@/landing/bookingHandoff'
 import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
+
+const config = useRuntimeConfig()
+
+definePageMeta({ layout: 'landing' })
+useLandingSeo()
+
+const { data: workGallery } = await useAsyncData(
+  'home-work-gallery',
+  () => fetchHomeWorkGallery(String(config.public.apiBaseUrl || '')),
+  { default: () => STATIC_HOME_WORK },
+)
+const workImages = computed(() => workGallery.value ?? STATIC_HOME_WORK)
 
 const activeSlide = ref(0)
 const mountedHeroSlides = computed(() => {
@@ -450,25 +472,17 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', onHeroVisibility)
 })
 
-const services = getServiceSummaries()
 const featuredPackages = getFeaturedPackages()
 
-const serviceList = [
-  'Deep Cleansing Facials',
-  'Hot Stone Massage',
-  'Full Body Waxing',
-  'Bridal Makeup',
-  'Back & Shoulder Massage',
-  'Brow Shaping',
-  'Skin Brightening',
-  'Event Glam',
-]
-
-const stats = [
-  { value: '4', label: 'Treatments in one studio', icon: '/images/icon-counter-2.png' },
-  { value: '2', label: 'Days for full packages', icon: '/images/icon-counter-4.png' },
-  { value: '6', label: 'Days open weekly', icon: '/images/icon-counter-1.png' },
-  { value: 'M-Pesa', label: 'Pay at checkout', icon: '/images/icon-counter-3.png' },
+const offerItems = [
+  { label: 'Facials', to: `${SERVICES_ROUTES.page}#facials` },
+  { label: 'Deep cleansing facials', to: `${SERVICES_ROUTES.page}#facials` },
+  { label: 'Massage', to: `${SERVICES_ROUTES.page}#massage` },
+  { label: 'Hot stone massage', to: `${SERVICES_ROUTES.page}#massage` },
+  { label: 'Waxing', to: `${SERVICES_ROUTES.page}#waxing` },
+  { label: 'Brow shaping', to: `${SERVICES_ROUTES.page}#waxing` },
+  { label: 'Makeup', to: `${SERVICES_ROUTES.page}#makeup` },
+  { label: 'Bridal & event glam', to: `${SERVICES_ROUTES.page}#makeup` },
 ]
 
 const reviews = [
@@ -488,19 +502,6 @@ const reviews = [
     text: 'The Saturday massage is something I look forward to each week. Easy to book and always on time.',
   },
 ]
-
-const galleryImages = [
-  '/images/gallery-1.jpg',
-  '/images/gallery-2.jpg',
-  '/images/gallery-3.jpg',
-  '/images/gallery-4.jpg',
-  '/images/gallery-5.jpg',
-  '/images/gallery-6.jpg',
-]
-
-definePageMeta({ layout: 'landing' })
-
-useLandingSeo()
 </script>
 
 <style scoped>
@@ -508,6 +509,10 @@ useLandingSeo()
   background: var(--color-paper);
   margin: 0;
   padding: 0;
+  /* Mobile keeps generous clamps; tablet+ overrides below */
+  --home-section-y: clamp(2rem, 5vh, 3.5rem);
+  --home-section-y-lg: clamp(2.5rem, 6vh, 4rem);
+  --home-head-gap: 1.35rem;
 }
 
 .home-section {
@@ -525,7 +530,7 @@ useLandingSeo()
 
 .section-head {
   width: var(--container);
-  margin: 0 auto 1.35rem;
+  margin: 0 auto var(--home-head-gap);
   text-align: center;
   padding: 0 0.25rem;
 }
@@ -777,7 +782,7 @@ useLandingSeo()
 
 /* Welcome — calm seam under spa hero */
 .welcome {
-  padding: clamp(2rem, 5vh, 3.5rem) 1rem clamp(2rem, 5vh, 3.5rem);
+  padding: var(--home-section-y) 1rem;
   position: relative;
   z-index: 1;
   margin-top: 0;
@@ -860,166 +865,242 @@ useLandingSeo()
   color: var(--color-muted);
 }
 
-/* Treatments — photo showcase (not a list of names in the headline) */
-.services {
-  padding: clamp(2.5rem, 6vh, 4rem) 1rem;
-  background: var(--color-cream);
+/* Treatments — Mellis parallax: fixed full-bleed photo, content scrolls over it */
+.offer.home-section {
+  content-visibility: visible;
+  contain-intrinsic-size: none;
 }
 
-.services__grid {
-  width: var(--container);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.25rem 0.85rem;
-}
-
-.services__footer {
-  width: var(--container);
-  margin: 1.75rem auto 0;
-  text-align: center;
-}
-
-/* More — standout band with visible spa photo */
-.more {
+.offer {
   position: relative;
-  padding: clamp(2.25rem, 5vh, 3.75rem) 1rem;
-  overflow: hidden;
-  border-top: 4px solid var(--color-rose);
-  border-bottom: 4px solid var(--color-rose);
+  display: flex;
+  align-items: center;
+  min-height: min(42rem, 92vh);
+  padding: clamp(4rem, 11vh, 7.5rem) 1.25rem;
+  /* Clips the fixed photo to this band — image stays, section edges move */
+  overflow: clip;
+  background: #2a2424;
 }
 
-.more__bg {
+.offer__bg {
   position: absolute;
   inset: 0;
   z-index: 0;
+  pointer-events: none;
+  /* Ensures fixed child is clipped to the section in all browsers */
+  clip-path: inset(0);
 }
 
-.more__bg img {
+.offer__fixed {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.offer__photo {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1.05);
+  /* Larger crop — less “panel”, more atmosphere */
+  transform: scale(1.14);
+  transform-origin: center 40%;
+  /* Portrait hero-massage: keep oil + candles in the landscape crop */
+  object-position: center 28%;
 }
 
-.more__bg-overlay {
+.offer__veil {
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    105deg,
-    rgba(252, 245, 245, 0.97) 0%,
-    rgba(255, 255, 255, 0.9) 42%,
-    rgba(39, 37, 42, 0.45) 100%
+    95deg,
+    rgba(20, 16, 14, 0.68) 0%,
+    rgba(20, 16, 14, 0.38) 38%,
+    rgba(20, 16, 14, 0.12) 62%,
+    rgba(20, 16, 14, 0.2) 100%
   );
+  pointer-events: none;
 }
 
-.more__inner {
+.offer__inner {
   position: relative;
   z-index: 1;
   width: var(--container);
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2rem;
+  gap: clamp(2.25rem, 5vw, 4rem);
   align-items: center;
 }
 
-.more__panel {
-  background: #fff;
-  border-left: 4px solid var(--color-rose);
-  padding: clamp(1.75rem, 4vw, 2.5rem);
-  box-shadow: 0 24px 64px rgba(39, 37, 42, 0.14);
-  max-width: 34rem;
+.offer__label {
+  margin: 0 0 0.75rem;
+  font: 600 0.72rem var(--font-body);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
 }
 
-.more__panel h2 {
-  margin: 0 0 1.5rem;
+.offer__copy h2 {
+  margin: 0 0 1rem;
   font-family: var(--font-display);
-  font-size: clamp(1.9rem, 4.5vw, 2.55rem);
+  font-size: clamp(2rem, 4.5vw, 3.1rem);
   font-weight: 400;
-  line-height: 1.2;
-  color: var(--color-ink);
+  line-height: 1.15;
+  color: #fff;
+  max-width: 12ch;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
 }
 
-.more__cta {
-  width: 100%;
-  max-width: 16rem;
+.offer__text {
+  margin: 0 0 1.75rem;
+  font: 400 1rem/1.6 var(--font-body);
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 34ch;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.3);
 }
 
-.more__hint {
-  margin: 1rem 0 0;
-  font: 500 0.8rem/1.5 var(--font-body);
-  color: var(--color-muted);
-  letter-spacing: 0.02em;
+.offer__play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.35rem;
+  height: 3.35rem;
+  background: var(--color-rose);
+  color: #fff;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.more__list {
-  columns: 1;
-  column-gap: 2rem;
+.offer__play:hover {
+  background: var(--color-rose-dark);
+  transform: scale(1.04);
+}
+
+.offer__play-icon {
+  display: block;
+  width: 0;
+  height: 0;
+  margin-left: 0.2rem;
+  border-style: solid;
+  border-width: 0.55rem 0 0.55rem 0.9rem;
+  border-color: transparent transparent transparent #fff;
+}
+
+.offer__list {
   list-style: none;
-  margin: 0 0 1.5rem;
+  margin: 0;
   padding: 0;
-}
-
-.more__list li {
-  position: relative;
-  padding-left: 1.1rem;
-  margin-bottom: 0.85rem;
-  font: 500 0.92rem var(--font-body);
-  break-inside: avoid;
-}
-
-.more__list li::before {
-  content: '•';
-  position: absolute;
-  left: 0;
-  color: var(--color-rose);
-}
-
-.more__stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 0.95rem 1.75rem;
 }
 
-.stat-card {
-  background: #fff;
-  padding: 1.1rem 1rem;
-  text-align: center;
-  border: 1px solid rgba(222, 150, 141, 0.25);
-  box-shadow: 0 8px 24px rgba(39, 37, 42, 0.08);
-  height: 100%;
-  transition: transform 0.35s var(--ease-story), box-shadow 0.35s;
+.offer__item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font: 500 0.95rem/1.35 var(--font-body);
+  color: #fff;
+  text-decoration: none;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.35);
 }
 
-.stat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 28px rgba(39, 37, 42, 0.1);
+.offer__item:hover {
+  color: #f5d8d0;
 }
 
-.stat-card img {
-  margin: 0 auto 1rem;
-  display: block;
+.offer__check {
+  flex-shrink: 0;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background: var(--color-rose);
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.stat-card__num {
-  display: block;
-  font: 700 clamp(1.35rem, 4vw, 2.25rem)/1.1 var(--font-display);
-  color: var(--color-ink);
+.offer__check::after {
+  content: '';
+  position: absolute;
+  left: 0.34rem;
+  top: 0.24rem;
+  width: 0.28rem;
+  height: 0.5rem;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
-.stat-card__label {
-  display: block;
-  margin-top: 0.5rem;
-  font: 600 0.78rem var(--font-body);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-muted);
+@media (min-width: 768px) {
+  .offer {
+    min-height: min(40rem, 88vh);
+    padding: clamp(4.5rem, 12vh, 8rem) 1.5rem;
+  }
+
+  .offer__photo {
+    object-position: center 22%;
+    transform: scale(1.16);
+    transform-origin: center 35%;
+  }
+
+  .offer__inner {
+    grid-template-columns: minmax(16rem, 0.95fr) minmax(18rem, 1.1fr);
+    gap: clamp(2.5rem, 6vw, 5rem);
+  }
+
+  .offer__list {
+    gap: 1.05rem 2.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .offer {
+    min-height: min(42rem, 85vh);
+  }
+
+  .offer__photo {
+    object-position: center 18%;
+    transform: scale(1.18);
+    transform-origin: center 30%;
+  }
+
+  .offer__copy h2 {
+    max-width: 11ch;
+  }
+
+  .offer__list {
+    gap: 1.15rem 2.75rem;
+  }
+
+  .offer__item {
+    font-size: 1.02rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .offer__photo {
+    object-position: center 15%;
+    transform: scale(1.2);
+  }
+}
+
+/* Respect reduced motion: still full-bleed, but no fixed pin */
+@media (prefers-reduced-motion: reduce) {
+  .offer__fixed {
+    position: absolute;
+    inset: 0;
+  }
+
+  .offer__photo {
+    transform: none;
+  }
 }
 
 /* Steps — compact numbered list on phones; circle flow from tablet up */
 .steps {
-  padding: clamp(2rem, 5vh, 3.5rem) 1.25rem;
+  padding: var(--home-section-y) 1.25rem;
   background: var(--color-paper);
 }
 
@@ -1100,42 +1181,99 @@ useLandingSeo()
   }
 }
 
-/* Packages */
+/* Packages — copy + featured card band */
 .packages {
-  padding: clamp(2rem, 5vh, 3.5rem) 1rem;
-  background: var(--color-paper);
+  position: relative;
+  padding: var(--home-section-y) 1rem;
+  background:
+    linear-gradient(135deg, rgba(196, 140, 140, 0.08) 0%, transparent 42%),
+    linear-gradient(180deg, var(--color-cream) 0%, var(--color-paper) 100%);
+  overflow: hidden;
 }
 
-.packages__grid {
+.packages::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 55% 70% at 92% 20%, rgba(196, 140, 140, 0.12), transparent 60%),
+    radial-gradient(ellipse 40% 50% at 8% 85%, rgba(196, 140, 140, 0.06), transparent 55%);
+  pointer-events: none;
+}
+
+.packages__band {
+  position: relative;
+  z-index: 1;
   width: var(--container);
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
-  align-items: stretch;
-  padding-top: 0.85rem;
+  gap: 1.75rem;
+  align-items: center;
 }
 
-.packages__grid--featured {
-  max-width: 26rem;
-  margin-left: auto;
-  margin-right: auto;
+.packages__copy h2 {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3.5vw, 2.35rem);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--color-ink);
+  max-width: 18ch;
 }
 
-.packages__grid > * {
+.packages__sub {
+  margin: 0 0 0.65rem;
+  font: 400 0.98rem/1.55 var(--font-body);
+  color: var(--color-muted);
+  max-width: 36ch;
+}
+
+.packages__note {
+  margin: 0 0 1.25rem;
+  font: 500 0.82rem/1.45 var(--font-body);
+  letter-spacing: 0.02em;
+  color: var(--color-rose);
+  max-width: 32ch;
+}
+
+.packages__all {
+  display: inline-block;
+}
+
+.packages__card-wrap {
   min-width: 0;
+  width: 100%;
+  max-width: 26rem;
+}
+
+.packages__card-wrap > * {
   height: 100%;
 }
 
-.packages__footer {
-  width: var(--container);
-  margin: 1.5rem auto 0;
-  text-align: center;
+@media (min-width: 768px) {
+  .packages__band {
+    grid-template-columns: 1fr minmax(16rem, 24rem);
+    gap: clamp(1.75rem, 4vw, 3rem);
+    align-items: center;
+  }
+
+  .packages__card-wrap {
+    max-width: none;
+    justify-self: stretch;
+  }
+}
+
+@media (min-width: 1024px) {
+  .packages__band {
+    grid-template-columns: 1.05fr minmax(18rem, 26rem);
+    gap: clamp(2.25rem, 5vw, 4rem);
+  }
 }
 
 /* Visit path — two clear booking doors */
 .visit-path {
-  padding: clamp(2.25rem, 5vh, 3.75rem) 1rem;
+  padding: var(--home-section-y) 1rem;
   background: var(--color-cream);
 }
 
@@ -1220,18 +1358,15 @@ useLandingSeo()
   }
 }
 
-.services__grid > *,
 .reviews__grid > *,
-.more__stats > *,
-.steps__flow > *,
-.gallery__grid > * {
+.steps__flow > * {
   height: 100%;
   min-width: 0;
 }
 
 /* Reviews */
 .reviews {
-  padding: clamp(2rem, 5vh, 3.5rem) 1rem;
+  padding: var(--home-section-y) 1rem;
 }
 
 .reviews__grid {
@@ -1297,134 +1432,236 @@ useLandingSeo()
   color: var(--color-muted);
 }
 
-/* Gallery — static grid (no infinite scroll animation) */
-.gallery {
-  padding: clamp(2.25rem, 5vh, 3.75rem) 0;
-  background: var(--color-footer);
+/* Our work — Pinterest-style masonry */
+.work {
+  padding: var(--home-section-y-lg) 1rem;
+  background: var(--color-paper);
 }
 
-.gallery .section-head {
-  padding: 0 1.5rem;
-}
-
-.gallery__grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
+.work__masonry {
   width: var(--container);
-  max-width: 100%;
-  margin: 2rem auto 0;
-  padding: 0 1rem;
+  margin: 0 auto;
+  column-count: 2;
+  column-gap: 0.65rem;
 }
 
-.gallery__item {
+.work__tile {
   display: block;
-  aspect-ratio: 1;
+  break-inside: avoid;
+  margin: 0 0 0.65rem;
   overflow: hidden;
-  border-radius: 2px;
+  background: var(--color-cream);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.gallery__item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.work__tile--tall .work__photo {
+  aspect-ratio: 3 / 4;
+}
+
+.work__tile--wide .work__photo {
+  aspect-ratio: 4 / 3;
+}
+
+.work__tile--square .work__photo {
+  aspect-ratio: 1;
+}
+
+.work__photo {
   display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  transition: transform 0.7s var(--ease-story, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+@media (hover: hover) {
+  .work__tile:hover .work__photo {
+    transform: scale(1.04);
+  }
+}
+
+.work__tile:focus-visible {
+  outline: 2px solid var(--color-rose);
+  outline-offset: 3px;
+}
+
+.work__footer {
+  width: var(--container);
+  margin: 1.35rem auto 0;
+  text-align: center;
 }
 
 @media (min-width: 768px) {
-  .gallery__grid {
-    grid-template-columns: repeat(3, 1fr);
+  .work__masonry {
+    column-count: 3;
+    column-gap: 0.85rem;
+  }
+
+  .work__tile {
+    margin-bottom: 0.85rem;
   }
 }
 
 @media (min-width: 1024px) {
-  .gallery__grid {
-    grid-template-columns: repeat(6, 1fr);
-    gap: 1rem;
+  .work__masonry {
+    column-count: 4;
+    column-gap: 1rem;
   }
 }
 
-/* CTA */
-.cta {
-  position: relative;
-  padding: clamp(2.5rem, 6vh, 4rem) 1.5rem;
-  overflow: hidden;
+/* Visit — split hours + clipped map */
+.visit-map {
+  padding: var(--home-section-y) 1rem;
+  background: var(--color-cream);
 }
 
-.cta__photo {
-  position: absolute;
-  inset: 0;
-}
-
-.cta__photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.cta__overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(39, 37, 42, 0.82);
-}
-
-.cta__inner {
-  position: relative;
-  z-index: 1;
+.visit-map__inner {
   width: var(--container);
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2rem;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.visit-map__hours-panel {
+  padding: 0.25rem 0 0.5rem;
+}
+
+.visit-map__card-head {
+  display: flex;
   align-items: center;
-  color: #fff;
-}
-
-.cta__book h2 {
-  margin: 0 0 2rem;
-  font-family: var(--font-display);
-  font-size: clamp(1.85rem, 3.5vw, 2.65rem);
-  font-weight: 400;
-  line-height: 1.25;
-  color: #fff;
-  max-width: 16ch;
-}
-
-.cta__hours .label {
-  color: var(--color-rose);
-}
-
-.cta__hours-grid {
-  display: grid;
-  grid-template-columns: 1fr;
+  justify-content: space-between;
   gap: 1rem;
-  margin-top: 1rem;
+  margin-bottom: 1.35rem;
 }
 
-.cta__hours-grid h3 {
-  margin: 0 0 0.25rem;
-  font: 700 0.95rem var(--font-body);
-  color: #fff;
-}
-
-.cta__hours-grid p {
+.visit-map__card-head h2 {
   margin: 0;
-  font: 400 0.88rem var(--font-body);
-  color: rgba(255, 255, 255, 0.75);
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 1.85rem);
+  font-weight: 400;
+  color: var(--color-ink);
 }
 
-/* Tablet and up — progressive enhancement */
-@media (min-width: 640px) {
-  .cta__hours-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-  }
+.visit-map__hours {
+  margin: 0 0 1.25rem;
+}
+
+.visit-map__hours > div {
+  margin-bottom: 0.9rem;
+}
+
+.visit-map__hours > div:last-child {
+  margin-bottom: 0;
+}
+
+.visit-map__hours dt {
+  margin: 0 0 0.2rem;
+  font: 600 0.68rem var(--font-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.visit-map__hours dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--color-rose);
+  line-height: 1.35;
+}
+
+.visit-map__place {
+  margin: 0 0 1.25rem;
+  font: 500 0.88rem/1.4 var(--font-body);
+  color: var(--color-muted);
+}
+
+.visit-map__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.visit-map__maps {
+  font: 700 0.68rem var(--font-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-rose);
+  text-decoration: none;
+}
+
+.visit-map__maps:hover {
+  color: var(--color-rose-dark);
+}
+
+.visit-map__map-panel {
+  min-width: 0;
+}
+
+.visit-map__frame-wrap {
+  position: relative;
+  height: 15rem;
+  overflow: hidden;
+  background: var(--color-paper);
+}
+
+.visit-map__frame {
+  position: absolute;
+  /* Crop Google search chrome / UI edges */
+  top: -3.5rem;
+  left: -1rem;
+  width: calc(100% + 2rem);
+  height: calc(100% + 5.5rem);
+  border: 0;
+  filter: grayscale(0.35) contrast(0.92) saturate(0.75);
+  pointer-events: auto;
 }
 
 @media (min-width: 768px) {
+  .visit-map__inner {
+    grid-template-columns: minmax(16rem, 22rem) 1fr;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    align-items: center;
+  }
+
+  .visit-map__hours-panel {
+    padding: 0.5rem 0;
+  }
+
+  .visit-map__frame-wrap {
+    height: min(26rem, 52vh);
+    min-height: 22rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .visit-map__inner {
+    grid-template-columns: minmax(18rem, 24rem) 1fr;
+    gap: clamp(2rem, 4vw, 3.25rem);
+  }
+
+  .visit-map__frame-wrap {
+    height: min(28rem, 50vh);
+    min-height: 24rem;
+  }
+}
+
+/* Tablet and up — progressive enhancement */
+@media (min-width: 768px) {
+  .home {
+    --home-section-y: 2.5rem;
+    --home-section-y-lg: 2.75rem;
+    --home-head-gap: 1.15rem;
+  }
+
   .hero {
-    height: min(72vh, 42rem);
-    min-height: 30rem;
+    height: min(62vh, 36rem);
+    min-height: 26rem;
   }
 
   .hero__content {
@@ -1443,17 +1680,13 @@ useLandingSeo()
     font-size: 0.78rem;
   }
 
-  .section-head {
-    margin-bottom: 1.75rem;
-  }
-
   .welcome {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
 
   .welcome__inner {
-    gap: clamp(2rem, 5vw, 4.5rem);
+    gap: clamp(1.75rem, 4vw, 3rem);
   }
 
   .welcome__mirror {
@@ -1465,22 +1698,17 @@ useLandingSeo()
     width: min(130px, 30%);
   }
 
-  .services,
+  .work,
   .reviews,
   .packages,
-  .visit-path {
+  .visit-path,
+  .visit-map {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
 
-  .services__grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.35rem;
-  }
-
-  .packages__grid {
-    grid-template-columns: 1fr;
-    gap: 1.15rem;
+  .visit-path__door {
+    padding: 1.35rem 1.25rem;
   }
 
   .reviews__grid {
@@ -1491,40 +1719,23 @@ useLandingSeo()
   .review-card {
     padding: 1.35rem 1.25rem;
   }
-
-  .more__inner {
-    grid-template-columns: 1.15fr 1fr;
-    gap: 3rem;
-  }
-
-  .more__cta {
-    width: auto;
-  }
-
-  .more__list {
-    columns: 2;
-    margin-bottom: 2rem;
-  }
-
-  .cta__inner {
-    grid-template-columns: 1fr 1fr;
-    gap: 3rem;
-  }
 }
 
 @media (min-width: 1024px) {
+  .home {
+    --home-section-y: 2.85rem;
+    --home-section-y-lg: 3.15rem;
+    --home-head-gap: 1.25rem;
+  }
+
   .hero {
-    height: min(78vh, 46rem);
-    min-height: 34rem;
+    height: min(68vh, 40rem);
+    min-height: 28rem;
   }
 
   .welcome__inner {
     grid-template-columns: 1fr 1fr;
-  }
-
-  .services__grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.25rem;
+    gap: clamp(1.5rem, 3vw, 2.75rem);
   }
 
   .steps__flow {
@@ -1544,13 +1755,8 @@ useLandingSeo()
     z-index: 0;
   }
 
-  .packages__grid:not(.packages__grid--featured) {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
-  }
-
-  .packages__grid--featured {
-    grid-template-columns: 1fr;
+  .visit-path__door {
+    padding: 1.25rem 1.2rem;
   }
 
   .reviews__grid {
@@ -1565,7 +1771,6 @@ useLandingSeo()
   .hero__content,
   .hero-copy-enter-active,
   .hero-copy-leave-active,
-  .stat-card,
   .package-card,
   .review-card {
     animation: none !important;

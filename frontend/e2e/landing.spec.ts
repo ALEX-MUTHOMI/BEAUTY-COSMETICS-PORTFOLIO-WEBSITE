@@ -34,8 +34,14 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(logoLink.locator('.shee-logo__name')).toHaveText('Shee')
 
     await expect(page.getByRole('heading', { name: 'Choose online', level: 3 })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Our treatments', level: 2 })).toBeVisible()
-    await expect(page.locator('#services .treat-tile')).toHaveCount(4)
+    await expect(page.getByRole('heading', { name: 'Clients by Shee', level: 2 })).toBeVisible()
+    await expect(page.locator('#our-work .work__tile').count()).resolves.toBeGreaterThanOrEqual(8)
+    await expect(page.getByRole('heading', { name: 'A calm spa experience at Shee Aesthetics', level: 2 })).toBeVisible()
+    await expect(page.locator('#services .offer__item')).toHaveCount(8)
+    await expect(page.locator('#services .treat-tile')).toHaveCount(0)
+    await expect(page.locator('#services .offer__bg')).toBeVisible()
+    await expect(page.locator('#services .offer__play')).toBeVisible()
+    await expect(page.locator('#services .offer__list')).toBeVisible()
 
     await page.locator('#visit-path').scrollIntoViewIfNeeded()
     await expect(page.getByRole('heading', { name: 'How would you like to visit?', level: 2 })).toBeVisible()
@@ -46,8 +52,15 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.getByRole('heading', { name: /Full visits, Tuesday/i })).toBeVisible()
     await expect(page.getByRole('heading', { name: /Book one specific treatment/i })).toHaveCount(0)
     await expect(page.locator('#packages .mellis-card')).toHaveCount(1)
+    await expect(page.locator('#packages .packages__band')).toBeVisible()
     await expect(page.locator('.mellis-card__badge', { hasText: 'Most booked' })).toBeVisible()
     await expect(page.getByRole('link', { name: /See all packages/i })).toBeVisible()
+
+    await expect(page.getByRole('heading', { name: 'What our clients say', level: 2 })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Opening Hours', level: 2 })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Open in Maps/i })).toBeVisible()
+    await expect(page.locator('#visit .visit-map__hours-panel')).toBeVisible()
+    await expect(page.locator('#visit .visit-map__frame')).toBeVisible()
 
     const cspViolations = consoleErrors.filter((e) =>
       /content security policy|refused to execute|refused to load/i.test(e),
@@ -63,10 +76,13 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.locator('.mobile-book-bar')).toBeVisible()
     await expect(page.locator('.mobile-book-bar').getByRole('link', { name: /Book your visit/i })).toBeVisible()
 
-    const servicesGrid = page.locator('.services__grid')
-    await servicesGrid.scrollIntoViewIfNeeded()
-    const gridCols = await servicesGrid.evaluate((el) => getComputedStyle(el).gridTemplateColumns)
-    expect(gridCols.split(' ').length).toBe(1)
+    await expect(page.locator('#our-work .work__tile').first()).toBeVisible()
+    await expect(page.locator('#packages .mellis-card')).toHaveCount(1)
+    await expect(page.getByRole('heading', { name: 'What our clients say', level: 2 })).toBeVisible()
+    await expect(page.locator('#services .offer__list')).toBeVisible()
+    await expect(page.locator('#services .offer__item')).toHaveCount(8)
+    await expect(page.locator('#visit .visit-map__hours-panel')).toBeVisible()
+    await expect(page.locator('#visit .visit-map__frame-wrap')).toBeVisible()
 
     await expect(page.getByRole('heading', { name: 'Shee', level: 1 })).toBeVisible()
   })
