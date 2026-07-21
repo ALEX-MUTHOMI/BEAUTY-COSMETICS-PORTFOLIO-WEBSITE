@@ -4,7 +4,7 @@
       <div class="book-hero__inner">
         <p class="label">Book online</p>
         <h1>{{ pageTitle }}</h1>
-        <p class="book-hero__lead">{{ pageLead }}</p>
+        <p v-if="pageLead" class="book-hero__lead">{{ pageLead }}</p>
       </div>
     </header>
 
@@ -30,11 +30,11 @@
 
         <div class="book-summary">
           <p class="book-summary__eyebrow">
-            {{ handoff.type === 'package' ? 'Full package' : 'Single treatment' }}
+            {{ handoff.type === 'package' ? 'Package' : 'Treatment' }}
           </p>
           <h2>{{ selectionName }}</h2>
           <p v-if="flow.selection.value" class="book-summary__meta">
-            {{ flow.selection.value.durationMinutes }} min · {{ flow.selection.value.name }}
+            {{ flow.selection.value.durationMinutes }} min
           </p>
         </div>
 
@@ -216,15 +216,13 @@ const capacityHint = computed(() =>
 )
 
 const pageTitle = computed(() => {
-  if (checkoutStep.value === 'details') return 'Confirm your details'
-  return 'Pick your day & time'
+  if (checkoutStep.value === 'details') return 'Your details'
+  return 'Date & time'
 })
 
 const pageLead = computed(() => {
-  if (checkoutStep.value === 'details') {
-    return 'Confirm your details to reserve this time.'
-  }
-  return 'Choose a day, then a time.'
+  if (checkoutStep.value === 'details') return ''
+  return 'Select a day and start time.'
 })
 </script>
 
@@ -425,6 +423,23 @@ const pageLead = computed(() => {
     padding: 0.65rem 0.35rem;
     background: linear-gradient(180deg, rgba(250, 250, 250, 0.75) 0%, #fafafa 35%);
     border-top: 1px solid var(--color-line);
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .book-actions :deep(.site-btn),
+  .book-continue {
+    flex: none;
+    width: 100%;
+  }
+
+  .book-actions :deep(.site-btn) {
+    order: 2;
+    border: 0;
+    background: transparent;
+    color: var(--color-rose-dark);
+    box-shadow: none;
+    min-height: 2.35rem;
   }
 }
 </style>

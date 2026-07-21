@@ -8,9 +8,9 @@ test.describe('Book page handoff security', () => {
       waitUntil: 'domcontentloaded',
     })
 
-    await expect(page.getByText(/Full package/i).first()).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText(/^Package$/i).first()).toBeVisible({ timeout: 15000 })
     await expect(page.getByRole('heading', { name: 'Classic Full Package' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: /Pick your day/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Date & time/i })).toBeVisible()
   })
 
   test('legacy package query redirects to clean path', async ({ page }) => {
@@ -24,7 +24,7 @@ test.describe('Book page handoff security', () => {
   test('accepts allowlisted single treatment path', async ({ page }) => {
     await page.goto(`${BASE_URL}/book/waxing/brow-shaping`, { waitUntil: 'domcontentloaded' })
 
-    await expect(page.getByText(/Single treatment/i).first()).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText(/^Treatment$/i).first()).toBeVisible({ timeout: 15000 })
     await expect(page.getByRole('heading', { name: 'Brow shaping' })).toBeVisible()
   })
 

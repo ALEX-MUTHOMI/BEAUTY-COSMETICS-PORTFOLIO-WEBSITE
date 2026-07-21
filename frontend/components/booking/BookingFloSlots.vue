@@ -45,9 +45,12 @@
               :disabled="loading"
               @click="emit('select', slot)"
             >
-              <span class="flo-slots__btn-start">{{ formatSlotLabel(slot.startsAt) }}</span>
-              <span v-if="slot.endsAt" class="flo-slots__btn-end">
-                until {{ formatSlotLabel(slot.endsAt) }}
+              <span class="flo-slots__btn-start">
+                {{
+                  slot.endsAt
+                    ? formatSlotRange(slot.startsAt, slot.endsAt)
+                    : formatSlotLabel(slot.startsAt)
+                }}
               </span>
             </button>
           </div>
@@ -296,7 +299,8 @@ const selectionSummary = computed(() => {
 }
 
 .flo-slots__btn-start {
-  font: 600 0.88rem var(--font-body);
+  font: 600 0.8rem/1.25 var(--font-body);
+  letter-spacing: 0.01em;
 }
 
 .flo-slots__btn-end {

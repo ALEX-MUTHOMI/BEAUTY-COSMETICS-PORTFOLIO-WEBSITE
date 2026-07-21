@@ -1,15 +1,14 @@
 <template>
   <section class="book-customer" aria-labelledby="book-customer-title">
     <header class="book-customer__head">
-      <h2 id="book-customer-title">Checkout details</h2>
-      <p>We use your email for booking confirmation and your PDF receipt after payment.</p>
+      <h2 id="book-customer-title">Your details</h2>
     </header>
 
     <p v-if="submitError" class="book-customer__error" role="alert">{{ submitError }}</p>
 
     <form class="book-customer__form" novalidate @submit.prevent="emit('submit')">
       <label class="book-customer__field">
-        <span>Full name</span>
+        <span>Full name <abbr title="required">*</abbr></span>
         <input
           v-model="customerForm.fullName"
           type="text"
@@ -22,7 +21,7 @@
       </label>
 
       <label class="book-customer__field">
-        <span>Email (for receipt &amp; confirmation)</span>
+        <span>Email <abbr title="required">*</abbr></span>
         <input
           v-model="customerForm.email"
           type="email"
@@ -35,7 +34,7 @@
       </label>
 
       <label class="book-customer__field">
-        <span>Confirm email</span>
+        <span>Confirm email <abbr title="required">*</abbr></span>
         <input
           v-model="customerForm.emailConfirm"
           type="email"
@@ -48,27 +47,22 @@
       </label>
 
       <label class="book-customer__field">
-        <span>Phone (Kenya)</span>
+        <span>Phone <abbr title="required">*</abbr></span>
         <input
           v-model="customerForm.phone"
           type="tel"
           name="phone"
           autocomplete="tel"
           inputmode="tel"
-          placeholder="+254 7XX XXX XXX"
+          placeholder="+254…"
           maxlength="20"
           required
           :disabled="disabled"
         />
       </label>
 
-      <p v-if="receiptEmailHint" class="book-customer__receipt-hint" role="status">
-        Receipt will be sent to {{ receiptEmailHint }}
-      </p>
       <p class="book-customer__privacy">
-        Email and phone are used only for this booking, M-Pesa payment, and your receipt — not marketing.
-        See our
-        <NuxtLink to="/privacy">Privacy Policy</NuxtLink>.
+        <NuxtLink to="/privacy">Privacy Policy</NuxtLink>
       </p>
 
       <label class="book-customer__trap" aria-hidden="true">
@@ -104,8 +98,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-
 import type { BookingCustomerValidation } from '@/booking/bookingCustomer'
 
 defineProps<{
@@ -124,13 +116,6 @@ const emit = defineEmits<{
 const customerForm = defineModel<BookingCustomerValidation>('customerForm', { required: true })
 const policyAccepted = defineModel<boolean>('policyAccepted', { required: true })
 const turnstileToken = defineModel<string>('turnstileToken', { required: true })
-
-const receiptEmailHint = computed(() => {
-  const email = customerForm.value.email.trim().toLowerCase()
-  const confirm = customerForm.value.emailConfirm.trim().toLowerCase()
-  if (!email || email !== confirm || !email.includes('@')) return ''
-  return email
-})
 </script>
 
 <style scoped>
@@ -143,25 +128,16 @@ const receiptEmailHint = computed(() => {
 }
 
 .book-customer__head h2 {
-  margin: 0 0 0.25rem;
+  margin: 0 0 1rem;
   font-family: var(--font-display);
   font-size: 1.35rem;
   font-weight: 400;
 }
 
-.book-customer__head p {
-  margin: 0 0 1rem;
-  color: var(--color-muted);
-  font-size: 0.9rem;
-}
-
-.book-customer__receipt-hint {
-  margin: 0;
-  padding: 0.75rem 0.85rem;
-  border-radius: 8px;
-  background: #f7f1ea;
-  color: var(--color-ink);
-  font-size: 0.88rem;
+.book-customer__field abbr {
+  text-decoration: none;
+  color: var(--color-rose-dark);
+  font-weight: 700;
 }
 
 .book-customer__privacy {
