@@ -16,8 +16,10 @@ export type HeroService = 'facial' | 'massage' | 'waxing' | 'makeup'
 export const HERO_LAYOUT = {
   mobileHeightCss: 'min(78dvh, 40rem)',
   minHeightRem: 28,
-  tabletHeightCss: 'min(72vh, 42rem)',
-  desktopHeightCss: 'min(78vh, 46rem)',
+  tabletHeightCss: 'min(62vh, 36rem)',
+  tabletMinHeightRem: 26,
+  desktopHeightCss: 'min(68vh, 40rem)',
+  desktopMinHeightRem: 28,
   /** Soft full-frame dim like Mellis slide overlay (~25–35%). */
   overlayMidMax: 0.28,
   overlayBottomMax: 0.42,
