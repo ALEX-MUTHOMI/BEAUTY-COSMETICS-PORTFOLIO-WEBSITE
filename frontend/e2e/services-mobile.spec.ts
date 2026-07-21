@@ -18,8 +18,8 @@ test.describe('Services page mobile UX', () => {
   test('keeps both path tiles in the first viewport', async ({ page }) => {
     await page.goto(`${BASE_URL}/services`, { waitUntil: 'networkidle' })
 
-    const fullPackage = page.getByRole('link', { name: /Full package/i })
-    const single = page.getByRole('link', { name: /Single treatment/i })
+    const fullPackage = page.getByRole('link', { name: /Package/i }).first()
+    const single = page.getByRole('link', { name: /^Singles/i })
     await expect(fullPackage).toBeVisible()
     await expect(single).toBeVisible()
 

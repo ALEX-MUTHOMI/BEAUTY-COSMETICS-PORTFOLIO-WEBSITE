@@ -22,7 +22,7 @@
         >
           <span class="services-path__icon" aria-hidden="true">◆</span>
           <span class="services-path__copy">
-            <strong>Full package</strong>
+            <strong>Package</strong>
             <span>Facial, wax, massage &amp; makeup</span>
           </span>
         </a>
@@ -33,8 +33,8 @@
         >
           <span class="services-path__icon" aria-hidden="true">◇</span>
           <span class="services-path__copy">
-            <strong>Single treatment</strong>
-            <span>One service of your choice</span>
+            <strong>Singles</strong>
+            <span>One service</span>
           </span>
         </a>
       </nav>
@@ -42,10 +42,10 @@
 
     <section id="full-packages" class="services-packages">
       <header class="services-section-head">
-        <p class="label">Full packages</p>
-        <h2>Complete visits in one booking</h2>
+        <p class="label">Packages</p>
+        <h2>Complete visits</h2>
         <p class="services-section-head__sub">
-          Every treatment in one private room, without rushing between appointments.
+          Tue &amp; Wed — facial, wax, massage and makeup in one booking.
         </p>
       </header>
       <div class="services-packages__grid">
@@ -67,10 +67,10 @@
 
     <section id="single-sessions" class="services-packages services-packages--singles">
       <header class="services-section-head">
-        <p class="label">Single treatments</p>
-        <h2>Select a treatment</h2>
+        <p class="label">Singles</p>
+        <h2>Choose a treatment</h2>
         <p class="services-section-head__sub">
-          Choose a category, pick the exact treatment you want, then book.
+          {{ SINGLE_DAYS_LABEL }}. Pick a category, then book.
         </p>
       </header>
 
@@ -421,6 +421,12 @@ useHead({
   gap: 0.5rem;
   margin: 0;
   padding: 0;
+}
+
+@media (max-width: 420px) {
+  .services-paths {
+    grid-template-columns: 1fr;
+  }
 }
 
 .services-path {
