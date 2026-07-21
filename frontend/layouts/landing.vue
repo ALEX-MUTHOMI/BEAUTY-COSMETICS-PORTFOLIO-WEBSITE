@@ -53,10 +53,14 @@ useHead({
   bottom: 0;
   z-index: 45;
   padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
-  background: rgba(255, 255, 255, 0.96);
-  border-top: 1px solid var(--color-line);
-  box-shadow: 0 -8px 28px rgba(39, 37, 42, 0.08);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(
+    to top,
+    rgba(243, 242, 241, 0.98) 70%,
+    rgba(243, 242, 241, 0.88)
+  );
+  border-top: 0;
+  box-shadow: 0 -12px 32px rgba(39, 37, 42, 0.06);
+  backdrop-filter: blur(12px);
 }
 
 .mobile-book-bar__cta {
