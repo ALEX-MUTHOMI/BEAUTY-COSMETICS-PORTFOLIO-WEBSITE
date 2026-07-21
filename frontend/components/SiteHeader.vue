@@ -11,7 +11,6 @@
       <div class="site-header__top-inner">
         <div class="site-header__contact">
           <a href="mailto:bookings@sheeaesthetics.co.ke">bookings@sheeaesthetics.co.ke</a>
-          <NuxtLink to="/services" class="site-header__policy">Pay online to book</NuxtLink>
         </div>
         <div class="site-header__social" aria-label="Social links">
           <a :href="LANDING_INSTAGRAM_URL" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
@@ -23,14 +22,12 @@
 
     <div class="site-header__main">
       <div class="site-header__main-inner">
-        <SheeLogo class="site-header__logo" :variant="overHero ? 'light' : 'default'" />
+        <SheeLogo class="site-header__logo" />
 
         <nav class="site-header__nav" aria-label="Primary">
-          <NuxtLink to="/">Home</NuxtLink>
-          <NuxtLink to="/services">Our Services</NuxtLink>
+          <NuxtLink to="/services">Services</NuxtLink>
           <NuxtLink :to="SERVICES_ROUTES.fullPackages">Packages</NuxtLink>
           <NuxtLink :to="SERVICES_ROUTES.singleSessions">Singles</NuxtLink>
-          <NuxtLink to="/#gallery">Gallery</NuxtLink>
           <NuxtLink to="/#contact">Contact</NuxtLink>
         </nav>
 
@@ -89,7 +86,6 @@
             <NuxtLink to="/services" @click="closeMenu">Services</NuxtLink>
             <NuxtLink :to="SERVICES_ROUTES.fullPackages" @click="closeMenu">Packages</NuxtLink>
             <NuxtLink :to="SERVICES_ROUTES.singleSessions" @click="closeMenu">Singles</NuxtLink>
-            <NuxtLink to="/#gallery" @click="closeMenu">Gallery</NuxtLink>
             <NuxtLink to="/#contact" @click="closeMenu">Contact</NuxtLink>
           </div>
 
@@ -115,7 +111,7 @@ const route = useRoute()
 const menuOpen = ref(false)
 const headerEl = ref<HTMLElement | null>(null)
 const isHome = computed(() => route.path === '/')
-/** Assume over-hero on home until the observer says otherwise (avoids solid flash). */
+/** Frosted light header over hero — keeps brand logo colors. */
 const heroInView = ref(isHome.value)
 const overHero = computed(() => isHome.value && heroInView.value && !menuOpen.value)
 
@@ -155,7 +151,6 @@ function setupHeroObserver() {
   heroObserver = new IntersectionObserver(
     ([entry]) => {
       if (!entry) return
-      // Stay frosted while any of the hero still occupies the upper viewport band.
       heroInView.value = entry.isIntersecting && entry.boundingClientRect.bottom > 80
     },
     { root: null, threshold: [0, 0.05, 0.15, 0.35] },
@@ -209,10 +204,11 @@ onUnmounted(() => {
 }
 
 .site-header--over-hero {
-  background: rgba(39, 37, 42, 0.18);
-  backdrop-filter: blur(16px) saturate(1.2);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
-  box-shadow: none;
+  /* Solid paper bar — no frosted ash veil over the photo */
+  background: var(--color-paper);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 1px 0 rgba(44, 44, 48, 0.06);
 }
 
 .site-header--over-hero .site-header__top {
@@ -294,7 +290,7 @@ onUnmounted(() => {
 }
 
 .site-header--over-hero .site-header__main-inner {
-  border-bottom-color: rgba(255, 255, 255, 0.14);
+  border-bottom-color: rgba(44, 44, 48, 0.08);
 }
 
 .site-header__logo {
@@ -302,28 +298,80 @@ onUnmounted(() => {
   flex: 1 1 auto;
 }
 
+/* Mobile / tablet: larger brand mark; menu stays on the right */
 @media (max-width: 959px) {
+  .site-header__main-inner {
+    position: relative;
+    justify-content: center;
+    min-height: 4.25rem;
+  }
+
+  .site-header__logo {
+    flex: 0 0 auto;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+    pointer-events: auto;
+  }
+
   .site-header__logo :deep(.shee-logo) {
-    gap: 0.65rem;
+    flex-direction: row;
+    gap: 0.55rem;
+    align-items: center;
+    justify-content: center;
   }
 
   .site-header__logo :deep(.shee-logo__mark-wrap) {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
   }
 
   .site-header__logo :deep(.shee-logo__mark) {
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .site-header__logo :deep(.shee-logo__text) {
+    align-items: flex-start;
+    text-align: left;
   }
 
   .site-header__logo :deep(.shee-logo__name) {
-    font-size: 1.65rem;
+    font-size: 1.85rem;
+    line-height: 1;
+    text-align: left;
   }
 
   .site-header__logo :deep(.shee-logo__tag) {
     font-size: 0.62rem;
     letter-spacing: 0.28em;
+    text-align: left;
+  }
+
+  .site-header__menu-toggle {
+    margin-left: auto;
+    z-index: 2;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 959px) {
+  .site-header__logo :deep(.shee-logo__mark-wrap) {
+    width: 54px;
+    height: 54px;
+  }
+
+  .site-header__logo :deep(.shee-logo__mark) {
+    width: 32px;
+    height: 32px;
+  }
+
+  .site-header__logo :deep(.shee-logo__name) {
+    font-size: 2.05rem;
+  }
+
+  .site-header__logo :deep(.shee-logo__tag) {
+    font-size: 0.68rem;
   }
 }
 
@@ -341,6 +389,43 @@ onUnmounted(() => {
   .site-header__logo {
     flex: 0 0 auto;
   }
+
+  /* Cap brand so script Shee does not dominate the desktop bar */
+  .site-header__logo :deep(.shee-logo) {
+    gap: 0.7rem;
+    align-items: center;
+  }
+
+  .site-header__logo :deep(.shee-logo__mark-wrap) {
+    width: 44px;
+    height: 44px;
+  }
+
+  .site-header__logo :deep(.shee-logo__mark) {
+    width: 24px;
+    height: 24px;
+  }
+
+  .site-header__logo :deep(.shee-logo__name) {
+    font-size: 1.7rem;
+    line-height: 1;
+  }
+
+  .site-header__logo :deep(.shee-logo__tag) {
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.26em;
+  }
+
+  .site-header__nav {
+    align-items: center;
+    gap: 1.75rem;
+  }
+
+  .site-header__main-inner {
+    padding: 0.85rem 0;
+    min-height: 4.5rem;
+  }
 }
 
 .site-header__nav {
@@ -353,8 +438,10 @@ onUnmounted(() => {
 .site-header__nav a {
   text-decoration: none;
   color: var(--color-ink);
-  font: 600 0.75rem var(--font-body);
-  letter-spacing: 0.16em;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   text-shadow: none;
   transition: color 0.2s ease;
@@ -365,12 +452,12 @@ onUnmounted(() => {
 }
 
 .site-header--over-hero .site-header__nav a {
-  color: rgba(255, 255, 255, 0.94);
-  text-shadow: 0 1px 12px rgba(39, 37, 42, 0.35);
+  color: var(--color-ink);
+  text-shadow: none;
 }
 
 .site-header--over-hero .site-header__nav a:hover {
-  color: #fff;
+  color: var(--color-rose);
 }
 
 .site-header__menu-toggle {
@@ -396,12 +483,12 @@ onUnmounted(() => {
 }
 
 .site-header--over-hero .site-header__menu-toggle {
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.14);
+  border-color: var(--color-line);
+  background: #fff;
 }
 
 .site-header--over-hero .site-header__menu-line {
-  background: #fff;
+  background: var(--color-ink);
 }
 
 .site-header__menu-toggle--open {
@@ -537,8 +624,11 @@ onUnmounted(() => {
   padding: 0.85rem 0.25rem;
   border-bottom: 1px solid rgba(39, 37, 42, 0.06);
   text-decoration: none;
-  font: 500 1.125rem var(--font-body);
-  letter-spacing: 0.02em;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--color-ink);
   transition: color 0.2s, padding-left 0.2s;
 }

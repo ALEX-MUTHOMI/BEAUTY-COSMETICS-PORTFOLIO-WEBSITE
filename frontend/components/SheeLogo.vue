@@ -54,16 +54,16 @@ const logoClasses = computed(() => [
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 52px;
-  height: 52px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   background: var(--color-rose);
   box-shadow: 0 4px 14px rgba(222, 150, 141, 0.35);
 }
 
 .shee-logo__mark {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   object-fit: contain;
   filter: brightness(0) invert(1);
 }
@@ -109,29 +109,30 @@ const logoClasses = computed(() => [
 
 .shee-logo__name {
   font-family: var(--font-script);
-  font-size: 2.15rem;
+  font-size: 1.85rem;
   font-weight: 400;
   letter-spacing: 0.02em;
+  line-height: 1;
   color: var(--color-ink);
 }
 
 .shee-logo__tag {
-  margin-top: 0.1rem;
-  font-family: var(--font-display);
-  font-size: 0.72rem;
-  font-weight: 400;
-  letter-spacing: 0.34em;
+  margin-top: 0.15rem;
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
   color: var(--color-muted);
 }
 
 .shee-logo--lg .shee-logo__name {
-  font-size: clamp(2.5rem, 6vw, 3.75rem);
+  font-size: clamp(2.25rem, 5vw, 3.25rem);
 }
 
 .shee-logo--lg .shee-logo__tag {
-  font-size: 0.78rem;
-  letter-spacing: 0.38em;
+  font-size: 0.72rem;
+  letter-spacing: 0.32em;
 }
 
 .shee-logo--light .shee-logo__name,
