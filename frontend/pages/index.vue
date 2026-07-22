@@ -40,23 +40,22 @@
       </div>
       <div class="hero__overlay" aria-hidden="true" />
       <div class="hero__content" aria-live="polite">
-        <Transition name="hero-copy">
-          <div :key="currentHero.service" class="hero__copy">
-            <img
-              src="/images/logo-mark.png"
-              alt=""
-              class="hero__mark"
-              width="48"
-              height="48"
-              aria-hidden="true"
-            />
-            <p class="hero__eyebrow">{{ currentHero.eyebrow }}</p>
-            <h1 class="hero__title">{{ currentHero.headline }}</h1>
-            <SiteButton :to="HERO_CTA.to" variant="primary" class="hero__cta">
-              {{ HERO_CTA.label }}
-            </SiteButton>
-          </div>
-        </Transition>
+        <!-- Single copy node — no Transition leave/enter stack (prevents ghosted titles) -->
+        <div :key="currentHero.service" class="hero__copy">
+          <img
+            src="/images/logo-mark.png"
+            alt=""
+            class="hero__mark"
+            width="48"
+            height="48"
+            aria-hidden="true"
+          />
+          <p class="hero__eyebrow">{{ currentHero.eyebrow }}</p>
+          <h1 class="hero__title">{{ currentHero.headline }}</h1>
+          <SiteButton :to="HERO_CTA.to" variant="primary" class="hero__cta">
+            {{ HERO_CTA.label }}
+          </SiteButton>
+        </div>
       </div>
       <div class="hero__dots" role="tablist" aria-label="Gallery slides">
         <button
@@ -151,7 +150,7 @@
       </ScrollReveal>
     </section>
 
-    <!-- Treatments — Mellis atmosphere: fixed photo, content scrolls over it -->
+    <!-- Treatments — Mellis height (~54vh / 120px pad) + static bg + Shee board -->
     <section id="services" class="offer home-section">
       <div class="offer__bg" aria-hidden="true">
         <div class="offer__fixed">
@@ -167,23 +166,31 @@
           <div class="offer__veil" />
         </div>
       </div>
-      <div class="offer__inner">
-        <div class="offer__copy">
-          <p class="offer__label">What we offer</p>
-          <h2>A calm spa experience at Shee Aesthetics</h2>
-          <p class="offer__text">Facials, waxing, massage and makeup — under one roof in Meru Town.</p>
-          <NuxtLink to="/services" class="offer__play" aria-label="View packages and full pricing">
-            <span class="offer__play-icon" aria-hidden="true" />
-          </NuxtLink>
-        </div>
-        <ul class="offer__list" aria-label="Treatment highlights">
-          <li v-for="item in offerItems" :key="item.label">
-            <NuxtLink :to="item.to" class="offer__item">
-              <span class="offer__check" aria-hidden="true" />
-              {{ item.label }}
+      <!-- Sticky chapter: photo holds while you scroll through the runway -->
+      <div class="offer__chapter">
+        <div class="offer__inner">
+          <header class="offer__head">
+            <div>
+              <p class="offer__label">What we offer</p>
+              <h2 class="sr-only">Facials, massage, waxing and makeup</h2>
+            </div>
+            <NuxtLink :to="SERVICES_ROUTES.fullPackages" class="offer__cta">
+              View packages
+              <span class="offer__cta-arrow" aria-hidden="true">→</span>
             </NuxtLink>
-          </li>
-        </ul>
+          </header>
+          <ul class="offer__board" aria-label="Core treatments">
+            <li v-for="(item, index) in offerShowcase" :key="item.label">
+              <ScrollReveal variant="up" :delay="60 + index * 70">
+                <NuxtLink :to="item.to" class="offer__cell">
+                  <span class="offer__index" aria-hidden="true">{{ item.index }}</span>
+                  <span class="offer__name">{{ item.label }}</span>
+                  <span class="offer__detail">{{ item.perk }}</span>
+                </NuxtLink>
+              </ScrollReveal>
+            </li>
+          </ul>
+        </div>
       </div>
     </section>
 
@@ -415,7 +422,7 @@ const { data: workGallery } = await useAsyncData(
   () => fetchHomeWorkGallery(String(config.public.apiBaseUrl || '')),
   { default: () => STATIC_HOME_WORK },
 )
-const workImages = computed(() => workGallery.value ?? STATIC_HOME_WORK)
+const workImages = computed(() => (workGallery.value ?? STATIC_HOME_WORK).slice(0, 8))
 
 const activeSlide = ref(0)
 const mountedHeroSlides = computed(() => {
@@ -474,15 +481,11 @@ onUnmounted(() => {
 
 const featuredPackages = getFeaturedPackages()
 
-const offerItems = [
-  { label: 'Facials', to: `${SERVICES_ROUTES.page}#facials` },
-  { label: 'Deep cleansing facials', to: `${SERVICES_ROUTES.page}#facials` },
-  { label: 'Massage', to: `${SERVICES_ROUTES.page}#massage` },
-  { label: 'Hot stone massage', to: `${SERVICES_ROUTES.page}#massage` },
-  { label: 'Waxing', to: `${SERVICES_ROUTES.page}#waxing` },
-  { label: 'Brow shaping', to: `${SERVICES_ROUTES.page}#waxing` },
-  { label: 'Makeup', to: `${SERVICES_ROUTES.page}#makeup` },
-  { label: 'Bridal & event glam', to: `${SERVICES_ROUTES.page}#makeup` },
+const offerShowcase = [
+  { index: '01', label: 'Facials', perk: 'Deep cleansing facials', to: `${SERVICES_ROUTES.page}#facials` },
+  { index: '02', label: 'Massage', perk: 'Hot stone massage', to: `${SERVICES_ROUTES.page}#massage` },
+  { index: '03', label: 'Waxing', perk: 'Brow shaping', to: `${SERVICES_ROUTES.page}#waxing` },
+  { index: '04', label: 'Makeup', perk: 'Bridal & event glam', to: `${SERVICES_ROUTES.page}#makeup` },
 ]
 
 const reviews = [
@@ -509,10 +512,10 @@ const reviews = [
   background: var(--color-paper);
   margin: 0;
   padding: 0;
-  /* Mobile keeps generous clamps; tablet+ overrides below */
-  --home-section-y: clamp(2rem, 5vh, 3.5rem);
-  --home-section-y-lg: clamp(2.5rem, 6vh, 4rem);
-  --home-head-gap: 1.35rem;
+  /* Tight section rhythm — no dead white */
+  --home-section-y: clamp(1.5rem, 3.5vh, 2.25rem);
+  --home-section-y-lg: clamp(1.75rem, 4vh, 2.5rem);
+  --home-head-gap: 1rem;
 }
 
 .home-section {
@@ -572,9 +575,10 @@ const reviews = [
 .hero {
   position: relative;
   width: 100%;
-  height: min(78svh, 40rem);
-  height: min(78dvh, 40rem);
-  min-height: 28rem;
+  /* Locked: mobile 85dvh — see HERO_LAYOUT */
+  height: 85svh;
+  height: 85dvh;
+  min-height: 32rem;
   overflow: hidden;
   background: var(--color-ink);
   --hero-crossfade-ms: 1800ms;
@@ -665,63 +669,54 @@ const reviews = [
   text-align: center;
   max-width: 100%;
   position: relative;
+  animation: hero-copy-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .hero__content :deep(.site-btn) {
   pointer-events: auto;
 }
 
-.hero-copy-enter-active,
-.hero-copy-leave-active {
-  transition:
-    opacity var(--hero-copy-fade-ms) cubic-bezier(0.22, 1, 0.36, 1),
-    transform var(--hero-copy-fade-ms) cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.hero-copy-leave-active {
-  position: absolute;
-  inset-inline: 0;
-  margin-inline: auto;
-}
-
-.hero-copy-enter-from {
-  opacity: 0;
-  transform: translateY(16px);
-}
-
-.hero-copy-leave-to {
-  opacity: 0;
-  transform: translateY(-12px);
+@keyframes hero-copy-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero__mark {
   display: block;
-  width: 2.75rem;
-  height: 2.75rem;
-  margin: 0 0 0.85rem;
+  width: clamp(3rem, 4.5vw, 4rem);
+  height: clamp(3rem, 4.5vw, 4rem);
+  margin: 0 0 1rem;
   object-fit: contain;
   filter: brightness(0) invert(1);
   opacity: 0.95;
 }
 
 .hero__eyebrow {
-  margin: 0 0 0.55rem;
+  margin: 0 0 0.65rem;
   font-family: var(--font-body);
-  font-size: 0.72rem;
-  font-weight: 700;
+  /* Mellis measured: 20px / 600 / letter-spacing 5px */
+  font-size: clamp(0.9rem, 1.35vw, 1.25rem);
+  font-weight: 600;
   line-height: 1.3;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.95);
 }
 
 .hero__title {
-  margin: 0 0 1.35rem;
-  max-width: 14ch;
+  margin: 0 0 1.5rem;
+  max-width: 16ch;
   font-family: var(--font-script);
-  font-size: clamp(2.75rem, 11vw, 4.75rem);
+  /* Mellis measured: Parisienne ~130px on desktop */
+  font-size: clamp(3.25rem, 12vw, 8.125rem);
   font-weight: 400;
-  line-height: 1.05;
+  line-height: 1;
   letter-spacing: 0.01em;
   color: #fff;
   text-align: center;
@@ -730,10 +725,10 @@ const reviews = [
 
 .hero__cta {
   display: inline-flex;
-  min-height: 2.85rem;
-  padding: 0.9rem 1.85rem !important;
+  min-height: 3.15rem;
+  padding: 1rem 2.15rem !important;
   border-radius: 0 !important;
-  font-size: 0.72rem !important;
+  font-size: 0.78rem !important;
   letter-spacing: 0.16em !important;
 }
 
@@ -805,7 +800,7 @@ const reviews = [
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2rem;
+  gap: 1.35rem;
   align-items: center;
 }
 
@@ -865,7 +860,7 @@ const reviews = [
   color: var(--color-muted);
 }
 
-/* Treatments — Mellis parallax: fixed full-bleed photo, content scrolls over it */
+/* Treatments — Mellis static-bg scroll chapter + colored Shee board */
 .offer.home-section {
   content-visibility: visible;
   contain-intrinsic-size: none;
@@ -873,13 +868,11 @@ const reviews = [
 
 .offer {
   position: relative;
-  display: flex;
-  align-items: center;
-  min-height: min(42rem, 92vh);
-  padding: clamp(4rem, 11vh, 7.5rem) 1.25rem;
-  /* Clips the fixed photo to this band — image stays, section edges move */
+  /* Runway: ~50vh sticky hold while fixed photo stays put */
+  min-height: 150vh;
+  padding: 0;
   overflow: clip;
-  background: #2a2424;
+  background: #1c1714;
 }
 
 .offer__bg {
@@ -887,7 +880,6 @@ const reviews = [
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  /* Ensures fixed child is clipped to the section in all browsers */
   clip-path: inset(0);
 }
 
@@ -903,24 +895,38 @@ const reviews = [
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Larger crop — less “panel”, more atmosphere */
-  transform: scale(1.14);
-  transform-origin: center 40%;
-  /* Portrait hero-massage: keep oil + candles in the landscape crop */
-  object-position: center 28%;
+  object-position: 72% 42%;
+  transform: scale(1.03);
+  transform-origin: 70% 40%;
 }
 
 .offer__veil {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    95deg,
-    rgba(20, 16, 14, 0.68) 0%,
-    rgba(20, 16, 14, 0.38) 38%,
-    rgba(20, 16, 14, 0.12) 62%,
-    rgba(20, 16, 14, 0.2) 100%
-  );
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18, 12, 12, 0.42) 0%,
+      rgba(18, 12, 12, 0.28) 40%,
+      rgba(18, 12, 12, 0.58) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(18, 12, 12, 0.28) 0%,
+      rgba(18, 12, 12, 0.12) 50%,
+      rgba(18, 12, 12, 0.24) 100%
+    );
   pointer-events: none;
+}
+
+.offer__chapter {
+  position: sticky;
+  top: var(--site-header-height, 4.75rem);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  min-height: calc(100vh - var(--site-header-height, 4.75rem));
+  padding: clamp(3rem, 6vh, 5.5rem) 1.25rem;
 }
 
 .offer__inner {
@@ -928,172 +934,235 @@ const reviews = [
   z-index: 1;
   width: var(--container);
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: clamp(2.25rem, 5vw, 4rem);
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.35rem, 3vh, 2rem);
+}
+
+.offer__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
 }
 
 .offer__label {
-  margin: 0 0 0.75rem;
-  font: 600 0.72rem var(--font-body);
+  margin: 0;
+  font: 600 0.78rem var(--font-body);
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.92);
+  color: #f5d8d0;
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
 }
 
-.offer__copy h2 {
-  margin: 0 0 1rem;
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 4.5vw, 3.1rem);
-  font-weight: 400;
-  line-height: 1.15;
-  color: #fff;
-  max-width: 12ch;
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
-}
-
-.offer__text {
-  margin: 0 0 1.75rem;
-  font: 400 1rem/1.6 var(--font-body);
-  color: rgba(255, 255, 255, 0.9);
-  max-width: 34ch;
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.3);
-}
-
-.offer__play {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.35rem;
-  height: 3.35rem;
-  background: var(--color-rose);
-  color: #fff;
-  text-decoration: none;
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.offer__play:hover {
-  background: var(--color-rose-dark);
-  transform: scale(1.04);
-}
-
-.offer__play-icon {
-  display: block;
-  width: 0;
-  height: 0;
-  margin-left: 0.2rem;
-  border-style: solid;
-  border-width: 0.55rem 0 0.55rem 0.9rem;
-  border-color: transparent transparent transparent #fff;
-}
-
-.offer__list {
+.offer__board {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.95rem 1.75rem;
+  gap: 0;
+  /* Restored unified bar — stronger veil so copy stays readable */
+  background: rgba(28, 16, 18, 0.78);
+  border: 1px solid rgba(245, 216, 208, 0.32);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 18px 48px rgba(8, 4, 4, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
-.offer__item {
+.offer__board > li {
+  min-width: 0;
+}
+
+.offer__board > li:nth-child(odd) .offer__cell {
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.offer__board > li:nth-child(-n + 2) .offer__cell {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.offer__cell {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font: 500 0.95rem/1.35 var(--font-body);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  min-height: 100%;
+  padding: clamp(1.15rem, 2.8vw, 1.55rem) clamp(0.9rem, 2vw, 1.3rem);
   color: #fff;
   text-decoration: none;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.35);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.22s ease;
 }
 
-.offer__item:hover {
+.offer__cell:hover,
+.offer__cell:focus-visible {
+  background: rgba(222, 150, 141, 0.16);
+  outline: none;
+}
+
+.offer__cell:hover .offer__name,
+.offer__cell:focus-visible .offer__name {
+  color: #f0b8ac;
+}
+
+.offer__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 0.35rem;
+  border: 1px solid rgba(240, 184, 172, 0.55);
+  border-radius: 999px;
+  background: rgba(222, 150, 141, 0.2);
+  font: 600 0.64rem/1 var(--font-body);
+  letter-spacing: 0.14em;
   color: #f5d8d0;
 }
 
-.offer__check {
-  flex-shrink: 0;
-  width: 1.2rem;
-  height: 1.2rem;
-  border-radius: 50%;
-  background: var(--color-rose);
-  position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+.offer__name {
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 5.2vw, 2.3rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+  transition: color 0.2s ease;
 }
 
-.offer__check::after {
-  content: '';
-  position: absolute;
-  left: 0.34rem;
-  top: 0.24rem;
-  width: 0.28rem;
-  height: 0.5rem;
-  border: solid #fff;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
+.offer__detail {
+  margin-top: 0.1rem;
+  font: 400 0.88rem/1.4 var(--font-body);
+  color: rgba(255, 245, 240, 0.9);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.35);
+}
+
+.offer__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.85rem 1.25rem;
+  background: var(--color-rose);
+  color: #fff;
+  font: 600 0.76rem/1 var(--font-body);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  box-shadow: 0 10px 28px rgba(120, 48, 52, 0.35);
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.offer__cta:hover {
+  background: var(--color-rose-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(120, 48, 52, 0.42);
+}
+
+.offer__cta-arrow {
+  font-size: 1rem;
+  line-height: 1;
+  letter-spacing: 0;
+  transition: transform 0.2s ease;
+}
+
+.offer__cta:hover .offer__cta-arrow {
+  transform: translateX(0.2rem);
 }
 
 @media (min-width: 768px) {
   .offer {
-    min-height: min(40rem, 88vh);
-    padding: clamp(4.5rem, 12vh, 8rem) 1.5rem;
+    min-height: 155vh;
+  }
+
+  .offer__chapter {
+    padding: clamp(3.5rem, 7vh, 6rem) 1.5rem;
   }
 
   .offer__photo {
-    object-position: center 22%;
-    transform: scale(1.16);
-    transform-origin: center 35%;
+    object-position: 68% 40%;
   }
 
-  .offer__inner {
-    grid-template-columns: minmax(16rem, 0.95fr) minmax(18rem, 1.1fr);
-    gap: clamp(2.5rem, 6vw, 5rem);
+  .offer__board {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  .offer__list {
-    gap: 1.05rem 2.25rem;
+  .offer__board > li:nth-child(odd) .offer__cell,
+  .offer__board > li:nth-child(-n + 2) .offer__cell {
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  .offer__board > li:not(:last-child) .offer__cell {
+    border-right: 1px solid rgba(255, 255, 255, 0.22);
+  }
+
+  .offer__cell {
+    padding: clamp(1.3rem, 2.6vh, 1.85rem) clamp(1rem, 1.5vw, 1.4rem);
+    gap: 0.5rem;
+  }
+
+  .offer__name {
+    font-size: clamp(1.8rem, 2.4vw, 2.35rem);
+  }
+
+  .offer__detail {
+    font-size: 0.9rem;
+    max-width: 14ch;
   }
 }
 
 @media (min-width: 1024px) {
   .offer {
-    min-height: min(42rem, 85vh);
+    min-height: 158vh;
   }
 
   .offer__photo {
-    object-position: center 18%;
-    transform: scale(1.18);
-    transform-origin: center 30%;
+    object-position: 65% 38%;
   }
 
-  .offer__copy h2 {
-    max-width: 11ch;
+  .offer__name {
+    font-size: clamp(1.95rem, 2.15vw, 2.5rem);
   }
 
-  .offer__list {
-    gap: 1.15rem 2.75rem;
-  }
-
-  .offer__item {
-    font-size: 1.02rem;
+  .offer__detail {
+    font-size: 0.94rem;
   }
 }
 
 @media (min-width: 1440px) {
   .offer__photo {
-    object-position: center 15%;
-    transform: scale(1.2);
+    object-position: 62% 36%;
   }
 }
 
-/* Respect reduced motion: still full-bleed, but no fixed pin */
 @media (prefers-reduced-motion: reduce) {
+  .offer {
+    min-height: auto;
+  }
+
+  .offer__chapter {
+    position: relative;
+    min-height: auto;
+    padding: clamp(3.25rem, 7vh, 7.5rem) 1.25rem;
+  }
+
   .offer__fixed {
     position: absolute;
     inset: 0;
   }
 
   .offer__photo {
+    transform: none;
+  }
+
+  .offer__cta:hover {
     transform: none;
   }
 }
@@ -1654,14 +1723,15 @@ const reviews = [
 /* Tablet and up — progressive enhancement */
 @media (min-width: 768px) {
   .home {
-    --home-section-y: 2.5rem;
-    --home-section-y-lg: 2.75rem;
-    --home-head-gap: 1.15rem;
+    --home-section-y: 2rem;
+    --home-section-y-lg: 2.25rem;
+    --home-head-gap: 0.95rem;
   }
 
   .hero {
-    height: min(62vh, 36rem);
-    min-height: 26rem;
+    /* Locked: tablet/iPad 80vh — see HERO_LAYOUT */
+    height: 80vh;
+    min-height: 36rem;
   }
 
   .hero__content {
@@ -1673,11 +1743,12 @@ const reviews = [
   }
 
   .hero__title {
-    font-size: clamp(3.5rem, 6vw, 5.5rem);
+    font-size: clamp(4.5rem, 9vw, 8.125rem);
   }
 
   .hero__eyebrow {
-    font-size: 0.78rem;
+    font-size: clamp(1rem, 1.2vw, 1.25rem);
+    letter-spacing: 0.3em;
   }
 
   .welcome {
@@ -1686,7 +1757,7 @@ const reviews = [
   }
 
   .welcome__inner {
-    gap: clamp(1.75rem, 4vw, 3rem);
+    gap: clamp(1.25rem, 3vw, 2rem);
   }
 
   .welcome__mirror {
@@ -1723,14 +1794,15 @@ const reviews = [
 
 @media (min-width: 1024px) {
   .home {
-    --home-section-y: 2.85rem;
-    --home-section-y-lg: 3.15rem;
-    --home-head-gap: 1.25rem;
+    --home-section-y: 2.25rem;
+    --home-section-y-lg: 2.5rem;
+    --home-head-gap: 1rem;
   }
 
   .hero {
-    height: min(68vh, 40rem);
-    min-height: 28rem;
+    /* Locked: desktop 90vh — see HERO_LAYOUT */
+    height: 90vh;
+    min-height: 42rem;
   }
 
   .welcome__inner {
@@ -1769,8 +1841,7 @@ const reviews = [
   .hero__slide,
   .hero__bg,
   .hero__content,
-  .hero-copy-enter-active,
-  .hero-copy-leave-active,
+  .hero__copy,
   .package-card,
   .review-card {
     animation: none !important;
