@@ -16,7 +16,8 @@ html {
 
 body {
   margin: 0;
-  overflow-x: hidden;
+  /* clip avoids creating a scrollport that breaks position:sticky (unlike hidden) */
+  overflow-x: clip;
 }
 
 * {
