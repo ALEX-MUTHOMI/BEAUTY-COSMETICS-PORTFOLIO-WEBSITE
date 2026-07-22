@@ -70,6 +70,15 @@ describe('heroMedia', () => {
     expect(HERO_LAYOUT.seam).toBe('wave')
   })
 
+  it('locks clear hero heights per breakpoint (no rem caps)', () => {
+    expect(HERO_LAYOUT.mobileHeightCss).toBe('85dvh')
+    expect(HERO_LAYOUT.minHeightRem).toBe(32)
+    expect(HERO_LAYOUT.tabletHeightCss).toBe('80vh')
+    expect(HERO_LAYOUT.tabletMinHeightRem).toBe(36)
+    expect(HERO_LAYOUT.desktopHeightCss).toBe('90vh')
+    expect(HERO_LAYOUT.desktopMinHeightRem).toBe(42)
+  })
+
   it('hardens hero image paths to same-origin local assets only', () => {
     expect(assertHeroImagesAreLocal()).toBe(true)
     expect(

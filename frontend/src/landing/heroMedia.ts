@@ -14,12 +14,19 @@ export type HeroService = 'facial' | 'massage' | 'waxing' | 'makeup'
 
 /** Layout + motion contract aligned to Mellis RS hero. */
 export const HERO_LAYOUT = {
-  mobileHeightCss: 'min(78dvh, 40rem)',
-  minHeightRem: 28,
-  tabletHeightCss: 'min(62vh, 36rem)',
-  tabletMinHeightRem: 26,
-  desktopHeightCss: 'min(68vh, 40rem)',
-  desktopMinHeightRem: 28,
+  /**
+   * Locked hero heights — do not ramble.
+   * Mobile: 85dvh (immersive, leaves scroll peek, respects URL bar)
+   * Tablet/iPad: 80vh (balanced portrait/landscape)
+   * Desktop: 90vh (arrival frame with a thin peek of next content)
+   * Floors only — never max-rem caps (those cut the photo on large screens).
+   */
+  mobileHeightCss: '85dvh',
+  minHeightRem: 32,
+  tabletHeightCss: '80vh',
+  tabletMinHeightRem: 36,
+  desktopHeightCss: '90vh',
+  desktopMinHeightRem: 42,
   /** Soft full-frame dim like Mellis slide overlay (~25–35%). */
   overlayMidMax: 0.28,
   overlayBottomMax: 0.42,
@@ -186,12 +193,16 @@ export function assertHeroLayoutPhotoForward(
   return (
     layout.overlayBottomMax <= 0.5 &&
     layout.overlayMidMax <= 0.35 &&
-    layout.minHeightRem >= 28 &&
+    layout.minHeightRem >= 32 &&
+    layout.tabletMinHeightRem >= 36 &&
+    layout.desktopMinHeightRem >= 42 &&
     layout.fadeMs >= 1600 &&
     layout.fadeMs <= 2200 &&
     layout.blendFadePercent === 0 &&
     layout.seam === 'wave' &&
-    layout.mobileHeightCss.includes('78dvh')
+    layout.mobileHeightCss === '85dvh' &&
+    layout.tabletHeightCss === '80vh' &&
+    layout.desktopHeightCss === '90vh'
   )
 }
 
