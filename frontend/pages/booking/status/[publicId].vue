@@ -45,6 +45,22 @@
         </button>
       </form>
 
+      <div v-if="showRememberOptIn" class="book-status__remember">
+        <label class="book-status__remember-label">
+          <input v-model="rememberOptIn" type="checkbox" :disabled="rememberBusy || rememberDone" />
+          <span>{{ rememberCopy }}</span>
+        </label>
+        <button
+          type="button"
+          class="book-status__remember-btn"
+          :disabled="!rememberOptIn || rememberBusy || rememberDone"
+          @click="saveRememberDevice"
+        >
+          {{ rememberDone ? 'Saved on this device' : rememberBusy ? 'Saving…' : 'Save for next visit' }}
+        </button>
+        <p v-if="rememberMessage" class="book-status__polling" role="status">{{ rememberMessage }}</p>
+      </div>
+
       <div class="book-status__actions">
         <SiteButton to="/" variant="outline">Home</SiteButton>
         <SiteButton to="/services" variant="primary">Book again</SiteButton>
@@ -64,6 +80,7 @@ import {
   initiateBookingGuestStk,
   type BookingStatusSnapshot,
 } from '@/booking/bookingWriteApi'
+import { optInRememberDevice, REMEMBER_DEVICE_CUSTOMER_COPY } from '@/booking/rememberDevice'
 
 const route = useRoute()
 const config = useRuntimeConfig()
@@ -78,15 +95,27 @@ const stkMessage = ref<string | null>(null)
 const retryPhone = ref('')
 const retrying = ref(false)
 const abort = new AbortController()
+const rememberOptIn = ref(false)
+const rememberBusy = ref(false)
+const rememberDone = ref(false)
+const rememberMessage = ref<string | null>(null)
+const rememberCopy = REMEMBER_DEVICE_CUSTOMER_COPY
 
 const shortReference = computed(() => {
   const id = snapshot.value?.bookingReference ?? publicId.value
   return id ? id.slice(0, 8).toUpperCase() : '—'
 })
 
+const isConfirmed = computed(
+  () =>
+    snapshot.value?.bookingStatus === 'confirmed' || snapshot.value?.paymentStatus === 'paid',
+)
+
+const showRememberOptIn = computed(() => isConfirmed.value && !rememberDone.value)
+
 const canRetryStk = computed(() => {
   if (!snapshot.value) return false
-  if (snapshot.value.bookingStatus === 'confirmed' || snapshot.value.paymentStatus === 'paid') {
+  if (isConfirmed.value) {
     return false
   }
   return (
@@ -185,6 +214,30 @@ async function retryStk() {
     await loadStatus()
   } finally {
     retrying.value = false
+  }
+}
+
+async function saveRememberDevice() {
+  if (!rememberOptIn.value || rememberBusy.value || rememberDone.value || !isConfirmed.value) return
+  rememberBusy.value = true
+  rememberMessage.value = null
+  try {
+    const csrf = await ensureBookingCsrfToken(apiBaseUrl)
+    if (!csrf) {
+      rememberMessage.value = 'Could not save on this device. Please try again.'
+      return
+    }
+    const result = await optInRememberDevice(apiBaseUrl, publicId.value, csrf, {
+      signal: abort.signal,
+    })
+    if ('error' in result) {
+      rememberMessage.value = 'Could not save on this device. Please try again.'
+      return
+    }
+    rememberDone.value = true
+    rememberMessage.value = 'Saved. Next visit you can book faster on this phone.'
+  } finally {
+    rememberBusy.value = false
   }
 }
 
@@ -302,6 +355,43 @@ useSeoMeta({
 
 .book-status__retry-btn:disabled {
   opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.book-status__remember {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 0.85rem;
+  background: #faf6f5;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.book-status__remember-label {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #3a2a24;
+}
+
+.book-status__remember-btn {
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 999px;
+  font: 600 0.72rem var(--font-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--color-rose, #de968d);
+  cursor: pointer;
+  justify-self: start;
+}
+
+.book-status__remember-btn:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 

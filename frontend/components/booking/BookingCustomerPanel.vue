@@ -6,55 +6,97 @@
 
     <p v-if="submitError" class="book-customer__error" role="alert">{{ submitError }}</p>
 
+    <div
+      v-if="remembered?.remembered && remembered.profileSummary"
+      class="book-customer__remembered"
+      role="region"
+      aria-label="Saved details on this device"
+    >
+      <p class="book-customer__remembered-lead">
+        Continue as
+        <strong>{{ remembered.profileSummary.displayName }}</strong>
+        <span v-if="remembered.profileSummary.emailRedacted">
+          ({{ remembered.profileSummary.emailRedacted }})
+        </span>
+      </p>
+      <div class="book-customer__remembered-actions">
+        <button
+          type="button"
+          class="book-customer__remembered-use"
+          :disabled="disabled || useSavedDetails"
+          @click="emit('use-saved')"
+        >
+          {{ useSavedDetails ? 'Using saved details' : 'Use saved details' }}
+        </button>
+        <button
+          type="button"
+          class="book-customer__remembered-fresh"
+          :disabled="disabled"
+          @click="emit('use-fresh')"
+        >
+          Not you
+        </button>
+      </div>
+    </div>
+
     <form class="book-customer__form" novalidate @submit.prevent="emit('submit')">
-      <label class="book-customer__field">
-        <span>Full name <abbr title="required">*</abbr></span>
-        <input
-          v-model="customerForm.fullName"
-          type="text"
-          name="full_name"
-          autocomplete="name"
-          maxlength="80"
-          required
-          :disabled="disabled"
-        />
-      </label>
+      <template v-if="!useSavedDetails">
+        <label class="book-customer__field">
+          <span>Full name <abbr title="required">*</abbr></span>
+          <input
+            v-model="customerForm.fullName"
+            type="text"
+            name="full_name"
+            autocomplete="name"
+            maxlength="80"
+            required
+            :disabled="disabled"
+          />
+        </label>
+
+        <label class="book-customer__field">
+          <span>Email <abbr title="required">*</abbr></span>
+          <input
+            v-model="customerForm.email"
+            type="email"
+            name="email"
+            autocomplete="email"
+            maxlength="254"
+            required
+            :disabled="disabled"
+          />
+        </label>
+
+        <label class="book-customer__field">
+          <span>Confirm email <abbr title="required">*</abbr></span>
+          <input
+            v-model="customerForm.emailConfirm"
+            type="email"
+            name="email_confirm"
+            autocomplete="off"
+            maxlength="254"
+            required
+            :disabled="disabled"
+          />
+        </label>
+      </template>
 
       <label class="book-customer__field">
-        <span>Email <abbr title="required">*</abbr></span>
-        <input
-          v-model="customerForm.email"
-          type="email"
-          name="email"
-          autocomplete="email"
-          maxlength="254"
-          required
-          :disabled="disabled"
-        />
-      </label>
-
-      <label class="book-customer__field">
-        <span>Confirm email <abbr title="required">*</abbr></span>
-        <input
-          v-model="customerForm.emailConfirm"
-          type="email"
-          name="email_confirm"
-          autocomplete="email"
-          maxlength="254"
-          required
-          :disabled="disabled"
-        />
-      </label>
-
-      <label class="book-customer__field">
-        <span>Phone <abbr title="required">*</abbr></span>
+        <span>
+          {{ useSavedDetails ? 'M-Pesa phone (must match saved number)' : 'Phone' }}
+          <abbr title="required">*</abbr>
+        </span>
         <input
           v-model="customerForm.phone"
           type="tel"
           name="phone"
           autocomplete="tel"
           inputmode="tel"
-          placeholder="+254…"
+          :placeholder="
+            useSavedDetails && remembered?.profileSummary?.phoneRedacted
+              ? remembered.profileSummary.phoneRedacted
+              : '+254…'
+          "
           maxlength="20"
           required
           :disabled="disabled"
@@ -99,6 +141,7 @@
 
 <script setup lang="ts">
 import type { BookingCustomerValidation } from '@/booking/bookingCustomer'
+import type { RememberedDeviceState } from '@/booking/rememberDevice'
 
 defineProps<{
   policyText: string
@@ -106,11 +149,15 @@ defineProps<{
   canSubmit: boolean
   disabled: boolean
   submitError: string | null
+  remembered?: RememberedDeviceState | null
+  useSavedDetails?: boolean
 }>()
 
 const emit = defineEmits<{
   submit: []
   back: []
+  'use-saved': []
+  'use-fresh': []
 }>()
 
 const customerForm = defineModel<BookingCustomerValidation>('customerForm', { required: true })
@@ -132,6 +179,56 @@ const turnstileToken = defineModel<string>('turnstileToken', { required: true })
   font-family: var(--font-display);
   font-size: 1.35rem;
   font-weight: 400;
+}
+
+.book-customer__remembered {
+  margin: 0 0 1rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 10px;
+  background: #faf6f5;
+  border: 1px solid var(--color-rose-soft, #f0d5d0);
+}
+
+.book-customer__remembered-lead {
+  margin: 0 0 0.65rem;
+  font-size: 0.92rem;
+  color: var(--color-ink);
+  line-height: 1.45;
+}
+
+.book-customer__remembered-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.book-customer__remembered-use,
+.book-customer__remembered-fresh {
+  min-height: 2.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  font: 600 0.72rem var(--font-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.book-customer__remembered-use {
+  border: 0;
+  background: var(--color-rose);
+  color: #fff;
+}
+
+.book-customer__remembered-fresh {
+  border: 1px solid var(--color-line);
+  background: #fff;
+  color: var(--color-ink);
+}
+
+.book-customer__remembered-use:disabled,
+.book-customer__remembered-fresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .book-customer__field abbr {

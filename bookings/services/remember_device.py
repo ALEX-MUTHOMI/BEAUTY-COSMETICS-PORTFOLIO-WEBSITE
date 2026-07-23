@@ -153,7 +153,15 @@ def forget_returning_device(token):
         return True
 
 
-def create_hold_from_remembered_device(*, token, service_public_id, resource_public_id, starts_at, idempotency_key):
+def create_hold_from_remembered_device(
+    *,
+    token,
+    starts_at,
+    idempotency_key,
+    service_public_id=None,
+    resource_public_id=None,
+    full_package_public_id=None,
+):
     device = lookup_returning_device(token)
     if device is None:
         raise ValidationError(GENERIC_REMEMBER_ERROR)
@@ -163,8 +171,22 @@ def create_hold_from_remembered_device(*, token, service_public_id, resource_pub
         "email": decrypt_value(profile.email_encrypted),
         "phone": decrypt_value(profile.phone_encrypted),
     }
+    package_id = str(full_package_public_id or "").strip()
+    service_id = str(service_public_id or "").strip()
+    if package_id and service_id:
+        raise ValidationError(GENERIC_REMEMBER_ERROR)
+    if package_id:
+        return BookingHoldService.create_full_package_hold(
+            full_package_public_id=package_id,
+            resource_public_id=resource_public_id,
+            starts_at=starts_at,
+            customer_payload=payload,
+            idempotency_key=idempotency_key,
+        )
+    if not service_id:
+        raise ValidationError(GENERIC_REMEMBER_ERROR)
     return BookingHoldService.create_bundle_hold(
-        service_public_ids=[service_public_id],
+        service_public_ids=[service_id],
         resource_public_id=resource_public_id,
         starts_at=starts_at,
         customer_payload=payload,

@@ -81,12 +81,13 @@ def use_remembered_device(request):
             token=request.COOKIES.get(cookie_name(), ""),
             service_public_id=body.get("service_public_id"),
             resource_public_id=body.get("resource_public_id"),
+            full_package_public_id=body.get("full_package_public_id"),
             starts_at=starts_at,
             idempotency_key=body.get("idempotency_key"),
         )
     except ValidationError:
         return JsonResponse({"detail": "Remembered device is unavailable."}, status=400)
-    return JsonResponse(result, status=201)
+    return JsonResponse({"booking": result}, status=201)
 
 
 @require_POST

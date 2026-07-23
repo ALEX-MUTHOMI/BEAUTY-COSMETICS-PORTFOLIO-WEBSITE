@@ -22,8 +22,19 @@ import {
   BookingSubmitGovernor,
   GENERIC_BOOKING_SUBMIT_ERROR,
 } from './bookingSubmitGovernor'
+import {
+  createHoldFromRememberedDevice,
+  fetchRememberedDevice,
+  forgetRememberedDevice,
+  type RememberedDeviceState,
+} from './rememberDevice'
 
 export type BookCheckoutStep = 'pick' | 'details' | 'submitting'
+
+function phoneLooksValid(phone: string): boolean {
+  const digits = phone.replace(/\D/g, '')
+  return digits.length >= 9 && digits.length <= 15
+}
 
 export function useBookCheckout(
   apiBaseUrl: string,
@@ -42,6 +53,12 @@ export function useBookCheckout(
   const turnstileRequired = ref(true)
   const submitError = ref<string | null>(null)
   const checkoutResult = ref<BookingCheckoutResult | null>(null)
+  const remembered = ref<RememberedDeviceState>({
+    remembered: false,
+    canUseSavedDetails: false,
+    profileSummary: null,
+  })
+  const useSavedDetails = ref(false)
 
   const customerForm = ref<BookingCustomerValidation>({
     fullName: '',
@@ -69,6 +86,10 @@ export function useBookCheckout(
     if (step.value !== 'details' || submitGovernor.isInFlight) return false
     if (!policyAccepted.value || !policyText.value) return false
     if (turnstileRequired.value && !turnstileToken.value) return false
+    if (customerForm.value.honeypot) return false
+    if (useSavedDetails.value && remembered.value.canUseSavedDetails) {
+      return phoneLooksValid(customerForm.value.phone)
+    }
     return Boolean(validateBookingCustomer(customerForm.value))
   })
 
@@ -84,6 +105,15 @@ export function useBookCheckout(
     }
   }
 
+  async function loadRememberedDevice() {
+    const result = await fetchRememberedDevice(apiBaseUrl)
+    if ('error' in result) return
+    remembered.value = result.data
+    if (!result.data.remembered) {
+      useSavedDetails.value = false
+    }
+  }
+
   function openDetails() {
     if (!canOpenDetails.value) return
     if (!clickGate.canRun('open-details')) return
@@ -91,12 +121,15 @@ export function useBookCheckout(
     step.value = 'details'
     submitError.value = null
     if (!policyText.value) void loadPolicyText()
+    void loadRememberedDevice()
     clickGate.finish('open-details')
   }
 
   onMounted(() => {
     // Prefetch while client picks date/time so details opens without policy flash.
     void loadPolicyText()
+    void ensureBookingCsrfToken(apiBaseUrl)
+    void loadRememberedDevice()
   })
 
   function backToPick() {
@@ -108,6 +141,21 @@ export function useBookCheckout(
     step.value = 'pick'
     submitError.value = null
     turnstileToken.value = ''
+  }
+
+  async function chooseSavedDetails() {
+    if (!remembered.value.canUseSavedDetails) return
+    useSavedDetails.value = true
+    submitError.value = null
+  }
+
+  async function chooseFreshDetails() {
+    useSavedDetails.value = false
+    const csrf = await ensureBookingCsrfToken(apiBaseUrl)
+    if (csrf && remembered.value.remembered) {
+      await forgetRememberedDevice(apiBaseUrl, csrf)
+      remembered.value = { remembered: false, canUseSavedDetails: false, profileSummary: null }
+    }
   }
 
   async function submitBooking(): Promise<BookingCheckoutResult | null> {
@@ -123,8 +171,15 @@ export function useBookCheckout(
       return null
     }
 
-    const customer = validateBookingCustomer(customerForm.value)
-    if (!customer) {
+    const usingSaved = useSavedDetails.value && remembered.value.canUseSavedDetails
+    const customer = usingSaved ? null : validateBookingCustomer(customerForm.value)
+    if (!usingSaved && !customer) {
+      submitError.value = GENERIC_BOOKING_SUBMIT_ERROR
+      submitGovernor.finishSubmit()
+      clickGate.finish('hold-checkout')
+      return null
+    }
+    if (usingSaved && !phoneLooksValid(customerForm.value.phone)) {
       submitError.value = GENERIC_BOOKING_SUBMIT_ERROR
       submitGovernor.finishSubmit()
       clickGate.finish('hold-checkout')
@@ -147,15 +202,24 @@ export function useBookCheckout(
     submitError.value = null
     submitGovernor.recordHoldAttempt()
 
-    const holdResult = await createBookingHold(
-      apiBaseUrl,
-      selection.value,
-      selectedSlot.value,
-      customer,
-      holdIdempotencyKey.value,
-      csrfToken,
-      { turnstileToken: turnstileToken.value, signal },
-    )
+    const holdResult = usingSaved
+      ? await createHoldFromRememberedDevice(
+          apiBaseUrl,
+          selection.value,
+          selectedSlot.value,
+          holdIdempotencyKey.value,
+          csrfToken,
+          { signal },
+        )
+      : await createBookingHold(
+          apiBaseUrl,
+          selection.value,
+          selectedSlot.value,
+          customer!,
+          holdIdempotencyKey.value,
+          csrfToken,
+          { turnstileToken: turnstileToken.value, signal },
+        )
 
     if (signal.aborted) {
       submitGovernor.finishSubmit()
@@ -170,6 +234,9 @@ export function useBookCheckout(
         submitError.value = GENERIC_BOOKING_THROTTLE_ERROR
       } else {
         submitError.value = GENERIC_BOOKING_SUBMIT_ERROR
+        if (usingSaved) {
+          useSavedDetails.value = false
+        }
       }
       step.value = 'details'
       submitGovernor.finishSubmit()
@@ -220,15 +287,15 @@ export function useBookCheckout(
       return null
     }
 
-    // Guest-safe STK: phone must match booking customer (server HMAC). Fail closed on error
-    // but still return checkout so status page can offer retry without orphaning the hold.
+    const stkPhone = usingSaved ? customerForm.value.phone.trim() : customer!.phone
+
     if (checkout.data.nextAction === 'initiate_payment' || checkout.data.checkoutPublicId) {
       const stk = await initiateBookingGuestStk(
         apiBaseUrl,
         {
           bookingPublicId: checkout.data.bookingPublicId,
           checkoutPublicId: checkout.data.checkoutPublicId,
-          phoneNumber: customer.phone,
+          phoneNumber: stkPhone,
           idempotencyKey: buildStkIdempotencyKey(
             checkout.data.checkoutPublicId,
             attemptNonce.value || createBookingAttemptNonce(),
@@ -247,7 +314,6 @@ export function useBookCheckout(
           submitGovernor.markAbuseSuspected()
           submitError.value = GENERIC_BOOKING_THROTTLE_ERROR
         }
-        // Still navigate to status — payment can be retried there.
       }
     }
 
@@ -292,12 +358,16 @@ export function useBookCheckout(
     submitError,
     checkoutResult,
     customerForm,
+    remembered,
+    useSavedDetails,
     canOpenDetails,
     canSubmit,
     isSubmitting: computed(() => submitGovernor.isInFlight || step.value === 'submitting'),
     abuseMode: computed(() => submitGovernor.abuseMode),
     openDetails,
     backToPick,
+    chooseSavedDetails,
+    chooseFreshDetails,
     submitBooking,
   }
 }

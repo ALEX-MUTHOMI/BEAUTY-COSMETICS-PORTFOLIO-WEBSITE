@@ -101,8 +101,12 @@
           :can-submit="canSubmit"
           :disabled="isSubmitting"
           :submit-error="submitError"
+          :remembered="remembered"
+          :use-saved-details="useSavedDetails"
           @back="backToPick"
           @submit="handleSubmit"
+          @use-saved="chooseSavedDetails"
+          @use-fresh="chooseFreshDetails"
         />
       </div>
     </section>
@@ -146,8 +150,12 @@ const {
   isSubmitting,
   submitError,
   step: checkoutStep,
+  remembered,
+  useSavedDetails,
   openDetails,
   backToPick,
+  chooseSavedDetails,
+  chooseFreshDetails,
   submitBooking,
 } = checkout
 
