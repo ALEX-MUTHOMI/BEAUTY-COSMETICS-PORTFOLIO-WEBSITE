@@ -8,3 +8,10 @@ playwright-report
 .git
 .vscode
 *.log
+# Never bake image candidate / scratch trees into the Nuxt image
+public/images/_*/
+public/images/_*.jpg
+public/images/_*.jpeg
+public/images/_*.png
+public/images/_*.webp
+docker/images-prod

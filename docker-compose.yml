@@ -300,8 +300,8 @@ services:
       dockerfile: Dockerfile
     image: aesthetic_os_nuxt_frontend:latest
     container_name: aesthetic_os_nuxt_frontend
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       - NODE_ENV=production
       - NITRO_HOST=0.0.0.0
@@ -327,8 +327,31 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.75"
-          memory: 512M
+          cpus: "1.50"
+          memory: 1G
+    restart: unless-stopped
+
+  # Static /images sendfile + reverse proxy to Nuxt (port 3000 on host)
+  # Mount curated images-prod (run: node frontend/scripts/sync-prod-images.mjs)
+  frontend-edge:
+    image: nginx:1.27-alpine
+    container_name: aesthetic_os_nuxt_edge
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend/docker/nginx-edge.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend/docker/images-prod:/var/www/images:ro
+    depends_on:
+      - frontend
+    networks:
+      - aesthetic_os_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
     restart: unless-stopped
 
   # ============================================================================
