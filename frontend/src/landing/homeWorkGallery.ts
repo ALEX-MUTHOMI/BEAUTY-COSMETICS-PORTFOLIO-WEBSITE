@@ -17,18 +17,72 @@ export type HomeWorkImage = {
 
 const SHAPES: HomeWorkImage['shape'][] = ['tall', 'wide', 'square', 'tall', 'square', 'wide', 'tall', 'wide']
 
-/** Curated static fallback — mixed crops for a Pinterest-like fill. */
+/** Curated static fallback — realistic Kenyan-facing spa/beauty frames (not client PII). */
 export const STATIC_HOME_WORK: HomeWorkImage[] = [
-  { id: 'static-1', src: '/images/gallery-1.jpg', alt: 'Shee client work', width: 800, height: 1000, shape: 'tall' },
-  { id: 'static-2', src: '/images/gallery-2.jpg', alt: 'Shee studio result', width: 900, height: 700, shape: 'wide' },
-  { id: 'static-3', src: '/images/showcase-facial.jpg', alt: 'Facial finish at Shee', width: 640, height: 800, shape: 'tall' },
-  { id: 'static-4', src: '/images/gallery-3.jpg', alt: 'Makeup look by Shee', width: 800, height: 800, shape: 'square' },
-  { id: 'static-5', src: '/images/showcase-makeup.jpg', alt: 'Soft glam makeup', width: 640, height: 800, shape: 'tall' },
-  { id: 'static-6', src: '/images/gallery-4.jpg', alt: 'Spa treatment detail', width: 900, height: 700, shape: 'wide' },
-  { id: 'static-7', src: '/images/showcase-massage.jpg', alt: 'Massage in studio', width: 640, height: 800, shape: 'tall' },
-  { id: 'static-8', src: '/images/gallery-5.jpg', alt: 'Client glow after visit', width: 800, height: 800, shape: 'square' },
-  { id: 'static-9', src: '/images/gallery-6.jpg', alt: 'Shee aesthetics work', width: 900, height: 700, shape: 'wide' },
-  { id: 'static-10', src: '/images/showcase-waxing.jpg', alt: 'Clean wax finish', width: 640, height: 800, shape: 'tall' },
+  {
+    id: 'static-1',
+    src: '/images/work-1.jpg',
+    alt: 'Makeup glow — joyful client with a natural afro at Shee',
+    width: 1000,
+    height: 1500,
+    shape: 'tall',
+  },
+  {
+    id: 'static-2',
+    src: '/images/work-2.jpg',
+    alt: 'African-print beauty look styled for a Shee client',
+    width: 1000,
+    height: 1500,
+    shape: 'tall',
+  },
+  {
+    id: 'static-3',
+    src: '/images/work-3.jpg',
+    alt: 'Warm oil back massage for deep relaxation at Shee',
+    width: 1000,
+    height: 1500,
+    shape: 'tall',
+  },
+  {
+    id: 'static-4',
+    src: '/images/work-4.jpg',
+    alt: 'Natural glow — close-up beauty portrait at Shee',
+    width: 1000,
+    height: 1000,
+    shape: 'square',
+  },
+  {
+    id: 'static-5',
+    src: '/images/work-5.jpg',
+    alt: 'Overhead facial massage in the Shee treatment room',
+    width: 1000,
+    height: 667,
+    shape: 'wide',
+  },
+  {
+    id: 'static-6',
+    src: '/images/work-6.jpg',
+    alt: 'Candlelit facial massage — calm spa moment at Shee',
+    width: 1000,
+    height: 1500,
+    shape: 'tall',
+  },
+  {
+    id: 'static-7',
+    src: '/images/work-7.jpg',
+    alt: 'Joyful client glow — natural hair and beaded earrings at Shee',
+    width: 1200,
+    height: 900,
+    shape: 'wide',
+  },
+  {
+    id: 'static-8',
+    src: '/images/work-8.jpg',
+    alt: 'Natural afro glow — confident client energy at Shee',
+    width: 1200,
+    height: 1804,
+    shape: 'tall',
+  },
 ]
 
 type ApiVariant = {
