@@ -90,6 +90,36 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.getByRole('heading', { name: 'Shee', level: 1 })).toBeVisible()
   })
 
+  for (const viewport of [
+    { width: 375, height: 667, label: 'iPhone SE' },
+    { width: 390, height: 844, label: 'iPhone 12' },
+  ]) {
+    test(`mobile-first hero chrome fits ${viewport.label} (${viewport.width}x${viewport.height})`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height })
+      await page.goto(BASE_URL, { waitUntil: 'networkidle' })
+      await expect(page.locator('.site-loader')).toHaveCount(0, { timeout: 5000 })
+
+      const overflowX = await page.evaluate(() => {
+        const doc = document.documentElement
+        return Math.max(doc.scrollWidth, document.body.scrollWidth) - doc.clientWidth
+      })
+      expect(overflowX, 'horizontal overflow').toBeLessThanOrEqual(1)
+
+      await expect(page.getByRole('link', { name: /Discover more/i }).first()).toBeVisible()
+      await expect(page.locator('.mobile-book-bar')).toBeVisible()
+      await expect(page.locator('.hero__dots')).toBeVisible()
+
+      const menu = page.getByRole('banner').getByRole('button', { name: /menu|open/i })
+      await expect(menu).toBeVisible()
+      await menu.click()
+      await expect(page.locator('#site-header-mobile-nav')).toBeVisible()
+      await page.getByRole('button', { name: /Close menu/i }).click()
+      await expect(page.locator('#site-header-mobile-nav')).toHaveCount(0)
+    })
+  }
+
   test('serves strict security headers with nonce-aware CSP', async ({ request }) => {
     const response = await request.get(BASE_URL)
     expect(response.ok()).toBeTruthy()

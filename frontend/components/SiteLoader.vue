@@ -29,7 +29,7 @@ const props = withDefaults(
   }>(),
   {
     minDuration: 450,
-    assets: () => ['/images/hero-1.jpg', '/images/logo-mark.png'],
+    assets: () => ['/images/hero-makeup-960.jpg', '/images/logo-mark.png'],
   },
 )
 

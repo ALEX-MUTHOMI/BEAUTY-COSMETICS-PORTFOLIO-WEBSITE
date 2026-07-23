@@ -42,16 +42,8 @@
       <div class="hero__content" aria-live="polite">
         <!-- Single copy node — no Transition leave/enter stack (prevents ghosted titles) -->
         <div :key="currentHero.service" class="hero__copy">
-          <img
-            src="/images/logo-mark.png"
-            alt=""
-            class="hero__mark"
-            width="48"
-            height="48"
-            aria-hidden="true"
-          />
           <p class="hero__eyebrow">{{ currentHero.eyebrow }}</p>
-          <h1 class="hero__title">{{ currentHero.headline }}</h1>
+          <HeroHandwriteTitle :text="currentHero.headline" class="hero__title" />
           <SiteButton :to="HERO_CTA.to" variant="primary" class="hero__cta">
             {{ HERO_CTA.label }}
           </SiteButton>
@@ -111,6 +103,7 @@
         <header class="section-head">
           <p class="label">Our work</p>
           <h2>Clients by Shee</h2>
+          <p class="section-head__sub">Studio mood — makeup, facials, massage &amp; waxing.</p>
         </header>
       </ScrollReveal>
       <div class="work__masonry" aria-label="Shee client and studio work">
@@ -158,8 +151,9 @@
             src="/images/hero-massage.jpg"
             alt=""
             class="offer__photo"
-            width="1920"
-            height="1280"
+            width="1600"
+            height="1067"
+            loading="lazy"
             decoding="async"
             fetchpriority="low"
           />
@@ -393,7 +387,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   flowSteps,
   getFeaturedPackages,
@@ -425,15 +419,21 @@ const { data: workGallery } = await useAsyncData(
 const workImages = computed(() => (workGallery.value ?? STATIC_HOME_WORK).slice(0, 8))
 
 const activeSlide = ref(0)
-const mountedHeroSlides = computed(() => {
-  const set = new Set<number>()
-  heroSlides.forEach((_, index) => {
-    if (shouldMountHeroImage(activeSlide.value, index, heroSlides.length)) {
-      set.add(index)
-    }
-  })
-  return set
-})
+/** Retain frames once mounted so crossfades never remount mid-fade. */
+const retainedHeroSlides = ref(new Set<number>())
+const mountedHeroSlides = computed(() => retainedHeroSlides.value)
+
+watch(
+  activeSlide,
+  (active) => {
+    const next = new Set(retainedHeroSlides.value)
+    heroSlides.forEach((_, index) => {
+      if (shouldMountHeroImage(active, index, heroSlides.length)) next.add(index)
+    })
+    retainedHeroSlides.value = next
+  },
+  { immediate: true },
+)
 
 const currentHero = computed(() => heroSlides[activeSlide.value] ?? heroSlides[0]!)
 
@@ -575,14 +575,14 @@ const reviews = [
 .hero {
   position: relative;
   width: 100%;
-  /* Locked: mobile 85dvh — see HERO_LAYOUT */
-  height: 85svh;
-  height: 85dvh;
-  min-height: 32rem;
+  /* Locked: mobile 92dvh — soft floor so short phones stay inside the viewport */
+  height: 92svh;
+  height: 92dvh;
+  min-height: 28rem;
   overflow: hidden;
   background: var(--color-ink);
-  --hero-crossfade-ms: 1800ms;
-  --hero-copy-fade-ms: 1100ms;
+  --hero-crossfade-ms: 2800ms;
+  --hero-copy-fade-ms: 1400ms;
 }
 
 .hero__track {
@@ -616,7 +616,8 @@ const reviews = [
   height: 100%;
   object-fit: cover;
   object-position: center center;
-  transform: scale(1.05);
+  /* Subtle settle — avoid heavy blur from oversized Ken Burns */
+  transform: scale(1.03);
   transition: transform var(--hero-crossfade-ms) cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
@@ -630,7 +631,14 @@ const reviews = [
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  background: rgba(39, 37, 42, 0.3);
+  /* Lighter veil — keep photos sharp; copy still readable */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(20, 16, 18, 0.22) 0%,
+      rgba(20, 16, 18, 0.12) 42%,
+      rgba(20, 16, 18, 0.34) 100%
+    );
 }
 
 .hero__wave {
@@ -649,15 +657,14 @@ const reviews = [
   position: absolute;
   inset: 0;
   z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   text-align: center;
+  /* Center in the band below the Home 3 header, not under the logo stack */
   padding:
-    1.5rem
+    max(var(--site-header-height, 7.5rem), env(safe-area-inset-top, 0px))
     1.25rem
-    calc(var(--mobile-book-bar-height, 4.25rem) + 3rem);
+    max(3.5rem, env(safe-area-inset-bottom, 0px));
   color: #fff;
   pointer-events: none;
 }
@@ -666,10 +673,13 @@ const reviews = [
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: clamp(1rem, 2.6vh, 2.35rem);
   text-align: center;
-  max-width: 100%;
+  max-width: min(94vw, 56rem);
+  margin: 0;
+  transform: none;
   position: relative;
-  animation: hero-copy-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: hero-copy-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .hero__content :deep(.site-btn) {
@@ -679,7 +689,7 @@ const reviews = [
 @keyframes hero-copy-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -687,58 +697,39 @@ const reviews = [
   }
 }
 
-.hero__mark {
-  display: block;
-  width: clamp(3rem, 4.5vw, 4rem);
-  height: clamp(3rem, 4.5vw, 4rem);
-  margin: 0 0 1rem;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
-  opacity: 0.95;
-}
-
 .hero__eyebrow {
-  margin: 0 0 0.65rem;
+  margin: 0;
   font-family: var(--font-body);
-  /* Mellis measured: 20px / 600 / letter-spacing 5px */
-  font-size: clamp(0.9rem, 1.35vw, 1.25rem);
+  font-size: clamp(0.72rem, 1.15vw, 1.05rem);
   font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: 0.28em;
+  line-height: 1.35;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.95);
 }
 
 .hero__title {
-  margin: 0 0 1.5rem;
-  max-width: 16ch;
-  font-family: var(--font-script);
-  /* Mellis measured: Parisienne ~130px on desktop */
-  font-size: clamp(3.25rem, 12vw, 8.125rem);
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: 0.01em;
-  color: #fff;
-  text-align: center;
-  text-shadow: 0 2px 28px rgba(20, 16, 18, 0.35);
+  /* Handwriting title owns type scale; keep as flex child */
+  margin: 0;
 }
 
 .hero__cta {
   display: inline-flex;
-  min-height: 3.15rem;
+  min-height: 3.1rem;
+  margin-top: 0.15rem;
   padding: 1rem 2.15rem !important;
   border-radius: 0 !important;
-  font-size: 0.78rem !important;
+  font-size: 0.76rem !important;
   letter-spacing: 0.16em !important;
 }
 
 .hero__dots {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--mobile-book-bar-height, 4.25rem) + 2.75rem);
+  bottom: calc(var(--mobile-book-bar-height, 4.25rem) + 1.35rem);
   z-index: 4;
   display: flex;
-  gap: 0.45rem;
+  gap: 0.4rem;
   transform: translateX(-50%);
 }
 
@@ -1074,6 +1065,34 @@ const reviews = [
 
 .offer__cta:hover .offer__cta-arrow {
   transform: translateX(0.2rem);
+}
+
+/* Phones: static chapter (no fixed sticky runway) — calmer scroll, less jank */
+@media (max-width: 767px) {
+  .offer {
+    min-height: auto;
+  }
+
+  .offer__chapter {
+    position: relative;
+    top: auto;
+    min-height: auto;
+    padding: clamp(2.75rem, 7vh, 4.5rem) 1.15rem;
+  }
+
+  .offer__fixed {
+    position: absolute;
+    inset: 0;
+  }
+
+  .hero__eyebrow {
+    letter-spacing: 0.16em;
+  }
+
+  .hero__cta {
+    min-height: 2.85rem;
+    padding: 0.9rem 1.75rem !important;
+  }
 }
 
 @media (min-width: 768px) {
@@ -1729,25 +1748,39 @@ const reviews = [
   }
 
   .hero {
-    /* Locked: tablet/iPad 80vh — see HERO_LAYOUT */
-    height: 80vh;
-    min-height: 36rem;
+    /* Locked: tablet/iPad 92vh — Mellis-tall */
+    height: 92vh;
+    min-height: 38rem;
   }
 
   .hero__content {
-    padding: 2rem 1.5rem 3.25rem;
+    padding:
+      max(var(--site-header-height, 8.5rem), env(safe-area-inset-top, 0px))
+      1.5rem
+      2.5rem;
+  }
+
+  .hero__copy {
+    transform: none;
+  }
+
+  @keyframes hero-copy-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .hero__dots {
-    bottom: 2.75rem;
-  }
-
-  .hero__title {
-    font-size: clamp(4.5rem, 9vw, 8.125rem);
+    bottom: 2.5rem;
   }
 
   .hero__eyebrow {
-    font-size: clamp(1rem, 1.2vw, 1.25rem);
+    font-size: clamp(0.9rem, 1.15vw, 1.1rem);
     letter-spacing: 0.3em;
   }
 
@@ -1800,9 +1833,9 @@ const reviews = [
   }
 
   .hero {
-    /* Locked: desktop 90vh — see HERO_LAYOUT */
-    height: 90vh;
-    min-height: 42rem;
+    /* Locked: desktop 100vh — Mellis full viewport */
+    height: 100vh;
+    min-height: 44rem;
   }
 
   .welcome__inner {

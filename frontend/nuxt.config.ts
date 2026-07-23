@@ -11,6 +11,11 @@ export default defineNuxtConfig({
   // session checks that cannot see cross-origin API cookies inside Docker.
   routeRules: {
     '/staff/**': { ssr: false },
+    '/images/**': {
+      headers: {
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      },
+    },
   },
 
   // Mellis theme design tokens shared across the public site

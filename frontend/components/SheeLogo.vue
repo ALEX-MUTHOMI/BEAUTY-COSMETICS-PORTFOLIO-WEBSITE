@@ -24,11 +24,18 @@ const props = withDefaults(
     to?: string
     variant?: 'default' | 'light' | 'hero'
     size?: 'sm' | 'md' | 'lg'
+    /** Home 3: mark above name, centered column */
+    layout?: 'inline' | 'stacked'
   }>(),
-  { to: '/', variant: 'default', size: 'md' },
+  { to: '/', variant: 'default', size: 'md', layout: 'inline' },
 )
 
 const markSize = computed(() => {
+  if (props.layout === 'stacked') {
+    if (props.size === 'lg') return 40
+    if (props.size === 'sm') return 28
+    return 34
+  }
   if (props.size === 'lg') return 36
   if (props.size === 'sm') return 26
   return 30
@@ -37,6 +44,7 @@ const markSize = computed(() => {
 const logoClasses = computed(() => [
   props.variant !== 'default' ? `shee-logo--${props.variant}` : '',
   props.size !== 'md' ? `shee-logo--${props.size}` : '',
+  props.layout === 'stacked' ? 'shee-logo--stacked' : '',
 ])
 </script>
 
@@ -150,5 +158,65 @@ const logoClasses = computed(() => [
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.35);
   box-shadow: none;
+}
+
+/* Mellis Home 3 — mark above brand, centered */
+.shee-logo--stacked {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  text-align: center;
+}
+
+.shee-logo--stacked .shee-logo__text {
+  align-items: center;
+}
+
+.shee-logo--stacked .shee-logo__name {
+  font-size: clamp(1.85rem, 2.4vw, 2.35rem);
+  letter-spacing: 0.04em;
+}
+
+.shee-logo--stacked .shee-logo__tag {
+  margin-top: 0.2rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.32em;
+}
+
+.shee-logo--stacked.shee-logo--sm .shee-logo__mark-wrap {
+  width: 52px;
+  height: 52px;
+}
+
+.shee-logo--stacked.shee-logo--sm .shee-logo__mark {
+  width: 28px;
+  height: 28px;
+}
+
+.shee-logo--stacked.shee-logo--sm .shee-logo__name {
+  font-size: clamp(1.65rem, 4vw, 2rem);
+}
+
+.shee-logo--stacked.shee-logo--md .shee-logo__mark-wrap,
+.shee-logo--stacked:not(.shee-logo--sm):not(.shee-logo--lg) .shee-logo__mark-wrap {
+  width: 58px;
+  height: 58px;
+}
+
+.shee-logo--stacked:not(.shee-logo--sm):not(.shee-logo--lg) .shee-logo__mark {
+  width: 32px;
+  height: 32px;
+}
+
+.shee-logo--stacked.shee-logo--light .shee-logo__mark-wrap,
+.shee-logo--stacked.shee-logo--hero .shee-logo__mark-wrap {
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow: none;
+}
+
+.shee-logo--stacked.shee-logo--light .shee-logo__tag,
+.shee-logo--stacked.shee-logo--hero .shee-logo__tag {
+  color: rgba(255, 255, 255, 0.88);
 }
 </style>

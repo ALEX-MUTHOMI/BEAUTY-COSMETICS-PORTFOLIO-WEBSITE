@@ -74,8 +74,8 @@ const year = new Date().getFullYear()
   width: var(--container);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1.1fr 1fr;
-  gap: clamp(1.5rem, 4vw, 2.75rem);
+  grid-template-columns: 1fr;
+  gap: 1.75rem;
   padding-bottom: clamp(1.75rem, 4vw, 2.5rem);
 }
 
@@ -174,9 +174,10 @@ const year = new Date().getFullYear()
   }
 }
 
-@media (max-width: 900px) {
+@media (min-width: 561px) {
   .site-footer__inner {
     grid-template-columns: 1fr 1fr;
+    gap: clamp(1.5rem, 4vw, 2.75rem);
   }
 
   .site-footer__brand {
@@ -184,10 +185,13 @@ const year = new Date().getFullYear()
   }
 }
 
-@media (max-width: 560px) {
+@media (min-width: 901px) {
   .site-footer__inner {
-    grid-template-columns: 1fr;
-    gap: 1.75rem;
+    grid-template-columns: 1.4fr 1fr 1.1fr 1fr;
+  }
+
+  .site-footer__brand {
+    grid-column: auto;
   }
 }
 </style>

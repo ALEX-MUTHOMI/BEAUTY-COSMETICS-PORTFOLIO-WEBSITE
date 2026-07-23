@@ -42,17 +42,17 @@ describe('landingContent', () => {
   })
 
   it('maps hero slides to four Shee script titles', () => {
-    expect(heroSlides.map((s) => s.service)).toEqual(['facial', 'massage', 'waxing', 'makeup'])
+    expect(heroSlides.map((s) => s.service)).toEqual(['makeup', 'facial', 'massage', 'waxing'])
     expect(heroSlides.map((s) => s.headline)).toEqual([
+      'Shee Makeup',
       'Shee Facials',
       'Shee Massage',
       'Shee Waxing',
-      'Shee Makeup',
     ])
-    expect(heroSlides[0]?.image).toBe('/images/hero-facial.jpg')
-    expect(heroSlides[1]?.image).toBe('/images/hero-massage.jpg')
-    expect(heroSlides[2]?.image).toContain('wax')
-    expect(heroSlides[3]?.image).toBe('/images/hero-makeup.jpg')
+    expect(heroSlides[0]?.image).toBe('/images/hero-makeup.jpg')
+    expect(heroSlides[1]?.image).toBe('/images/hero-facial.jpg')
+    expect(heroSlides[2]?.image).toBe('/images/hero-massage.jpg')
+    expect(heroSlides[3]?.image).toBe('/images/hero-waxing.jpg')
     heroSlides.forEach((slide) => {
       expect(slide.alt.length).toBeGreaterThan(10)
       expect(slide.eyebrow.toLowerCase()).toContain('unwind')
