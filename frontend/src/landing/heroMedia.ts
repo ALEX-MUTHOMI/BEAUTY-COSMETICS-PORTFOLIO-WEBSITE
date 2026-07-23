@@ -16,22 +16,22 @@ export type HeroService = 'facial' | 'massage' | 'waxing' | 'makeup'
 export const HERO_LAYOUT = {
   /**
    * Locked hero heights — do not ramble.
-   * Mobile: 85dvh (immersive, leaves scroll peek, respects URL bar)
-   * Tablet/iPad: 80vh (balanced portrait/landscape)
-   * Desktop: 90vh (arrival frame with a thin peek of next content)
+   * Mobile: 92dvh with a soft floor (short phones must not exceed viewport badly)
+   * Tablet/iPad: 92vh
+   * Desktop: 100vh
    * Floors only — never max-rem caps (those cut the photo on large screens).
    */
-  mobileHeightCss: '85dvh',
-  minHeightRem: 32,
-  tabletHeightCss: '80vh',
-  tabletMinHeightRem: 36,
-  desktopHeightCss: '90vh',
-  desktopMinHeightRem: 42,
-  /** Soft full-frame dim like Mellis slide overlay (~25–35%). */
-  overlayMidMax: 0.28,
-  overlayBottomMax: 0.42,
-  /** Photo + copy crossfade — slower than RS default so it feels calm. */
-  fadeMs: 1800,
+  mobileHeightCss: '92dvh',
+  minHeightRem: 28,
+  tabletHeightCss: '92vh',
+  tabletMinHeightRem: 38,
+  desktopHeightCss: '100vh',
+  desktopMinHeightRem: 44,
+  /** Soft full-frame dim — keep photos bright; copy still readable. */
+  overlayMidMax: 0.22,
+  overlayBottomMax: 0.34,
+  /** Photo + copy crossfade — unhurried, luxurious. */
+  fadeMs: 2800,
   /**
    * Seam into the page — wave clip (not ash/smoke gradient).
    * Kept for contract checks; CSS uses an SVG wave, not a fog %.
@@ -59,9 +59,16 @@ export interface HeroSlide {
 
 const HERO_SIZES = '100vw'
 const SHARED_EYEBROW = 'Ideal place to unwind'
+/** Pre-generated static widths — phones pick ≤960w without runtime IPX. */
+export const HERO_SRCSET_WIDTHS = [640, 960, 1280] as const
+
+export function heroVariantPath(basePath: string, width: number): string {
+  return basePath.replace(/\.jpg$/i, `-${width}.jpg`)
+}
 
 function heroSrcset(basePath: string): string {
-  return `${basePath} 1600w`
+  const variants = HERO_SRCSET_WIDTHS.map((w) => `${heroVariantPath(basePath, w)} ${w}w`)
+  return [...variants, `${basePath} 1600w`].join(', ')
 }
 
 function slide(
@@ -100,71 +107,86 @@ export function formatHeroHeadline(slide: Pick<HeroSlide, 'serviceTitle' | 'head
   return slide.headline || `Shee ${slide.serviceTitle}`
 }
 
+/**
+ * Hero photos — Kenyan beauty studio: Black / lightskin models, sharp aesthetic frames.
+ * Order: Makeup first (hero arrival), then Facials, Massage, Waxing.
+ */
 export const heroSlides: HeroSlide[] = [
+  slide(
+    'makeup',
+    'Makeup',
+    '/images/hero-makeup.jpg',
+    1440,
+    1800,
+    'center 28%',
+    'Soft glam makeup look with dewy skin and glossy lips',
+    'Sharp aesthetic glam portrait — unmistakably makeup.',
+  ),
   slide(
     'facial',
     'Facials',
     '/images/hero-facial.jpg',
-    1600,
-    1067,
+    1440,
+    1920,
     'center 28%',
-    'Facial treatment at Shee Aesthetics',
-    'Facial in progress. Warm light.',
+    'Black woman receiving a cream facial mask treatment in black and white',
+    'Moody B&W spa facial — cream mask, gloved hands, towel wrap.',
   ),
   slide(
     'massage',
     'Massage',
     '/images/hero-massage.jpg',
-    1200,
-    1800,
-    'center 30%',
-    'Therapist applying warm oil during a back massage',
-    'Hands-on back/shoulder massage.',
+    1600,
+    1067,
+    'center 32%',
+    'Black woman relaxing during an oil back massage in black and white',
+    'Moody B&W spa massage — oil sheen, serene close-up.',
   ),
   slide(
     'waxing',
     'Waxing',
-    '/images/service-waxing.jpg',
-    1200,
-    1200,
-    'center 40%',
-    'Waxing treatment at Shee Aesthetics',
-    'Clearly waxing.',
-  ),
-  slide(
-    'makeup',
-    'Makeup',
-    '/images/hero-makeup.jpg',
-    1600,
-    1067,
-    'center 32%',
-    'Makeup artist finishing a soft glam look',
-    'Makeup brush or lipstick — unmistakably glam.',
+    '/images/hero-waxing.jpg',
+    1500,
+    1700,
+    'center 38%',
+    'Therapist applying warm golden wax during a leg waxing treatment',
+    'Warm spa waxing on deep skin — candlelight aesthetic.',
   ),
 ]
 
 /**
  * Time between slide advances (includes crossfade).
- * Slow enough to read the title; not a screensaver.
+ * Slow enough to watch the handwriting finish.
  */
-export const HERO_FADE_MS = 5600
+export const HERO_FADE_MS = 9000
 
 /** Crossfade duration — calm Mellis-style opacity fade. */
 export const HERO_CROSSFADE_MS = HERO_LAYOUT.fadeMs
 
-/** Content layer fade (mark / eyebrow / title / CTA). */
-export const HERO_COPY_FADE_MS = 1100
+/** Content layer fade (eyebrow / title / CTA). */
+export const HERO_COPY_FADE_MS = 1400
 
 export function getHeroLcpHref(): string {
-  return heroSlides[0]?.image ?? '/images/hero-facial.jpg'
+  const base = heroSlides[0]?.image ?? '/images/hero-makeup.jpg'
+  return heroVariantPath(base, 960)
 }
 
-export function shouldMountHeroImage(_activeIndex: number, _index: number, total: number): boolean {
-  return total > 0
+/** Full srcset for LCP preload imagesrcset. */
+export function getHeroLcpSrcset(): string {
+  return heroSlides[0]?.srcset ?? heroSrcset('/images/hero-makeup.jpg')
+}
+
+/**
+ * Mount active + next only on first paint; callers may retain prior mounts for fade.
+ */
+export function shouldMountHeroImage(activeIndex: number, index: number, total: number): boolean {
+  if (total <= 0) return false
+  if (index === activeIndex) return true
+  return index === (activeIndex + 1) % total
 }
 
 export function assertHeroServiceMatch(slides: HeroSlide[] = heroSlides): boolean {
-  const required: HeroService[] = ['facial', 'massage', 'waxing', 'makeup']
+  const required: HeroService[] = ['makeup', 'facial', 'massage', 'waxing']
   if (slides.length !== required.length) return false
   return slides.every((entry, i) => {
     const expected = required[i]
@@ -193,16 +215,17 @@ export function assertHeroLayoutPhotoForward(
   return (
     layout.overlayBottomMax <= 0.5 &&
     layout.overlayMidMax <= 0.35 &&
-    layout.minHeightRem >= 32 &&
+    layout.minHeightRem >= 26 &&
+    layout.minHeightRem <= 32 &&
     layout.tabletMinHeightRem >= 36 &&
     layout.desktopMinHeightRem >= 42 &&
-    layout.fadeMs >= 1600 &&
-    layout.fadeMs <= 2200 &&
+    layout.fadeMs >= 2400 &&
+    layout.fadeMs <= 3200 &&
     layout.blendFadePercent === 0 &&
     layout.seam === 'wave' &&
-    layout.mobileHeightCss === '85dvh' &&
-    layout.tabletHeightCss === '80vh' &&
-    layout.desktopHeightCss === '90vh'
+    layout.mobileHeightCss === '92dvh' &&
+    layout.tabletHeightCss === '92vh' &&
+    layout.desktopHeightCss === '100vh'
   )
 }
 
@@ -211,8 +234,8 @@ export function assertHeroTiming(
   fadeMs: number = HERO_FADE_MS,
   crossfadeMs: number = HERO_CROSSFADE_MS,
 ): boolean {
-  if (fadeMs < 5000 || fadeMs > 7000) return false
-  if (crossfadeMs < 1600 || crossfadeMs > 2200) return false
+  if (fadeMs < 7500 || fadeMs > 11000) return false
+  if (crossfadeMs < 2400 || crossfadeMs > 3200) return false
   const settled = fadeMs - crossfadeMs
-  return settled >= 2800 && settled <= 5200
+  return settled >= 4200 && settled <= 8000
 }

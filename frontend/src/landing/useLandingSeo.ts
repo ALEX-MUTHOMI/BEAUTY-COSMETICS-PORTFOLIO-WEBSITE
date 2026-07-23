@@ -4,8 +4,9 @@ import {
   LANDING_INSTAGRAM_URL,
   LANDING_LOCATION_LABEL,
 } from './landingContent'
+import { getHeroLcpHref, getHeroLcpSrcset } from './heroMedia'
 
-export const LANDING_OG_IMAGE = '/images/hero-facial.jpg'
+export const LANDING_OG_IMAGE = '/images/hero-makeup.jpg'
 
 const LANDING_TITLE =
   'Shee Aesthetics | Beauty Studio in Meru Town — Facials, Waxing, Massage & Makeup'
@@ -41,7 +42,14 @@ export function useLandingSeo() {
     htmlAttrs: { lang: 'en-KE' },
     link: [
       { rel: 'canonical', href: canonical },
-      { rel: 'preload', as: 'image', href: LANDING_OG_IMAGE, fetchpriority: 'high' },
+      {
+        rel: 'preload',
+        as: 'image',
+        href: getHeroLcpHref(),
+        imagesrcset: getHeroLcpSrcset(),
+        imagesizes: '100vw',
+        fetchpriority: 'high',
+      },
     ],
     script: [
       {
