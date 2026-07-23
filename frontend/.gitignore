@@ -42,3 +42,6 @@ __screenshots__/
 
 test-results/
 playwright-report/
+
+# Local scratch image candidates (not for commit)
+public/images/_ke_cands/
