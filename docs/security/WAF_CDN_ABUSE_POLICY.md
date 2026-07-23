@@ -16,6 +16,9 @@ booking-status/gallery abuse, and preserve provider webhook availability. Do
 not blindly challenge authenticated checkout/payment mutations or cache private
 media. Public variants alone may be cached within their revocation policy.
 
+Deploy checklist for Kenya PoP caching and rollback:
+see `docs/ops/CLOUDFLARE_KENYA_EDGE.md`.
+
 ## Route policy map
 
 | Surface | Edge policy | Safety boundary |
