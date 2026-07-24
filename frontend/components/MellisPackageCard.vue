@@ -102,8 +102,28 @@ const visibleIncludes = computed(() =>
 .mellis-card--featured {
   background: var(--color-cream);
   border-top-width: 4px;
-  box-shadow: 0 12px 28px rgba(222, 150, 141, 0.14);
-  margin-top: 0.5rem;
+  box-shadow: 0 16px 40px rgba(176, 122, 113, 0.18);
+  margin-top: 0.75rem;
+  padding: 1.75rem 1.35rem 1.5rem;
+}
+
+.mellis-card--featured .mellis-card__title {
+  font-size: clamp(1.35rem, 2.8vw, 1.55rem);
+}
+
+.mellis-card--featured .mellis-card__price {
+  font-size: clamp(1.55rem, 3vw, 1.85rem);
+  margin-bottom: 0.75rem;
+}
+
+.mellis-card--featured .mellis-card__text {
+  max-width: 32ch;
+  font-size: 0.92rem;
+}
+
+.mellis-card--featured :deep(.site-btn) {
+  max-width: 16rem;
+  min-height: 2.9rem;
 }
 
 /* Lean singles tile — title + price + 2 bullets + calm Select */
@@ -294,14 +314,18 @@ const visibleIncludes = computed(() =>
 .mellis-card__title {
   margin: 0 0 0.35rem;
   font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: clamp(1.28rem, 2.4vw, 1.45rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
   color: var(--color-ink);
 }
 
 .mellis-card__price {
   margin: 0 0 0.65rem;
-  font: 700 1.4rem var(--font-display);
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.6vw, 1.55rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--color-rose-dark);
   line-height: 1.2;
 }

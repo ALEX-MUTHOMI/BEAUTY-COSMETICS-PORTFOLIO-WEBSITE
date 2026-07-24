@@ -35,11 +35,29 @@ const props = withDefaults(
 
 const LOADER_SESSION_KEY = 'shee-loader-done'
 
+function readLoaderDone(): boolean {
+  if (!import.meta.client) return false
+  try {
+    if (localStorage.getItem(LOADER_SESSION_KEY) === '1') return true
+    if (sessionStorage.getItem(LOADER_SESSION_KEY) === '1') return true
+  } catch {
+    /* ignore */
+  }
+  return false
+}
+
+function writeLoaderDone(): void {
+  if (!import.meta.client) return
+  try {
+    localStorage.setItem(LOADER_SESSION_KEY, '1')
+    sessionStorage.setItem(LOADER_SESSION_KEY, '1')
+  } catch {
+    /* ignore */
+  }
+}
+
 /** SiteLoader alone owns html.is-loading — never set it permanently via page useHead. */
-const alreadyDone =
-  import.meta.client && typeof sessionStorage !== 'undefined'
-    ? sessionStorage.getItem(LOADER_SESSION_KEY) === '1'
-    : false
+const alreadyDone = readLoaderDone()
 
 const visible = ref(!alreadyDone)
 
@@ -76,7 +94,7 @@ function markReady() {
 }
 
 onMounted(() => {
-  if (alreadyDone || sessionStorage.getItem(LOADER_SESSION_KEY) === '1') {
+  if (alreadyDone || readLoaderDone()) {
     markReady()
     return
   }
@@ -86,7 +104,7 @@ onMounted(() => {
 
   const dismiss = () => {
     markReady()
-    sessionStorage.setItem(LOADER_SESSION_KEY, '1')
+    writeLoaderDone()
   }
 
   const safety = setTimeout(dismiss, maxWait)

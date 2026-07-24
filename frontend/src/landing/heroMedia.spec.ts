@@ -33,9 +33,9 @@ describe('heroMedia', () => {
     })
   })
 
-  it('keeps Discover more CTA like Mellis Discover More', () => {
-    expect(HERO_CTA.label.toLowerCase()).toContain('discover')
-    expect(HERO_CTA.to).toBe('/services')
+  it('keeps Book this visit CTA deep-linked to services', () => {
+    expect(HERO_CTA.label.toLowerCase()).toContain('book')
+    expect(HERO_CTA.to).toContain('/services')
   })
 
   it('preloads the makeup LCP asset at a mobile-friendly width', () => {

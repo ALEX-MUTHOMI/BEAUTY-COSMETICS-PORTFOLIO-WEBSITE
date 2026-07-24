@@ -97,11 +97,27 @@ function slide(
   }
 }
 
-/** Mellis-style CTA under the script title. */
+/** Mellis-style CTA under the script title — decision, not a tour. */
 export const HERO_CTA = {
-  label: 'Discover more',
-  to: '/services',
+  label: 'Book this visit',
+  to: '/services#single-sessions',
 } as const
+
+const HERO_SERVICE_HASH: Record<HeroService, string> = {
+  makeup: 'makeup',
+  facial: 'facials',
+  massage: 'massage',
+  waxing: 'waxing',
+}
+
+/** Deep-link the active hero service into the treatments catalog. */
+export function heroCtaForSlide(slide: Pick<HeroSlide, 'service'>): { label: string; to: string } {
+  const hash = HERO_SERVICE_HASH[slide.service]
+  return {
+    label: HERO_CTA.label,
+    to: `/services#${hash}`,
+  }
+}
 
 export function formatHeroHeadline(slide: Pick<HeroSlide, 'serviceTitle' | 'headline'>): string {
   return slide.headline || `Shee ${slide.serviceTitle}`
@@ -119,8 +135,8 @@ export const heroSlides: HeroSlide[] = [
     1440,
     1800,
     'center 28%',
-    'Soft glam makeup look with dewy skin and glossy lips',
-    'Sharp aesthetic glam portrait — unmistakably makeup.',
+    'Black woman with glowing skin and glam makeup against a deep red backdrop',
+    'Editorial glam portrait — diamond earrings, dewy skin.',
   ),
   slide(
     'facial',
@@ -148,9 +164,9 @@ export const heroSlides: HeroSlide[] = [
     '/images/hero-waxing.jpg',
     1500,
     1700,
-    'center 38%',
-    'Therapist applying warm golden wax during a leg waxing treatment',
-    'Warm spa waxing on deep skin — candlelight aesthetic.',
+    'center 32%',
+    'Smiling Black woman in a spa robe and towel wrap with winged liner',
+    'Bright spa-day portrait — robe, towel wrap, polished glam.',
   ),
 ]
 

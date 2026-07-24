@@ -26,16 +26,19 @@ const chars = computed(() => Array.from(props.text))
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  margin: 0;
-  max-width: 14ch;
+  margin: 0 auto;
+  max-width: min(100%, 18ch);
+  padding-inline: 0.35rem;
+  box-sizing: border-box;
   font-family: var(--font-script);
-  font-size: clamp(2.65rem, 11vw, 7.5rem);
+  font-size: clamp(2.15rem, 9.2vw, 7.5rem);
   font-weight: 400;
-  line-height: 1.02;
+  line-height: 1.05;
   letter-spacing: 0.01em;
   color: #fff;
   text-align: center;
   text-shadow: 0 2px 28px rgba(20, 16, 18, 0.32);
+  overflow-wrap: anywhere;
 }
 
 .hero-handwrite__ch {

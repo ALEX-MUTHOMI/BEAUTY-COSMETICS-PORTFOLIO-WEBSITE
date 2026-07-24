@@ -7,6 +7,11 @@
 
 @import '@fontsource/parisienne/400.css';
 
+@import '@fontsource/fraunces/400.css';
+@import '@fontsource/fraunces/500.css';
+@import '@fontsource/fraunces/600.css';
+@import '@fontsource/fraunces/700.css';
+
 @import '@fontsource/libre-baskerville/400.css';
 @import '@fontsource/libre-baskerville/700.css';
 
@@ -38,7 +43,8 @@
   --color-clay: var(--color-rose);
 
   --font-script: 'Parisienne', cursive;
-  --font-display: 'Libre Baskerville', Georgia, serif;
+  /* Soft optical serif for section questions & statements */
+  --font-display: 'Fraunces', 'Libre Baskerville', Georgia, serif;
   --font-body: 'Manrope', ui-sans-serif, system-ui, sans-serif;
 
   --space-2xs: 0.5rem;
