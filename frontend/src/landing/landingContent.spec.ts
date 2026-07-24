@@ -6,13 +6,16 @@ import {
   flowSteps,
   heroSlides,
   isPackageDay,
+  landingContactFromE164,
   packageDayHeadline,
   packageDayUrgency,
   packages,
   getFeaturedPackages,
+  resolveWhatsappE164,
   singleTreatments,
   validateLandingPackages,
   validateTreatmentCards,
+  LANDING_CONTACT_PLACEHOLDER_E164,
 } from './landingContent'
 
 describe('landingContent', () => {
@@ -30,15 +33,17 @@ describe('landingContent', () => {
     expect(packageDayUrgency).not.toMatch(/experience|journey|unlock/i)
   })
 
-  it('defines booking flow steps with circle images', () => {
+  it('defines booking flow steps as book → pay → visit (no images)', () => {
     expect(flowSteps).toHaveLength(3)
-    expect(flowSteps[0]?.title).toBe('Choose online')
-    expect(flowSteps[1]?.title).toBe('Your treatment')
-    expect(flowSteps[2]?.title).toBe('Leave glowing')
+    expect(flowSteps[0]?.title).toBe('Choose your visit')
+    expect(flowSteps[1]?.title).toBe('Pay with M-Pesa')
+    expect(flowSteps[2]?.title).toBe('Come in glowing')
     flowSteps.forEach((step) => {
-      expect(step.image).toMatch(/^\/images\/step-/)
+      expect(step).not.toHaveProperty('image')
       expect(step.num).toMatch(/^\d{2}$/)
+      expect(step.text.length).toBeGreaterThan(12)
     })
+    expect(flowSteps[1]?.text.toLowerCase()).toMatch(/m-?pesa|slot|receipt/)
   })
 
   it('maps hero slides to four Shee script titles', () => {
@@ -83,5 +88,13 @@ describe('landingContent', () => {
     expect(assertSafeDisplayText('Shee Aesthetics')).toBe(true)
     expect(assertSafeDisplayText('<script>alert(1)</script>')).toBe(false)
     expect(assertSafeDisplayText('javascript:alert(1)')).toBe(false)
+  })
+
+  it('keeps WhatsApp fail-closed for placeholder and short numbers', () => {
+    expect(resolveWhatsappE164('')).toBe(LANDING_CONTACT_PLACEHOLDER_E164)
+    expect(resolveWhatsappE164('254700000000')).toBe(LANDING_CONTACT_PLACEHOLDER_E164)
+    expect(resolveWhatsappE164('+254 712 345 678')).toBe('254712345678')
+    expect(landingContactFromE164('254712345678').isLive).toBe(true)
+    expect(landingContactFromE164('').whatsappUrl).toBe('')
   })
 })

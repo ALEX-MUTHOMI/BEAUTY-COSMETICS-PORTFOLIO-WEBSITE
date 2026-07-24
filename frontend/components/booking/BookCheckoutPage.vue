@@ -38,21 +38,46 @@
           </p>
         </div>
 
-        <div v-if="displayError" class="book-error" role="alert">
-          <p class="book-error__text">{{ displayError }}</p>
-          <button
-            v-if="checkoutStep === 'pick' && canRetryAvailability"
-            type="button"
-            class="book-error__retry"
-            :disabled="flow.loading.value || flow.slotsLoading.value"
-            @click="flow.retryLoad()"
-          >
-            Retry availability
-          </button>
+        <div v-if="displayError || showAvailabilityFallback" class="book-error" role="alert">
+          <p class="book-error__text">
+            {{
+              displayError ||
+              'No open dates are available online right now. Retry, or message Shee on WhatsApp to book.'
+            }}
+          </p>
+          <div class="book-error__actions">
+            <button
+              v-if="checkoutStep === 'pick' && (canRetryAvailability || showAvailabilityFallback)"
+              type="button"
+              class="book-error__retry"
+              :disabled="flow.loading.value || flow.slotsLoading.value"
+              @click="flow.retryLoad()"
+            >
+              Retry availability
+            </button>
+            <a
+              v-if="contactIsLive"
+              class="book-error__wa"
+              :href="whatsappUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              @click="onWhatsAppClick"
+            >
+              {{ whatsappLabel }}
+            </a>
+            <a
+              v-if="contactIsLive && phoneTel"
+              class="book-error__call"
+              :href="phoneTel"
+            >
+              {{ callLabel }}
+            </a>
+          </div>
         </div>
 
         <template v-if="checkoutStep === 'pick'">
           <BookingFloCalendar
+            v-if="!showAvailabilityFallback || flow.loading.value"
             :days="flow.calendarDays.value"
             :weeks="flow.calendar.value?.weeks ?? []"
             :layout="flow.calendar.value?.layout ?? 'singles'"
@@ -84,7 +109,7 @@
               type="button"
               class="book-continue"
               :disabled="!flow.canContinue.value || isSubmitting"
-              @click="openDetails"
+              @click="onContinueCheckout"
             >
               Continue to checkout
             </button>
@@ -122,12 +147,15 @@ import { useBookCheckout } from '@/booking/useBookCheckout'
 import { useBookFlow } from '@/booking/useBookFlow'
 import { GENERIC_BOOKING_THROTTLE_ERROR } from '@/booking/bookingRequestGovernor'
 import { SINGLE_DAYS_LABEL } from '@/landing/landingContent'
+import { useLandingContact } from '@/landing/useLandingContact'
 import {
   persistBookHandoff,
+  persistLastBookHandoff,
   SERVICES_BOOK_ENTRY,
   type ResolvedBookHandoff,
 } from '@/landing/bookingHandoff'
 import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
+import { trackFunnelEvent } from '@/landing/funnelEvents'
 
 const props = defineProps<{
   handoff: ResolvedBookHandoff
@@ -136,6 +164,12 @@ const props = defineProps<{
 const router = useRouter()
 const config = useRuntimeConfig()
 const apiBaseUrl = (config.public.apiBaseUrl as string) || 'http://localhost:8000'
+const contact = useLandingContact()
+const contactIsLive = contact.isLive
+const whatsappUrl = contact.whatsappUrl
+const whatsappLabel = contact.whatsappLabel
+const phoneTel = contact.phoneTel
+const callLabel = contact.callLabel
 
 const handoffRef = toRef(props, 'handoff') as Ref<ResolvedBookHandoff | null>
 const flow = useBookFlow(handoffRef, apiBaseUrl)
@@ -164,7 +198,10 @@ const slotsAnchor = ref<HTMLElement | null>(null)
 watch(
   handoffRef,
   (value) => {
-    if (value) persistBookHandoff(value)
+    if (value) {
+      persistBookHandoff(value)
+      persistLastBookHandoff(value)
+    }
   },
   { immediate: true },
 )
@@ -179,11 +216,34 @@ const calendarLocked = computed(
 
 const displayError = computed(() => flow.error.value || submitError.value)
 
+const showAvailabilityFallback = computed(
+  () =>
+    checkoutStep.value === 'pick' &&
+    !flow.loading.value &&
+    (Boolean(flow.error.value) || flow.calendarDays.value.length === 0),
+)
+
 const canRetryAvailability = computed(
   () =>
     Boolean(flow.error.value) &&
     (flow.error.value === GENERIC_BOOKING_THROTTLE_ERROR ||
       /try again|unavailable|too many/i.test(flow.error.value || '')),
+)
+
+function onWhatsAppClick() {
+  trackFunnelEvent('wa_click', { surface: 'book_availability_fallback' })
+}
+
+function onContinueCheckout() {
+  trackFunnelEvent('checkout_continue')
+  openDetails()
+}
+
+watch(
+  () => flow.selectedSlot.value,
+  (slot) => {
+    if (slot) trackFunnelEvent('slot_selected', { date: flow.selectedDate.value || '' })
+  },
 )
 
 const changeServiceHref = computed(() => {
@@ -353,7 +413,7 @@ const pageLead = computed(() => {
 
 .book-error {
   margin: 0 0 1rem;
-  padding: 0.75rem;
+  padding: 0.85rem 0.9rem;
   border-radius: 8px;
   background: #fff5f5;
   color: #9b2c2c;
@@ -361,25 +421,55 @@ const pageLead = computed(() => {
 }
 
 .book-error__text {
-  margin: 0;
+  margin: 0 0 0.75rem;
+}
+
+.book-error__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .book-error__retry {
-  margin-top: 0.65rem;
   min-height: 2.4rem;
   padding: 0.45rem 0.9rem;
   border: 1px solid #9b2c2c;
   border-radius: 999px;
   background: #fff;
   color: #9b2c2c;
-  font: 600 0.72rem var(--font-body);
-  letter-spacing: 0.08em;
+  font: 600 0.78rem var(--font-body);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
 }
 
+.book-error__wa,
+.book-error__call {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  font: 600 0.78rem var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.book-error__wa {
+  background: #128c7e;
+  color: #fff;
+}
+
+.book-error__call {
+  border: 1px solid #9b2c2c;
+  color: #9b2c2c;
+  background: #fff;
+}
+
 .book-error__retry:disabled {
-  opacity: 0.5;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 

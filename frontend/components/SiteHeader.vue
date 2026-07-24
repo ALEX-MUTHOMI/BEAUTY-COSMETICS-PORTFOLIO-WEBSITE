@@ -40,6 +40,22 @@
           <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm10 2H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-5 3.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11zm0 2a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm5.75-3.25a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5z" />
         </svg>
       </a>
+      <a
+        v-if="contactIsLive"
+        class="site-header__wa"
+        :href="whatsappUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        :aria-label="whatsappLabel"
+        @click="onWaClick"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+          <path
+            fill="currentColor"
+            d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 1.67c2.2 0 4.26.86 5.82 2.42a8.2 8.2 0 0 1 2.41 5.82c0 4.54-3.7 8.24-8.23 8.24-1.44 0-2.84-.37-4.08-1.07l-.29-.17-3.12.82.83-3.04-.19-.31a8.2 8.2 0 0 1-1.26-4.47c0-4.54 3.7-8.24 8.11-8.24z"
+          />
+        </svg>
+      </a>
 
       <nav class="site-header__nav" aria-label="Primary">
         <NuxtLink
@@ -58,12 +74,29 @@
           :to="SERVICES_ROUTES.singleSessions"
           :class="{ 'is-active': isSinglesHash }"
         >
-          Singles
+          Treatments
         </NuxtLink>
         <a href="/#contact" :class="{ 'is-active': route.hash === '#contact' }">Visit</a>
       </nav>
 
-      <NuxtLink to="/services" class="site-header__cta">Book now</NuxtLink>
+      <a
+        v-if="bookIsExternal"
+        :href="bookHref"
+        class="site-header__cta"
+        target="_blank"
+        rel="noopener noreferrer"
+        @click="onBookClick"
+      >
+        Book now
+      </a>
+      <NuxtLink
+        v-else
+        :to="bookHref"
+        class="site-header__cta"
+        @click="onBookClick"
+      >
+        Book now
+      </NuxtLink>
 
       <button
         class="site-header__menu-toggle"
@@ -109,8 +142,17 @@
           <div class="site-header__drawer-links">
             <NuxtLink to="/services" @click="closeMenu">Services</NuxtLink>
             <NuxtLink :to="SERVICES_ROUTES.fullPackages" @click="closeMenu">Packages</NuxtLink>
-            <NuxtLink :to="SERVICES_ROUTES.singleSessions" @click="closeMenu">Singles</NuxtLink>
+            <NuxtLink :to="SERVICES_ROUTES.singleSessions" @click="closeMenu">Treatments</NuxtLink>
             <a href="/#contact" @click="closeMenu">Visit</a>
+            <a
+              v-if="contactIsLive"
+              :href="whatsappUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              @click="onDrawerWa"
+            >
+              {{ whatsappLabel }}
+            </a>
             <a
               :href="LANDING_INSTAGRAM_URL"
               target="_blank"
@@ -120,7 +162,22 @@
               Instagram
             </a>
           </div>
-          <SiteButton to="/services" variant="primary" class="site-header__drawer-cta" @click="closeMenu">
+          <SiteButton
+            v-if="bookIsExternal"
+            :href="bookHref"
+            variant="primary"
+            class="site-header__drawer-cta"
+            @click="onDrawerBook"
+          >
+            {{ LANDING_PRIMARY_CTA }}
+          </SiteButton>
+          <SiteButton
+            v-else
+            :to="bookHref"
+            variant="primary"
+            class="site-header__drawer-cta"
+            @click="onDrawerBook"
+          >
             {{ LANDING_PRIMARY_CTA }}
           </SiteButton>
         </nav>
@@ -137,6 +194,8 @@ import {
   LANDING_PRIMARY_CTA,
 } from '@/landing/landingContent'
 import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
+import { trackFunnelEvent } from '@/landing/funnelEvents'
+import { useLandingBookCta } from '@/landing/useLandingBookCta'
 
 const route = useRoute()
 const menuOpen = ref(false)
@@ -148,6 +207,29 @@ const overHero = computed(() => isHome.value && heroInView.value && !menuOpen.va
 
 const isPackagesHash = computed(() => route.path === '/services' && route.hash === '#full-packages')
 const isSinglesHash = computed(() => route.path === '/services' && route.hash === '#single-sessions')
+
+const { bookHref, bookIsExternal, contact } = useLandingBookCta()
+const contactIsLive = contact.isLive
+const whatsappUrl = contact.whatsappUrl
+const whatsappLabel = contact.whatsappLabel
+
+function onBookClick() {
+  trackFunnelEvent('cta_book_click', { surface: 'header', href: bookHref.value })
+}
+
+function onWaClick() {
+  trackFunnelEvent('wa_click', { surface: 'header' })
+}
+
+function onDrawerBook() {
+  trackFunnelEvent('cta_book_click', { surface: 'header_drawer', href: bookHref.value })
+  closeMenu()
+}
+
+function onDrawerWa() {
+  trackFunnelEvent('wa_click', { surface: 'header_drawer' })
+  closeMenu()
+}
 
 let headerResizeObserver: ResizeObserver | null = null
 let heroObserver: IntersectionObserver | null = null
@@ -433,7 +515,8 @@ onUnmounted(() => {
   display: none;
 }
 
-.site-header__ig {
+.site-header__ig,
+.site-header__wa {
   display: none;
 }
 
@@ -546,7 +629,8 @@ onUnmounted(() => {
     min-height: 4.5rem;
   }
 
-  .site-header__ig {
+  .site-header__ig,
+  .site-header__wa {
     display: grid;
     place-items: center;
     width: 2.5rem;
@@ -556,20 +640,24 @@ onUnmounted(() => {
     transition: color 0.2s ease, opacity 0.2s ease;
   }
 
-  .site-header--solid .site-header__ig {
+  .site-header--solid .site-header__ig,
+  .site-header--solid .site-header__wa {
     color: var(--header-ink);
   }
 
-  .site-header__ig:hover {
+  .site-header__ig:hover,
+  .site-header__wa:hover {
     color: var(--header-rose);
   }
 
-  .site-header--over-hero .site-header__ig:hover {
+  .site-header--over-hero .site-header__ig:hover,
+  .site-header--over-hero .site-header__wa:hover {
     color: #fff;
     opacity: 0.8;
   }
 
-  .site-header__ig svg {
+  .site-header__ig svg,
+  .site-header__wa svg {
     width: 1rem;
     height: 1rem;
     fill: currentColor;
@@ -667,6 +755,7 @@ onUnmounted(() => {
 }
 
 .site-header__ig:focus-visible,
+.site-header__wa:focus-visible,
 .site-header__cta:focus-visible,
 .site-header__nav a:focus-visible,
 .site-header__menu-toggle:focus-visible,
@@ -818,6 +907,7 @@ onUnmounted(() => {
   .site-header,
   .site-header__menu-line,
   .site-header__ig,
+  .site-header__wa,
   .site-header__cta,
   .site-header__nav a,
   .menu-fade-enter-active,

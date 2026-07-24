@@ -42,6 +42,8 @@ export default defineNuxtConfig({
       staffAppleEnabled: process.env.NUXT_PUBLIC_STAFF_APPLE_ENABLED === 'true',
       staffGoogleEnabled: process.env.NUXT_PUBLIC_STAFF_GOOGLE_ENABLED === 'true',
       turnstileSiteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY || '1x0000000000000000000000000000000AA',
+      /** Live Meru WhatsApp E.164 digits only (no +). Empty/placeholder = CTAs fail closed. */
+      whatsappE164: process.env.NUXT_PUBLIC_WHATSAPP_E164 || '',
     },
   },
 

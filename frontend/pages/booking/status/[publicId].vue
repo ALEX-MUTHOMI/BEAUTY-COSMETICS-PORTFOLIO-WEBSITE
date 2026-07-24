@@ -63,7 +63,13 @@
 
       <div class="book-status__actions">
         <SiteButton to="/" variant="outline">Home</SiteButton>
-        <SiteButton to="/services" variant="primary">Book again</SiteButton>
+        <SiteButton
+          :to="bookAgainHref"
+          variant="primary"
+          @click="trackFunnelEvent('book_again_click', { href: bookAgainHref })"
+        >
+          Book again
+        </SiteButton>
       </div>
     </section>
   </main>
@@ -81,12 +87,19 @@ import {
   type BookingStatusSnapshot,
 } from '@/booking/bookingWriteApi'
 import { optInRememberDevice, REMEMBER_DEVICE_CUSTOMER_COPY } from '@/booking/rememberDevice'
+import { lastBookHref, SERVICES_BOOK_ENTRY } from '@/landing/bookingHandoff'
+import { trackFunnelEvent } from '@/landing/funnelEvents'
 
 const route = useRoute()
 const config = useRuntimeConfig()
 const apiBaseUrl = (config.public.apiBaseUrl as string) || 'http://localhost:8000'
 
 const publicId = computed(() => String(route.params.publicId ?? ''))
+const bookAgainHref = computed(() => {
+  if (!import.meta.client) return SERVICES_BOOK_ENTRY
+  const last = lastBookHref()
+  return last && last !== SERVICES_BOOK_ENTRY ? last : SERVICES_BOOK_ENTRY
+})
 const snapshot = ref<BookingStatusSnapshot | null>(null)
 const checkoutPublicId = ref('')
 const polling = ref(false)
@@ -211,6 +224,7 @@ async function retryStk() {
       return
     }
     stkMessage.value = 'M-Pesa prompt sent. Approve it on your phone.'
+    trackFunnelEvent('stk_sent', { booking: publicId.value })
     await loadStatus()
   } finally {
     retrying.value = false

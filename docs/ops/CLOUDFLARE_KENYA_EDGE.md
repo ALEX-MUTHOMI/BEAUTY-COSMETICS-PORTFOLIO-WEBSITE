@@ -29,6 +29,10 @@ this document is the deploy checklist + rollback for `sheeaesthetics.co.ke`.
 
 Respect origin `Cache-Control`. Do not “Cache Everything” on `/media/public/` without matching the 5-minute revoke policy in app code.
 
+## Booking API requirement
+
+Marketing pages can run on **frontend-edge + frontend** alone. The **book → date/time → pay** path requires the Django `web` API (`NUXT_PUBLIC_API_BASE_URL`). Without it, clients see empty calendars and a WhatsApp/Call fail-open panel. Always keep API healthy in staging/prod smoke checks for `/book/package/*`.
+
 ## WAF / bots (align with WAF_CDN_ABUSE_POLICY.md)
 
 - Bot Fight / managed challenge on volumetric scrapes of `/images/*` (allow normal browsers).

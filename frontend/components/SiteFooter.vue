@@ -14,15 +14,15 @@
         <NuxtLink to="/">Home</NuxtLink>
         <NuxtLink to="/services">Services</NuxtLink>
         <NuxtLink :to="SERVICES_ROUTES.fullPackages">Packages</NuxtLink>
-        <NuxtLink :to="SERVICES_ROUTES.singleSessions">Singles</NuxtLink>
+        <NuxtLink :to="SERVICES_ROUTES.singleSessions">Treatments</NuxtLink>
       </nav>
 
       <div class="site-footer__col">
         <p class="site-footer__heading">Hours</p>
         <ul class="site-footer__hours">
-          <li><strong>Mon</strong> 7am–7pm · singles</li>
+          <li><strong>Mon</strong> 7am–7pm · treatments</li>
           <li><strong>Tue–Wed</strong> 7am–7pm · packages</li>
-          <li><strong>Thu–Sat</strong> 7am–7pm · singles</li>
+          <li><strong>Thu–Sat</strong> 7am–7pm · treatments</li>
           <li><strong>Sun</strong> Closed</li>
         </ul>
       </div>
@@ -31,13 +31,43 @@
         <p class="site-footer__heading">Visit</p>
         <a href="mailto:bookings@sheeaesthetics.co.ke">bookings@sheeaesthetics.co.ke</a>
         <a
+          v-if="contactIsLive"
+          :href="whatsappUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          @click="trackFunnelEvent('wa_click', { surface: 'footer' })"
+        >
+          {{ whatsappLabel }}
+        </a>
+        <a v-if="contactIsLive && phoneTel" :href="phoneTel">
+          {{ phoneDisplay }}
+        </a>
+        <p v-else class="site-footer__phone-pending">{{ phoneDisplay }}</p>
+        <a
           :href="LANDING_INSTAGRAM_URL"
           target="_blank"
           rel="noopener noreferrer"
         >
           Instagram
         </a>
-        <NuxtLink to="/services" class="site-footer__cta">{{ LANDING_PRIMARY_CTA }}</NuxtLink>
+        <SiteButton
+          v-if="bookIsExternal"
+          :href="bookHref"
+          variant="primary"
+          class="site-footer__cta"
+          @click="trackFunnelEvent('cta_book_click', { surface: 'footer', href: bookHref })"
+        >
+          {{ LANDING_PRIMARY_CTA }}
+        </SiteButton>
+        <SiteButton
+          v-else
+          :to="bookHref"
+          variant="primary"
+          class="site-footer__cta"
+          @click="trackFunnelEvent('cta_book_click', { surface: 'footer', href: bookHref })"
+        >
+          {{ LANDING_PRIMARY_CTA }}
+        </SiteButton>
       </div>
     </div>
 
@@ -59,15 +89,31 @@ import {
   LANDING_PRIMARY_CTA,
 } from '@/landing/landingContent'
 import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
+import { trackFunnelEvent } from '@/landing/funnelEvents'
+import { useLandingBookCta } from '@/landing/useLandingBookCta'
 
 const year = new Date().getFullYear()
+
+const { bookHref, bookIsExternal, contact } = useLandingBookCta()
+const contactIsLive = contact.isLive
+const whatsappUrl = contact.whatsappUrl
+const whatsappLabel = contact.whatsappLabel
+const phoneDisplay = contact.phoneDisplay
+const phoneTel = contact.phoneTel
 </script>
 
 <style scoped>
+/* Base chrome — keep opaque footer brand plane on all breakpoints */
 .site-footer {
   background: var(--color-footer);
   color: rgba(255, 255, 255, 0.7);
   padding: clamp(2.5rem, 6vw, 4rem) 1.25rem 0;
+}
+
+.site-footer__phone-pending {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.55);
+  font: 400 0.9rem/1.45 var(--font-body);
 }
 
 .site-footer__inner {

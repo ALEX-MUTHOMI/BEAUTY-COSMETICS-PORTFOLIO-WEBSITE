@@ -20,6 +20,8 @@ export type BookingIntentType = 'package' | 'single'
 export const BOOK_ROUTE = '/book'
 export const SERVICES_BOOK_ENTRY = SERVICES_ROUTES.page
 export const BOOK_HANDOFF_STORAGE_KEY = 'shee-book-handoff-v1'
+/** Last successful book intent (slug-only) — localStorage, no PII. */
+export const LAST_BOOK_HANDOFF_STORAGE_KEY = 'shee-last-book-handoff-v1'
 
 export const BOOKING_INTENT_TYPES = ['package', 'single'] as const
 
@@ -236,4 +238,36 @@ export function readPersistedBookHandoff(): ResolvedBookHandoff | null {
   } catch {
     return null
   }
+}
+
+/** Persist last book intent across visits (slugs only — no customer PII). */
+export function persistLastBookHandoff(selection: ResolvedBookHandoff): void {
+  if (!import.meta.client) return
+  try {
+    const slim: Record<string, string> = { type: selection.type }
+    if (selection.plan) slim.plan = selection.plan
+    if (selection.category) slim.category = selection.category
+    if (selection.treatment) slim.treatment = selection.treatment
+    localStorage.setItem(LAST_BOOK_HANDOFF_STORAGE_KEY, JSON.stringify(slim))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLastBookHandoff(): ResolvedBookHandoff | null {
+  if (!import.meta.client) return null
+  try {
+    const raw = localStorage.getItem(LAST_BOOK_HANDOFF_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    return parseBookHandoffQuery(parsed)
+  } catch {
+    return null
+  }
+}
+
+export function lastBookHref(): string {
+  const handoff = readLastBookHandoff()
+  if (!handoff) return SERVICES_BOOK_ENTRY
+  return canonicalBookPath(handoff)
 }

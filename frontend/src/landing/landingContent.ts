@@ -13,16 +13,105 @@ export interface FlowStep {
   num: string
   title: string
   text: string
-  image: string
 }
 
 export const LANDING_PRIMARY_CTA = 'Book your visit'
 
 export const LANDING_INSTAGRAM_URL = 'https://www.instagram.com/shee_aesthetics/'
 
+/**
+ * Public WhatsApp + phone (fail-closed).
+ *
+ * Set `NUXT_PUBLIC_WHATSAPP_E164` (digits only, e.g. 2547XXXXXXXX) in env /
+ * `runtimeConfig.public.whatsappE164`. Until a real number is configured,
+ * never render `wa.me` / `tel:` links — the placeholder 254700000000 must
+ * never ship as a live CTA.
+ *
+ * Prefer `useLandingContact()` in Vue SFCs so runtimeConfig wins over
+ * build-time defaults. Module constants below are build-time fallbacks for
+ * pure helpers (e.g. primaryBookHref) and unit tests.
+ */
+export const LANDING_CONTACT_PLACEHOLDER_E164 = '254700000000'
+
+/** Normalize raw env/config into E.164 digits or the safe placeholder. */
+export function resolveWhatsappE164(raw: unknown): string {
+  const digits = String(raw ?? '').replace(/\D/g, '')
+  if (digits.length >= 11 && digits !== LANDING_CONTACT_PLACEHOLDER_E164) return digits
+  return LANDING_CONTACT_PLACEHOLDER_E164
+}
+
+export type LandingContact = {
+  e164: string
+  isLive: boolean
+  phoneDisplay: string
+  phoneTel: string
+  whatsappUrl: string
+}
+
+export function landingContactFromE164(raw: unknown): LandingContact {
+  const e164 = resolveWhatsappE164(raw)
+  const isLive = e164 !== LANDING_CONTACT_PLACEHOLDER_E164
+  return {
+    e164,
+    isLive,
+    phoneDisplay: isLive ? `+${e164}` : 'Meru Town · book online',
+    phoneTel: isLive ? `tel:+${e164}` : '',
+    whatsappUrl: isLive ? `https://wa.me/${e164}` : '',
+  }
+}
+
+function readBuildTimeWhatsappE164(): string {
+  const fromProcess =
+    typeof process !== 'undefined' ? String(process.env.NUXT_PUBLIC_WHATSAPP_E164 || '') : ''
+  return resolveWhatsappE164(fromProcess)
+}
+
+const _buildContact = landingContactFromE164(readBuildTimeWhatsappE164())
+
+export const LANDING_WHATSAPP_E164 = _buildContact.e164
+export const LANDING_CONTACT_IS_LIVE = _buildContact.isLive
+export const LANDING_PHONE_DISPLAY = _buildContact.phoneDisplay
+export const LANDING_PHONE_TEL = _buildContact.phoneTel
+export const LANDING_WHATSAPP_URL = _buildContact.whatsappUrl
+export const LANDING_WHATSAPP_LABEL = 'WhatsApp'
+export const LANDING_CALL_LABEL = 'Call Shee'
+
+/** Compact price anchors for hero / trust strips (from catalog floors). */
+export const LANDING_PRICE_ANCHOR =
+  'Treatments from KES 1,200 · Packages from KES 7,000'
+
 export const LANDING_LOCATION_LABEL = 'Meru Town, Meru County'
 
 export const LANDING_ADDRESS_LINES = ['Meru Town', 'Meru County, Kenya'] as const
+
+export type LandingClientReview = {
+  name: string
+  text: string
+  visitLabel: string
+  service: 'facial' | 'waxing' | 'makeup' | 'massage'
+}
+
+/** Meru client stories — honesty framing; no stock reviewer photos. */
+export const landingClientReviews: LandingClientReview[] = [
+  {
+    name: 'Wanjiku M.',
+    text: 'I booked a deep cleansing facial on Thursday and left with calm, clear skin. The therapist explained every step and the room was spotless — I already rebooked for next month.',
+    visitLabel: 'Facial · Meru client',
+    service: 'facial',
+  },
+  {
+    name: 'Amina K.',
+    text: 'Came for a full-leg wax before an event. Quick, neat, and barely any irritation after. Shee made it feel private and professional — I will not go anywhere else in Meru.',
+    visitLabel: 'Waxing · Meru client',
+    service: 'waxing',
+  },
+  {
+    name: 'Sharon O.',
+    text: 'Had soft glam makeup for a wedding. It stayed on through tears, dancing, and photos. Guests kept asking who did my face — booking online was easy too.',
+    visitLabel: 'Makeup · Meru client',
+    service: 'makeup',
+  },
+]
 
 export const PACKAGE_DAYS = ['Tuesday', 'Wednesday'] as const
 
@@ -33,21 +122,18 @@ export { heroSlides, type HeroSlide } from './heroMedia'
 export const flowSteps: FlowStep[] = [
   {
     num: '01',
-    title: 'Choose online',
-    text: 'Pick a date, treatment or package, then check out.',
-    image: '/images/step-meeting.jpg',
+    title: 'Choose your visit',
+    text: 'Pick a date, treatment or package online.',
   },
   {
     num: '02',
-    title: 'Your treatment',
-    text: 'Arrive a few minutes early. Your therapist guides each step.',
-    image: '/images/step-treatment.jpg',
+    title: 'Pay with M-Pesa',
+    text: 'Checkout locks your slot. A receipt arrives by email.',
   },
   {
     num: '03',
-    title: 'Leave glowing',
-    text: 'Payment confirms your slot. A receipt arrives by email.',
-    image: '/images/step-finalizing.jpg',
+    title: 'Come in glowing',
+    text: 'Arrive a few minutes early — we take it from there.',
   },
 ]
 
