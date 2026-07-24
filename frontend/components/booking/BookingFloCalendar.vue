@@ -5,7 +5,7 @@
     role="group"
     :aria-label="ariaLabel"
   >
-    <header class="flo-calendar__head">
+    <header v-if="loading || orderedDays.length > 0" class="flo-calendar__head">
       <p class="flo-calendar__range">Next open dates</p>
       <p class="flo-calendar__capacity">{{ capacityHint }}</p>
     </header>
@@ -15,7 +15,7 @@
       Loading open dates…
     </div>
 
-    <template v-else>
+    <template v-else-if="orderedDays.length > 0">
       <div class="flo-strip">
         <button
           v-for="day in visibleDays"
