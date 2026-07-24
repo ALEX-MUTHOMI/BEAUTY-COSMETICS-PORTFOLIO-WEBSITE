@@ -45,3 +45,6 @@ playwright-report/
 
 # Local scratch image candidates (not for commit)
 public/images/_ke_cands/
+public/images/_new/
+public/images/_wax_cands/
+public/images/_cand*.jpg
