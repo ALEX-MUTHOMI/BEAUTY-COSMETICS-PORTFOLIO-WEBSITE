@@ -44,6 +44,24 @@ describe('homeWorkGallery', () => {
     expect(images).toEqual(STATIC_HOME_WORK)
   })
 
+  it('falls back to static when the API times out (abort)', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockImplementation((_url, init) => {
+      return new Promise((_resolve, reject) => {
+        const signal = init?.signal
+        if (signal?.aborted) {
+          reject(new DOMException('Aborted', 'AbortError'))
+          return
+        }
+        signal?.addEventListener('abort', () => {
+          reject(new DOMException('Aborted', 'AbortError'))
+        })
+      })
+    })
+    const images = await fetchHomeWorkGallery('http://localhost:8000', fetcher, { timeoutMs: 50 })
+    expect(images).toEqual(STATIC_HOME_WORK)
+    expect(fetcher).toHaveBeenCalled()
+  })
+
   it('falls back to static when the API returns an empty list', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue({
       ok: true,

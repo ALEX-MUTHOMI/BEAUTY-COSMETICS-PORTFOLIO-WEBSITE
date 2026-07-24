@@ -1,6 +1,9 @@
 /**
  * Homepage “Our work” masonry — prefer staff-published public gallery,
  * fall back to curated static studio shots when the API is empty or offline.
+ *
+ * Resilience: SSR must never hang waiting on Django. We abort after ~2.5s
+ * and render STATIC_HOME_WORK so nginx edge does not 504 the marketing site.
  */
 import { trimApiBaseUrl, safeApiText } from '../booking/bookingApi'
 import { resolvePublicGalleryMediaUrl } from '../gallery/publicMedia'
@@ -16,6 +19,9 @@ export type HomeWorkImage = {
 }
 
 const SHAPES: HomeWorkImage['shape'][] = ['tall', 'wide', 'square', 'tall', 'square', 'wide', 'tall', 'wide']
+
+/** Default SSR timeout — keep under edge proxy budgets (often ~10–60s). */
+export const HOME_WORK_GALLERY_TIMEOUT_MS = 2500
 
 /** Curated static fallback — realistic Kenyan-facing spa/beauty frames (not client PII). */
 export const STATIC_HOME_WORK: HomeWorkImage[] = [
@@ -140,24 +146,41 @@ export function mapPublicGalleryToHomeWork(
   return mapped
 }
 
+/**
+ * Fetch public homepage gallery images.
+ * @param apiBaseUrl Trusted API origin (empty → static fallback immediately)
+ * @param options.timeoutMs Abort budget (clamped 500–8000ms)
+ */
 export async function fetchHomeWorkGallery(
   apiBaseUrl: string,
   fetcher: typeof fetch = fetch,
+  options?: { timeoutMs?: number },
 ): Promise<HomeWorkImage[]> {
   const base = trimApiBaseUrl(apiBaseUrl)
+  const timeoutMs = Math.min(
+    Math.max(options?.timeoutMs ?? HOME_WORK_GALLERY_TIMEOUT_MS, 500),
+    8000,
+  )
   if (!base) return STATIC_HOME_WORK
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
     const response = await fetcher(`${base}/api/gallery/public/homepage/`, {
       method: 'GET',
       credentials: 'omit',
       headers: { Accept: 'application/json' },
+      signal: controller.signal,
     })
     if (!response.ok) return STATIC_HOME_WORK
     const payload = await response.json()
     const mapped = mapPublicGalleryToHomeWork(payload, base)
     return mapped.length > 0 ? mapped : STATIC_HOME_WORK
   } catch {
+    // AbortError, network failure, or JSON parse — marketing page stays up.
     return STATIC_HOME_WORK
+  } finally {
+    clearTimeout(timer)
   }
 }
