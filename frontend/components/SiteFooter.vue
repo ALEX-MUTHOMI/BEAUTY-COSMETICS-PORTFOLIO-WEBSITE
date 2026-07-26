@@ -27,11 +27,14 @@
         </ul>
       </div>
 
-      <div class="site-footer__col">
+      <div class="site-footer__col site-footer__col--visit">
         <p class="site-footer__heading">Visit</p>
-        <a href="mailto:bookings@sheeaesthetics.co.ke">bookings@sheeaesthetics.co.ke</a>
+        <a class="site-footer__mail" href="mailto:bookings@sheeaesthetics.co.ke">
+          bookings@sheeaesthetics.co.ke
+        </a>
         <a
           v-if="contactIsLive"
+          class="site-footer__contact"
           :href="whatsappUrl"
           target="_blank"
           rel="noopener noreferrer"
@@ -39,17 +42,15 @@
         >
           {{ whatsappLabel }}
         </a>
-        <a v-if="contactIsLive && phoneTel" :href="phoneTel">
+        <a
+          v-if="contactIsLive && phoneTel"
+          class="site-footer__contact"
+          :href="phoneTel"
+        >
           {{ phoneDisplay }}
         </a>
-        <p v-else class="site-footer__phone-pending">{{ phoneDisplay }}</p>
-        <a
-          :href="LANDING_INSTAGRAM_URL"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Instagram
-        </a>
+        <p v-else-if="!contactIsLive" class="site-footer__phone-pending">{{ phoneDisplay }}</p>
+        <InstagramLink variant="ghost" label="Instagram" aria-label="Shee Aesthetics on Instagram" />
         <SiteButton
           v-if="bookIsExternal"
           :href="bookHref"
@@ -85,7 +86,6 @@
 <script setup lang="ts">
 import {
   LANDING_ADDRESS_LINES,
-  LANDING_INSTAGRAM_URL,
   LANDING_PRIMARY_CTA,
 } from '@/landing/landingContent'
 import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
@@ -103,17 +103,10 @@ const phoneTel = contact.phoneTel
 </script>
 
 <style scoped>
-/* Base chrome — keep opaque footer brand plane on all breakpoints */
 .site-footer {
   background: var(--color-footer);
-  color: rgba(255, 255, 255, 0.7);
-  padding: clamp(2.5rem, 6vw, 4rem) 1.25rem 0;
-}
-
-.site-footer__phone-pending {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.55);
-  font: 400 0.9rem/1.45 var(--font-body);
+  color: rgba(255, 255, 255, 0.72);
+  padding: clamp(2.75rem, 6vw, 4.25rem) 1.25rem 0;
 }
 
 .site-footer__inner {
@@ -121,7 +114,7 @@ const phoneTel = contact.phoneTel
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.75rem;
+  gap: 1.85rem;
   padding-bottom: clamp(1.75rem, 4vw, 2.5rem);
 }
 
@@ -149,24 +142,40 @@ const phoneTel = contact.phoneTel
 .site-footer__col {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  align-items: flex-start;
+  gap: 0.55rem;
 }
 
-.site-footer__col a {
+.site-footer__col a,
+.site-footer__mail,
+.site-footer__contact {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.25rem 0;
   color: rgba(255, 255, 255, 0.72);
   text-decoration: none;
   font: 400 0.92rem/1.4 var(--font-body);
   transition: color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.site-footer__col a:hover {
+.site-footer__col a:hover,
+.site-footer__mail:hover,
+.site-footer__contact:hover {
   color: var(--color-rose);
 }
 
+.site-footer__phone-pending {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.55);
+  font: 400 0.9rem/1.45 var(--font-body);
+}
+
 .site-footer__cta {
-  margin-top: 0.35rem;
-  color: #fff !important;
-  font-weight: 600 !important;
+  margin-top: 0.55rem;
+  width: auto;
+  max-width: 100%;
 }
 
 .site-footer__hours {
@@ -177,6 +186,7 @@ const phoneTel = contact.phoneTel
   flex-direction: column;
   gap: 0.45rem;
   font: 400 0.88rem/1.45 var(--font-body);
+  color: rgba(255, 255, 255, 0.68);
 }
 
 .site-footer__hours strong {
@@ -206,8 +216,13 @@ const phoneTel = contact.phoneTel
 }
 
 .site-footer__legal a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.25rem 0.15rem;
   color: rgba(255, 255, 255, 0.5);
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .site-footer__legal a:hover {
@@ -216,14 +231,15 @@ const phoneTel = contact.phoneTel
 
 @media (max-width: 767px) {
   .site-footer {
+    /* Clear sticky mobile book bar */
     padding-bottom: calc(var(--mobile-book-bar-height) + env(safe-area-inset-bottom, 0px));
   }
 }
 
 @media (min-width: 561px) {
   .site-footer__inner {
-    grid-template-columns: 1fr 1fr;
-    gap: clamp(1.5rem, 4vw, 2.75rem);
+    grid-template-columns: 1.2fr 1fr;
+    gap: clamp(1.5rem, 4vw, 2.75rem) clamp(1.25rem, 3vw, 2rem);
   }
 
   .site-footer__brand {
@@ -233,7 +249,8 @@ const phoneTel = contact.phoneTel
 
 @media (min-width: 901px) {
   .site-footer__inner {
-    grid-template-columns: 1.4fr 1fr 1.1fr 1fr;
+    grid-template-columns: 1.45fr 0.9fr 1.15fr 1.05fr;
+    align-items: start;
   }
 
   .site-footer__brand {
