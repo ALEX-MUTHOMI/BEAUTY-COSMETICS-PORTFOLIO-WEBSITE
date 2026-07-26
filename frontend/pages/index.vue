@@ -88,7 +88,29 @@
         <ScrollReveal variant="up" :delay="120">
           <div class="welcome__copy">
             <p class="label">{{ LANDING_LOCATION_LABEL }}</p>
-            <h2>Your hour to unwind</h2>
+            <div class="title-lockup title-lockup--start">
+              <img
+                src="/images/flower.png"
+                alt=""
+                class="title-lockup__flower title-lockup__flower--left"
+                width="56"
+                height="56"
+                loading="lazy"
+                decoding="async"
+                aria-hidden="true"
+              />
+              <h2>Your hour to unwind</h2>
+              <img
+                src="/images/flower.png"
+                alt=""
+                class="title-lockup__flower title-lockup__flower--right"
+                width="56"
+                height="56"
+                loading="lazy"
+                decoding="async"
+                aria-hidden="true"
+              />
+            </div>
             <p class="welcome__text">
               Clean rooms, soft light, and therapists who take their time.
             </p>
@@ -102,7 +124,29 @@
     <section id="our-work" class="work home-section">
       <ScrollReveal variant="up">
         <header class="section-head">
-          <h2>Clients by Shee</h2>
+          <div class="title-lockup">
+            <img
+              src="/images/flower.png"
+              alt=""
+              class="title-lockup__flower title-lockup__flower--left"
+              width="64"
+              height="64"
+              loading="lazy"
+              decoding="async"
+              aria-hidden="true"
+            />
+            <h2>Clients by Shee</h2>
+            <img
+              src="/images/flower.png"
+              alt=""
+              class="title-lockup__flower title-lockup__flower--right"
+              width="64"
+              height="64"
+              loading="lazy"
+              decoding="async"
+              aria-hidden="true"
+            />
+          </div>
         </header>
       </ScrollReveal>
       <div class="work__masonry" aria-label="Shee client and studio work">
@@ -129,14 +173,7 @@
       </div>
       <ScrollReveal variant="fade" :delay="80">
         <p class="work__footer">
-          <a
-            :href="LANDING_INSTAGRAM_URL"
-            class="home-services-link"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            More on Instagram
-          </a>
+          <InstagramLink class="work__ig" />
         </p>
       </ScrollReveal>
     </section>
@@ -162,11 +199,11 @@
       <div class="offer__chapter">
         <div class="offer__inner">
           <header class="offer__head">
-            <div class="offer__title-lockup">
+            <div class="title-lockup title-lockup--on-dark">
               <img
                 src="/images/flower.png"
                 alt=""
-                class="offer__title-flower offer__title-flower--left"
+                class="title-lockup__flower title-lockup__flower--left"
                 width="72"
                 height="72"
                 aria-hidden="true"
@@ -177,7 +214,7 @@
               <img
                 src="/images/flower.png"
                 alt=""
-                class="offer__title-flower offer__title-flower--right"
+                class="title-lockup__flower title-lockup__flower--right"
                 width="72"
                 height="72"
                 aria-hidden="true"
@@ -218,10 +255,53 @@
     </section>
 
     <!-- How it works — book → pay → visit (image-free, one layout all breakpoints) -->
-    <section class="steps home-section">
+    <section class="steps home-section home-floral">
+      <!-- Soft edge orchids — transparent line art, visible but quiet -->
+      <img
+        src="/images/flower-edge.png"
+        alt=""
+        class="home-floral__edge home-floral__edge--bl"
+        width="200"
+        height="160"
+        loading="lazy"
+        decoding="async"
+        aria-hidden="true"
+      />
+      <img
+        src="/images/flower-edge.png"
+        alt=""
+        class="home-floral__edge home-floral__edge--br"
+        width="200"
+        height="160"
+        loading="lazy"
+        decoding="async"
+        aria-hidden="true"
+      />
       <ScrollReveal variant="up">
         <header class="section-head">
-          <h2>How booking works</h2>
+          <div class="title-lockup">
+            <img
+              src="/images/flower.png"
+              alt=""
+              class="title-lockup__flower title-lockup__flower--left"
+              width="64"
+              height="64"
+              loading="lazy"
+              decoding="async"
+              aria-hidden="true"
+            />
+            <h2>How booking works</h2>
+            <img
+              src="/images/flower.png"
+              alt=""
+              class="title-lockup__flower title-lockup__flower--right"
+              width="64"
+              height="64"
+              loading="lazy"
+              decoding="async"
+              aria-hidden="true"
+            />
+          </div>
         </header>
       </ScrollReveal>
       <ScrollReveal variant="up" :delay="120">
@@ -252,11 +332,53 @@
           />
           <span class="book-visit__veil" />
         </div>
+        <img
+          src="/images/flower-edge.png"
+          alt=""
+          class="home-floral__edge home-floral__edge--bl home-floral__edge--on-photo"
+          width="180"
+          height="145"
+          loading="lazy"
+          decoding="async"
+          aria-hidden="true"
+        />
+        <img
+          src="/images/flower-edge.png"
+          alt=""
+          class="home-floral__edge home-floral__edge--br home-floral__edge--on-photo"
+          width="180"
+          height="145"
+          loading="lazy"
+          decoding="async"
+          aria-hidden="true"
+        />
 
         <div class="book-visit__path-inner">
           <ScrollReveal variant="up">
             <header class="book-visit__head">
-              <h2>How would you like to visit?</h2>
+              <div class="title-lockup">
+                <img
+                  src="/images/flower.png"
+                  alt=""
+                  class="title-lockup__flower title-lockup__flower--left"
+                  width="64"
+                  height="64"
+                  loading="lazy"
+                  decoding="async"
+                  aria-hidden="true"
+                />
+                <h2>How would you like to visit?</h2>
+                <img
+                  src="/images/flower.png"
+                  alt=""
+                  class="title-lockup__flower title-lockup__flower--right"
+                  width="64"
+                  height="64"
+                  loading="lazy"
+                  decoding="async"
+                  aria-hidden="true"
+                />
+              </div>
             </header>
           </ScrollReveal>
 
@@ -357,10 +479,10 @@
       <div id="packages" class="book-visit__stage">
           <div class="mellis-cta__atmosphere" aria-hidden="true">
             <img
-              src="/images/stock-beauty-mono.jpg"
+              src="/images/hero-makeup.jpg"
               alt=""
               class="mellis-cta__bg"
-              width="1200"
+              width="1280"
               height="1600"
               loading="lazy"
               decoding="async"
@@ -371,29 +493,33 @@
           <div class="mellis-cta__content">
             <ScrollReveal variant="up" :delay="40">
               <header class="mellis-cta__head">
-                <h2>Full packages</h2>
+                <div class="title-lockup">
+                  <img
+                    src="/images/flower.png"
+                    alt=""
+                    class="title-lockup__flower title-lockup__flower--left"
+                    width="64"
+                    height="64"
+                    loading="lazy"
+                    decoding="async"
+                    aria-hidden="true"
+                  />
+                  <h2>Full packages</h2>
+                  <img
+                    src="/images/flower.png"
+                    alt=""
+                    class="title-lockup__flower title-lockup__flower--right"
+                    width="64"
+                    height="64"
+                    loading="lazy"
+                    decoding="async"
+                    aria-hidden="true"
+                  />
+                </div>
               </header>
             </ScrollReveal>
 
             <div class="mellis-cta__card-wrap packages__band">
-              <img
-                src="/images/flower.png"
-                alt=""
-                class="mellis-cta__flower mellis-cta__flower--left"
-                width="140"
-                height="140"
-                loading="lazy"
-                decoding="async"
-              />
-              <img
-                src="/images/flower.png"
-                alt=""
-                class="mellis-cta__flower"
-                width="140"
-                height="140"
-                loading="lazy"
-                decoding="async"
-              />
               <ScrollReveal
                 v-for="(pkg, index) in featuredPackages"
                 :key="pkg.name"
@@ -422,11 +548,53 @@
     </section>
 
     <!-- Client reviews — Mellis-style proof cards (no reviewer photos) -->
-    <section class="reviews home-section" aria-labelledby="reviews-heading">
+    <section class="reviews home-section home-floral" aria-labelledby="reviews-heading">
+      <img
+        src="/images/flower-edge.png"
+        alt=""
+        class="home-floral__edge home-floral__edge--tl"
+        width="160"
+        height="130"
+        loading="lazy"
+        decoding="async"
+        aria-hidden="true"
+      />
+      <img
+        src="/images/flower-edge.png"
+        alt=""
+        class="home-floral__edge home-floral__edge--br"
+        width="180"
+        height="145"
+        loading="lazy"
+        decoding="async"
+        aria-hidden="true"
+      />
       <div class="reviews__inner">
         <ScrollReveal variant="up">
           <header class="reviews__head">
-            <h2 id="reviews-heading">What clients say</h2>
+            <div class="title-lockup">
+              <img
+                src="/images/flower.png"
+                alt=""
+                class="title-lockup__flower title-lockup__flower--left"
+                width="64"
+                height="64"
+                loading="lazy"
+                decoding="async"
+                aria-hidden="true"
+              />
+              <h2 id="reviews-heading">What clients say</h2>
+              <img
+                src="/images/flower.png"
+                alt=""
+                class="title-lockup__flower title-lockup__flower--right"
+                width="64"
+                height="64"
+                loading="lazy"
+                decoding="async"
+                aria-hidden="true"
+              />
+            </div>
           </header>
         </ScrollReveal>
 
@@ -543,14 +711,7 @@
           <SiteButton :to="primaryBookHref()" variant="primary" @click="closeWorkLightbox">
             Book this vibe
           </SiteButton>
-          <a
-            :href="LANDING_INSTAGRAM_URL"
-            class="work-lightbox__ig"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            More on Instagram
-          </a>
+          <InstagramLink variant="light" />
         </div>
       </div>
     </Teleport>
@@ -567,7 +728,6 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   flowSteps,
   getFeaturedPackages,
-  LANDING_INSTAGRAM_URL,
   LANDING_LOCATION_LABEL,
   LANDING_MAPS_EMBED_URL,
   LANDING_MAPS_URL,
@@ -718,6 +878,62 @@ const reviews = landingClientReviews
   position: relative;
 }
 
+/**
+ * Edge orchid accents — transparent line art at section corners.
+ * Quiet enough not to compete with copy; visible enough to read as design.
+ */
+.home-floral {
+  overflow: hidden;
+}
+
+.home-floral__edge {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  width: min(11rem, 34vw);
+  height: auto;
+  opacity: 0.38;
+  filter: saturate(1.05) contrast(1.04);
+}
+
+.home-floral__edge--on-photo {
+  opacity: 0.5;
+  filter: saturate(1.05) contrast(1.02) drop-shadow(0 2px 10px rgba(255, 255, 255, 0.35));
+}
+
+.home-floral__edge--br {
+  right: 0.75rem;
+  bottom: 0.35rem;
+  transform: rotate(8deg);
+}
+
+.home-floral__edge--bl {
+  left: 0.75rem;
+  bottom: 0.35rem;
+  width: min(13rem, 40vw);
+  transform: rotate(-12deg) scaleX(-1);
+}
+
+.home-floral__edge--tr {
+  top: 0.45rem;
+  right: 0.85rem;
+  width: min(11rem, 34vw);
+  transform: rotate(16deg) scaleX(-1);
+}
+
+.home-floral__edge--tl {
+  top: 0.45rem;
+  left: 0.85rem;
+  width: min(11rem, 34vw);
+  transform: rotate(-14deg);
+}
+
+.home-floral > :not(.home-floral__edge) {
+  position: relative;
+  z-index: 1;
+}
+
 .label {
   margin: 0 0 0.5rem;
   text-transform: uppercase;
@@ -731,6 +947,62 @@ const reviews = landingClientReviews
   margin: 0 auto var(--home-head-gap);
   text-align: center;
   padding: 0 0.25rem;
+}
+
+/* Spa orchid flanks — complimentary to every quiet header */
+.title-lockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.65rem, 2.2vw, 1.15rem);
+  max-width: 100%;
+}
+
+.title-lockup h2 {
+  margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.title-lockup__flower {
+  width: clamp(2.85rem, 6.5vw, 3.85rem);
+  height: auto;
+  flex-shrink: 0;
+  opacity: 0.78;
+  pointer-events: none;
+  user-select: none;
+}
+
+.title-lockup__flower--left {
+  transform: scaleX(-1) rotate(-8deg);
+}
+
+.title-lockup__flower--right {
+  transform: rotate(8deg);
+}
+
+.title-lockup--on-dark .title-lockup__flower {
+  opacity: 0.9;
+  filter: brightness(1.08) saturate(0.95);
+}
+
+.title-lockup--start {
+  justify-content: flex-start;
+}
+
+@media (max-width: 479px) {
+  .title-lockup__flower {
+    width: clamp(1.55rem, 7.5vw, 2rem);
+    opacity: 0.68;
+  }
+
+  .title-lockup {
+    gap: 0.4rem;
+  }
+
+  .title-lockup h2 {
+    font-size: clamp(1.55rem, 7.2vw, 1.95rem);
+  }
 }
 
 .section-head h2 {
@@ -930,27 +1202,44 @@ const reviews = landingClientReviews
 .hero__dots {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--mobile-book-bar-height, 4.25rem) + 1.35rem);
+  bottom: calc(var(--mobile-book-bar-height, 4.25rem) + 0.85rem);
   z-index: 4;
   display: flex;
-  gap: 0.4rem;
+  gap: 0.1rem;
   transform: translateX(-50%);
 }
 
 .hero__dot {
-  width: 0.5rem;
-  height: 0.5rem;
+  /* Visible bead stays small; hit area meets 44px touch target */
+  position: relative;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.35);
+  background: transparent;
   cursor: pointer;
-  transition: background-color 0.25s ease, transform 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.hero__dot--active {
+.hero__dot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transform: translate(-50%, -50%);
+  transition: background-color 0.25s ease, transform 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+
+.hero__dot--active::after {
   background: #fff;
-  transform: scale(1.15);
+  width: 0.58rem;
+  height: 0.58rem;
+  transform: translate(-50%, -50%) scale(1.15);
 }
 
 .hero__dot:focus-visible {
@@ -970,7 +1259,7 @@ const reviews = landingClientReviews
   border: 0;
 }
 
-/* Welcome — calm seam under spa hero */
+/* Welcome — quiet paper; local flower accent already on the media mirror */
 .welcome {
   padding: var(--home-section-y) 1rem;
   position: relative;
@@ -1042,8 +1331,12 @@ const reviews = landingClientReviews
   pointer-events: none;
 }
 
-.welcome__copy h2 {
+.welcome__copy .title-lockup {
   margin: 0 0 1.25rem;
+}
+
+.welcome__copy h2 {
+  margin: 0;
   font-family: var(--font-display);
   font-size: clamp(1.95rem, 3.8vw, 2.75rem);
   font-weight: 500;
@@ -1144,17 +1437,12 @@ const reviews = landingClientReviews
   text-align: center;
 }
 
-.offer__title-lockup {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(0.85rem, 2.4vw, 1.6rem);
-  max-width: 100%;
+.offer__head .title-lockup {
   padding: 0.35rem 0 0.5rem;
+  gap: clamp(0.85rem, 2.4vw, 1.6rem);
 }
 
-.offer__title-lockup h2 {
+.offer__head .title-lockup h2 {
   margin: 0;
   font-family: var(--font-display);
   font-size: clamp(2.65rem, 7.5vw, 4.15rem);
@@ -1165,21 +1453,8 @@ const reviews = landingClientReviews
   text-shadow: 0 3px 22px rgba(0, 0, 0, 0.5);
 }
 
-.offer__title-flower {
+.offer__head .title-lockup__flower {
   width: clamp(2.75rem, 6.5vw, 4rem);
-  height: auto;
-  flex-shrink: 0;
-  opacity: 0.88;
-  filter: brightness(1.05) saturate(0.95);
-  pointer-events: none;
-}
-
-.offer__title-flower--left {
-  transform: scaleX(-1) rotate(-8deg);
-}
-
-.offer__title-flower--right {
-  transform: rotate(8deg);
 }
 
 .offer__board {
@@ -1449,6 +1724,19 @@ const reviews = landingClientReviews
   }
 }
 
+/* Narrow phones — stack offer board for readable copy */
+@media (max-width: 419px) {
+  .offer__board {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+  }
+
+  .offer__cell {
+    min-height: 7.5rem;
+    padding: 1.15rem 1.05rem 1.05rem;
+  }
+}
+
 @media (min-width: 768px) {
   .offer {
     min-height: 185vh;
@@ -1496,7 +1784,7 @@ const reviews = landingClientReviews
     object-position: 65% 38%;
   }
 
-  .offer__title-lockup h2 {
+  .offer__head .title-lockup h2 {
     font-size: clamp(3.1rem, 3.8vw, 4.25rem);
   }
 
@@ -1552,7 +1840,7 @@ const reviews = landingClientReviews
   }
 }
 
-/* Steps — numbered book → pay → visit cards (no images, one system) */
+/* Steps — quiet parchment + one soft edge orchid */
 .steps {
   padding: var(--home-section-y-lg) 1.25rem;
   background: var(--color-parchment);
@@ -1575,9 +1863,9 @@ const reviews = landingClientReviews
   align-items: start;
   height: 100%;
   padding: 1rem 1rem 1.05rem;
-  background: #fff;
-  border: 1px solid rgba(176, 122, 113, 0.14);
-  box-shadow: 0 10px 28px rgba(44, 44, 48, 0.04);
+  background: rgba(255, 252, 250, 0.88);
+  border: 1px solid rgba(176, 122, 113, 0.12);
+  box-shadow: none;
 }
 
 .steps__compact-num {
@@ -1650,7 +1938,7 @@ const reviews = landingClientReviews
   }
 }
 
-/* Book a visit — distinctive atmospheric path through doors */
+/* Book a visit — soft photo atmosphere; visit cards carry the visual weight */
 .book-visit {
   padding: 0;
   background: var(--color-paper);
@@ -1679,7 +1967,7 @@ const reviews = landingClientReviews
   object-position: center 40%;
   transform: scale(1.1);
   filter: saturate(0.55) blur(6px) brightness(1.06);
-  opacity: 0.7;
+  opacity: 0.55;
 }
 
 .book-visit__veil {
@@ -1688,12 +1976,14 @@ const reviews = landingClientReviews
   background:
     linear-gradient(
       180deg,
-      rgba(252, 248, 244, 0.92) 0%,
-      rgba(252, 248, 244, 0.82) 42%,
-      rgba(252, 248, 244, 0.94) 100%
-    ),
-    radial-gradient(ellipse 70% 55% at 12% 0%, rgba(176, 122, 113, 0.14), transparent 55%),
-    radial-gradient(ellipse 55% 45% at 92% 100%, rgba(176, 122, 113, 0.1), transparent 50%);
+      rgba(243, 239, 236, 0.88) 0%,
+      rgba(243, 239, 236, 0.78) 42%,
+      rgba(243, 239, 236, 0.9) 100%
+    );
+}
+
+.book-visit__path > .home-floral__edge {
+  z-index: 0;
 }
 
 .book-visit__path-inner {
@@ -1708,7 +1998,7 @@ const reviews = landingClientReviews
 
 .book-visit__head {
   text-align: center;
-  max-width: 28rem;
+  max-width: 42rem;
   margin: 0 auto;
 }
 
@@ -1854,7 +2144,7 @@ const reviews = landingClientReviews
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-ink);
-  background: #fff;
+  background: var(--color-paper);
   border: 0;
   box-shadow: 0 8px 20px rgba(44, 44, 48, 0.12);
 }
@@ -1901,7 +2191,7 @@ const reviews = landingClientReviews
   }
 }
 
-/* Classic Full Package — B&W model atmosphere; card stays primary */
+/* Classic Full Package — soft-glam makeup atmosphere; card stays primary */
 .book-visit__stage {
   position: relative;
   isolation: isolate;
@@ -1909,6 +2199,7 @@ const reviews = landingClientReviews
   padding: clamp(2.5rem, 6vw, 3.75rem) 1rem clamp(2.25rem, 5vw, 3.25rem);
   overflow: hidden;
   border-block: 1px solid rgba(176, 122, 113, 0.16);
+  background: #f4f3f1;
 }
 
 .mellis-cta__atmosphere {
@@ -1916,36 +2207,39 @@ const reviews = landingClientReviews
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  /* Force B&W on the whole plate so parchment never recolors the photo */
+  filter: grayscale(1) contrast(1.08);
 }
 
 .mellis-cta__bg {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 18%;
+  object-position: center 20%;
   transform: scale(1.04);
-  /* Already a B&W portrait — keep light grayscale pass for consistency */
-  filter: grayscale(0.35) contrast(1.06) brightness(1.03);
-  opacity: 0.48;
+  /* Readable B&W atmosphere — card still wins via center veil */
+  opacity: 0.38;
+  filter: none;
 }
 
 .mellis-cta__veil {
   position: absolute;
   inset: 0;
   background:
+    /* Soft pocket behind the card only */
     radial-gradient(
-      ellipse 48% 62% at 50% 46%,
-      rgba(243, 242, 241, 0.96) 0%,
-      rgba(243, 242, 241, 0.86) 36%,
-      rgba(243, 242, 241, 0.48) 68%,
-      rgba(243, 242, 241, 0.18) 100%
+      ellipse 48% 62% at 50% 48%,
+      rgba(255, 255, 255, 0.94) 0%,
+      rgba(255, 255, 255, 0.78) 36%,
+      rgba(255, 255, 255, 0.32) 66%,
+      rgba(255, 255, 255, 0) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(243, 242, 241, 0.68) 0%,
-      rgba(243, 242, 241, 0.28) 36%,
-      rgba(243, 242, 241, 0.28) 64%,
-      rgba(243, 242, 241, 0.72) 100%
+      rgba(248, 247, 245, 0.58) 0%,
+      rgba(248, 247, 245, 0.14) 28%,
+      rgba(248, 247, 245, 0.12) 72%,
+      rgba(248, 247, 245, 0.64) 100%
     );
 }
 
@@ -1956,7 +2250,7 @@ const reviews = landingClientReviews
 
 .mellis-cta__head {
   text-align: center;
-  max-width: 28rem;
+  max-width: 36rem;
   margin: 0 auto 1.75rem;
 }
 
@@ -1968,6 +2262,7 @@ const reviews = landingClientReviews
   line-height: 1.15;
   letter-spacing: -0.025em;
   color: var(--color-ink);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
 .mellis-cta__card-wrap {
@@ -1977,53 +2272,18 @@ const reviews = landingClientReviews
   padding-top: 0.65rem;
 }
 
-.mellis-cta__flower {
-  position: absolute;
-  z-index: 0;
-  right: -1.15rem;
-  bottom: -1.15rem;
-  width: min(7.5rem, 36%);
-  height: auto;
-  pointer-events: none;
-  opacity: 0.92;
-}
-
-.mellis-cta__flower--left {
-  right: auto;
-  left: -1.35rem;
-  bottom: auto;
-  top: -0.85rem;
-  width: min(6.25rem, 30%);
-  opacity: 0.78;
-  transform: scaleX(-1) rotate(-8deg);
-}
-
-.mellis-cta__card-wrap > *:not(.mellis-cta__flower) {
-  position: relative;
-  z-index: 1;
-}
-
 .mellis-cta__card {
+  position: relative;
+  z-index: 2;
+  background: #fff;
   box-shadow:
-    0 22px 48px rgba(44, 44, 48, 0.14),
-    0 0 0 1px rgba(255, 255, 255, 0.7);
+    0 22px 48px rgba(44, 44, 48, 0.16),
+    0 0 0 1px rgba(255, 255, 255, 0.85);
 }
 
 @media (max-width: 479px) {
   .book-visit__stage {
     padding-inline: 0.85rem;
-  }
-
-  .mellis-cta__flower {
-    width: min(5.5rem, 28%);
-    right: -0.55rem;
-    bottom: -0.75rem;
-  }
-
-  .mellis-cta__flower--left {
-    left: -0.65rem;
-    top: -0.55rem;
-    width: min(4.75rem, 24%);
   }
 
   .mellis-cta__head h2 {
@@ -2071,21 +2331,13 @@ const reviews = landingClientReviews
   }
 }
 
-.reviews__grid > * {
-  height: 100%;
-  min-width: 0;
-}
-
-/* Reviews — Mellis-style proof cards, Shee-branded */
+/* Reviews — quiet parchment + one soft corner orchid */
 .reviews {
   position: relative;
   padding: clamp(2.5rem, 5.5vh, 3.5rem) 1rem;
   overflow: hidden;
   border-block: var(--home-seam);
-  background:
-    radial-gradient(ellipse 60% 50% at 8% 20%, rgba(176, 122, 113, 0.1), transparent 55%),
-    radial-gradient(ellipse 50% 45% at 92% 80%, rgba(176, 122, 113, 0.08), transparent 50%),
-    linear-gradient(180deg, var(--color-parchment) 0%, var(--color-paper) 48%, var(--color-cream) 100%);
+  background: var(--color-parchment);
 }
 
 .reviews__inner {
@@ -2126,17 +2378,14 @@ const reviews = landingClientReviews
   height: 100%;
   margin: 0;
   padding: 1.45rem 1.3rem 1.35rem;
-  background: #fff;
+  background: rgba(255, 252, 250, 0.92);
   border: 1px solid rgba(176, 122, 113, 0.12);
-  box-shadow: 0 14px 34px rgba(44, 44, 48, 0.06);
-  transition:
-    transform 0.35s var(--ease-story, ease),
-    box-shadow 0.35s var(--ease-story, ease);
+  box-shadow: none;
+  transition: transform 0.35s var(--ease-story, ease);
 }
 
 .review-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 18px 40px rgba(44, 44, 48, 0.09);
+  transform: translateY(-3px);
 }
 
 .review-card__top {
@@ -2206,10 +2455,10 @@ const reviews = landingClientReviews
   }
 }
 
-/* Our work — Pinterest-style masonry */
+/* Our work — quiet paper; photos carry texture (no floral + no second cream band) */
 .work {
   padding: var(--home-section-y-lg) 1rem;
-  background: var(--color-cream);
+  background: var(--color-paper);
   border-bottom: var(--home-seam);
 }
 
@@ -2274,6 +2523,10 @@ const reviews = landingClientReviews
   text-align: center;
 }
 
+.work__ig {
+  margin-inline: auto;
+}
+
 @media (min-width: 768px) {
   .work__masonry {
     column-count: 3;
@@ -2327,15 +2580,6 @@ const reviews = landingClientReviews
   gap: 0.75rem;
   align-items: center;
   justify-content: center;
-}
-
-.work-lightbox__ig {
-  color: #fff;
-  font: 600 0.78rem var(--font-body);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
 }
 
 .work-lightbox__close {
@@ -2433,11 +2677,16 @@ const reviews = landingClientReviews
 }
 
 .visit-map__maps {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.35rem 0.15rem;
   font: 700 0.68rem var(--font-body);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-rose);
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .visit-map__maps:hover {
