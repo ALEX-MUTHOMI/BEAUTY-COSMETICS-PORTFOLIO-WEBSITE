@@ -134,9 +134,9 @@ export const heroSlides: HeroSlide[] = [
     '/images/hero-makeup.jpg',
     1440,
     1800,
-    'center 28%',
-    'Black woman with glowing skin and glam makeup against a deep red backdrop',
-    'Editorial glam portrait — diamond earrings, dewy skin.',
+    'center 22%',
+    'Black woman with soft glam makeup, sleek ponytail, and glossy ombré lips',
+    'Signature soft-glam portrait — smokey eye, gloss lips, silver hoops.',
   ),
   slide(
     'facial',
@@ -164,9 +164,9 @@ export const heroSlides: HeroSlide[] = [
     '/images/hero-waxing.jpg',
     1500,
     1700,
-    'center 32%',
-    'Smiling Black woman in a spa robe and towel wrap with winged liner',
-    'Bright spa-day portrait — robe, towel wrap, polished glam.',
+    'center 40%',
+    'Warm spa waxing — amber wax applied to a leg with candles in soft light',
+    'Treatment-frame waxing — spatula, warm wax, candlelit spa mood.',
   ),
 ]
 
