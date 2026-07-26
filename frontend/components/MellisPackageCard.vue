@@ -193,15 +193,16 @@ const visibleIncludes = computed(() =>
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   margin-top: 0.55rem;
-  padding: 0.25rem 0.4rem;
+  padding: 0.45rem 0.55rem;
   font: 600 0.72rem var(--font-body);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   text-decoration: none;
   color: var(--color-rose-dark);
   transition: color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .mellis-card__details:hover {
@@ -253,7 +254,8 @@ const visibleIncludes = computed(() =>
   }
 
   .mellis-card__details {
-    min-height: 2.25rem;
+    min-height: 2.75rem;
+    width: 100%;
   }
 }
 

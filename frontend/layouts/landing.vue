@@ -109,28 +109,49 @@ useHead({
 
 .welcome-back {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  padding: 0.55rem 1rem;
+  gap: 0.55rem;
+  padding: 0.35rem 0.85rem;
   background: #f7ece9;
   border-bottom: 1px solid var(--color-line, #e8e4e1);
 }
 
 .welcome-back__text {
   margin: 0;
-  font: 500 0.88rem/1.35 var(--font-body);
+  font: 500 0.78rem/1.3 var(--font-body);
   color: var(--color-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .welcome-back__cta {
-  font: 700 0.72rem var(--font-body);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-height: 2.75rem;
+  padding: 0.35rem 0.55rem;
+  font: 700 0.7rem var(--font-body);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-rose-dark, #b56b62);
   text-decoration: underline;
   text-underline-offset: 0.18em;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 768px) {
+  .welcome-back {
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .welcome-back__text {
+    font-size: 0.88rem;
+  }
 }
 
 .mobile-book-bar {
