@@ -621,14 +621,22 @@
       </div>
     </section>
 
-    <!-- Visit — split hours + clipped map -->
+    <!-- Visit — Opening Hours card + framed map (side by side, not overlay) -->
     <section id="visit" class="visit-map home-section">
       <div class="visit-map__inner">
         <ScrollReveal variant="up" :delay="40">
-          <div class="visit-map__hours-panel">
+          <div class="visit-map__card">
             <div class="visit-map__card-head">
               <h2>Opening Hours</h2>
-              <img src="/images/icon-clock.png" alt="" width="40" height="40" />
+              <img
+                src="/images/icon-clock.png"
+                alt=""
+                width="40"
+                height="40"
+                class="visit-map__clock"
+                loading="lazy"
+                decoding="async"
+              />
             </div>
             <dl class="visit-map__hours">
               <div>
@@ -672,18 +680,22 @@
             </div>
           </div>
         </ScrollReveal>
-        <div class="visit-map__map-panel">
-          <div class="visit-map__frame-wrap">
-            <iframe
-              class="visit-map__frame"
-              title="Shee Aesthetics location map"
-              :src="LANDING_MAPS_EMBED_URL"
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-              allowfullscreen
-            />
+
+        <ScrollReveal variant="up" :delay="100">
+          <div class="visit-map__map-panel">
+            <div class="visit-map__frame-wrap">
+              <iframe
+                class="visit-map__frame"
+                title="Shee Aesthetics location map"
+                :src="LANDING_MAPS_EMBED_URL"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                allowfullscreen
+              />
+            </div>
+            <p class="visit-map__map-caption">Find us in Meru Town</p>
           </div>
-        </div>
+        </ScrollReveal>
       </div>
     </section>
 
@@ -2598,11 +2610,12 @@ const reviews = landingClientReviews
   cursor: pointer;
 }
 
-/* Visit — split hours + clipped map */
+/* Visit — Opening Hours card + framed map panel (side by side) */
 .visit-map {
   padding: var(--home-section-y-lg) 1rem;
-  background: var(--color-paper);
+  background: var(--color-parchment);
   border-top: var(--home-seam);
+  overflow: hidden;
 }
 
 .visit-map__inner {
@@ -2610,12 +2623,18 @@ const reviews = landingClientReviews
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
+  gap: 1.35rem;
   align-items: stretch;
 }
 
-.visit-map__hours-panel {
-  padding: 0.25rem 0 0.5rem;
+.visit-map__card {
+  height: 100%;
+  padding: clamp(1.65rem, 4vw, 2.15rem) clamp(1.35rem, 3.5vw, 1.85rem) clamp(1.5rem, 3.5vw, 1.85rem);
+  background: #fffcfa;
+  border: 1px solid rgba(176, 122, 113, 0.12);
+  box-shadow:
+    0 18px 40px rgba(44, 44, 48, 0.1),
+    0 2px 8px rgba(44, 44, 48, 0.05);
 }
 
 .visit-map__card-head {
@@ -2623,23 +2642,32 @@ const reviews = landingClientReviews
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.35rem;
+  margin-bottom: 1.45rem;
 }
 
 .visit-map__card-head h2 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.45rem, 3vw, 1.85rem);
-  font-weight: 400;
+  font-size: clamp(1.55rem, 3.2vw, 1.95rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
   color: var(--color-ink);
 }
 
+.visit-map__clock {
+  width: 2.35rem;
+  height: 2.35rem;
+  object-fit: contain;
+  flex-shrink: 0;
+  opacity: 0.88;
+}
+
 .visit-map__hours {
-  margin: 0 0 1.25rem;
+  margin: 0 0 1.35rem;
 }
 
 .visit-map__hours > div {
-  margin-bottom: 0.9rem;
+  margin-bottom: 1.05rem;
 }
 
 .visit-map__hours > div:last-child {
@@ -2647,9 +2675,9 @@ const reviews = landingClientReviews
 }
 
 .visit-map__hours dt {
-  margin: 0 0 0.2rem;
+  margin: 0 0 0.28rem;
   font: 600 0.68rem var(--font-body);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--color-muted);
 }
@@ -2657,14 +2685,15 @@ const reviews = landingClientReviews
 .visit-map__hours dd {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: clamp(1.05rem, 2.4vw, 1.2rem);
   font-weight: 400;
   color: var(--color-rose);
   line-height: 1.35;
 }
 
 .visit-map__place {
-  margin: 0 0 1.25rem;
+  margin: 0 0 1.15rem;
+  padding-top: 0.15rem;
   font: 500 0.88rem/1.4 var(--font-body);
   color: var(--color-muted);
 }
@@ -2673,7 +2702,7 @@ const reviews = landingClientReviews
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.85rem;
+  gap: 0.55rem;
 }
 
 .visit-map__maps {
@@ -2694,54 +2723,76 @@ const reviews = landingClientReviews
 }
 
 .visit-map__map-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   min-width: 0;
+  background: #fffcfa;
+  border: 1px solid rgba(176, 122, 113, 0.12);
+  box-shadow:
+    0 18px 40px rgba(44, 44, 48, 0.1),
+    0 2px 8px rgba(44, 44, 48, 0.05);
+  overflow: hidden;
 }
 
 .visit-map__frame-wrap {
   position: relative;
-  height: 15rem;
+  flex: 1 1 auto;
+  min-height: 16rem;
   overflow: hidden;
-  background: var(--color-paper);
+  background: #e4e0dc;
 }
 
 .visit-map__frame {
   position: absolute;
-  /* Crop Google search chrome / UI edges */
-  top: -3.5rem;
+  /* Crop Google Maps chrome / UI edges */
+  top: -3.25rem;
   left: -1rem;
   width: calc(100% + 2rem);
   height: calc(100% + 5.5rem);
   border: 0;
-  filter: grayscale(0.35) contrast(0.92) saturate(0.75);
+  filter: grayscale(0.22) contrast(0.96) saturate(0.78) brightness(1.03);
   pointer-events: auto;
+}
+
+.visit-map__map-caption {
+  margin: 0;
+  padding: 0.85rem 1.15rem 0.95rem;
+  border-top: 1px solid rgba(176, 122, 113, 0.1);
+  font: 600 0.68rem/1.3 var(--font-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted);
 }
 
 @media (min-width: 768px) {
   .visit-map__inner {
-    grid-template-columns: minmax(16rem, 22rem) 1fr;
-    gap: clamp(1.5rem, 3vw, 2.5rem);
-    align-items: center;
+    grid-template-columns: minmax(17rem, 23rem) minmax(0, 1fr);
+    gap: 1.35rem;
+    align-items: stretch;
   }
 
-  .visit-map__hours-panel {
-    padding: 0.5rem 0;
+  .visit-map__card {
+    padding: 2.15rem 1.9rem 1.95rem;
   }
 
   .visit-map__frame-wrap {
-    height: min(26rem, 52vh);
-    min-height: 22rem;
+    min-height: 100%;
+  }
+
+  .visit-map__map-panel {
+    min-height: 100%;
   }
 }
 
 @media (min-width: 1024px) {
   .visit-map__inner {
-    grid-template-columns: minmax(18rem, 24rem) 1fr;
-    gap: clamp(2rem, 4vw, 3.25rem);
+    grid-template-columns: minmax(18rem, 25rem) minmax(0, 1fr);
+    gap: 1.65rem;
   }
 
   .visit-map__frame-wrap {
-    height: min(28rem, 50vh);
-    min-height: 24rem;
+    min-height: 28rem;
   }
 }
 

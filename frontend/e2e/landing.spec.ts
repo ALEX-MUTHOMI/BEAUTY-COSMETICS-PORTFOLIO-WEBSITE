@@ -73,7 +73,8 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.getByRole('heading', { name: 'What clients say', level: 2 })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Opening Hours', level: 2 })).toBeVisible()
     await expect(page.getByRole('link', { name: /Open in Maps/i })).toBeVisible()
-    await expect(page.locator('#visit .visit-map__hours-panel')).toBeVisible()
+    await expect(page.locator('#visit .visit-map__card')).toBeVisible()
+    await expect(page.locator('#visit .visit-map__map-panel')).toBeVisible()
     await expect(page.locator('#visit .visit-map__frame')).toBeVisible()
 
     const cspViolations = consoleErrors.filter((e) =>
@@ -96,8 +97,9 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.locator('#services .offer__board')).toBeVisible()
     await expect(page.locator('#services .offer__cell')).toHaveCount(4)
     await expect(page.locator('#services .offer__cta')).toBeVisible()
-    await expect(page.locator('#visit .visit-map__hours-panel')).toBeVisible()
-    await expect(page.locator('#visit .visit-map__frame-wrap')).toBeVisible()
+    await expect(page.locator('#visit .visit-map__card')).toBeVisible()
+    await expect(page.locator('#visit .visit-map__map-panel')).toBeVisible()
+    await expect(page.locator('#visit .visit-map__frame')).toBeVisible()
 
     await expect(page.getByRole('heading', { name: 'Shee', level: 1 })).toBeVisible()
   })
