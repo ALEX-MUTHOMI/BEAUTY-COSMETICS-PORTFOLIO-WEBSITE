@@ -16,14 +16,14 @@
 @import '@fontsource/libre-baskerville/700.css';
 
 :root {
-  /* Soft gray-warm desk — not chalk white */
+  /* Deeper warm stone canvas — quiet against photos, not chalk white */
   --color-ink: #2c2c30;
   --color-deep: #3f3e43;
   --color-muted: #7a7876;
-  --color-cream: #e4e1df;
-  --color-paper: #ebe8e6;
-  --color-stone: #ddd9d7;
-  --color-parchment: #e8e4e1;
+  --color-cream: #d2ccc7;
+  --color-paper: #ddd8d4;
+  --color-stone: #c9c3be;
+  --color-parchment: #d8d2cd;
   --color-rose: #b07a71;
   --color-rose-dark: #965f57;
   --color-rose-soft: #e4dcd9;
