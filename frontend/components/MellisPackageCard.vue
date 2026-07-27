@@ -72,7 +72,7 @@ const visibleIncludes = computed(() =>
   width: 100%;
   min-width: 0;
   padding: 1.35rem 1.1rem 1.25rem;
-  background: #fff;
+  background: #f3efeb;
   border: 1px solid var(--color-line);
   border-top: 3px solid var(--color-rose);
   box-shadow: var(--shadow-card);
@@ -134,7 +134,7 @@ const visibleIncludes = computed(() =>
   border: 1px solid var(--color-line);
   border-top: 3px solid var(--color-rose);
   border-radius: 0;
-  background: #fff;
+  background: #f3efeb;
   box-shadow: var(--shadow-card);
 }
 
