@@ -77,8 +77,16 @@ export const LANDING_WHATSAPP_LABEL = 'WhatsApp'
 export const LANDING_CALL_LABEL = 'Call Shee'
 
 /** Compact price anchors for hero / trust strips (from catalog floors). */
+export const LANDING_TREATMENT_FLOOR = 'From KES 1,200'
+export const LANDING_PACKAGE_FLOOR = 'From KES 7,000'
+export const LANDING_PACKAGE_FLOOR_SHORT = 'KES 7,000'
+
 export const LANDING_PRICE_ANCHOR =
-  'Treatments from KES 1,200 · Packages from KES 7,000'
+  `Treatments from KES 1,200 · Packages from ${LANDING_PACKAGE_FLOOR_SHORT}`
+
+/** Featured Classic card clarifying line (keeps 12,000; floor stays Relax). */
+export const LANDING_FEATURED_PACKAGE_CLARIFIER =
+  'Most booked · from KES 12,000 · packages from KES 7,000'
 
 export const LANDING_LOCATION_LABEL = 'Meru Town, Meru County'
 
