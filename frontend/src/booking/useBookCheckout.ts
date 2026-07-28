@@ -22,6 +22,7 @@ import {
   BookingSubmitGovernor,
   GENERIC_BOOKING_SUBMIT_ERROR,
 } from './bookingSubmitGovernor'
+import { trackFunnelEvent } from '@/landing/funnelEvents'
 import {
   createHoldFromRememberedDevice,
   fetchRememberedDevice,
@@ -314,6 +315,11 @@ export function useBookCheckout(
           submitGovernor.markAbuseSuspected()
           submitError.value = GENERIC_BOOKING_THROTTLE_ERROR
         }
+      } else {
+        trackFunnelEvent('stk_sent', {
+          booking: checkout.data.bookingPublicId,
+          surface: 'checkout_initial',
+        })
       }
     }
 

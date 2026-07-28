@@ -2,6 +2,9 @@
   <section class="book-customer" aria-labelledby="book-customer-title">
     <header class="book-customer__head">
       <h2 id="book-customer-title">Your details</h2>
+      <p class="book-customer__mpesa-hint">
+        You’ll approve M-Pesa on your phone to lock the slot.
+      </p>
     </header>
 
     <p v-if="submitError" class="book-customer__error" role="alert">{{ submitError }}</p>
@@ -175,10 +178,16 @@ const turnstileToken = defineModel<string>('turnstileToken', { required: true })
 }
 
 .book-customer__head h2 {
-  margin: 0 0 1rem;
+  margin: 0;
   font-family: var(--font-display);
   font-size: 1.35rem;
   font-weight: 400;
+}
+
+.book-customer__mpesa-hint {
+  margin: 0.4rem 0 1rem;
+  font: 500 0.88rem/1.4 var(--font-body);
+  color: var(--color-muted);
 }
 
 .book-customer__remembered {
