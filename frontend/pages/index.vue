@@ -45,7 +45,22 @@
           <p class="hero__eyebrow">{{ currentHero.eyebrow }}</p>
           <HeroHandwriteTitle :text="currentHero.headline" class="hero__title" />
           <p class="hero__price">{{ LANDING_PRICE_ANCHOR }}</p>
-          <SiteButton :to="heroCta.to" variant="primary" class="hero__cta" @click="onHeroBook">
+          <SiteButton
+            v-if="heroCtaIsExternal"
+            :href="heroCta.to"
+            variant="primary"
+            class="hero__cta"
+            @click="onHeroBook"
+          >
+            {{ heroCta.label }}
+          </SiteButton>
+          <SiteButton
+            v-else
+            :to="heroCta.to"
+            variant="primary"
+            class="hero__cta"
+            @click="onHeroBook"
+          >
             {{ heroCta.label }}
           </SiteButton>
         </div>
@@ -114,7 +129,22 @@
             <p class="welcome__text">
               Clean rooms, soft light, and therapists who take their time.
             </p>
-            <SiteButton :to="primaryBookHref()" variant="primary" class="welcome__cta">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+            <SiteButton
+              v-if="primaryCtaIsExternal"
+              :href="primaryCtaHref"
+              variant="primary"
+              class="welcome__cta"
+            >
+              {{ LANDING_PRIMARY_CTA }}
+            </SiteButton>
+            <SiteButton
+              v-else
+              :to="primaryCtaHref"
+              variant="primary"
+              class="welcome__cta"
+            >
+              {{ LANDING_PRIMARY_CTA }}
+            </SiteButton>
           </div>
         </ScrollReveal>
       </div>
@@ -242,7 +272,7 @@
               <span class="offer__cta-copy">
                 <span class="offer__cta-label">Tue &amp; Wed only</span>
                 <span class="offer__cta-title">One booking. Full glow.</span>
-                <span class="offer__cta-meta">Facial, wax, massage &amp; makeup · from KES 7,000</span>
+                <span class="offer__cta-meta">Facial, wax, massage &amp; makeup · from {{ LANDING_PACKAGE_FLOOR_SHORT }}</span>
               </span>
               <span class="offer__cta-action">
                 View packages
@@ -385,7 +415,7 @@
           <div class="book-visit__doors">
           <ScrollReveal variant="up" :delay="80">
             <NuxtLink
-              :to="SERVICES_ROUTES.fullPackages"
+              :to="packagesVisitHref"
               class="visit-card"
               :class="{ 'visit-card--focus': visitFocus === 'packages' }"
             >
@@ -409,7 +439,7 @@
               <span class="visit-card__body">
                 <h3 class="visit-card__title">Full packages</h3>
                 <span class="visit-card__text">Facial, wax, massage &amp; makeup — one booking.</span>
-                <span class="visit-card__meta">From KES 7,000</span>
+                <span class="visit-card__meta">{{ LANDING_PACKAGE_FLOOR }}</span>
                 <span class="visit-card__cta">Book now</span>
               </span>
               <img
@@ -427,7 +457,7 @@
 
           <ScrollReveal variant="up" :delay="160">
             <NuxtLink
-              :to="SERVICES_ROUTES.singleSessions"
+              :to="treatmentsVisitHref"
               class="visit-card"
               :class="{ 'visit-card--focus': visitFocus === 'treatments' }"
             >
@@ -457,7 +487,7 @@
               <span class="visit-card__body">
                 <h3 class="visit-card__title">Treatments</h3>
                 <span class="visit-card__text">One service when that is all you need today.</span>
-                <span class="visit-card__meta">From KES 1,200</span>
+                <span class="visit-card__meta">{{ LANDING_TREATMENT_FLOOR }}</span>
                 <span class="visit-card__cta">Book now</span>
               </span>
               <img
@@ -542,7 +572,8 @@
                 />
               </ScrollReveal>
             </div>
-            <p class="mellis-cta__note">{{ packageDayUrgency }}</p>
+            <p class="mellis-cta__note">{{ LANDING_FEATURED_PACKAGE_CLARIFIER }}</p>
+            <p class="mellis-cta__note mellis-cta__note--soft">{{ packageDayUrgency }}</p>
           </div>
       </div>
     </section>
@@ -658,7 +689,16 @@
             </dl>
             <p class="visit-map__place">{{ LANDING_LOCATION_LABEL }}</p>
             <div class="visit-map__actions">
-              <SiteButton :to="primaryBookHref()" variant="primary">{{ LANDING_PRIMARY_CTA }}</SiteButton>
+              <SiteButton
+                v-if="primaryCtaIsExternal"
+                :href="primaryCtaHref"
+                variant="primary"
+              >
+                {{ LANDING_PRIMARY_CTA }}
+              </SiteButton>
+              <SiteButton v-else :to="primaryCtaHref" variant="primary">
+                {{ LANDING_PRIMARY_CTA }}
+              </SiteButton>
               <a
                 v-if="contactIsLive"
                 :href="whatsappUrl"
@@ -720,7 +760,20 @@
         />
         <p class="work-lightbox__caption">{{ lightboxImage.alt }}</p>
         <div class="work-lightbox__actions">
-          <SiteButton :to="primaryBookHref()" variant="primary" @click="closeWorkLightbox">
+          <SiteButton
+            v-if="primaryCtaIsExternal"
+            :href="primaryCtaHref"
+            variant="primary"
+            @click="closeWorkLightbox"
+          >
+            Book this vibe
+          </SiteButton>
+          <SiteButton
+            v-else
+            :to="primaryCtaHref"
+            variant="primary"
+            @click="closeWorkLightbox"
+          >
             Book this vibe
           </SiteButton>
           <InstagramLink variant="light" />
@@ -740,11 +793,15 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   flowSteps,
   getFeaturedPackages,
+  LANDING_FEATURED_PACKAGE_CLARIFIER,
   LANDING_LOCATION_LABEL,
   LANDING_MAPS_EMBED_URL,
   LANDING_MAPS_URL,
+  LANDING_PACKAGE_FLOOR,
+  LANDING_PACKAGE_FLOOR_SHORT,
   LANDING_PRICE_ANCHOR,
   LANDING_PRIMARY_CTA,
+  LANDING_TREATMENT_FLOOR,
   landingClientReviews,
   packageDayUrgency,
 } from '@/landing/landingContent'
@@ -753,14 +810,22 @@ import {
   HERO_COPY_FADE_MS,
   HERO_CROSSFADE_MS,
   HERO_FADE_MS,
-  heroCtaForSlide,
   heroSlides,
   shouldMountHeroImage,
 } from '@/landing/heroMedia'
+import {
+  defaultTreatmentBookHref,
+  featuredPackageBookHref,
+} from '@/landing/bookCtaTargets'
 import { useLandingSeo } from '@/landing/useLandingSeo'
 import { useLandingContact } from '@/landing/useLandingContact'
 import { bookHrefForPackageName } from '@/landing/bookingHandoff'
-import { primaryBookHref, primaryBookHrefKind } from '@/landing/primaryBookHref'
+import {
+  heroCtaForSlide,
+  primaryBookHref,
+  primaryBookHrefKind,
+  primaryBookIsExternal,
+} from '@/landing/primaryBookHref'
 import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
 import { trackFunnelEvent } from '@/landing/funnelEvents'
 
@@ -798,7 +863,24 @@ watch(
 )
 
 const currentHero = computed(() => heroSlides[activeSlide.value] ?? heroSlides[0]!)
-const heroCta = computed(() => heroCtaForSlide(currentHero.value))
+const heroCta = computed(() =>
+  heroCtaForSlide(currentHero.value, new Date(), {
+    contactIsLive: contactIsLive.value,
+    whatsappUrl: whatsappUrl.value,
+  }),
+)
+const heroCtaIsExternal = computed(() => primaryBookIsExternal(heroCta.value.to))
+
+const packagesVisitHref = featuredPackageBookHref()
+const treatmentsVisitHref = defaultTreatmentBookHref()
+
+const primaryCtaHref = computed(() =>
+  primaryBookHref(new Date(), {
+    contactIsLive: contactIsLive.value,
+    whatsappUrl: whatsappUrl.value,
+  }),
+)
+const primaryCtaIsExternal = computed(() => primaryBookIsExternal(primaryCtaHref.value))
 
 const lightboxImage = ref<HomeWorkImage | null>(null)
 
@@ -1648,7 +1730,7 @@ const reviews = landingClientReviews
   gap: 0.5rem;
   flex-shrink: 0;
   padding: 0.85rem 1.15rem;
-  background: #fff;
+  background: #f3efeb;
   color: var(--color-ink);
   font: 700 0.72rem/1 var(--font-body);
   letter-spacing: 0.14em;
@@ -1659,7 +1741,7 @@ const reviews = landingClientReviews
 
 .offer__cta:hover .offer__cta-action,
 .offer__cta:focus-visible .offer__cta-action {
-  background: #fff8f4;
+  background: #efe8e2;
 }
 
 .offer__cta-arrow {
@@ -1875,7 +1957,7 @@ const reviews = landingClientReviews
   align-items: start;
   height: 100%;
   padding: 1rem 1rem 1.05rem;
-  background: rgba(255, 252, 250, 0.88);
+  background: rgba(243, 239, 235, 0.92);
   border: 1px solid rgba(176, 122, 113, 0.12);
   box-shadow: none;
 }
@@ -2211,7 +2293,7 @@ const reviews = landingClientReviews
   padding: clamp(2.5rem, 6vw, 3.75rem) 1rem clamp(2.25rem, 5vw, 3.25rem);
   overflow: hidden;
   border-block: 1px solid rgba(176, 122, 113, 0.16);
-  background: #f4f3f1;
+  background: #f3efeb;
 }
 
 .mellis-cta__atmosphere {
@@ -2287,10 +2369,10 @@ const reviews = landingClientReviews
 .mellis-cta__card {
   position: relative;
   z-index: 2;
-  background: #fff;
+  background: #f3efeb;
   box-shadow:
     0 22px 48px rgba(44, 44, 48, 0.16),
-    0 0 0 1px rgba(255, 255, 255, 0.85);
+    0 0 0 1px rgba(243, 239, 235, 0.9);
 }
 
 @media (max-width: 479px) {
@@ -2309,6 +2391,11 @@ const reviews = landingClientReviews
   text-align: center;
   font: 500 0.8rem/1.45 var(--font-body);
   color: var(--color-rose-dark);
+}
+
+.mellis-cta__note--soft {
+  margin-top: 0.35rem;
+  color: var(--color-muted);
 }
 
 @media (min-width: 768px) {
@@ -2390,7 +2477,7 @@ const reviews = landingClientReviews
   height: 100%;
   margin: 0;
   padding: 1.45rem 1.3rem 1.35rem;
-  background: rgba(255, 252, 250, 0.92);
+  background: rgba(243, 239, 235, 0.94);
   border: 1px solid rgba(176, 122, 113, 0.12);
   box-shadow: none;
   transition: transform 0.35s var(--ease-story, ease);
@@ -2630,7 +2717,7 @@ const reviews = landingClientReviews
 .visit-map__card {
   height: 100%;
   padding: clamp(1.65rem, 4vw, 2.15rem) clamp(1.35rem, 3.5vw, 1.85rem) clamp(1.5rem, 3.5vw, 1.85rem);
-  background: #fffcfa;
+  background: #f3efeb;
   border: 1px solid rgba(176, 122, 113, 0.12);
   box-shadow:
     0 18px 40px rgba(44, 44, 48, 0.1),
@@ -2727,7 +2814,7 @@ const reviews = landingClientReviews
   flex-direction: column;
   height: 100%;
   min-width: 0;
-  background: #fffcfa;
+  background: #f3efeb;
   border: 1px solid rgba(176, 122, 113, 0.12);
   box-shadow:
     0 18px 40px rgba(44, 44, 48, 0.1),
