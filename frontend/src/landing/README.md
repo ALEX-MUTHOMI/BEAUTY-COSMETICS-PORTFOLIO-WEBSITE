@@ -8,9 +8,10 @@ and PII. Browser calls `NUXT_PUBLIC_API_BASE_URL` directly — do not add Nuxt
 
 | Module | Role |
 |--------|------|
+| `bookCtaTargets.ts` | Canonical `/book/...` deep-links for Book CTAs |
 | `landingContent.ts` | Copy, packages, contact fail-closed helpers |
 | `useLandingContact.ts` | Runtime WhatsApp/phone from `runtimeConfig` |
-| `primaryBookHref.ts` | Day-aware Book target (Africa/Nairobi) |
+| `primaryBookHref.ts` | Day-aware Book target (Africa/Nairobi) → `/book/...` |
 | `useLandingBookCta.ts` | Header/footer/sticky Book href (handoff + day bias) |
 | `bookingHandoff.ts` | Deep links into `/book/...` + last-path memory |
 | `heroMedia.ts` | Hero slide image sources + responsive variants |
@@ -20,8 +21,7 @@ and PII. Browser calls `NUXT_PUBLIC_API_BASE_URL` directly — do not add Nuxt
 
 ## Contact / WhatsApp
 
-Set `NUXT_PUBLIC_WHATSAPP_E164` (E.164 digits, no `+`). Until set, UI shows
-pending copy and hides `wa.me` / `tel:` links. Never use `254700000000` live.
+Set `NUXT_PUBLIC_WHATSAPP_E164` in the **repo root** `.env` (E.164 digits, no `+`), then recreate the frontend container so Docker compose passes it through. Until set, UI shows pending copy and hides `wa.me` / `tel:` links. Never use `254700000000` live.
 
 ## Images
 
