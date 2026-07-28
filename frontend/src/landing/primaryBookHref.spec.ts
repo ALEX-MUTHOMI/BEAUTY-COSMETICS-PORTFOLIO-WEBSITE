@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { primaryBookHref, primaryBookHrefKind } from './primaryBookHref'
+import { featuredPackageBookHref, defaultTreatmentBookHref } from './bookCtaTargets'
 import { LANDING_WHATSAPP_URL } from './landingContent'
+import { heroCtaForSlide, primaryBookHref, primaryBookHrefKind } from './primaryBookHref'
 import { SERVICES_ROUTES } from './servicesNavigation'
 
 describe('primaryBookHref', () => {
@@ -25,17 +26,35 @@ describe('primaryBookHref', () => {
     expect(primaryBookHrefKind(monUtc)).toBe('treatments')
   })
 
-  it('routes Tuesday and Wednesday to packages', () => {
+  it('routes Tuesday and Wednesday to featured package book path', () => {
     const tue = new Date('2026-07-21T10:00:00+03:00')
     const wed = new Date('2026-07-22T10:00:00+03:00')
-    expect(primaryBookHref(tue)).toBe(SERVICES_ROUTES.fullPackages)
-    expect(primaryBookHref(wed)).toBe(SERVICES_ROUTES.fullPackages)
+    expect(primaryBookHref(tue)).toBe(featuredPackageBookHref())
+    expect(primaryBookHref(wed)).toBe('/book/package/classic-full-package')
   })
 
-  it('routes Mon and Thu–Sat to treatments', () => {
+  it('routes Mon and Thu–Sat to default treatment book path', () => {
     const mon = new Date('2026-07-20T10:00:00+03:00')
     const thu = new Date('2026-07-23T10:00:00+03:00')
-    expect(primaryBookHref(mon)).toBe(SERVICES_ROUTES.singleSessions)
-    expect(primaryBookHref(thu)).toBe(SERVICES_ROUTES.singleSessions)
+    expect(primaryBookHref(mon)).toBe(defaultTreatmentBookHref())
+    expect(primaryBookHref(thu)).toBe('/book/facials/deep-cleansing-facial')
+  })
+})
+
+describe('heroCtaForSlide', () => {
+  it('deep-links package day to Classic Full Package', () => {
+    const tue = new Date('2026-07-21T10:00:00+03:00')
+    expect(heroCtaForSlide({ service: 'makeup' }, tue).to).toBe(
+      '/book/package/classic-full-package',
+    )
+    expect(heroCtaForSlide({ service: 'makeup' }, tue).label.toLowerCase()).toContain('book')
+  })
+
+  it('deep-links treatment day to the slide highlight book path', () => {
+    const mon = new Date('2026-07-20T10:00:00+03:00')
+    expect(heroCtaForSlide({ service: 'makeup' }, mon).to).toBe('/book/makeup/soft-glam')
+    expect(heroCtaForSlide({ service: 'facial' }, mon).to).toBe(
+      '/book/facials/deep-cleansing-facial',
+    )
   })
 })

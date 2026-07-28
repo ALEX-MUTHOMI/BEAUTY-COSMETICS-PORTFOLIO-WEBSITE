@@ -255,7 +255,7 @@ export interface SingleTreatmentHighlight {
 }
 
 /** One marquee, directly-bookable treatment per category for the homepage singles rail. */
-const SINGLE_HIGHLIGHT_PICKS: Record<string, string> = {
+export const SINGLE_HIGHLIGHT_PICKS: Record<ServiceCategoryId, string> = {
   facials: 'Deep cleansing facial',
   massage: 'Back, neck & shoulders',
   waxing: 'Full leg',
@@ -264,7 +264,7 @@ const SINGLE_HIGHLIGHT_PICKS: Record<string, string> = {
 
 export function getSingleTreatmentHighlights(): SingleTreatmentHighlight[] {
   return serviceCategories.map((category) => {
-    const pick = SINGLE_HIGHLIGHT_PICKS[category.id]
+    const pick = SINGLE_HIGHLIGHT_PICKS[category.id as ServiceCategoryId]
     const treatment =
       category.treatments.find((t) => t.name === pick) ?? category.treatments[0]!
     return {

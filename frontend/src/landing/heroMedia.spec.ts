@@ -33,9 +33,9 @@ describe('heroMedia', () => {
     })
   })
 
-  it('keeps Book this visit CTA deep-linked to services', () => {
+  it('keeps Book this visit CTA label and a bookable fallback path', () => {
     expect(HERO_CTA.label.toLowerCase()).toContain('book')
-    expect(HERO_CTA.to).toContain('/services')
+    expect(HERO_CTA.to.startsWith('/book/')).toBe(true)
   })
 
   it('preloads the makeup LCP asset at a mobile-friendly width', () => {

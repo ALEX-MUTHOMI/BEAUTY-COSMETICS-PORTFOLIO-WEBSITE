@@ -100,24 +100,9 @@ function slide(
 /** Mellis-style CTA under the script title — decision, not a tour. */
 export const HERO_CTA = {
   label: 'Book this visit',
-  to: '/services#single-sessions',
+  /** Fallback only — prefer heroCtaForSlide() from primaryBookHref. */
+  to: '/book/facials/deep-cleansing-facial',
 } as const
-
-const HERO_SERVICE_HASH: Record<HeroService, string> = {
-  makeup: 'makeup',
-  facial: 'facials',
-  massage: 'massage',
-  waxing: 'waxing',
-}
-
-/** Deep-link the active hero service into the treatments catalog. */
-export function heroCtaForSlide(slide: Pick<HeroSlide, 'service'>): { label: string; to: string } {
-  const hash = HERO_SERVICE_HASH[slide.service]
-  return {
-    label: HERO_CTA.label,
-    to: `/services#${hash}`,
-  }
-}
 
 export function formatHeroHeadline(slide: Pick<HeroSlide, 'serviceTitle' | 'headline'>): string {
   return slide.headline || `Shee ${slide.serviceTitle}`
