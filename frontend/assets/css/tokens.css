@@ -16,20 +16,25 @@
 @import '@fontsource/libre-baskerville/700.css';
 
 :root {
-  /* Deeper warm stone canvas — quiet against photos, not chalk white */
+  /* Mellis soft-gray canvas — muted warm stone, easy on the eye */
   --color-ink: #2c2c30;
   --color-deep: #3f3e43;
   --color-muted: #7a7876;
-  --color-cream: #d2ccc7;
-  --color-paper: #ddd8d4;
-  --color-stone: #c9c3be;
-  --color-parchment: #d8d2cd;
+  --color-cream: #d8d2cc;
+  --color-paper: #e5e1dc;
+  --color-stone: #cbc5bf;
+  --color-parchment: #ddd8d3;
   --color-rose: #b07a71;
   --color-rose-dark: #965f57;
-  --color-rose-soft: #e4dcd9;
-  --color-line: rgba(44, 44, 48, 0.12);
-  --color-footer: #2c2c30;
+  --color-rose-soft: #e4ddd8;
+  --color-line: rgba(44, 44, 48, 0.09);
+  /* Mellis charcoal plate — aligns with card-dark family */
+  --color-footer: #1a1718;
   --color-overlay: rgba(44, 44, 48, 0.5);
+  /* Quiet raised plate on soft gray */
+  --color-surface-raised: #ebe7e3;
+  /* Package / pricing near-black */
+  --color-card-dark: #171516;
 
   --color-bg: var(--color-paper);
   --color-surface: var(--color-paper);
@@ -64,7 +69,8 @@
   --ease-story: cubic-bezier(0.22, 1, 0.36, 1);
   --container: min(1170px, 100% - 1.25rem);
   --header-height: 4.25rem;
-  --mobile-book-bar-height: 4.25rem;
+  /* 0.65 + 2.85 + 0.65 padding/cta — safe-area added at use sites */
+  --mobile-book-bar-height: 4.15rem;
 }
 
 @media (min-width: 768px) {
@@ -90,6 +96,8 @@ html[data-staff-theme='dark'] {
   --color-line: rgba(244, 244, 245, 0.12);
   --color-footer: #09090b;
   --color-overlay: rgba(0, 0, 0, 0.62);
+  --color-surface-raised: #1c1c1f;
+  --color-card-dark: #0b0b0d;
   --shadow-card: 0 12px 36px rgba(0, 0, 0, 0.5);
   --color-bg: var(--color-cream);
   --color-surface: var(--color-paper);
