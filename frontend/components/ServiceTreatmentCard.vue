@@ -66,8 +66,8 @@ const indexLabel = computed(() => String(props.index + 1).padStart(2, '0'))
   padding: 1.35rem 1.25rem 1.2rem;
   border: 2px solid transparent;
   border-radius: 2px;
-  background: #fff;
-  box-shadow: 0 4px 20px rgba(39, 37, 42, 0.06);
+  background: var(--color-surface-raised);
+  box-shadow: 0 4px 20px rgba(39, 37, 42, 0.05);
   text-align: left;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -85,16 +85,16 @@ const indexLabel = computed(() => String(props.index + 1).padStart(2, '0'))
 @media (hover: hover) {
   .service-treatment--facials:hover:not(.service-treatment--selected) {
     border-color: rgba(222, 150, 141, 0.3);
-    background: #fafafa;
-    box-shadow: 0 6px 18px rgba(39, 37, 42, 0.06);
+    background: var(--color-parchment);
+    box-shadow: 0 6px 18px rgba(39, 37, 42, 0.05);
   }
 
   .service-treatment--massage:hover:not(.service-treatment--selected),
   .service-treatment--waxing:hover:not(.service-treatment--selected),
   .service-treatment--makeup:hover:not(.service-treatment--selected) {
     border-color: rgba(222, 150, 141, 0.3);
-    background: #fafafa;
-    box-shadow: 0 6px 18px rgba(39, 37, 42, 0.06);
+    background: var(--color-parchment);
+    box-shadow: 0 6px 18px rgba(39, 37, 42, 0.05);
   }
 
   .service-treatment:hover:not(.service-treatment--selected) .service-treatment__badge {
@@ -109,7 +109,7 @@ const indexLabel = computed(() => String(props.index + 1).padStart(2, '0'))
 }
 
 .service-treatment:active:not(.service-treatment--selected) {
-  background: #f5f5f6;
+  background: var(--color-cream);
   border-color: rgba(222, 150, 141, 0.25);
 }
 
@@ -120,8 +120,8 @@ const indexLabel = computed(() => String(props.index + 1).padStart(2, '0'))
 
 .service-treatment--selected {
   border-color: var(--color-rose);
-  background: #fff;
-  box-shadow: 0 4px 16px rgba(39, 37, 42, 0.07);
+  background: var(--color-surface-raised);
+  box-shadow: 0 4px 16px rgba(39, 37, 42, 0.06);
   transform: none;
 }
 
@@ -130,7 +130,7 @@ const indexLabel = computed(() => String(props.index + 1).padStart(2, '0'))
 .service-treatment--waxing.service-treatment--selected,
 .service-treatment--makeup.service-treatment--selected {
   border-color: var(--color-rose);
-  background: linear-gradient(180deg, #fff 0%, #fdf9f8 100%);
+  background: linear-gradient(180deg, var(--color-surface-raised) 0%, var(--color-rose-soft) 100%);
 }
 
 .service-treatment__badge {
