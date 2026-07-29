@@ -28,7 +28,7 @@ test.describe('Services page security and IA', () => {
 
   test('nav packages and singles route to canonical services anchors', async ({ page }) => {
     await page.goto(BASE_URL, { waitUntil: 'networkidle' })
-    await expect(page.locator('.site-loader')).toHaveCount(0, { timeout: 5000 })
+    await expect(page.locator('.site-boot-skeleton, .site-loader')).toHaveCount(0, { timeout: 5000 })
 
     await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Packages' }).click()
     await expect(page).toHaveURL(/\/services#full-packages/)

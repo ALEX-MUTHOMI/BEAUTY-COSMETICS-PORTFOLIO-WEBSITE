@@ -21,7 +21,7 @@ test.describe('Shee Aesthetics landing page', () => {
     expect(hydrated.hasNuxt, 'window.__NUXT__ missing — inline bootstrap blocked').toBe(true)
     expect(hydrated.vueApp, 'Vue app not mounted — client bundle failed').toBe(true)
 
-    await expect(page.locator('.site-loader')).toHaveCount(0, { timeout: 5000 })
+    await expect(page.locator('.site-boot-skeleton, .site-loader')).toHaveCount(0, { timeout: 5000 })
 
     await expect(page.getByRole('heading', { name: 'Shee', level: 1 })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Your hour to unwind', level: 2 })).toBeVisible()
@@ -71,11 +71,18 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.getByRole('link', { name: /See all packages/i })).toBeVisible()
 
     await expect(page.getByRole('heading', { name: 'What clients say', level: 2 })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Opening Hours', level: 2 })).toBeVisible()
-    await expect(page.getByRole('link', { name: /Open in Maps/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Visit us', level: 2 })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Opening Hours', level: 3 })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Get directions/i })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Open in Google Maps/i })).toBeVisible()
     await expect(page.locator('#visit .visit-map__card')).toBeVisible()
     await expect(page.locator('#visit .visit-map__map-panel')).toBeVisible()
     await expect(page.locator('#visit .visit-map__frame')).toBeVisible()
+
+    const directions = page.getByRole('link', { name: /Get directions/i })
+    await expect(directions).toHaveAttribute('href', /google\.com\/maps\/dir/)
+    const openMaps = page.getByRole('link', { name: /Open in Google Maps/i })
+    await expect(openMaps).toHaveAttribute('href', /google\.com\/maps\/search/)
 
     const cspViolations = consoleErrors.filter((e) =>
       /content security policy|refused to execute|refused to load/i.test(e),
@@ -87,7 +94,7 @@ test.describe('Shee Aesthetics landing page', () => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto(BASE_URL, { waitUntil: 'networkidle' })
 
-    await expect(page.locator('.site-loader')).toHaveCount(0, { timeout: 5000 })
+    await expect(page.locator('.site-boot-skeleton, .site-loader')).toHaveCount(0, { timeout: 5000 })
     await expect(page.locator('.mobile-book-bar')).toBeVisible()
     await expect(page.locator('.mobile-book-bar').getByRole('link', { name: /Book your visit/i })).toBeVisible()
 
@@ -113,7 +120,7 @@ test.describe('Shee Aesthetics landing page', () => {
     }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
       await page.goto(BASE_URL, { waitUntil: 'networkidle' })
-      await expect(page.locator('.site-loader')).toHaveCount(0, { timeout: 5000 })
+      await expect(page.locator('.site-boot-skeleton, .site-loader')).toHaveCount(0, { timeout: 5000 })
 
       const overflowX = await page.evaluate(() => {
         const doc = document.documentElement
@@ -121,7 +128,7 @@ test.describe('Shee Aesthetics landing page', () => {
       })
       expect(overflowX, 'horizontal overflow').toBeLessThanOrEqual(1)
 
-      await expect(page.getByRole('link', { name: /Book this visit/i }).first()).toBeVisible()
+      await expect(page.locator('.mobile-book-bar').getByRole('link', { name: /Book your visit/i })).toBeVisible()
       const heroTitle = page.locator('.hero-handwrite').first()
       await expect(heroTitle).toBeVisible()
       const titleBox = await heroTitle.boundingBox()
@@ -130,6 +137,7 @@ test.describe('Shee Aesthetics landing page', () => {
       expect(titleText.length).toBeGreaterThan(8)
       await expect(page.locator('.mobile-book-bar')).toBeVisible()
       await expect(page.locator('.hero__dots')).toBeVisible()
+      await expect(page.locator('.hero__cta').first()).toBeHidden()
 
       const menu = page.getByRole('banner').getByRole('button', { name: /menu|open/i })
       await expect(menu).toBeVisible()

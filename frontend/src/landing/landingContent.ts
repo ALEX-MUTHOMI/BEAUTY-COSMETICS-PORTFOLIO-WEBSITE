@@ -209,12 +209,20 @@ export function getFeaturedPackages(list: LandingPackage[] = packages): LandingP
   return featured.length > 0 ? featured : list.slice(0, 1)
 }
 
+/** Shared place query for Maps search / directions / embed (no API key). */
+const LANDING_MAPS_PLACE_QUERY = 'Shee+Aesthetics+Meru+Town+Kenya'
+
+/** Opens the place card in Google Maps (mobile app or web). */
 export const LANDING_MAPS_URL =
-  'https://www.google.com/maps/search/?api=1&query=Shee+Aesthetics+Meru+Town+Kenya'
+  `https://www.google.com/maps/search/?api=1&query=${LANDING_MAPS_PLACE_QUERY}`
+
+/** Turn-by-turn directions to the studio — preferred client CTA. */
+export const LANDING_MAPS_DIRECTIONS_URL =
+  `https://www.google.com/maps/dir/?api=1&destination=${LANDING_MAPS_PLACE_QUERY}`
 
 /** Light embed for the homepage visit band (no API key). */
 export const LANDING_MAPS_EMBED_URL =
-  'https://maps.google.com/maps?q=Shee+Aesthetics+Meru+Town+Kenya&hl=en&z=15&output=embed'
+  `https://maps.google.com/maps?q=${LANDING_MAPS_PLACE_QUERY}&hl=en&z=16&output=embed`
 
 export const singleTreatments: LandingPackage[] = [
   {
