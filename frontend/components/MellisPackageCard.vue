@@ -71,40 +71,59 @@ const visibleIncludes = computed(() =>
   height: 100%;
   width: 100%;
   min-width: 0;
-  padding: 1.35rem 1.1rem 1.25rem;
-  background: #f3efeb;
-  border: 1px solid var(--color-line);
+  padding: 1.55rem 1.3rem 1.4rem;
+  background: var(--color-card-dark);
+  border: 0;
   border-top: 3px solid var(--color-rose);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 20px 44px rgba(23, 21, 22, 0.26);
   overflow: visible;
+  color: #f4ebe6;
   transition:
     transform 0.35s var(--ease-story),
-    box-shadow 0.35s var(--ease-story),
-    border-color 0.3s;
+    box-shadow 0.35s var(--ease-story);
+}
+
+.mellis-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.38;
+  background-image: url('/images/flower.png');
+  background-size: 6.25rem;
+  background-repeat: repeat;
+  /* Keep rose/pink orchid tone — no grayscale */
+  filter: saturate(1.5) brightness(1.18) contrast(1.05);
+  border-radius: inherit;
+  mix-blend-mode: soft-light;
 }
 
 .mellis-card::after {
   content: '';
   position: absolute;
   inset: 0;
-  opacity: 0.03;
+  z-index: 0;
   pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 6c-5 11-14 13-14 22a14 14 0 0 0 28 0c0-9-9-11-14-22z' fill='%23de968d'/%3E%3C/svg%3E");
-  background-size: 72px;
+  background: linear-gradient(180deg, rgba(23, 21, 22, 0.08) 0%, transparent 40%, rgba(23, 21, 22, 0.28) 100%);
+}
+
+.mellis-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .mellis-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 14px 32px rgba(39, 37, 42, 0.1);
-  border-top-color: var(--color-rose-dark);
+  box-shadow: 0 24px 52px rgba(23, 21, 22, 0.32);
 }
 
 .mellis-card--featured {
-  background: var(--color-cream);
+  background: var(--color-card-dark);
   border-top-width: 4px;
-  box-shadow: 0 16px 40px rgba(176, 122, 113, 0.18);
+  box-shadow: 0 22px 48px rgba(23, 21, 22, 0.3);
   margin-top: 0.75rem;
-  padding: 1.75rem 1.35rem 1.5rem;
+  padding: 1.95rem 1.5rem 1.6rem;
 }
 
 .mellis-card--featured .mellis-card__title {
@@ -131,20 +150,21 @@ const visibleIncludes = computed(() =>
   align-items: flex-start;
   text-align: left;
   padding: 1rem 0.95rem 0.95rem;
-  border: 1px solid var(--color-line);
+  border: 0;
   border-top: 3px solid var(--color-rose);
   border-radius: 0;
-  background: #f3efeb;
-  box-shadow: var(--shadow-card);
+  background: var(--color-card-dark);
+  box-shadow: 0 12px 28px rgba(23, 21, 22, 0.14);
 }
 
+.mellis-card--single::before,
 .mellis-card--single::after {
   display: none;
 }
 
 .mellis-card--single:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(39, 37, 42, 0.09);
+  box-shadow: 0 14px 32px rgba(23, 21, 22, 0.18);
 }
 
 .mellis-card--single .mellis-card__title {
@@ -189,6 +209,19 @@ const visibleIncludes = computed(() =>
   max-width: 14rem;
 }
 
+.mellis-card :deep(.site-btn--outline) {
+  background: transparent;
+  color: #f4ebe6;
+  border-color: rgba(245, 216, 208, 0.45);
+}
+
+.mellis-card :deep(.site-btn--outline:hover),
+.mellis-card :deep(.site-btn--outline:focus-visible) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(245, 216, 208, 0.7);
+  color: #fff;
+}
+
 .mellis-card__details {
   display: inline-flex;
   align-items: center;
@@ -200,13 +233,13 @@ const visibleIncludes = computed(() =>
   letter-spacing: 0.12em;
   text-transform: uppercase;
   text-decoration: none;
-  color: var(--color-rose-dark);
+  color: #f0b8ac;
   transition: color 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 .mellis-card__details:hover {
-  color: var(--color-rose);
+  color: #f5d8d0;
   text-decoration: underline;
 }
 
@@ -310,7 +343,7 @@ const visibleIncludes = computed(() =>
   font: 600 0.68rem var(--font-body);
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--color-rose-dark);
+  color: #f0b8ac;
 }
 
 .mellis-card__title {
@@ -319,7 +352,7 @@ const visibleIncludes = computed(() =>
   font-size: clamp(1.28rem, 2.4vw, 1.45rem);
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--color-ink);
+  color: #f8f2ee;
 }
 
 .mellis-card__price {
@@ -328,7 +361,7 @@ const visibleIncludes = computed(() =>
   font-size: clamp(1.35rem, 2.6vw, 1.55rem);
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--color-rose-dark);
+  color: #f0b8ac;
   line-height: 1.2;
 }
 
@@ -336,7 +369,7 @@ const visibleIncludes = computed(() =>
   margin: 0 0 0.85rem;
   max-width: 28ch;
   font: 400 0.88rem/1.55 var(--font-body);
-  color: var(--color-muted);
+  color: rgba(244, 235, 230, 0.72);
 }
 
 .mellis-card__includes {
@@ -349,10 +382,10 @@ const visibleIncludes = computed(() =>
 
 .mellis-card__includes li {
   position: relative;
-  padding: 0.3rem 0 0.3rem 1.35rem;
+  padding: 0.28rem 0 0.28rem 1.35rem;
   font: 500 0.84rem var(--font-body);
-  color: var(--color-ink);
-  border-bottom: 1px solid rgba(39, 37, 42, 0.06);
+  color: rgba(248, 242, 238, 0.92);
+  border-bottom: 0;
 }
 
 .mellis-card__includes li:last-child {
