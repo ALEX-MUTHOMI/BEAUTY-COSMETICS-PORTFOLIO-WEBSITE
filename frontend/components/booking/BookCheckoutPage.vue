@@ -102,7 +102,10 @@
 
           <div
             class="book-actions"
-            :class="{ 'book-actions--ready': flow.canContinue.value }"
+            :class="{
+              'book-actions--ready': flow.canContinue.value,
+              'book-actions--dock': flow.canContinue.value,
+            }"
           >
             <SiteButton :to="changeServiceHref" variant="outline">Change service</SiteButton>
             <button
@@ -255,7 +258,7 @@ const changeServiceHref = computed(() => {
 async function onSelectDate(isoDate: string) {
   flow.selectDate(isoDate)
   await nextTick()
-  slotsAnchor.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  slotsAnchor.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 async function handleSubmit() {
@@ -298,7 +301,7 @@ const pageLead = computed(() => {
 .book-page {
   background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
   min-height: 70vh;
-  /* Mobile book bar is hidden on /book/* — only need sticky-action + safe-area room. */
+  /* Room for docked sticky actions once a slot is chosen. */
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
 }
 
@@ -475,6 +478,7 @@ const pageLead = computed(() => {
 
 .book-slots-anchor {
   scroll-margin-top: 5.5rem;
+  scroll-margin-bottom: 1.5rem;
 }
 
 .book-actions {
@@ -511,16 +515,19 @@ const pageLead = computed(() => {
 }
 
 @media (max-width: 767px) {
+  .book-page {
+    --book-dock-h: 7.5rem;
+    padding-bottom: calc(var(--book-dock-h) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .book-slots-anchor {
+    /* Keep time chips above the dock once it appears */
+    scroll-margin-bottom: calc(var(--book-dock-h) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0.35rem;
+  }
+
   .book-actions {
-    position: sticky;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
-    z-index: 3;
     margin-top: 1rem;
-    margin-left: -0.35rem;
-    margin-right: -0.35rem;
-    padding: 0.65rem 0.35rem;
-    background: linear-gradient(180deg, rgba(250, 250, 250, 0.75) 0%, #fafafa 35%);
-    border-top: 1px solid var(--color-line);
     flex-direction: column-reverse;
     gap: 0.5rem;
   }
@@ -538,6 +545,21 @@ const pageLead = computed(() => {
     color: var(--color-rose-dark);
     box-shadow: none;
     min-height: 2.35rem;
+  }
+
+  /*
+    Only dock after a slot is selected. While picking times, actions stay in
+    normal flow under the slot grid so they cannot intercept taps.
+  */
+  .book-actions--dock {
+    position: sticky;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 0.35rem);
+    z-index: 5;
+    margin-left: -0.35rem;
+    margin-right: -0.35rem;
+    padding: 0.65rem 0.35rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(180deg, rgba(250, 250, 250, 0.72) 0%, #fafafa 38%);
+    border-top: 1px solid var(--color-line);
   }
 }
 </style>

@@ -577,8 +577,79 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
-/* Mobile over-hero: brand centered, hamburger on the right of nav row */
-@media (max-width: 959px) {
+/* Phone over-hero: single compact row — brand left, menu right */
+@media (max-width: 767px) {
+  .site-header--home.site-header--over-hero {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    padding-left: max(0.85rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.85rem, env(safe-area-inset-right, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    min-height: 3.5rem;
+  }
+
+  .site-header--home.site-header--over-hero .site-header__brand {
+    flex: 1 1 auto;
+    justify-content: flex-start;
+    padding: 0.35rem 0;
+  }
+
+  .site-header--home.site-header--over-hero .site-header__logo--stacked {
+    display: none;
+  }
+
+  .site-header--home.site-header--over-hero .site-header__logo--compact {
+    display: inline-flex;
+  }
+
+  .site-header--home.site-header--over-hero .site-header__logo--compact :deep(.shee-logo__mark-wrap) {
+    width: 34px;
+    height: 34px;
+    background: var(--header-rose);
+    border: 1.5px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 2px 10px rgba(20, 16, 18, 0.28);
+  }
+
+  .site-header--home.site-header--over-hero .site-header__logo--compact :deep(.shee-logo__mark) {
+    width: 18px;
+    height: 18px;
+    filter: brightness(0) invert(1);
+  }
+
+  .site-header--home.site-header--over-hero .site-header__logo--compact :deep(.shee-logo__name) {
+    color: #fff;
+    font-size: 1.15rem;
+    text-shadow:
+      0 1px 2px rgba(20, 16, 18, 0.75),
+      0 3px 12px rgba(20, 16, 18, 0.35);
+  }
+
+  .site-header--home.site-header--over-hero .site-header__logo--compact :deep(.shee-logo__tag) {
+    color: #f0c4be;
+    font-size: 0.5rem;
+    letter-spacing: 0.24em;
+    font-weight: 700;
+    text-shadow: 0 1px 8px rgba(20, 16, 18, 0.45);
+  }
+
+  .site-header--home.site-header--over-hero .site-header__nav-row {
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    min-height: 0;
+    padding: 0;
+    border-top: 0;
+  }
+
+  .site-header--home.site-header--over-hero .site-header__menu-toggle {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.55rem;
+  }
+}
+
+/* Mobile over-hero (tablet band): brand centered, hamburger on the right of nav row */
+@media (min-width: 768px) and (max-width: 959px) {
   .site-header--over-hero .site-header__brand {
     padding-top: calc(0.55rem + env(safe-area-inset-top, 0px));
     padding-bottom: 0.25rem;

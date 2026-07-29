@@ -87,6 +87,22 @@ const chars = computed(() => Array.from(props.text))
   }
 }
 
+@media (max-width: 767px) {
+  .hero-handwrite {
+    font-size: clamp(2rem, 8.5vw, 2.85rem);
+    max-width: min(100%, 16ch);
+  }
+
+  .hero-handwrite__ch,
+  .hero-handwrite__ch--space {
+    animation-delay: calc(var(--i) * 36ms + 60ms);
+  }
+
+  .hero-handwrite__ch {
+    animation-duration: 0.32s;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-handwrite__ch,
   .hero-handwrite__ch--space {

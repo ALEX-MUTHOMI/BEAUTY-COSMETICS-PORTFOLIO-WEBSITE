@@ -317,9 +317,9 @@ useHead({
 </script>
 
 <style scoped>
-/* Page shell — calm white base, room for fixed mobile book bar */
+/* Page shell — soft ivory canvas, room for fixed mobile book bar */
 .services-page {
-  background: #fff;
+  background: var(--color-paper);
   padding-bottom: calc(var(--mobile-book-bar-height) + env(safe-area-inset-bottom, 0px));
 }
 
@@ -342,7 +342,7 @@ useHead({
   position: relative;
   overflow: hidden;
   padding: 1rem max(1rem, env(safe-area-inset-left)) 0.5rem;
-  background: #fff;
+  background: var(--color-paper);
 }
 
 .services-hero::before {
@@ -395,7 +395,7 @@ useHead({
   padding: 0.75rem 0.85rem;
   border: 1px solid var(--color-line);
   border-radius: 2px;
-  background: #fff;
+  background: var(--color-surface-raised);
 }
 
 .services-chooser__days {
@@ -437,7 +437,7 @@ useHead({
   padding: 0.65rem 0.7rem;
   border: 1px solid var(--color-line);
   border-radius: 2px;
-  background: #fff;
+  background: var(--color-surface-raised);
   text-decoration: none;
   color: inherit;
   touch-action: manipulation;
@@ -451,20 +451,20 @@ useHead({
 @media (hover: hover) {
   .services-path:hover {
     border-color: rgba(222, 150, 141, 0.45);
-    background: #fafafa;
+    background: var(--color-parchment);
     box-shadow: 0 4px 14px rgba(39, 37, 42, 0.05);
     transform: translateY(-1px);
   }
 }
 
 .services-path:active {
-  background: #f7f7f8;
+  background: var(--color-cream);
 }
 
 .services-path--primary {
   border-color: rgba(222, 150, 141, 0.35);
   border-left: 3px solid var(--color-rose);
-  background: #fff;
+  background: var(--color-surface-raised);
   box-shadow: none;
 }
 
@@ -475,7 +475,7 @@ useHead({
 
 @media (hover: hover) {
   .services-path--primary:hover {
-    background: #fafafa;
+    background: var(--color-parchment);
   }
 }
 
@@ -514,16 +514,16 @@ useHead({
   color: var(--color-muted);
 }
 
-/* Package sections — unified neutral sections, no heavy pink blocks */
+/* Package sections — soft canvas bands */
 .services-packages {
   padding: clamp(1.75rem, 4vh, 2.75rem) max(1rem, env(safe-area-inset-left));
   margin-top: 0.5rem;
-  background: #fff;
+  background: var(--color-paper);
   scroll-margin-top: calc(var(--header-height) + 0.5rem);
 }
 
 .services-packages--singles {
-  background: #fafafa;
+  background: var(--color-parchment);
   border-top: 1px solid var(--color-line);
 }
 
@@ -622,7 +622,7 @@ useHead({
   padding: 0.7rem 0.45rem;
   border: 1px solid var(--color-line);
   border-radius: 2px;
-  background: #fff;
+  background: var(--color-surface-raised);
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -636,12 +636,12 @@ useHead({
 @media (hover: hover) {
   .services-tab:hover:not(.services-tab--active) {
     border-color: rgba(222, 150, 141, 0.35);
-    background: #fafafa;
+    background: var(--color-parchment);
   }
 }
 
 .services-tab:active:not(.services-tab--active) {
-  background: #f3f3f4;
+  background: var(--color-cream);
 }
 
 .services-tab:focus-visible {
@@ -709,14 +709,14 @@ useHead({
   border-radius: 2px;
   border: 1px solid var(--color-line);
   overflow: hidden;
-  background: #fff;
+  background: var(--color-surface-raised);
 }
 
 .services-panel--facials,
 .services-panel--massage,
 .services-panel--waxing,
 .services-panel--makeup {
-  background: #fff;
+  background: var(--color-surface-raised);
 }
 
 .services-panel__inner {
@@ -745,7 +745,7 @@ useHead({
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid #fff;
+  border: 4px solid var(--color-surface-raised);
   box-shadow: 0 10px 32px rgba(39, 37, 42, 0.12);
 }
 
@@ -760,7 +760,7 @@ useHead({
   height: 48px;
   border-radius: 50%;
   background: var(--color-rose);
-  border: 3px solid #fff;
+  border: 3px solid var(--color-surface-raised);
   box-shadow: 0 4px 14px rgba(222, 150, 141, 0.45);
 }
 
@@ -802,14 +802,14 @@ useHead({
   margin-top: 1.5rem;
   padding: 1.15rem 1rem;
   border-radius: 2px;
-  background: #fafafa;
+  background: var(--color-parchment);
   border: 1px dashed var(--color-line);
   text-align: center;
   transition: border-color 0.2s, background-color 0.2s;
 }
 
 .services-panel__book--ready {
-  background: #fff;
+  background: var(--color-surface-raised);
   border: 1px solid rgba(222, 150, 141, 0.35);
   box-shadow: 0 4px 16px rgba(39, 37, 42, 0.05);
 }

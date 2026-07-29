@@ -7,7 +7,19 @@
       <p v-if="durationHint" class="flo-slots__hint">{{ durationHint }}</p>
     </header>
 
-    <p v-if="loading" class="flo-slots__loading">Loading open hours…</p>
+    <div
+      v-if="loading"
+      class="flo-slots__skeleton"
+      role="status"
+      aria-label="Loading open hours"
+    >
+      <div
+        v-for="n in 3"
+        :key="n"
+        class="flo-slots__skel-btn flo-slots__skel-shimmer"
+        aria-hidden="true"
+      />
+    </div>
 
     <div v-else-if="slots.length === 0" class="flo-slots__empty">
       No open times for this day. Try another date.
@@ -228,6 +240,46 @@ const selectionSummary = computed(() => {
   color: var(--color-muted);
 }
 
+.flo-slots__skeleton {
+  margin-top: 0.85rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.flo-slots__skel-btn {
+  min-height: 3.1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(39, 37, 42, 0.06);
+}
+
+.flo-slots__skel-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(39, 37, 42, 0.05) 0%,
+    rgba(39, 37, 42, 0.11) 45%,
+    rgba(39, 37, 42, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: flo-slots-shimmer 1.25s ease-in-out infinite;
+}
+
+@keyframes flo-slots-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flo-slots__skel-shimmer {
+    animation: none;
+    background: rgba(39, 37, 42, 0.07);
+  }
+}
+
 .flo-slots__timeline {
   margin-top: 0.85rem;
   display: flex;
@@ -355,7 +407,8 @@ const selectionSummary = computed(() => {
 }
 
 @media (min-width: 520px) {
-  .flo-slots__grid {
+  .flo-slots__grid,
+  .flo-slots__skeleton {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

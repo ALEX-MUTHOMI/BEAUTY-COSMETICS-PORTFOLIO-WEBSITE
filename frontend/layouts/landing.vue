@@ -1,12 +1,33 @@
 <template>
-  <div class="landing-shell" :class="{ 'landing-shell--no-book-bar': !showMobileBookBar }">
+  <div
+    class="landing-shell"
+    :class="{
+      'landing-shell--no-book-bar': !showMobileBookBar,
+      'landing-shell--home': isHome,
+      'landing-shell--resume': Boolean(welcomeBackHref),
+    }"
+  >
     <SiteHeader />
-    <div v-if="welcomeBackHref" class="welcome-back" role="status">
-      <p class="welcome-back__text">Welcome back — continue your last booking</p>
-      <NuxtLink :to="welcomeBackHref" class="welcome-back__cta" @click="onWelcomeBack">
-        Continue
-      </NuxtLink>
-    </div>
+
+    <aside
+      v-if="welcomeBackHref"
+      class="welcome-back"
+      :class="{ 'welcome-back--hero': isHome }"
+      role="status"
+      aria-label="Continue your last booking"
+    >
+      <div class="welcome-back__inner">
+        <span class="welcome-back__mark" aria-hidden="true" />
+        <div class="welcome-back__copy">
+          <p class="welcome-back__eyebrow">Welcome back</p>
+          <p class="welcome-back__text">Continue your last booking</p>
+        </div>
+        <NuxtLink :to="welcomeBackHref" class="welcome-back__cta" @click="onWelcomeBack">
+          Resume
+        </NuxtLink>
+      </div>
+    </aside>
+
     <slot />
     <SiteFooter />
 
@@ -61,6 +82,7 @@ import { trackFunnelEvent } from '@/landing/funnelEvents'
 import { useLandingBookCta } from '@/landing/useLandingBookCta'
 
 const route = useRoute()
+const isHome = computed(() => route.path === '/')
 
 const showMobileBookBar = computed(() => {
   const path = route.path || ''
@@ -102,25 +124,79 @@ useHead({
 
 <style scoped>
 .landing-shell {
+  position: relative;
   min-height: 100vh;
   min-height: 100dvh;
   background: var(--color-paper);
+  --home-hero-chrome: 0px;
+  --welcome-resume-offset: 0px;
 }
 
-.welcome-back {
+.landing-shell--home.landing-shell--resume {
+  --welcome-resume-offset: 3.35rem;
+}
+
+.landing-shell--home.landing-shell--resume :deep(.hero__content) {
+  padding-top: calc(
+    max(var(--site-header-height, 3.75rem), env(safe-area-inset-top, 0px)) + var(--welcome-resume-offset)
+  );
+}
+
+/* Floating resume chip on home — does not push hero or bleach the header */
+.welcome-back--hero {
+  position: absolute;
+  z-index: 46;
+  top: calc(var(--site-header-height, 4.25rem) + 0.55rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(calc(100% - 1.5rem), 26rem);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  pointer-events: none;
+}
+
+.welcome-back--hero .welcome-back__inner {
+  pointer-events: auto;
   display: flex;
-  flex-wrap: nowrap;
   align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-  padding: 0.35rem 0.85rem;
-  background: #f7ece9;
-  border-bottom: 1px solid var(--color-line, #e8e4e1);
+  gap: 0.65rem;
+  padding: 0.55rem 0.55rem 0.55rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 10px 28px rgba(20, 16, 18, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.85) inset;
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+}
+
+.welcome-back__mark {
+  flex: 0 0 auto;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--color-rose);
+  box-shadow: 0 0 0 4px rgba(222, 150, 141, 0.22);
+}
+
+.welcome-back__copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.welcome-back__eyebrow {
+  margin: 0;
+  font: 700 0.58rem/1.2 var(--font-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-rose-dark, #b56b62);
 }
 
 .welcome-back__text {
-  margin: 0;
-  font: 500 0.78rem/1.3 var(--font-body);
+  margin: 0.08rem 0 0;
+  font: 600 0.78rem/1.25 var(--font-body);
   color: var(--color-ink);
   white-space: nowrap;
   overflow: hidden;
@@ -128,29 +204,83 @@ useHead({
 }
 
 .welcome-back__cta {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  min-height: 2.75rem;
-  padding: 0.35rem 0.55rem;
-  font: 700 0.7rem var(--font-body);
-  letter-spacing: 0.12em;
+  min-height: 2.35rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  font: 700 0.68rem var(--font-body);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--color-rose-dark, #b56b62);
-  text-decoration: underline;
-  text-underline-offset: 0.18em;
+  text-decoration: none;
+  color: #fff;
+  background: var(--color-rose);
   -webkit-tap-highlight-color: transparent;
 }
 
-@media (min-width: 768px) {
-  .welcome-back {
-    gap: 0.75rem;
-    padding: 0.5rem 1rem;
+.welcome-back__cta:hover {
+  background: var(--color-rose-dark, #b56b62);
+}
+
+/* Off-home: compact strip under solid sticky header */
+.welcome-back:not(.welcome-back--hero) {
+  position: relative;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding: 0.45rem 0.85rem;
+  background: #f7ece9;
+  border-bottom: 1px solid var(--color-line, #e8e4e1);
+}
+
+.welcome-back:not(.welcome-back--hero) .welcome-back__inner {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: min(100%, 36rem);
+}
+
+.welcome-back:not(.welcome-back--hero) .welcome-back__cta {
+  min-height: 2.5rem;
+}
+
+@media (max-width: 419px) {
+  .welcome-back--hero {
+    width: min(calc(100% - 1rem), 26rem);
+    top: calc(var(--site-header-height, 3.5rem) + 0.4rem);
+  }
+
+  .welcome-back--hero .welcome-back__inner {
+    gap: 0.45rem;
+    padding: 0.45rem 0.45rem 0.45rem 0.65rem;
   }
 
   .welcome-back__text {
-    font-size: 0.88rem;
+    font-size: 0.72rem;
+  }
+
+  .welcome-back__cta {
+    min-height: 2.2rem;
+    padding-inline: 0.8rem;
+    font-size: 0.64rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .welcome-back--hero {
+    width: min(calc(100% - 2rem), 28rem);
+    top: calc(var(--site-header-height, 5rem) + 0.75rem);
+  }
+
+  .welcome-back__text {
+    font-size: 0.84rem;
+  }
+
+  .welcome-back__cta {
+    min-height: 2.5rem;
+    padding-inline: 1.1rem;
   }
 }
 

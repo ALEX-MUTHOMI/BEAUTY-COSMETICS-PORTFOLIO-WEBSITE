@@ -208,24 +208,21 @@
       </ScrollReveal>
     </section>
 
-    <!-- Treatments — Mellis height (~54vh / 120px pad) + static bg + Shee board -->
+    <!-- Treatments — dark chapter with soft massage photo atmosphere -->
     <section id="services" class="offer home-section">
       <div class="offer__bg" aria-hidden="true">
-        <div class="offer__fixed">
-          <img
-            src="/images/hero-massage.jpg"
-            alt=""
-            class="offer__photo"
-            width="1600"
-            height="1067"
-            loading="lazy"
-            decoding="async"
-            fetchpriority="low"
-          />
-          <div class="offer__veil" />
-        </div>
+        <img
+          src="/images/hero-massage.jpg"
+          alt=""
+          class="offer__photo"
+          width="1600"
+          height="1067"
+          loading="lazy"
+          decoding="async"
+          fetchpriority="low"
+        />
+        <div class="offer__veil" />
       </div>
-      <!-- Sticky chapter: photo holds while you scroll through the runway -->
       <div class="offer__chapter">
         <div class="offer__inner">
           <header class="offer__head">
@@ -347,25 +344,13 @@
       </ScrollReveal>
     </section>
 
-    <!-- Book a visit — atmospheric path through doors; packages stage follows -->
+    <!-- Book a visit — flat paper; photos only on visit doors -->
     <section id="visit-path" class="book-visit home-section">
       <div class="book-visit__path">
-        <div class="book-visit__atmosphere" aria-hidden="true">
-          <img
-            src="/images/more-bg.jpg"
-            alt=""
-            class="book-visit__bg"
-            width="1600"
-            height="1067"
-            loading="lazy"
-            decoding="async"
-          />
-          <span class="book-visit__veil" />
-        </div>
         <img
           src="/images/flower-edge.png"
           alt=""
-          class="home-floral__edge home-floral__edge--bl home-floral__edge--on-photo"
+          class="home-floral__edge home-floral__edge--bl"
           width="180"
           height="145"
           loading="lazy"
@@ -375,7 +360,7 @@
         <img
           src="/images/flower-edge.png"
           alt=""
-          class="home-floral__edge home-floral__edge--br home-floral__edge--on-photo"
+          class="home-floral__edge home-floral__edge--br"
           width="180"
           height="145"
           loading="lazy"
@@ -416,7 +401,7 @@
           <ScrollReveal variant="up" :delay="80">
             <NuxtLink
               :to="packagesVisitHref"
-              class="visit-card"
+              class="visit-card visit-card--dark"
               :class="{ 'visit-card--focus': visitFocus === 'packages' }"
             >
               <img
@@ -428,7 +413,8 @@
                 loading="lazy"
                 decoding="async"
               />
-              <span class="visit-card__mist" aria-hidden="true" />
+              <span class="visit-card__wash" aria-hidden="true" />
+              <span class="visit-card__pattern" aria-hidden="true" />
               <span
                 class="visit-card__badge"
                 :class="{ 'visit-card__badge--today': visitFocus === 'packages' }"
@@ -442,23 +428,13 @@
                 <span class="visit-card__meta">{{ LANDING_PACKAGE_FLOOR }}</span>
                 <span class="visit-card__cta">Book now</span>
               </span>
-              <img
-                src="/images/flower.png"
-                alt=""
-                class="visit-card__flower"
-                width="140"
-                height="140"
-                loading="lazy"
-                decoding="async"
-                aria-hidden="true"
-              />
             </NuxtLink>
           </ScrollReveal>
 
           <ScrollReveal variant="up" :delay="160">
             <NuxtLink
               :to="treatmentsVisitHref"
-              class="visit-card"
+              class="visit-card visit-card--photo"
               :class="{ 'visit-card--focus': visitFocus === 'treatments' }"
             >
               <img
@@ -470,7 +446,7 @@
                 loading="lazy"
                 decoding="async"
               />
-              <span class="visit-card__mist" aria-hidden="true" />
+              <span class="visit-card__wash visit-card__wash--photo" aria-hidden="true" />
               <span
                 class="visit-card__badge"
                 :class="{ 'visit-card__badge--today': visitFocus === 'treatments' }"
@@ -490,16 +466,6 @@
                 <span class="visit-card__meta">{{ LANDING_TREATMENT_FLOOR }}</span>
                 <span class="visit-card__cta">Book now</span>
               </span>
-              <img
-                src="/images/flower.png"
-                alt=""
-                class="visit-card__flower visit-card__flower--right"
-                width="140"
-                height="140"
-                loading="lazy"
-                decoding="async"
-                aria-hidden="true"
-              />
             </NuxtLink>
           </ScrollReveal>
           </div>
@@ -652,90 +618,163 @@
       </div>
     </section>
 
-    <!-- Visit — Opening Hours card + framed map (side by side, not overlay) -->
-    <section id="visit" class="visit-map home-section">
-      <div class="visit-map__inner">
-        <ScrollReveal variant="up" :delay="40">
-          <div class="visit-map__card">
-            <div class="visit-map__card-head">
-              <h2>Opening Hours</h2>
-              <img
-                src="/images/icon-clock.png"
-                alt=""
-                width="40"
-                height="40"
-                class="visit-map__clock"
-                loading="lazy"
-                decoding="async"
-              />
+    <!-- Visit — hours + Google Maps (client path: book / get directions) -->
+    <section id="visit" class="visit-map home-section home-floral" aria-labelledby="visit-heading">
+      <img
+        src="/images/flower-edge.png"
+        alt=""
+        class="home-floral__edge home-floral__edge--tl"
+        width="200"
+        height="160"
+        loading="lazy"
+        decoding="async"
+        aria-hidden="true"
+      />
+      <img
+        src="/images/flower-edge.png"
+        alt=""
+        class="home-floral__edge home-floral__edge--br"
+        width="200"
+        height="160"
+        loading="lazy"
+        decoding="async"
+        aria-hidden="true"
+      />
+
+      <div class="visit-map__shell">
+        <header class="visit-map__intro">
+          <div class="title-lockup">
+            <img
+              src="/images/flower.png"
+              alt=""
+              class="title-lockup__flower title-lockup__flower--left"
+              width="72"
+              height="72"
+              aria-hidden="true"
+              loading="lazy"
+              decoding="async"
+            />
+            <h2 id="visit-heading">Visit us</h2>
+            <img
+              src="/images/flower.png"
+              alt=""
+              class="title-lockup__flower title-lockup__flower--right"
+              width="72"
+              height="72"
+              aria-hidden="true"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        </header>
+
+        <div class="visit-map__inner">
+          <ScrollReveal variant="up" :delay="40">
+            <div class="visit-map__card">
+              <div class="visit-map__card-head">
+                <h3 class="visit-map__card-title">Opening Hours</h3>
+                <img
+                  src="/images/icon-clock.png"
+                  alt=""
+                  width="40"
+                  height="40"
+                  class="visit-map__clock"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+              <dl class="visit-map__hours">
+                <div>
+                  <dt>Monday</dt>
+                  <dd>7:00 am – 7:00 pm · treatments</dd>
+                </div>
+                <div>
+                  <dt>Tue &amp; Wed</dt>
+                  <dd>7:00 am – 7:00 pm · packages</dd>
+                </div>
+                <div>
+                  <dt>Thu – Sat</dt>
+                  <dd>7:00 am – 7:00 pm · treatments</dd>
+                </div>
+                <div>
+                  <dt>Sunday</dt>
+                  <dd class="visit-map__closed">Closed</dd>
+                </div>
+              </dl>
+              <p class="visit-map__place">
+                <svg class="visit-map__pin" viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
+                  <path
+                    fill="currentColor"
+                    d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"
+                  />
+                </svg>
+                <span>{{ LANDING_LOCATION_LABEL }}</span>
+              </p>
+              <div class="visit-map__actions">
+                <SiteButton
+                  v-if="primaryCtaIsExternal"
+                  :href="primaryCtaHref"
+                  variant="primary"
+                  class="visit-map__book"
+                >
+                  {{ LANDING_PRIMARY_CTA }}
+                </SiteButton>
+                <SiteButton
+                  v-else
+                  :to="primaryCtaHref"
+                  variant="primary"
+                  class="visit-map__book"
+                >
+                  {{ LANDING_PRIMARY_CTA }}
+                </SiteButton>
+                <a
+                  :href="LANDING_MAPS_DIRECTIONS_URL"
+                  class="visit-map__maps visit-map__maps--primary"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  @click="trackFunnelEvent('cta_book_click', { surface: 'visit_directions', href: LANDING_MAPS_DIRECTIONS_URL })"
+                >
+                  Get directions
+                </a>
+                <a
+                  v-if="contactIsLive"
+                  :href="whatsappUrl"
+                  class="visit-map__maps"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  @click="trackFunnelEvent('wa_click', { surface: 'visit_map' })"
+                >
+                  {{ whatsappLabel }}
+                </a>
+              </div>
             </div>
-            <dl class="visit-map__hours">
-              <div>
-                <dt>Monday</dt>
-                <dd>7:00 am – 7:00 pm · treatments</dd>
+          </ScrollReveal>
+
+          <ScrollReveal variant="up" :delay="100">
+            <div class="visit-map__map-panel">
+              <div class="visit-map__frame-wrap">
+                <iframe
+                  class="visit-map__frame"
+                  title="Shee Aesthetics on Google Maps — Meru Town"
+                  :src="LANDING_MAPS_EMBED_URL"
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade"
+                  allowfullscreen
+                />
               </div>
-              <div>
-                <dt>Tue &amp; Wed</dt>
-                <dd>7:00 am – 7:00 pm · packages</dd>
-              </div>
-              <div>
-                <dt>Thu – Sat</dt>
-                <dd>7:00 am – 7:00 pm · treatments</dd>
-              </div>
-              <div>
-                <dt>Sunday</dt>
-                <dd>Closed</dd>
-              </div>
-            </dl>
-            <p class="visit-map__place">{{ LANDING_LOCATION_LABEL }}</p>
-            <div class="visit-map__actions">
-              <SiteButton
-                v-if="primaryCtaIsExternal"
-                :href="primaryCtaHref"
-                variant="primary"
-              >
-                {{ LANDING_PRIMARY_CTA }}
-              </SiteButton>
-              <SiteButton v-else :to="primaryCtaHref" variant="primary">
-                {{ LANDING_PRIMARY_CTA }}
-              </SiteButton>
-              <a
-                v-if="contactIsLive"
-                :href="whatsappUrl"
-                class="visit-map__maps"
-                target="_blank"
-                rel="noopener noreferrer"
-                @click="trackFunnelEvent('wa_click', { surface: 'visit_map' })"
-              >
-                {{ whatsappLabel }}
-              </a>
               <a
                 :href="LANDING_MAPS_URL"
-                class="visit-map__maps"
+                class="visit-map__map-caption"
                 target="_blank"
                 rel="noopener noreferrer"
+                @click="trackFunnelEvent('cta_book_click', { surface: 'visit_open_maps', href: LANDING_MAPS_URL })"
               >
-                Open in Maps
+                <span>Open in Google Maps</span>
+                <span class="visit-map__map-caption-arrow" aria-hidden="true">→</span>
               </a>
             </div>
-          </div>
-        </ScrollReveal>
-
-        <ScrollReveal variant="up" :delay="100">
-          <div class="visit-map__map-panel">
-            <div class="visit-map__frame-wrap">
-              <iframe
-                class="visit-map__frame"
-                title="Shee Aesthetics location map"
-                :src="LANDING_MAPS_EMBED_URL"
-                loading="lazy"
-                referrerpolicy="no-referrer-when-downgrade"
-                allowfullscreen
-              />
-            </div>
-            <p class="visit-map__map-caption">Find us in Meru Town</p>
-          </div>
-        </ScrollReveal>
+          </ScrollReveal>
+        </div>
       </div>
     </section>
 
@@ -795,6 +834,7 @@ import {
   getFeaturedPackages,
   LANDING_FEATURED_PACKAGE_CLARIFIER,
   LANDING_LOCATION_LABEL,
+  LANDING_MAPS_DIRECTIONS_URL,
   LANDING_MAPS_EMBED_URL,
   LANDING_MAPS_URL,
   LANDING_PACKAGE_FLOOR,
@@ -963,7 +1003,7 @@ const reviews = landingClientReviews
   --home-section-y: clamp(2rem, 5vh, 2.75rem);
   --home-section-y-lg: clamp(2.35rem, 5.5vh, 3.25rem);
   --home-head-gap: 1.15rem;
-  --home-seam: 1px solid rgba(176, 122, 113, 0.14);
+  --home-seam: 1px solid rgba(44, 44, 48, 0.05);
 }
 
 .home-section {
@@ -987,8 +1027,8 @@ const reviews = landingClientReviews
   user-select: none;
   width: min(11rem, 34vw);
   height: auto;
-  opacity: 0.38;
-  filter: saturate(1.05) contrast(1.04);
+  opacity: 0.28;
+  filter: saturate(0.95) contrast(1.02);
 }
 
 .home-floral__edge--on-photo {
@@ -1076,8 +1116,8 @@ const reviews = landingClientReviews
 }
 
 .title-lockup--on-dark .title-lockup__flower {
-  opacity: 0.9;
-  filter: brightness(1.08) saturate(0.95);
+  opacity: 1;
+  filter: brightness(1.22) saturate(1.35) drop-shadow(0 0 10px rgba(240, 184, 172, 0.35));
 }
 
 .title-lockup--start {
@@ -1144,6 +1184,14 @@ const reviews = landingClientReviews
   background: var(--color-ink);
   --hero-crossfade-ms: 2800ms;
   --hero-copy-fade-ms: 1400ms;
+}
+
+@media (max-width: 767px) {
+  .hero {
+    height: calc(100svh - var(--home-hero-chrome, 0px));
+    height: calc(100dvh - var(--home-hero-chrome, 0px));
+    min-height: 22rem;
+  }
 }
 
 .hero__track {
@@ -1223,9 +1271,9 @@ const reviews = landingClientReviews
   text-align: center;
   /* Center in the band below the Home 3 header, not under the logo stack */
   padding:
-    max(var(--site-header-height, 7.5rem), env(safe-area-inset-top, 0px))
-    1.25rem
-    max(3.5rem, env(safe-area-inset-bottom, 0px));
+    max(var(--site-header-height, 3.75rem), env(safe-area-inset-top, 0px))
+    1.15rem
+    calc(var(--mobile-book-bar-height, 4.15rem) + env(safe-area-inset-bottom, 0px) + 1.1rem);
   color: #fff;
   pointer-events: none;
 }
@@ -1296,7 +1344,9 @@ const reviews = landingClientReviews
 .hero__dots {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--mobile-book-bar-height, 4.25rem) + 0.85rem);
+  bottom: calc(
+    var(--mobile-book-bar-height, 4.15rem) + env(safe-area-inset-bottom, 0px) + 0.85rem
+  );
   z-index: 4;
   display: flex;
   gap: 0.1rem;
@@ -1401,7 +1451,7 @@ const reviews = landingClientReviews
   margin: 0 auto;
   padding: 6px;
   border-radius: 50%;
-  background: linear-gradient(145deg, var(--color-rose-soft), #fff 45%, var(--color-rose-soft));
+  background: linear-gradient(145deg, var(--color-rose-soft), var(--color-surface-raised) 45%, var(--color-rose-soft));
   box-shadow:
     0 0 0 1px rgba(222, 150, 141, 0.35),
     0 16px 48px rgba(39, 37, 42, 0.12);
@@ -1452,11 +1502,9 @@ const reviews = landingClientReviews
 
 .offer {
   position: relative;
-  /* Taller runway — more photo hold + less cramped sticky chapter */
-  min-height: 175vh;
   padding: 0;
   overflow: clip;
-  background: #1c1714;
+  background: var(--color-card-dark);
   border-block: var(--home-seam);
 }
 
@@ -1465,14 +1513,6 @@ const reviews = landingClientReviews
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  clip-path: inset(0);
-}
-
-.offer__fixed {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
 }
 
 .offer__photo {
@@ -1480,9 +1520,10 @@ const reviews = landingClientReviews
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 72% 42%;
-  transform: scale(1.06);
-  transform-origin: 70% 40%;
+  object-position: 70% 40%;
+  transform: scale(1.04);
+  /* Keep enough tone so the massage scene holds attention under the veil */
+  filter: grayscale(0.18) contrast(1.08) brightness(0.88) saturate(0.92);
 }
 
 .offer__veil {
@@ -1491,28 +1532,24 @@ const reviews = landingClientReviews
   background:
     linear-gradient(
       180deg,
-      rgba(18, 12, 12, 0.52) 0%,
-      rgba(18, 12, 12, 0.34) 38%,
-      rgba(18, 12, 12, 0.62) 72%,
-      rgba(18, 12, 12, 0.72) 100%
+      rgba(28, 18, 22, 0.58) 0%,
+      rgba(22, 16, 18, 0.42) 38%,
+      rgba(18, 14, 15, 0.62) 100%
     ),
     linear-gradient(
       90deg,
-      rgba(18, 12, 12, 0.36) 0%,
-      rgba(18, 12, 12, 0.16) 48%,
-      rgba(18, 12, 12, 0.32) 100%
+      rgba(28, 18, 22, 0.32) 0%,
+      rgba(18, 14, 15, 0.12) 48%,
+      rgba(28, 18, 22, 0.28) 100%
     );
-  pointer-events: none;
 }
 
 .offer__chapter {
-  position: sticky;
-  top: var(--site-header-height, 4.75rem);
+  position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
-  min-height: calc(100vh - var(--site-header-height, 4.75rem));
-  padding: clamp(4rem, 9vh, 7.5rem) 1.25rem;
+  padding: clamp(3.5rem, 8vh, 6rem) 1.25rem;
 }
 
 .offer__inner {
@@ -1544,11 +1581,12 @@ const reviews = landingClientReviews
   line-height: 1.05;
   letter-spacing: -0.03em;
   color: #fff;
-  text-shadow: 0 3px 22px rgba(0, 0, 0, 0.5);
+  text-shadow: none;
 }
 
 .offer__head .title-lockup__flower {
-  width: clamp(2.75rem, 6.5vw, 4rem);
+  width: clamp(2.9rem, 7vw, 4.25rem);
+  opacity: 1;
 }
 
 .offer__board {
@@ -1581,13 +1619,11 @@ const reviews = landingClientReviews
   padding: 1.35rem 1.15rem 1.2rem;
   color: #fff;
   text-decoration: none;
-  background: rgba(28, 16, 18, 0.52);
-  border: 1px solid rgba(245, 216, 208, 0.22);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
-    0 14px 32px rgba(8, 4, 4, 0.28);
-  backdrop-filter: blur(18px) saturate(1.15);
-  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(245, 216, 208, 0.18);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   cursor: pointer;
   transition:
     background 0.25s ease,
@@ -1598,12 +1634,10 @@ const reviews = landingClientReviews
 
 .offer__cell:hover,
 .offer__cell:focus-visible {
-  background: rgba(176, 122, 113, 0.42);
-  border-color: rgba(245, 216, 208, 0.55);
+  background: rgba(176, 122, 113, 0.28);
+  border-color: rgba(245, 216, 208, 0.45);
   transform: translateY(-4px);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-    0 20px 40px rgba(8, 4, 4, 0.4);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
   outline: none;
 }
 
@@ -1641,7 +1675,7 @@ const reviews = landingClientReviews
   line-height: 1.05;
   letter-spacing: -0.02em;
   color: #fff;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+  text-shadow: none;
   transition: color 0.2s ease;
 }
 
@@ -1649,7 +1683,7 @@ const reviews = landingClientReviews
   margin: 0;
   font: 400 0.82rem/1.4 var(--font-body);
   color: rgba(255, 245, 240, 0.88);
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.35);
+  text-shadow: none;
 }
 
 .offer__go {
@@ -1678,9 +1712,7 @@ const reviews = landingClientReviews
   border: 1px solid rgba(245, 216, 208, 0.35);
   color: #fff;
   text-decoration: none;
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
-    0 18px 40px rgba(80, 32, 36, 0.45);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
   transition:
     transform 0.25s var(--ease-story, ease),
     box-shadow 0.25s ease,
@@ -1691,9 +1723,6 @@ const reviews = landingClientReviews
 .offer__cta:focus-visible {
   transform: translateY(-3px);
   filter: brightness(1.05);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.12) inset,
-    0 22px 48px rgba(80, 32, 36, 0.55);
   outline: none;
 }
 
@@ -1730,18 +1759,18 @@ const reviews = landingClientReviews
   gap: 0.5rem;
   flex-shrink: 0;
   padding: 0.85rem 1.15rem;
-  background: #f3efeb;
+  background: var(--color-surface-raised);
   color: var(--color-ink);
   font: 700 0.72rem/1 var(--font-body);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  box-shadow: 0 8px 20px rgba(40, 16, 18, 0.2);
+  box-shadow: none;
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .offer__cta:hover .offer__cta-action,
 .offer__cta:focus-visible .offer__cta-action {
-  background: #efe8e2;
+  background: var(--color-paper);
 }
 
 .offer__cta-arrow {
@@ -1757,20 +1786,8 @@ const reviews = landingClientReviews
 }
 
 @media (max-width: 767px) {
-  .offer {
-    min-height: auto;
-  }
-
   .offer__chapter {
-    position: relative;
-    top: auto;
-    min-height: min(92svh, 48rem);
-    padding: clamp(3.75rem, 9vh, 6rem) 1.15rem;
-  }
-
-  .offer__fixed {
-    position: absolute;
-    inset: 0;
+    padding: clamp(3.25rem, 8vh, 5rem) 1.15rem;
   }
 
   .offer__inner {
@@ -1812,9 +1829,9 @@ const reviews = landingClientReviews
     letter-spacing: 0.16em;
   }
 
+  /* Sticky mobile book bar owns the primary Book CTA */
   .hero__cta {
-    min-height: 2.85rem;
-    padding: 0.9rem 1.75rem !important;
+    display: none !important;
   }
 }
 
@@ -1832,20 +1849,12 @@ const reviews = landingClientReviews
 }
 
 @media (min-width: 768px) {
-  .offer {
-    min-height: 185vh;
-  }
-
   .offer__chapter {
-    padding: clamp(4.5rem, 10vh, 8rem) 1.5rem;
+    padding: clamp(4rem, 9vh, 6.5rem) 1.5rem;
   }
 
   .offer__inner {
     gap: clamp(2.15rem, 5vh, 3.25rem);
-  }
-
-  .offer__photo {
-    object-position: 68% 40%;
   }
 
   .offer__board {
@@ -1870,14 +1879,6 @@ const reviews = landingClientReviews
 }
 
 @media (min-width: 1024px) {
-  .offer {
-    min-height: 190vh;
-  }
-
-  .offer__photo {
-    object-position: 65% 38%;
-  }
-
   .offer__head .title-lockup h2 {
     font-size: clamp(3.1rem, 3.8vw, 4.25rem);
   }
@@ -1899,32 +1900,7 @@ const reviews = landingClientReviews
   }
 }
 
-@media (min-width: 1440px) {
-  .offer__photo {
-    object-position: 62% 36%;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .offer {
-    min-height: auto;
-  }
-
-  .offer__chapter {
-    position: relative;
-    min-height: auto;
-    padding: clamp(4rem, 9vh, 8rem) 1.25rem;
-  }
-
-  .offer__fixed {
-    position: absolute;
-    inset: 0;
-  }
-
-  .offer__photo {
-    transform: none;
-  }
-
   .offer__cell:hover,
   .offer__cell:focus-visible,
   .offer__cta:hover,
@@ -1957,7 +1933,7 @@ const reviews = landingClientReviews
   align-items: start;
   height: 100%;
   padding: 1rem 1rem 1.05rem;
-  background: rgba(243, 239, 235, 0.92);
+  background: var(--color-surface-raised);
   border: 1px solid rgba(176, 122, 113, 0.12);
   box-shadow: none;
 }
@@ -2044,36 +2020,7 @@ const reviews = landingClientReviews
   position: relative;
   padding: clamp(2.5rem, 6vh, 4rem) 1rem;
   overflow: hidden;
-}
-
-.book-visit__atmosphere {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.book-visit__bg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 40%;
-  transform: scale(1.1);
-  filter: saturate(0.55) blur(6px) brightness(1.06);
-  opacity: 0.55;
-}
-
-.book-visit__veil {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(243, 239, 236, 0.88) 0%,
-      rgba(243, 239, 236, 0.78) 42%,
-      rgba(243, 239, 236, 0.9) 100%
-    );
+  background: var(--color-paper);
 }
 
 .book-visit__path > .home-floral__edge {
@@ -2104,13 +2051,13 @@ const reviews = landingClientReviews
   line-height: 1.15;
   letter-spacing: -0.025em;
   color: var(--color-ink);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  text-shadow: none;
 }
 
 .book-visit__doors {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.15rem;
+  gap: 0.85rem;
 }
 
 .book-visit__doors > * {
@@ -2121,12 +2068,12 @@ const reviews = landingClientReviews
 .visit-card {
   position: relative;
   display: block;
-  min-height: 16.5rem;
+  min-height: 18rem;
   overflow: hidden;
   text-decoration: none;
-  color: var(--color-ink);
-  background: var(--color-cream);
-  box-shadow: 0 14px 34px rgba(44, 44, 48, 0.08);
+  color: #f4ebe6;
+  background: var(--color-card-dark);
+  box-shadow: 0 14px 32px rgba(23, 21, 22, 0.18);
   transition:
     transform 0.35s var(--ease-story, ease),
     box-shadow 0.35s var(--ease-story, ease);
@@ -2138,47 +2085,69 @@ const reviews = landingClientReviews
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 30%;
+  object-position: center 28%;
   transform: scale(1.02);
   transition: transform 0.7s var(--ease-story, ease);
 }
 
 .visit-card__media--mono {
-  object-position: center 28%;
-  filter: grayscale(1) contrast(1.08);
+  filter: grayscale(0.92) contrast(1.1) brightness(0.68);
+  object-position: center 22%;
 }
 
-/* Mellis mist: soft left wash so script + CTA stay readable */
-.visit-card__mist {
+.visit-card__wash {
   position: absolute;
   inset: 0;
   background:
     linear-gradient(
-      95deg,
-      rgba(255, 252, 250, 0.94) 0%,
-      rgba(255, 252, 250, 0.82) 28%,
-      rgba(255, 252, 250, 0.35) 52%,
-      rgba(255, 252, 250, 0.06) 72%,
-      transparent 100%
-    ),
-    linear-gradient(180deg, transparent 55%, rgba(255, 252, 250, 0.28) 100%);
+      105deg,
+      rgba(22, 16, 18, 0.9) 0%,
+      rgba(22, 16, 18, 0.72) 40%,
+      rgba(22, 16, 18, 0.42) 70%,
+      rgba(22, 16, 18, 0.28) 100%
+    );
+  pointer-events: none;
+}
+
+.visit-card__wash--photo {
+  background:
+    linear-gradient(
+      105deg,
+      rgba(24, 16, 20, 0.88) 0%,
+      rgba(28, 18, 22, 0.62) 36%,
+      rgba(28, 18, 22, 0.28) 64%,
+      rgba(18, 14, 15, 0.12) 100%
+    );
+}
+
+.visit-card__pattern {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.42;
+  background-image: url('/images/flower.png');
+  background-size: 6.25rem;
+  background-repeat: repeat;
+  filter: saturate(1.55) brightness(1.2) contrast(1.05);
+  mix-blend-mode: soft-light;
 }
 
 .visit-card__badge {
   position: absolute;
-  top: 1.15rem;
-  right: 1.15rem;
+  top: 1.1rem;
+  right: 1.1rem;
   z-index: 3;
   display: grid;
   place-content: center;
-  width: 4.5rem;
-  height: 4.5rem;
-  padding: 0.35rem;
+  width: 4.25rem;
+  height: 4.25rem;
+  padding: 0.3rem;
   border-radius: 50%;
   text-align: center;
   color: #fff;
   background: var(--color-rose);
-  box-shadow: 0 10px 22px rgba(176, 122, 113, 0.32);
+  box-shadow: 0 8px 18px rgba(176, 122, 113, 0.28);
 }
 
 .visit-card__badge--today {
@@ -2187,8 +2156,8 @@ const reviews = landingClientReviews
 
 .visit-card__badge-line {
   display: block;
-  font: 700 0.58rem/1.15 var(--font-body);
-  letter-spacing: 0.06em;
+  font: 700 0.64rem/1.2 var(--font-body);
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
@@ -2199,32 +2168,32 @@ const reviews = landingClientReviews
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 0.4rem;
-  min-height: 16.5rem;
-  max-width: 17.5rem;
-  padding: 1.5rem 1.25rem 1.55rem 1.4rem;
+  gap: 0.45rem;
+  min-height: 18rem;
+  max-width: 17rem;
+  padding: 1.6rem 1.35rem 1.6rem 1.5rem;
 }
 
 .visit-card__title {
   margin: 0;
   font-family: var(--font-script);
-  font-size: clamp(2.15rem, 4.6vw, 2.75rem);
+  font-size: clamp(2.2rem, 4.5vw, 2.7rem);
   font-weight: 400;
   line-height: 1;
-  color: var(--color-ink);
+  color: #f8f2ee;
 }
 
 .visit-card__text {
   max-width: 20ch;
   font: 500 0.9rem/1.45 var(--font-body);
-  color: var(--color-deep);
+  color: rgba(244, 235, 230, 0.8);
 }
 
 .visit-card__meta {
-  font: 700 0.72rem/1.3 var(--font-body);
-  letter-spacing: 0.06em;
+  font: 700 0.7rem/1.3 var(--font-body);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-rose-dark);
+  color: #f0b8ac;
 }
 
 .visit-card__cta {
@@ -2232,36 +2201,20 @@ const reviews = landingClientReviews
   align-items: center;
   justify-content: center;
   margin-top: 0.55rem;
-  min-height: 2.65rem;
-  padding: 0.7rem 1.55rem;
+  min-height: 2.6rem;
+  min-width: 8.5rem;
+  padding: 0.65rem 1.4rem;
   font: 700 0.7rem/1 var(--font-body);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-ink);
-  background: var(--color-paper);
+  color: #fff;
+  background: var(--color-rose);
   border: 0;
-  box-shadow: 0 8px 20px rgba(44, 44, 48, 0.12);
-}
-
-.visit-card__flower {
-  position: absolute;
-  z-index: 3;
-  left: 38%;
-  bottom: -0.85rem;
-  width: min(7.25rem, 32%);
-  height: auto;
-  pointer-events: none;
-  filter: drop-shadow(0 6px 12px rgba(44, 44, 48, 0.12));
-}
-
-.visit-card__flower--right {
-  left: auto;
-  right: 0.5rem;
-  bottom: -0.95rem;
+  box-shadow: none;
 }
 
 .visit-card--focus {
-  box-shadow: 0 18px 40px rgba(176, 122, 113, 0.2);
+  box-shadow: 0 18px 40px rgba(23, 21, 22, 0.28);
 }
 
 .visit-card:focus-visible {
@@ -2271,29 +2224,28 @@ const reviews = landingClientReviews
 
 @media (hover: hover) {
   .visit-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 42px rgba(44, 44, 48, 0.12);
+    transform: translateY(-3px);
+    box-shadow: 0 20px 42px rgba(23, 21, 22, 0.3);
   }
 
   .visit-card:hover .visit-card__media {
-    transform: scale(1.06);
+    transform: scale(1.05);
   }
 
   .visit-card:hover .visit-card__cta {
-    background: var(--color-rose);
-    color: #fff;
+    background: var(--color-rose-dark);
   }
 }
 
-/* Classic Full Package — soft-glam makeup atmosphere; card stays primary */
+/* Full packages — soft glam atmosphere; black card sits on top */
 .book-visit__stage {
   position: relative;
   isolation: isolate;
   margin-top: 0;
   padding: clamp(2.5rem, 6vw, 3.75rem) 1rem clamp(2.25rem, 5vw, 3.25rem);
   overflow: hidden;
-  border-block: 1px solid rgba(176, 122, 113, 0.16);
-  background: #f3efeb;
+  border-block: var(--home-seam);
+  background: var(--color-paper);
 }
 
 .mellis-cta__atmosphere {
@@ -2301,45 +2253,42 @@ const reviews = landingClientReviews
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  /* Force B&W on the whole plate so parchment never recolors the photo */
-  filter: grayscale(1) contrast(1.08);
 }
 
 .mellis-cta__bg {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 20%;
+  object-position: center 22%;
   transform: scale(1.04);
-  /* Readable B&W atmosphere — card still wins via center veil */
-  opacity: 0.38;
-  filter: none;
+  opacity: 0.42;
+  filter: grayscale(1) contrast(1.06);
 }
 
 .mellis-cta__veil {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background:
-    /* Soft pocket behind the card only */
     radial-gradient(
-      ellipse 48% 62% at 50% 48%,
-      rgba(255, 255, 255, 0.94) 0%,
-      rgba(255, 255, 255, 0.78) 36%,
-      rgba(255, 255, 255, 0.32) 66%,
-      rgba(255, 255, 255, 0) 100%
+      ellipse 46% 54% at 50% 46%,
+      rgba(229, 225, 220, 0.88) 0%,
+      rgba(229, 225, 220, 0.55) 42%,
+      rgba(229, 225, 220, 0.12) 72%,
+      transparent 100%
     ),
     linear-gradient(
       180deg,
-      rgba(248, 247, 245, 0.58) 0%,
-      rgba(248, 247, 245, 0.14) 28%,
-      rgba(248, 247, 245, 0.12) 72%,
-      rgba(248, 247, 245, 0.64) 100%
+      rgba(229, 225, 220, 0.55) 0%,
+      rgba(229, 225, 220, 0.12) 28%,
+      rgba(229, 225, 220, 0.1) 72%,
+      rgba(229, 225, 220, 0.6) 100%
     );
 }
 
 .mellis-cta__content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
 .mellis-cta__head {
@@ -2356,7 +2305,7 @@ const reviews = landingClientReviews
   line-height: 1.15;
   letter-spacing: -0.025em;
   color: var(--color-ink);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .mellis-cta__card-wrap {
@@ -2368,11 +2317,9 @@ const reviews = landingClientReviews
 
 .mellis-cta__card {
   position: relative;
-  z-index: 2;
-  background: #f3efeb;
-  box-shadow:
-    0 22px 48px rgba(44, 44, 48, 0.16),
-    0 0 0 1px rgba(243, 239, 235, 0.9);
+  z-index: 3;
+  background: var(--color-card-dark) !important;
+  box-shadow: 0 22px 48px rgba(23, 21, 22, 0.32);
 }
 
 @media (max-width: 479px) {
@@ -2383,6 +2330,26 @@ const reviews = landingClientReviews
   .mellis-cta__head h2 {
     font-size: clamp(1.75rem, 8vw, 2.1rem);
   }
+
+  .visit-card__badge {
+    width: 4rem;
+    height: 4rem;
+    top: 0.95rem;
+    right: 0.95rem;
+  }
+
+  .visit-card__badge-line {
+    font-size: 0.64rem;
+  }
+
+  .hero__content {
+    padding-inline: 1rem;
+    gap: 0;
+  }
+
+  .hero__price {
+    font-size: 0.74rem;
+  }
 }
 
 .mellis-cta__note {
@@ -2391,6 +2358,7 @@ const reviews = landingClientReviews
   text-align: center;
   font: 500 0.8rem/1.45 var(--font-body);
   color: var(--color-rose-dark);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .mellis-cta__note--soft {
@@ -2401,7 +2369,7 @@ const reviews = landingClientReviews
 @media (min-width: 768px) {
   .book-visit__doors {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.15rem;
+    gap: 0.75rem;
   }
 
   .visit-card,
@@ -2477,7 +2445,7 @@ const reviews = landingClientReviews
   height: 100%;
   margin: 0;
   padding: 1.45rem 1.3rem 1.35rem;
-  background: rgba(243, 239, 235, 0.94);
+  background: var(--color-surface-raised);
   border: 1px solid rgba(176, 122, 113, 0.12);
   box-shadow: none;
   transition: transform 0.35s var(--ease-story, ease);
@@ -2697,64 +2665,130 @@ const reviews = landingClientReviews
   cursor: pointer;
 }
 
-/* Visit — Opening Hours card + framed map panel (side by side) */
+/* Visit — floral atmosphere + hours card + Google Maps panel */
 .visit-map {
+  position: relative;
   padding: var(--home-section-y-lg) 1rem;
-  background: var(--color-parchment);
-  border-top: var(--home-seam);
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 12% 18%,
+      rgba(240, 184, 172, 0.14) 0%,
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 55% 50% at 88% 82%,
+      rgba(176, 122, 113, 0.1) 0%,
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-paper) 88%, var(--color-rose-soft)) 0%,
+      var(--color-paper) 42%,
+      color-mix(in srgb, var(--color-paper) 92%, var(--color-cream)) 100%
+    );
+  border-block: var(--home-seam);
   overflow: hidden;
 }
 
-.visit-map__inner {
+.visit-map__shell {
   width: var(--container);
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.15rem, 2.8vw, 1.65rem);
+}
+
+.visit-map__intro {
+  text-align: center;
+  margin: 0 auto;
+}
+
+.visit-map__intro .title-lockup {
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+.visit-map__intro .title-lockup h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5.5vw, 2.85rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--color-ink);
+}
+
+.visit-map__inner {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.35rem;
+  gap: 1.15rem;
   align-items: stretch;
 }
 
 .visit-map__card {
+  position: relative;
   height: 100%;
-  padding: clamp(1.65rem, 4vw, 2.15rem) clamp(1.35rem, 3.5vw, 1.85rem) clamp(1.5rem, 3.5vw, 1.85rem);
-  background: #f3efeb;
-  border: 1px solid rgba(176, 122, 113, 0.12);
-  box-shadow:
-    0 18px 40px rgba(44, 44, 48, 0.1),
-    0 2px 8px rgba(44, 44, 48, 0.05);
+  padding: clamp(1.55rem, 4vw, 2.05rem) clamp(1.25rem, 3.5vw, 1.75rem) clamp(1.45rem, 3.5vw, 1.75rem);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--color-surface-raised) 92%, #fff) 0%,
+      var(--color-surface-raised) 100%
+    );
+  border: 1px solid rgba(176, 122, 113, 0.14);
+  box-shadow: 0 14px 34px rgba(44, 44, 48, 0.07);
+  overflow: hidden;
+}
+
+.visit-map__card::before {
+  content: '';
+  position: absolute;
+  right: -1.25rem;
+  bottom: -1.5rem;
+  width: 7.5rem;
+  height: 7.5rem;
+  background-image: url('/images/flower.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.12;
+  filter: saturate(1.15);
+  pointer-events: none;
 }
 
 .visit-map__card-head {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.45rem;
+  margin-bottom: 1.35rem;
 }
 
-.visit-map__card-head h2 {
+.visit-map__card-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.55rem, 3.2vw, 1.95rem);
+  font-size: clamp(1.45rem, 3.2vw, 1.85rem);
   font-weight: 500;
   letter-spacing: -0.02em;
   color: var(--color-ink);
 }
 
 .visit-map__clock {
-  width: 2.35rem;
-  height: 2.35rem;
+  width: 2.25rem;
+  height: 2.25rem;
   object-fit: contain;
   flex-shrink: 0;
   opacity: 0.88;
 }
 
 .visit-map__hours {
-  margin: 0 0 1.35rem;
+  position: relative;
+  z-index: 1;
+  margin: 0 0 1.25rem;
 }
 
 .visit-map__hours > div {
-  margin-bottom: 1.05rem;
+  margin-bottom: 0.95rem;
 }
 
 .visit-map__hours > div:last-child {
@@ -2762,7 +2796,7 @@ const reviews = landingClientReviews
 }
 
 .visit-map__hours dt {
-  margin: 0 0 0.28rem;
+  margin: 0 0 0.22rem;
   font: 600 0.68rem var(--font-body);
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -2772,41 +2806,85 @@ const reviews = landingClientReviews
 .visit-map__hours dd {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.05rem, 2.4vw, 1.2rem);
+  font-size: clamp(1.02rem, 2.4vw, 1.18rem);
   font-weight: 400;
   color: var(--color-rose);
   line-height: 1.35;
 }
 
+.visit-map__closed {
+  color: var(--color-rose-dark);
+  font-weight: 500;
+}
+
 .visit-map__place {
-  margin: 0 0 1.15rem;
-  padding-top: 0.15rem;
-  font: 500 0.88rem/1.4 var(--font-body);
-  color: var(--color-muted);
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin: 0 0 1.2rem;
+  font: 500 0.9rem/1.4 var(--font-body);
+  color: var(--color-deep);
+}
+
+.visit-map__pin {
+  flex-shrink: 0;
+  margin-top: 0.12rem;
+  color: var(--color-rose);
 }
 
 .visit-map__actions {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.55rem;
+  align-items: stretch;
+  gap: 0.45rem;
+}
+
+.visit-map__book {
+  width: 100%;
 }
 
 .visit-map__maps {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 2.75rem;
-  padding: 0.35rem 0.15rem;
+  padding: 0.45rem 0.85rem;
   font: 700 0.68rem var(--font-body);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-rose);
+  color: var(--color-rose-dark);
   text-decoration: none;
+  border: 1px solid rgba(176, 122, 113, 0.28);
+  background: rgba(176, 122, 113, 0.06);
   -webkit-tap-highlight-color: transparent;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease;
 }
 
-.visit-map__maps:hover {
+.visit-map__maps--primary {
+  color: #fff;
+  background: var(--color-rose);
+  border-color: var(--color-rose);
+}
+
+.visit-map__maps--primary:hover,
+.visit-map__maps--primary:focus-visible {
+  background: var(--color-rose-dark);
+  border-color: var(--color-rose-dark);
+  color: #fff;
+}
+
+.visit-map__maps:hover,
+.visit-map__maps:focus-visible {
   color: var(--color-rose-dark);
+  background: rgba(176, 122, 113, 0.12);
+  border-color: rgba(176, 122, 113, 0.4);
 }
 
 .visit-map__map-panel {
@@ -2814,53 +2892,99 @@ const reviews = landingClientReviews
   flex-direction: column;
   height: 100%;
   min-width: 0;
-  background: #f3efeb;
-  border: 1px solid rgba(176, 122, 113, 0.12);
-  box-shadow:
-    0 18px 40px rgba(44, 44, 48, 0.1),
-    0 2px 8px rgba(44, 44, 48, 0.05);
+  background: var(--color-surface-raised);
+  border: 1px solid rgba(176, 122, 113, 0.14);
+  box-shadow: 0 14px 34px rgba(44, 44, 48, 0.07);
   overflow: hidden;
 }
 
 .visit-map__frame-wrap {
   position: relative;
   flex: 1 1 auto;
-  min-height: 16rem;
+  min-height: 15.5rem;
   overflow: hidden;
-  background: #e4e0dc;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-stone) 70%, var(--color-rose-soft)) 0%,
+      var(--color-stone) 100%
+    );
 }
 
 .visit-map__frame {
   position: absolute;
-  /* Crop Google Maps chrome / UI edges */
-  top: -3.25rem;
-  left: -1rem;
-  width: calc(100% + 2rem);
-  height: calc(100% + 5.5rem);
+  /* Crop Google Maps chrome / “No reviews” strip */
+  top: -4.75rem;
+  left: -1.35rem;
+  width: calc(100% + 2.7rem);
+  height: calc(100% + 7.25rem);
   border: 0;
-  filter: grayscale(0.22) contrast(0.96) saturate(0.78) brightness(1.03);
+  filter: grayscale(0.1) contrast(0.98) saturate(0.9) brightness(1.02);
   pointer-events: auto;
 }
 
 .visit-map__map-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin: 0;
-  padding: 0.85rem 1.15rem 0.95rem;
-  border-top: 1px solid rgba(176, 122, 113, 0.1);
-  font: 600 0.68rem/1.3 var(--font-body);
-  letter-spacing: 0.14em;
+  padding: 0.95rem 1.15rem;
+  border-top: 1px solid rgba(176, 122, 113, 0.12);
+  font: 700 0.7rem/1.3 var(--font-body);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-muted);
+  color: var(--color-ink);
+  text-decoration: none;
+  background: color-mix(in srgb, var(--color-surface-raised) 88%, var(--color-rose-soft));
+  transition: background 0.18s ease, color 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 2.85rem;
+}
+
+.visit-map__map-caption:hover,
+.visit-map__map-caption:focus-visible {
+  background: rgba(176, 122, 113, 0.14);
+  color: var(--color-rose-dark);
+}
+
+.visit-map__map-caption-arrow {
+  color: var(--color-rose);
+  font-size: 1.05rem;
 }
 
 @media (min-width: 768px) {
   .visit-map__inner {
-    grid-template-columns: minmax(17rem, 23rem) minmax(0, 1fr);
+    grid-template-columns: minmax(17rem, 22.5rem) minmax(0, 1fr);
     gap: 1.35rem;
     align-items: stretch;
   }
 
   .visit-map__card {
-    padding: 2.15rem 1.9rem 1.95rem;
+    padding: 2rem 1.85rem 1.85rem;
+  }
+
+  .visit-map__actions {
+    align-items: flex-start;
+  }
+
+  .visit-map__book {
+    width: auto;
+    min-width: 11rem;
+  }
+
+  .visit-map__maps {
+    justify-content: flex-start;
+    padding-inline: 0.15rem;
+    border: 0;
+    background: transparent;
+  }
+
+  .visit-map__maps--primary {
+    justify-content: center;
+    padding-inline: 1.15rem;
+    border: 1px solid var(--color-rose);
+    background: var(--color-rose);
   }
 
   .visit-map__frame-wrap {
@@ -2874,7 +2998,7 @@ const reviews = landingClientReviews
 
 @media (min-width: 1024px) {
   .visit-map__inner {
-    grid-template-columns: minmax(18rem, 25rem) minmax(0, 1fr);
+    grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
     gap: 1.65rem;
   }
 
