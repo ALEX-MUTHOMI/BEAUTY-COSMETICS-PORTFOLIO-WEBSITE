@@ -3,16 +3,14 @@
     <div class="site-footer__glow" aria-hidden="true" />
 
     <div class="site-footer__inner">
-      <!-- Brand -->
       <div class="site-footer__brand">
         <SheeLogo variant="light" to="/" size="md" />
         <p class="site-footer__tagline">
-          Facials, waxing, massage &amp; makeup in Meru Town — clean rooms, soft light, and therapists who take their time.
+          Facials, waxing, massage &amp; makeup in Meru Town.
         </p>
-
         <div class="site-footer__call">
           <span class="site-footer__call-label">
-            <svg class="site-footer__icon" viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
+            <svg class="site-footer__icon" viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
               <path
                 fill="currentColor"
                 d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.2 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.7 21 3 13.3 3 3.7c0-.6.4-1 1-1H7c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.3 1.1L6.6 10.8z"
@@ -44,49 +42,41 @@
         </div>
       </div>
 
-      <!-- Quick Link -->
-      <nav class="site-footer__col" aria-label="Quick links">
-        <p class="site-footer__heading">Quick Link</p>
-        <NuxtLink to="/">Home</NuxtLink>
-        <NuxtLink to="/services">Services</NuxtLink>
-        <NuxtLink :to="SERVICES_ROUTES.fullPackages">Packages</NuxtLink>
-        <NuxtLink :to="SERVICES_ROUTES.singleSessions">Treatments</NuxtLink>
+      <nav class="site-footer__links" aria-label="Quick links">
+        <p class="site-footer__heading">Quick links</p>
+        <div class="site-footer__link-grid">
+          <NuxtLink to="/">Home</NuxtLink>
+          <NuxtLink to="/services">Services</NuxtLink>
+          <NuxtLink :to="SERVICES_ROUTES.fullPackages">Packages</NuxtLink>
+          <NuxtLink :to="SERVICES_ROUTES.singleSessions">Treatments</NuxtLink>
+        </div>
       </nav>
 
-      <!-- Working Hour — tabloid plate so hours lead the footer -->
-      <div class="site-footer__col site-footer__col--hours">
-        <p class="site-footer__heading">Working Hour</p>
-        <ul class="site-footer__hours">
-          <li>
-            <span class="site-footer__day">Monday</span>
-            <span class="site-footer__time">7:00 to 19:00</span>
-          </li>
-          <li>
-            <span class="site-footer__day">Tuesday – Wednesday</span>
-            <span class="site-footer__time">7:00 to 19:00 · packages</span>
-          </li>
-          <li>
-            <span class="site-footer__day">Thursday – Saturday</span>
-            <span class="site-footer__time">7:00 to 19:00</span>
-          </li>
-          <li class="site-footer__hours-closed">
-            <svg class="site-footer__icon" viewBox="0 0 24 24" aria-hidden="true" width="15" height="15">
-              <path
-                fill="currentColor"
-                d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6V11c0-3.1-1.6-5.6-4.5-6.3V4a1.5 1.5 0 0 0-3 0v.7C7.6 5.4 6 7.9 6 11v5l-2 2v1h16v-1l-2-2z"
-              />
-            </svg>
-            Sunday Closed
-          </li>
-        </ul>
-      </div>
-
-      <!-- Visit us -->
-      <div class="site-footer__col site-footer__col--support">
+      <div class="site-footer__visit">
+        <img
+          src="/images/flower.png"
+          alt=""
+          class="site-footer__visit-bloom site-footer__visit-bloom--tr"
+          width="72"
+          height="72"
+          loading="lazy"
+          decoding="async"
+          aria-hidden="true"
+        />
+        <img
+          src="/images/flower.png"
+          alt=""
+          class="site-footer__visit-bloom site-footer__visit-bloom--bl"
+          width="56"
+          height="56"
+          loading="lazy"
+          decoding="async"
+          aria-hidden="true"
+        />
         <p class="site-footer__heading">Visit us</p>
 
         <a
-          class="site-footer__support-row"
+          class="site-footer__visit-row"
           :href="LANDING_MAPS_URL"
           target="_blank"
           rel="noopener noreferrer"
@@ -98,12 +88,11 @@
             />
           </svg>
           <span>
-            {{ LANDING_ADDRESS_LINES[0] }}<br />
-            {{ LANDING_ADDRESS_LINES[1] }}
+            {{ LANDING_ADDRESS_LINES[0] }} · {{ LANDING_ADDRESS_LINES[1] }}
           </span>
         </a>
 
-        <a class="site-footer__support-row" href="mailto:bookings@sheeaesthetics.co.ke">
+        <a class="site-footer__visit-row" href="mailto:bookings@sheeaesthetics.co.ke">
           <svg class="site-footer__icon site-footer__icon--accent" viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
             <path
               fill="currentColor"
@@ -218,19 +207,20 @@ onUnmounted(() => {
   isolation: isolate;
   background: var(--color-footer);
   color: rgba(244, 235, 230, 0.72);
-  padding: clamp(3.5rem, 7vw, 5.25rem) 1.25rem 0;
+  /* Mobile-first: tight padding — not a second page */
+  padding: 1.75rem 1rem 0;
   overflow: clip;
 }
 
 .site-footer__glow {
   position: absolute;
-  inset: auto auto -18% -8%;
-  width: min(42vw, 18rem);
-  height: min(42vw, 18rem);
+  inset: auto auto -12% -6%;
+  width: min(36vw, 12rem);
+  height: min(36vw, 12rem);
   background-image: url('/images/flower.png');
   background-size: contain;
   background-repeat: no-repeat;
-  opacity: 0.07;
+  opacity: 0.08;
   filter: saturate(1.2) brightness(1.1);
   pointer-events: none;
   z-index: 0;
@@ -243,43 +233,43 @@ onUnmounted(() => {
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: clamp(2rem, 4.5vw, 2.75rem);
-  padding-bottom: clamp(2.25rem, 5vw, 3.25rem);
+  gap: 1.35rem;
+  align-items: start;
+  padding-bottom: 1.25rem;
 }
 
 .site-footer__brand {
-  position: relative;
   max-width: 28rem;
 }
 
 .site-footer__tagline {
-  margin: 1.25rem 0 0;
-  max-width: 34ch;
-  font: 400 0.95rem/1.65 var(--font-body);
-  color: rgba(244, 235, 230, 0.7);
+  margin: 0.75rem 0 0;
+  max-width: 36ch;
+  font: 400 0.88rem/1.5 var(--font-body);
+  color: rgba(244, 235, 230, 0.68);
 }
 
 .site-footer__call {
-  margin-top: 1.5rem;
+  margin-top: 0.85rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.35rem;
+  gap: 0.2rem;
 }
 
 .site-footer__call-label {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  font: 600 0.72rem/1 var(--font-body);
-  letter-spacing: 0.14em;
+  gap: 0.4rem;
+  font: 600 0.65rem/1 var(--font-body);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(244, 235, 230, 0.78);
+  color: rgba(244, 235, 230, 0.7);
 }
 
 .site-footer__phone {
   margin: 0;
-  font: 500 1.15rem/1.3 var(--font-body);
+  font: 600 1.05rem/1.3 var(--font-body);
   letter-spacing: 0.02em;
   color: var(--color-rose);
   text-decoration: none;
@@ -294,193 +284,158 @@ a.site-footer__phone:focus-visible {
 
 .site-footer__phone--pending {
   color: rgba(240, 184, 172, 0.75);
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .site-footer__heading {
-  margin: 0 0 1.1rem;
-  font: 600 1.05rem/1.2 var(--font-display);
+  margin: 0 0 0.55rem;
+  font: 600 0.95rem/1.2 var(--font-display);
   letter-spacing: -0.02em;
-  text-transform: none;
   color: #fff;
 }
 
-.site-footer__col {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.35rem;
+.site-footer__links {
+  min-width: 0;
 }
 
-/* Tabloid plate — hours are the footer’s lead signal */
-.site-footer__col--hours {
-  position: relative;
-  padding: 1.25rem 1.2rem 1.35rem;
-  background:
-    linear-gradient(
-      160deg,
-      rgba(48, 36, 38, 0.95) 0%,
-      rgba(32, 24, 26, 0.98) 55%,
-      rgba(26, 20, 22, 1) 100%
-    );
-  border: 1px solid rgba(240, 184, 172, 0.38);
-  box-shadow:
-    0 0 0 1px rgba(176, 122, 113, 0.12) inset,
-    0 18px 40px rgba(0, 0, 0, 0.38);
-  overflow: hidden;
+.site-footer__link-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
 }
 
-.site-footer__col--hours::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-rose-dark), var(--color-rose), #f0b8ac);
-  pointer-events: none;
-}
-
-.site-footer__col--hours::after {
-  content: '';
-  position: absolute;
-  right: -1.1rem;
-  bottom: -1.25rem;
-  width: 6.5rem;
-  height: 6.5rem;
-  background-image: url('/images/flower.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  opacity: 0.2;
-  filter: saturate(1.4) brightness(1.2);
-  pointer-events: none;
-}
-
-.site-footer__col--hours .site-footer__heading {
-  position: relative;
-  z-index: 1;
-  margin-bottom: 0.95rem;
-  font-size: 1.2rem;
-  color: #fff;
-}
-
-.site-footer__col--hours .site-footer__hours {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  gap: 0.85rem;
-}
-
-.site-footer__col--hours .site-footer__day {
-  color: #fff;
-  font-weight: 600;
-}
-
-.site-footer__col--hours .site-footer__time {
-  color: rgba(244, 235, 230, 0.72);
-}
-
-.site-footer__col--hours .site-footer__hours-closed {
-  margin-top: 0.15rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(240, 184, 172, 0.22);
-  width: 100%;
-}
-
-.site-footer__col a {
+.site-footer__link-grid a {
   display: inline-flex;
   align-items: center;
-  min-height: 2.5rem;
-  padding: 0.15rem 0;
-  color: rgba(244, 235, 230, 0.68);
+  justify-content: center;
+  min-height: 2.65rem;
+  padding: 0.55rem 0.7rem;
+  text-align: center;
+  color: rgba(255, 248, 244, 0.9);
   text-decoration: none;
-  font: 400 0.92rem/1.45 var(--font-body);
+  font: 600 0.82rem/1.2 var(--font-body);
+  letter-spacing: 0.02em;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(222, 150, 141, 0.22);
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.site-footer__link-grid a:hover,
+.site-footer__link-grid a:focus-visible {
+  color: #fff;
+  background: rgba(222, 150, 141, 0.22);
+  border-color: rgba(222, 150, 141, 0.45);
+}
+
+.site-footer__link-grid a.router-link-active {
+  color: #fff;
+  background: rgba(222, 150, 141, 0.28);
+  border-color: rgba(222, 150, 141, 0.5);
+}
+
+/* Dark Visit card — calm palette, readable type */
+.site-footer__visit {
+  position: relative;
+  overflow: hidden;
+  padding: 0.95rem 0.95rem 1rem;
+  background:
+    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(222, 150, 141, 0.16), transparent 58%),
+    linear-gradient(165deg, #322a2b 0%, #262122 50%, #1e1a1b 100%);
+  border: 1px solid rgba(222, 150, 141, 0.24);
+  border-top: 3px solid var(--color-rose);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.site-footer__visit::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.08;
+  background-image: url('/images/flower.png');
+  background-size: 4.75rem;
+  background-repeat: repeat;
+  filter: saturate(1.15) brightness(1.05);
+  mix-blend-mode: soft-light;
+}
+
+.site-footer__visit-bloom {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.24;
+  filter: saturate(1.15);
+}
+
+.site-footer__visit-bloom--tr {
+  top: -0.65rem;
+  right: -0.45rem;
+  width: 4.25rem;
+  transform: rotate(16deg);
+}
+
+.site-footer__visit-bloom--bl {
+  left: -0.55rem;
+  bottom: -0.4rem;
+  width: 3.25rem;
+  opacity: 0.28;
+  transform: rotate(-24deg);
+}
+
+.site-footer__visit > *:not(.site-footer__visit-bloom) {
+  position: relative;
+  z-index: 1;
+}
+
+.site-footer__visit-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0 0 0.45rem;
+  color: rgba(255, 250, 246, 0.92);
+  font: 500 0.84rem/1.45 var(--font-body);
+  text-decoration: none;
   transition: color 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-.site-footer__col a:hover,
-.site-footer__col a:focus-visible {
-  color: var(--color-rose);
-}
-
-.site-footer__hours {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  font: 400 0.9rem/1.45 var(--font-body);
-  color: rgba(244, 235, 230, 0.68);
-}
-
-.site-footer__day {
-  display: block;
-  color: rgba(244, 235, 230, 0.88);
-  font-weight: 500;
-}
-
-.site-footer__time {
-  display: block;
-  margin-top: 0.1rem;
-  color: rgba(244, 235, 230, 0.55);
-  font-size: 0.86rem;
-}
-
-.site-footer__hours-closed {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin-top: 0.25rem;
-  color: var(--color-rose);
-  font: 600 0.92rem/1.3 var(--font-body);
-}
-
-.site-footer__support-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.7rem;
-  margin: 0 0 0.85rem;
-  max-width: 22rem;
-  color: rgba(244, 235, 230, 0.68);
-  font: 400 0.92rem/1.55 var(--font-body);
-  text-decoration: none;
-  transition: color 0.15s ease;
-}
-
-a.site-footer__support-row:hover,
-a.site-footer__support-row:focus-visible {
-  color: var(--color-rose);
+a.site-footer__visit-row:hover,
+a.site-footer__visit-row:focus-visible {
+  color: #f0b8ac;
 }
 
 .site-footer__icon {
   flex-shrink: 0;
-  margin-top: 0.15rem;
+  margin-top: 0.12rem;
 }
 
 .site-footer__icon--accent {
-  color: var(--color-rose);
+  color: #f0b8ac;
 }
 
 .site-footer__social {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.55rem;
+  gap: 0.45rem;
   margin-top: 0.35rem;
 }
 
 .site-footer__social-btn {
   display: grid;
   place-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  min-height: 2.75rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-height: 2.5rem;
   padding: 0;
   border-radius: 50%;
-  color: rgba(244, 235, 230, 0.85);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(245, 216, 208, 0.16);
+  color: rgba(244, 235, 230, 0.9);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(245, 216, 208, 0.22);
   text-decoration: none;
   transition:
     color 0.18s ease,
@@ -503,14 +458,14 @@ a.site-footer__support-row:focus-visible {
   z-index: 1;
   width: var(--container);
   margin: 0 auto;
-  padding: 1.15rem 0 calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  padding: 0.85rem 0 calc(0.95rem + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.65rem 1.25rem;
-  font: 400 0.8rem/1.4 var(--font-body);
+  gap: 0.4rem 1rem;
+  font: 400 0.75rem/1.4 var(--font-body);
   color: rgba(244, 235, 230, 0.42);
 }
 
@@ -520,15 +475,15 @@ a.site-footer__support-row:focus-visible {
 
 .site-footer__legal {
   display: flex;
-  gap: 0.55rem;
+  gap: 0.45rem;
   align-items: center;
 }
 
 .site-footer__legal a {
   display: inline-flex;
   align-items: center;
-  min-height: 2.75rem;
-  padding: 0.2rem 0.1rem;
+  min-height: 2.35rem;
+  padding: 0.15rem 0.05rem;
   color: rgba(244, 235, 230, 0.5);
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
@@ -542,13 +497,13 @@ a.site-footer__support-row:focus-visible {
 
 .site-footer__top {
   position: fixed;
-  right: 1.1rem;
-  bottom: calc(1.1rem + env(safe-area-inset-bottom, 0px));
+  right: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   z-index: 60;
   display: grid;
   place-content: center;
-  width: 3rem;
-  height: 3rem;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -583,40 +538,143 @@ a.site-footer__support-row:focus-visible {
 
 @media (max-width: 767px) {
   .site-footer {
+    padding: 1.15rem 1rem 0;
     padding-bottom: calc(var(--mobile-book-bar-height, 4.15rem) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .site-footer__inner {
+    gap: 0.85rem;
+    padding-bottom: 0.85rem;
+  }
+
+  .site-footer__tagline {
+    display: none;
+  }
+
+  .site-footer__call {
+    margin-top: 0.55rem;
+  }
+
+  .site-footer__phone {
+    font-size: 0.95rem;
+  }
+
+  .site-footer__heading {
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+  }
+
+  .site-footer__link-grid a {
+    min-height: 2.75rem;
+    font-size: 0.84rem;
+  }
+
+  .site-footer__visit {
+    padding: 0.85rem 0.85rem 0.9rem;
+  }
+
+  .site-footer__social-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    min-height: 2.25rem;
   }
 
   .site-footer__top {
     bottom: calc(
-      var(--mobile-book-bar-height, 4.15rem) + env(safe-area-inset-bottom, 0px) + 0.85rem
+      var(--mobile-book-bar-height, 4.15rem) + env(safe-area-inset-bottom, 0px) + 0.75rem
     );
+  }
+
+  .site-footer__bottom {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    padding-top: 0.55rem;
+    padding-bottom: calc(0.65rem + env(safe-area-inset-bottom, 0px));
+    font-size: 0.7rem;
+  }
+
+  .site-footer__legal a {
+    min-height: 2.1rem;
   }
 }
 
 @media (min-width: 768px) {
+  .site-footer {
+    padding: 2.5rem 1.25rem 0;
+  }
+
   .site-footer__inner {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: clamp(2rem, 4vw, 2.75rem) clamp(1.75rem, 4vw, 3rem);
+    grid-template-columns: 1.35fr 1fr 1.15fr;
+    gap: 1.75rem 2.5rem;
+    padding-bottom: 1.75rem;
+    align-items: start;
+  }
+
+  .site-footer__tagline {
+    font-size: 0.92rem;
+  }
+
+  /* Desktop: quiet text links — not mobile tap tiles */
+  .site-footer__link-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .site-footer__link-grid a {
+    justify-content: flex-start;
+    min-height: 2.35rem;
+    padding: 0.35rem 0;
+    font: 500 0.95rem/1.3 var(--font-body);
+    letter-spacing: 0.04em;
+    color: rgba(244, 235, 230, 0.72);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0;
+  }
+
+  .site-footer__link-grid a:last-child {
+    border-bottom: 0;
+  }
+
+  .site-footer__link-grid a:hover,
+  .site-footer__link-grid a:focus-visible {
+    color: #f0b8ac;
+    background: transparent;
+    border-color: rgba(222, 150, 141, 0.35);
+  }
+
+  .site-footer__link-grid a.router-link-active {
+    color: #f0b8ac;
+    background: transparent;
+    border-color: rgba(222, 150, 141, 0.45);
+    font-weight: 600;
+  }
+
+  .site-footer__visit {
+    padding: 1.15rem 1.1rem 1.2rem;
+  }
+
+  .site-footer__heading {
+    font-size: 1.05rem;
+    margin-bottom: 0.75rem;
   }
 }
 
 @media (min-width: 1024px) {
+  .site-footer {
+    padding: 2.75rem 1.25rem 0;
+  }
+
   .site-footer__inner {
-    grid-template-columns: 1.25fr 0.85fr 1.2fr 1fr;
-    align-items: start;
-    gap: clamp(1.75rem, 3vw, 3.25rem);
+    gap: 2rem 3rem;
   }
 
-  .site-footer__heading {
-    font-size: 1.15rem;
-  }
-
-  .site-footer__col--hours {
-    padding: 1.4rem 1.35rem 1.5rem;
-  }
-
-  .site-footer__col--hours .site-footer__heading {
-    font-size: 1.28rem;
+  .site-footer__link-grid a {
+    font-size: 1rem;
+    min-height: 2.5rem;
   }
 }
 
