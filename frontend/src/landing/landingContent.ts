@@ -172,7 +172,21 @@ export function isPackageDay(day: string): boolean {
 
 export const PACKAGE_BOOK_CTA = 'Book this package'
 
+/** Display order on /services: Glow · Classic (Most booked, center) · Relax */
 export const packages: LandingPackage[] = [
+  {
+    name: 'Glow Package',
+    text: 'For events and photos. Brighten skin, shape brows and finish with soft glam.',
+    price: 'From KES 8,500',
+    daysLabel: 'Tue & Wed only',
+    ctaLabel: PACKAGE_BOOK_CTA,
+    includes: [
+      'Brightening facial',
+      'Brow shaping & wax',
+      'Soft glam makeup',
+      'Skin consultation',
+    ],
+  },
   {
     name: 'Classic Full Package',
     text: 'Our most booked visit. Arrive once, leave with skin, body and makeup done.',
@@ -186,19 +200,6 @@ export const packages: LandingPackage[] = [
       'Full body waxing',
       '60-minute massage',
       'Event-ready makeup',
-    ],
-  },
-  {
-    name: 'Glow Package',
-    text: 'For events and photos. Brighten skin, shape brows and finish with soft glam.',
-    price: 'From KES 8,500',
-    daysLabel: 'Tue & Wed only',
-    ctaLabel: PACKAGE_BOOK_CTA,
-    includes: [
-      'Brightening facial',
-      'Brow shaping & wax',
-      'Soft glam makeup',
-      'Skin consultation',
     ],
   },
   {

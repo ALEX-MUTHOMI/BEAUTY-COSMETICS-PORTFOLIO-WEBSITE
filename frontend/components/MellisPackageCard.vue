@@ -4,12 +4,33 @@
     :class="{
       'mellis-card--featured': featured,
       'mellis-card--single': variant === 'single',
+      'mellis-card--no-price': hidePrice,
     }"
   >
+    <img
+      src="/images/flower.png"
+      alt=""
+      class="mellis-card__bloom mellis-card__bloom--tr"
+      width="96"
+      height="96"
+      loading="lazy"
+      decoding="async"
+      aria-hidden="true"
+    />
+    <img
+      src="/images/flower.png"
+      alt=""
+      class="mellis-card__bloom mellis-card__bloom--bl"
+      width="72"
+      height="72"
+      loading="lazy"
+      decoding="async"
+      aria-hidden="true"
+    />
     <p v-if="badge" class="mellis-card__badge">{{ badge }}</p>
     <p v-if="daysLabel && variant !== 'single'" class="mellis-card__days">{{ daysLabel }}</p>
     <h3 class="mellis-card__title">{{ name }}</h3>
-    <p class="mellis-card__price">{{ price }}</p>
+    <p v-if="!hidePrice" class="mellis-card__price">{{ price }}</p>
     <p v-if="variant !== 'single'" class="mellis-card__text">{{ text }}</p>
     <ul
       v-if="visibleIncludes.length"
@@ -44,6 +65,8 @@ const props = withDefaults(
     ctaTo?: string
     detailsTo?: string
     detailsLabel?: string
+    /** Hide price — services catalog prefers info + CTA only */
+    hidePrice?: boolean
     /** package = full visit card; single = lean treatment tile for carousel */
     variant?: 'package' | 'single'
   }>(),
@@ -52,6 +75,7 @@ const props = withDefaults(
     ctaLabel: LANDING_PRIMARY_CTA,
     ctaTo: '/services',
     detailsLabel: 'See all options',
+    hidePrice: false,
     variant: 'package',
   },
 )
@@ -72,11 +96,15 @@ const visibleIncludes = computed(() =>
   width: 100%;
   min-width: 0;
   padding: 1.55rem 1.3rem 1.4rem;
-  background: var(--color-card-dark);
-  border: 0;
+  /* Warm rose-charcoal — not pure black */
+  background:
+    radial-gradient(ellipse 90% 70% at 100% 0%, rgba(222, 150, 141, 0.38), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 0% 100%, rgba(176, 98, 90, 0.28), transparent 50%),
+    linear-gradient(165deg, #3a2c2c 0%, #2a2224 45%, #1f1a1b 100%);
+  border: 1px solid rgba(222, 150, 141, 0.28);
   border-top: 3px solid var(--color-rose);
-  box-shadow: 0 20px 44px rgba(23, 21, 22, 0.26);
-  overflow: visible;
+  box-shadow: 0 14px 36px rgba(23, 21, 22, 0.16);
+  overflow: hidden;
   color: #f4ebe6;
   transition:
     transform 0.35s var(--ease-story),
@@ -89,55 +117,106 @@ const visibleIncludes = computed(() =>
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.38;
+  opacity: 0.22;
   background-image: url('/images/flower.png');
-  background-size: 6.25rem;
+  background-size: 5.5rem;
   background-repeat: repeat;
-  /* Keep rose/pink orchid tone — no grayscale */
-  filter: saturate(1.5) brightness(1.18) contrast(1.05);
-  border-radius: inherit;
+  filter: saturate(1.45) brightness(1.15);
   mix-blend-mode: soft-light;
 }
 
-.mellis-card::after {
-  content: '';
+.mellis-card__bloom {
   position: absolute;
-  inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(23, 21, 22, 0.08) 0%, transparent 40%, rgba(23, 21, 22, 0.28) 100%);
+  opacity: 0.42;
+  filter: saturate(1.35) brightness(1.05);
 }
 
-.mellis-card > * {
+.mellis-card__bloom--tr {
+  top: -0.85rem;
+  right: -0.65rem;
+  width: min(6.5rem, 42%);
+  transform: rotate(18deg);
+}
+
+.mellis-card__bloom--bl {
+  left: -0.85rem;
+  bottom: -0.55rem;
+  width: min(5rem, 34%);
+  transform: rotate(-28deg);
+  opacity: 0.32;
+}
+
+.mellis-card > *:not(.mellis-card__bloom) {
   position: relative;
   z-index: 1;
 }
 
 .mellis-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 24px 52px rgba(23, 21, 22, 0.32);
+  box-shadow: 0 20px 44px rgba(23, 21, 22, 0.2);
 }
 
+/* Most booked — white stage, stands out in the middle */
 .mellis-card--featured {
-  background: var(--color-card-dark);
-  border-top-width: 4px;
-  box-shadow: 0 22px 48px rgba(23, 21, 22, 0.3);
-  margin-top: 0.75rem;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 0%, rgba(222, 150, 141, 0.18), transparent 65%),
+    #fff;
+  border: 1px solid rgba(222, 150, 141, 0.45);
+  border-top: 4px solid var(--color-rose);
+  box-shadow:
+    0 18px 48px rgba(222, 150, 141, 0.22),
+    0 8px 24px rgba(23, 21, 22, 0.08);
+  margin-top: 0;
   padding: 1.95rem 1.5rem 1.6rem;
+  color: var(--color-ink);
+  z-index: 2;
+}
+
+.mellis-card--featured::before {
+  opacity: 0.12;
+  filter: saturate(1.3) brightness(1.05);
+  mix-blend-mode: multiply;
+}
+
+.mellis-card--featured .mellis-card__bloom {
+  opacity: 0.55;
+  filter: saturate(1.25) brightness(1);
+}
+
+.mellis-card--featured .mellis-card__days {
+  color: var(--color-rose-dark, #b56b62);
 }
 
 .mellis-card--featured .mellis-card__title {
-  font-size: clamp(1.35rem, 2.8vw, 1.55rem);
+  font-size: clamp(1.4rem, 3vw, 1.7rem);
+  color: var(--color-ink);
 }
 
 .mellis-card--featured .mellis-card__price {
   font-size: clamp(1.55rem, 3vw, 1.85rem);
   margin-bottom: 0.75rem;
+  color: var(--color-rose-dark, #b56b62);
 }
 
 .mellis-card--featured .mellis-card__text {
   max-width: 32ch;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
+  color: var(--color-muted);
+}
+
+.mellis-card--featured .mellis-card__includes li {
+  color: var(--color-ink);
+  border-bottom: 1px solid rgba(39, 37, 42, 0.06);
+}
+
+.mellis-card--featured .mellis-card__includes li:last-child {
+  border-bottom: none;
+}
+
+.mellis-card--featured .mellis-card__details {
+  color: var(--color-rose-dark, #b56b62);
 }
 
 .mellis-card--featured :deep(.site-btn) {
@@ -145,26 +224,24 @@ const visibleIncludes = computed(() =>
   min-height: 2.9rem;
 }
 
-/* Lean singles tile — title + price + 2 bullets + calm Select */
+.mellis-card--no-price .mellis-card__text {
+  margin-top: 0.15rem;
+}
+
+/* Lean singles tile */
 .mellis-card--single {
   align-items: flex-start;
   text-align: left;
   padding: 1rem 0.95rem 0.95rem;
-  border: 0;
-  border-top: 3px solid var(--color-rose);
   border-radius: 0;
-  background: var(--color-card-dark);
-  box-shadow: 0 12px 28px rgba(23, 21, 22, 0.14);
 }
 
-.mellis-card--single::before,
-.mellis-card--single::after {
+.mellis-card--single .mellis-card__bloom {
   display: none;
 }
 
 .mellis-card--single:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgba(23, 21, 22, 0.18);
 }
 
 .mellis-card--single .mellis-card__title {
@@ -210,15 +287,15 @@ const visibleIncludes = computed(() =>
 }
 
 .mellis-card :deep(.site-btn--outline) {
-  background: transparent;
-  color: #f4ebe6;
-  border-color: rgba(245, 216, 208, 0.45);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f8f2ee;
+  border-color: rgba(245, 216, 208, 0.55);
 }
 
 .mellis-card :deep(.site-btn--outline:hover),
 .mellis-card :deep(.site-btn--outline:focus-visible) {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(245, 216, 208, 0.7);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(245, 216, 208, 0.85);
   color: #fff;
 }
 
@@ -250,15 +327,16 @@ const visibleIncludes = computed(() =>
 
 @media (max-width: 767px) {
   .mellis-card:not(.mellis-card--single) {
-    padding: 1.25rem 1rem 1.1rem;
+    padding: 1.35rem 1.05rem 1.15rem;
   }
 
   .mellis-card--featured {
-    padding-top: 1.5rem;
+    padding-top: 1.65rem;
+    transform: scale(1.01);
   }
 
   .mellis-card:not(.mellis-card--single) .mellis-card__title {
-    font-size: 1.12rem;
+    font-size: 1.18rem;
     line-height: 1.25;
   }
 
@@ -268,22 +346,22 @@ const visibleIncludes = computed(() =>
 
   .mellis-card:not(.mellis-card--single) .mellis-card__text {
     max-width: none;
-    font-size: 0.84rem;
-    line-height: 1.45;
+    font-size: 0.88rem;
+    line-height: 1.5;
   }
 
   .mellis-card:not(.mellis-card--single) .mellis-card__includes li {
-    font-size: 0.8rem;
+    font-size: 0.84rem;
     padding-left: 1.2rem;
-    padding-top: 0.28rem;
-    padding-bottom: 0.28rem;
+    padding-top: 0.32rem;
+    padding-bottom: 0.32rem;
   }
 
   .mellis-card:not(.mellis-card--single) :deep(.site-btn) {
     max-width: none;
     width: 100%;
     margin-top: auto;
-    min-height: 2.75rem;
+    min-height: 2.85rem;
   }
 
   .mellis-card__details {
@@ -292,15 +370,13 @@ const visibleIncludes = computed(() =>
   }
 }
 
-@media (min-width: 480px) and (max-width: 767px) {
-  .mellis-card:not(.mellis-card--single) {
-    padding: 1.3rem 1.05rem 1.15rem;
-  }
-}
-
 @media (min-width: 768px) {
   .mellis-card:not(.mellis-card--single) {
     padding: 1.5rem 1.3rem 1.35rem;
+  }
+
+  .mellis-card--featured {
+    transform: scale(1.03);
   }
 
   .mellis-card--single {
@@ -320,6 +396,10 @@ const visibleIncludes = computed(() =>
   .mellis-card:not(.mellis-card--single) {
     padding: 1.65rem 1.4rem 1.45rem;
   }
+
+  .mellis-card--featured {
+    transform: scale(1.045);
+  }
 }
 
 .mellis-card__badge {
@@ -328,19 +408,20 @@ const visibleIncludes = computed(() =>
   left: 50%;
   transform: translate(-50%, -50%);
   margin: 0;
-  padding: 0.35rem 1rem;
+  padding: 0.4rem 1.1rem;
   background: var(--color-rose);
   color: #fff;
-  font: 600 0.68rem var(--font-body);
+  font: 700 0.68rem var(--font-body);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   white-space: nowrap;
-  z-index: 1;
+  z-index: 2;
+  box-shadow: 0 6px 16px rgba(222, 150, 141, 0.35);
 }
 
 .mellis-card__days {
-  margin: 0 0 0.45rem;
-  font: 600 0.68rem var(--font-body);
+  margin: 0.35rem 0 0.45rem;
+  font: 700 0.68rem var(--font-body);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #f0b8ac;
@@ -349,7 +430,7 @@ const visibleIncludes = computed(() =>
 .mellis-card__title {
   margin: 0 0 0.35rem;
   font-family: var(--font-display);
-  font-size: clamp(1.28rem, 2.4vw, 1.45rem);
+  font-size: clamp(1.28rem, 2.4vw, 1.5rem);
   font-weight: 600;
   letter-spacing: -0.02em;
   color: #f8f2ee;
@@ -367,14 +448,14 @@ const visibleIncludes = computed(() =>
 
 .mellis-card__text {
   margin: 0 0 0.85rem;
-  max-width: 28ch;
-  font: 400 0.88rem/1.55 var(--font-body);
-  color: rgba(244, 235, 230, 0.72);
+  max-width: 30ch;
+  font: 500 0.9rem/1.55 var(--font-body);
+  color: rgba(248, 242, 238, 0.88);
 }
 
 .mellis-card__includes {
   list-style: none;
-  margin: 0 0 1.1rem;
+  margin: 0 0 1.15rem;
   padding: 0;
   width: 100%;
   text-align: left;
@@ -382,21 +463,16 @@ const visibleIncludes = computed(() =>
 
 .mellis-card__includes li {
   position: relative;
-  padding: 0.28rem 0 0.28rem 1.35rem;
-  font: 500 0.84rem var(--font-body);
-  color: rgba(248, 242, 238, 0.92);
-  border-bottom: 0;
-}
-
-.mellis-card__includes li:last-child {
-  border-bottom: none;
+  padding: 0.35rem 0 0.35rem 1.35rem;
+  font: 600 0.88rem/1.35 var(--font-body);
+  color: rgba(248, 242, 238, 0.96);
 }
 
 .mellis-card__includes li::before {
   content: '✓';
   position: absolute;
   left: 0;
-  top: 0.3rem;
+  top: 0.35rem;
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--color-rose);
