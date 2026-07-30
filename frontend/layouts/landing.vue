@@ -4,28 +4,43 @@
     :class="{
       'landing-shell--no-book-bar': !showMobileBookBar,
       'landing-shell--home': isHome,
-      'landing-shell--resume': Boolean(welcomeBackHref),
+      'landing-shell--resume': showWelcomeBack,
     }"
   >
     <SiteHeader />
 
-    <aside
-      v-if="welcomeBackHref"
-      class="welcome-back welcome-back--overlay"
-      role="status"
-      aria-label="Continue your last booking"
-    >
-      <div class="welcome-back__inner">
-        <span class="welcome-back__mark" aria-hidden="true" />
-        <div class="welcome-back__copy">
-          <p class="welcome-back__eyebrow">Welcome back</p>
-          <p class="welcome-back__text">Continue your last booking</p>
+    <Teleport to="body">
+      <aside
+        v-if="showWelcomeBack"
+        class="welcome-back welcome-back--overlay"
+        role="status"
+        aria-label="Continue your last booking"
+      >
+        <div class="welcome-back__inner">
+          <span class="welcome-back__mark" aria-hidden="true" />
+          <div class="welcome-back__copy">
+            <p class="welcome-back__eyebrow">Welcome back</p>
+            <p class="welcome-back__text">Continue your last booking</p>
+          </div>
+          <NuxtLink :to="welcomeBackHref" class="welcome-back__cta" @click="onWelcomeBack">
+            Resume
+          </NuxtLink>
+          <button
+            type="button"
+            class="welcome-back__dismiss"
+            aria-label="Dismiss resume booking"
+            @click="dismissWelcomeBack"
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"
+              />
+            </svg>
+          </button>
         </div>
-        <NuxtLink :to="welcomeBackHref" class="welcome-back__cta" @click="onWelcomeBack">
-          Resume
-        </NuxtLink>
-      </div>
-    </aside>
+      </aside>
+    </Teleport>
 
     <slot />
     <SiteFooter />
@@ -74,11 +89,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { LANDING_PRIMARY_CTA } from '@/landing/landingContent'
 import { lastBookHref, SERVICES_BOOK_ENTRY } from '@/landing/bookingHandoff'
 import { trackFunnelEvent } from '@/landing/funnelEvents'
 import { useLandingBookCta } from '@/landing/useLandingBookCta'
+
+const WELCOME_BACK_DISMISS_KEY = 'shee:welcome-back-dismissed'
 
 const route = useRoute()
 const isHome = computed(() => route.path === '/')
@@ -95,12 +112,60 @@ const contactIsLive = contact.isLive
 const whatsappUrl = contact.whatsappUrl
 const whatsappLabel = contact.whatsappLabel
 
+const welcomeDismissed = ref(false)
+
 const welcomeBackHref = computed(() => {
   if (!import.meta.client) return ''
   if (route.path.startsWith('/book') || route.path.startsWith('/booking')) return ''
   const last = lastBookHref()
   return last && last !== SERVICES_BOOK_ENTRY ? last : ''
 })
+
+const showWelcomeBack = computed(
+  () => Boolean(welcomeBackHref.value) && !welcomeDismissed.value,
+)
+
+function readWelcomeDismissed() {
+  if (!import.meta.client) return false
+  try {
+    return sessionStorage.getItem(WELCOME_BACK_DISMISS_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function dismissWelcomeBack() {
+  welcomeDismissed.value = true
+  try {
+    sessionStorage.setItem(WELCOME_BACK_DISMISS_KEY, '1')
+  } catch {
+    /* ignore */
+  }
+  syncWelcomeBarOffset()
+  trackFunnelEvent('welcome_back_dismiss', { surface: 'welcome_back' })
+}
+
+onMounted(() => {
+  welcomeDismissed.value = readWelcomeDismissed()
+  syncWelcomeBarOffset()
+})
+
+watch(showWelcomeBack, () => {
+  syncWelcomeBarOffset()
+})
+
+watch(welcomeBackHref, (href) => {
+  if (!href) welcomeDismissed.value = readWelcomeDismissed()
+})
+
+function syncWelcomeBarOffset() {
+  if (!import.meta.client) return
+  const offset = showWelcomeBack.value
+    ? 'calc(3.15rem + env(safe-area-inset-top, 0px))'
+    : '0px'
+  document.documentElement.style.setProperty('--welcome-bar-offset', offset)
+  document.documentElement.classList.toggle('has-welcome-back', showWelcomeBack.value)
+}
 
 function onBookClick() {
   trackFunnelEvent('cta_book_click', { surface: 'mobile_sticky', href: bookHref.value })
@@ -132,7 +197,7 @@ useHead({
 }
 
 .landing-shell--home.landing-shell--resume {
-  --welcome-resume-offset: 3.35rem;
+  --welcome-resume-offset: 3.15rem;
 }
 
 .landing-shell--home.landing-shell--resume :deep(.hero__content) {
@@ -141,17 +206,23 @@ useHead({
   );
 }
 
-/* Floating resume chip — overlays content, never pushes layout */
+/* Fixed top strip — never scrolls; sits above header */
 .welcome-back--overlay {
   position: fixed;
-  z-index: 46;
-  top: calc(var(--site-header-height, 4.25rem) + 0.55rem);
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(calc(100% - 1.5rem), 26rem);
-  padding: 0;
-  background: transparent;
+  z-index: 55;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: none;
+  width: 100%;
+  margin: 0;
+  padding: env(safe-area-inset-top, 0px) 0 0;
+  background:
+    radial-gradient(ellipse 80% 120% at 0% 50%, rgba(222, 150, 141, 0.22), transparent 55%),
+    linear-gradient(165deg, #322a2b 0%, #262122 55%, #1e1a1b 100%);
   border: 0;
+  border-bottom: 1px solid rgba(222, 150, 141, 0.35);
+  box-shadow: 0 10px 28px rgba(20, 16, 18, 0.28);
   pointer-events: none;
 }
 
@@ -159,16 +230,14 @@ useHead({
   pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.55rem 0.55rem 0.55rem 0.75rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(232, 228, 225, 0.95);
-  box-shadow:
-    0 10px 28px rgba(20, 16, 18, 0.16),
-    0 1px 0 rgba(255, 255, 255, 0.85) inset;
-  backdrop-filter: blur(14px) saturate(1.1);
-  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  gap: 0.55rem;
+  width: min(100% - 1.5rem, 40rem);
+  margin: 0 auto;
+  padding: 0.55rem 0.35rem 0.55rem 0.15rem;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .welcome-back__mark {
@@ -176,8 +245,8 @@ useHead({
   width: 0.45rem;
   height: 0.45rem;
   border-radius: 50%;
-  background: var(--color-rose);
-  box-shadow: 0 0 0 4px rgba(222, 150, 141, 0.22);
+  background: #f0b8ac;
+  box-shadow: 0 0 0 4px rgba(222, 150, 141, 0.28);
 }
 
 .welcome-back__copy {
@@ -190,13 +259,13 @@ useHead({
   font: 700 0.58rem/1.2 var(--font-body);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-rose-dark, #b56b62);
+  color: #f0b8ac;
 }
 
 .welcome-back__text {
   margin: 0.08rem 0 0;
   font: 600 0.78rem/1.25 var(--font-body);
-  color: var(--color-ink);
+  color: #fff8f4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -214,24 +283,50 @@ useHead({
   letter-spacing: 0.1em;
   text-transform: uppercase;
   text-decoration: none;
-  color: #fff;
-  background: var(--color-rose);
+  color: #1a1718;
+  background: #f0b8ac;
   -webkit-tap-highlight-color: transparent;
 }
 
 .welcome-back__cta:hover {
-  background: var(--color-rose-dark, #b56b62);
+  background: var(--color-rose);
+  color: #fff;
+}
+
+.welcome-back__dismiss {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: rgba(255, 248, 244, 0.72);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.welcome-back__dismiss:hover,
+.welcome-back__dismiss:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  outline: none;
+}
+
+.welcome-back__dismiss:focus-visible {
+  outline: 2px solid #f0b8ac;
+  outline-offset: 2px;
 }
 
 @media (max-width: 419px) {
-  .welcome-back--overlay {
-    width: min(calc(100% - 1rem), 26rem);
-    top: calc(var(--site-header-height, 3.5rem) + 0.4rem);
-  }
-
   .welcome-back--overlay .welcome-back__inner {
-    gap: 0.45rem;
-    padding: 0.45rem 0.45rem 0.45rem 0.65rem;
+    width: min(100% - 1rem, 40rem);
+    gap: 0.4rem;
+    padding: 0.45rem 0.25rem 0.45rem 0.1rem;
   }
 
   .welcome-back__text {
@@ -240,15 +335,19 @@ useHead({
 
   .welcome-back__cta {
     min-height: 2.2rem;
-    padding-inline: 0.8rem;
+    padding-inline: 0.75rem;
     font-size: 0.64rem;
+  }
+
+  .welcome-back__dismiss {
+    width: 1.95rem;
+    height: 1.95rem;
   }
 }
 
 @media (min-width: 768px) {
-  .welcome-back--overlay {
-    width: min(calc(100% - 2rem), 28rem);
-    top: calc(var(--site-header-height, 5rem) + 0.75rem);
+  .welcome-back--overlay .welcome-back__inner {
+    width: min(100% - 2rem, 44rem);
   }
 
   .welcome-back__text {
