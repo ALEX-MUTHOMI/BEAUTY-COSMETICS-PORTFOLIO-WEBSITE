@@ -651,21 +651,20 @@ useHead({
 
 .services-door {
   position: relative;
-  flex: 0 0 min(78vw, 17.5rem);
+  flex: 0 0 min(82vw, 17.5rem);
   scroll-snap-align: start;
   display: block;
-  min-height: 12.75rem;
+  min-height: 11.5rem;
   overflow: hidden;
   text-decoration: none;
-  color: #f4ebe6;
+  color: #f7f0eb;
   background:
-    radial-gradient(ellipse 85% 75% at 100% 0%, rgba(240, 184, 172, 0.45), transparent 52%),
-    radial-gradient(ellipse 55% 50% at 0% 100%, rgba(181, 107, 98, 0.35), transparent 55%),
-    linear-gradient(155deg, #4a3434 0%, #322628 48%, #261e20 100%);
-  border: 1px solid rgba(222, 150, 141, 0.35);
+    radial-gradient(ellipse 75% 60% at 100% 0%, rgba(222, 150, 141, 0.2), transparent 55%),
+    linear-gradient(155deg, #322a2b 0%, #262122 52%, #1e1a1b 100%);
+  border: 1px solid rgba(222, 150, 141, 0.24);
   box-shadow:
-    0 12px 30px rgba(23, 21, 22, 0.12),
-    0 1px 0 rgba(255, 255, 255, 0.2) inset;
+    0 10px 26px rgba(23, 21, 22, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.12) inset;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -675,9 +674,8 @@ useHead({
 
 .services-door--treatments {
   background:
-    radial-gradient(ellipse 85% 75% at 0% 0%, rgba(240, 184, 172, 0.4), transparent 52%),
-    radial-gradient(ellipse 55% 50% at 100% 100%, rgba(181, 107, 98, 0.32), transparent 55%),
-    linear-gradient(205deg, #453032 0%, #2e2426 50%, #231c1e 100%);
+    radial-gradient(ellipse 75% 60% at 0% 0%, rgba(222, 150, 141, 0.18), transparent 55%),
+    linear-gradient(205deg, #302829 0%, #251f21 52%, #1d191a 100%);
 }
 
 @media (min-width: 640px) {
@@ -697,17 +695,18 @@ useHead({
 
   .services-door {
     flex: none;
-    min-height: 14.5rem;
+    min-height: 13.25rem;
   }
 }
 
 @media (hover: hover) {
   .services-door:hover {
     transform: translateY(-3px);
-    box-shadow: 0 18px 40px rgba(23, 21, 22, 0.16);
+    box-shadow: 0 16px 36px rgba(23, 21, 22, 0.14);
   }
 
   .services-door:hover .services-door__cta {
+    background: var(--color-rose);
     color: #fff;
   }
 }
@@ -721,21 +720,21 @@ useHead({
   position: absolute;
   pointer-events: none;
   z-index: 0;
-  filter: saturate(1.35) brightness(1.05);
+  filter: saturate(1.15) brightness(1.02);
 }
 
 .services-door__flower--main {
   right: 0.35rem;
   bottom: 0.25rem;
-  width: min(92px, 36%);
-  opacity: 0.55;
+  width: min(84px, 32%);
+  opacity: 0.28;
 }
 
 .services-door__flower--accent {
   top: 0.55rem;
   right: 0.65rem;
-  width: min(48px, 18%);
-  opacity: 0.4;
+  width: min(44px, 16%);
+  opacity: 0.22;
   transform: rotate(22deg);
 }
 
@@ -745,40 +744,47 @@ useHead({
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 0.35rem;
+  gap: 0.3rem;
   height: 100%;
   min-height: inherit;
-  padding: 1.35rem 1.2rem 1.35rem;
+  padding: 1.25rem 1.15rem 1.25rem;
 }
 
 .services-door__num {
-  font: 700 0.72rem/1 var(--font-body);
+  font: 700 0.7rem/1 var(--font-body);
   letter-spacing: 0.16em;
   color: #f0b8ac;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.1rem;
 }
 
 .services-door__title {
   font-family: var(--font-script);
-  font-size: clamp(2.2rem, 6.5vw, 3rem);
+  font-size: clamp(2rem, 6vw, 2.75rem);
   line-height: 1.05;
   color: #fff;
-  text-shadow: 0 2px 18px rgba(23, 21, 22, 0.25);
 }
 
 .services-door__sub {
-  font: 600 0.86rem/1.4 var(--font-body);
+  font: 500 0.84rem/1.4 var(--font-body);
   letter-spacing: 0.02em;
-  color: rgba(255, 248, 244, 0.9);
+  color: rgba(255, 248, 244, 0.78);
 }
 
 .services-door__cta {
-  margin-top: 0.85rem;
-  font: 700 0.72rem/1 var(--font-body);
-  letter-spacing: 0.14em;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  margin-top: 0.75rem;
+  min-height: 2.35rem;
+  padding: 0.45rem 0.9rem;
+  font: 700 0.68rem/1 var(--font-body);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #f0b8ac;
-  transition: color 0.2s ease;
+  color: #fff;
+  background: rgba(222, 150, 141, 0.92);
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
 }
 
 /* Packages */
@@ -979,17 +985,17 @@ useHead({
   align-items: flex-start;
   justify-content: flex-end;
   gap: 0.65rem;
-  min-height: 9.25rem;
-  padding: 0.95rem 0.85rem 1rem;
-  border: 1px solid rgba(222, 150, 141, 0.32);
+  min-height: 8.75rem;
+  padding: 0.9rem 0.8rem 0.95rem;
+  border: 1px solid rgba(222, 150, 141, 0.24);
   overflow: hidden;
   background:
-    radial-gradient(ellipse 90% 80% at 110% -10%, rgba(240, 184, 172, 0.42), transparent 50%),
-    linear-gradient(160deg, #433032 0%, #2c2325 55%, #221c1e 100%);
+    radial-gradient(ellipse 80% 70% at 110% -10%, rgba(222, 150, 141, 0.2), transparent 52%),
+    linear-gradient(160deg, #322a2b 0%, #262122 55%, #1e1a1b 100%);
   color: #f8f2ee;
   cursor: pointer;
   text-align: left;
-  box-shadow: 0 8px 22px rgba(23, 21, 22, 0.1);
+  box-shadow: 0 8px 20px rgba(23, 21, 22, 0.08);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -1006,17 +1012,17 @@ useHead({
 .services-board__cell--active {
   border-color: var(--color-rose);
   background:
-    radial-gradient(ellipse 90% 80% at 110% -10%, rgba(240, 184, 172, 0.55), transparent 50%),
-    linear-gradient(160deg, #5a3c3c 0%, #3a2a2c 55%, #2a2022 100%);
+    radial-gradient(ellipse 80% 70% at 110% -10%, rgba(222, 150, 141, 0.28), transparent 52%),
+    linear-gradient(160deg, #3d3031 0%, #2e2526 55%, #241e1f 100%);
   box-shadow:
     0 0 0 1px var(--color-rose),
-    0 12px 28px rgba(222, 150, 141, 0.22);
+    0 10px 24px rgba(222, 150, 141, 0.16);
 }
 
 @media (hover: hover) {
   .services-board__cell:hover:not(.services-board__cell--active) {
     transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(23, 21, 22, 0.14);
+    box-shadow: 0 12px 26px rgba(23, 21, 22, 0.12);
   }
 }
 
@@ -1024,11 +1030,11 @@ useHead({
   position: absolute;
   right: -0.15rem;
   top: -0.15rem;
-  width: 48px;
-  opacity: 0.45;
+  width: 44px;
+  opacity: 0.26;
   pointer-events: none;
   z-index: 0;
-  filter: saturate(1.3);
+  filter: saturate(1.2);
 }
 
 .services-board__icon-wrap {
@@ -1118,11 +1124,11 @@ useHead({
 .services-panel {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(222, 150, 141, 0.28);
+  border: 1px solid rgba(222, 150, 141, 0.22);
   background:
-    radial-gradient(ellipse 70% 55% at 100% 0%, rgba(222, 150, 141, 0.28), transparent 55%),
-    linear-gradient(165deg, #3a2c2e 0%, #2a2224 50%, #1f1a1c 100%);
-  box-shadow: 0 12px 32px rgba(23, 21, 22, 0.12);
+    radial-gradient(ellipse 65% 50% at 100% 0%, rgba(222, 150, 141, 0.16), transparent 55%),
+    linear-gradient(165deg, #322a2b 0%, #262122 52%, #1e1a1b 100%);
+  box-shadow: 0 10px 28px rgba(23, 21, 22, 0.1);
 }
 
 .services-panel::before {
@@ -1131,11 +1137,11 @@ useHead({
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.14;
+  opacity: 0.08;
   background-image: url('/images/flower.png');
   background-size: 5.5rem;
   background-repeat: repeat;
-  filter: saturate(1.4);
+  filter: saturate(1.2);
   mix-blend-mode: soft-light;
 }
 
