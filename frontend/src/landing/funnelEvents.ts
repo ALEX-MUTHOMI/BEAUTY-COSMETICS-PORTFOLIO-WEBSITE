@@ -10,6 +10,7 @@ export type FunnelEventName =
   | 'wa_click'
   | 'gallery_open'
   | 'book_again_click'
+  | 'welcome_back_dismiss'
 
 export function trackFunnelEvent(
   name: FunnelEventName,

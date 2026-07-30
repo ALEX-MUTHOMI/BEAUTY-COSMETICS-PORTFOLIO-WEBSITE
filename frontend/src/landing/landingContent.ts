@@ -90,18 +90,15 @@ export const LANDING_FEATURED_PACKAGE_CLARIFIER =
 
 export const LANDING_LOCATION_LABEL = 'Meru Town, Meru County'
 
-/** Behind the Glow — artist spotlight. */
-export const GLOW_SECTION_LABEL = 'Behind the Glow'
-export const GLOW_ARTIST_NAME = 'Your Beauty Artist'
-export const GLOW_ARTIST_ROLE = 'Beauty Artist & Founder'
-export const GLOW_ARTIST_BIO =
-  'Passionate about clean beauty and confident transformations — every visit is crafted to leave you glowing from within.'
-export const GLOW_ARTIST_SPECIALTIES = [
-  'Bridal Glam',
-  'Soft Glam',
-  'Skin Prep',
-  'Lash Art',
-] as const
+/** Meet Shee — compact Get to know us → Clients by Shee. */
+export const GLOW_SECTION_EYEBROW = 'Get to know us'
+export const GLOW_SECTION_HEADING = 'Meet your therapist'
+export const GLOW_SECTION_TEXT =
+  'Shee welcomes you in Meru Town for facials, waxing, massage, and makeup — calm, private, and easy to book.'
+export const GLOW_ARTIST_NAME = 'Shee'
+export const GLOW_ARTIST_LINE = 'Beauty artist · Meru Town'
+export const GLOW_CONTINUE_LABEL = 'See her work'
+export const GLOW_CONTINUE_HASH = '#our-work'
 
 export const LANDING_ADDRESS_LINES = ['Meru Town', 'Meru County, Kenya'] as const
 

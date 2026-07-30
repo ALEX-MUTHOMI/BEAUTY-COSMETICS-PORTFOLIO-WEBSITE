@@ -96,16 +96,15 @@ const visibleIncludes = computed(() =>
   width: 100%;
   min-width: 0;
   padding: 1.55rem 1.3rem 1.4rem;
-  /* Warm rose-charcoal — not pure black */
+  /* Calm warm charcoal — palette without choking text */
   background:
-    radial-gradient(ellipse 90% 70% at 100% 0%, rgba(222, 150, 141, 0.38), transparent 55%),
-    radial-gradient(ellipse 60% 50% at 0% 100%, rgba(176, 98, 90, 0.28), transparent 50%),
-    linear-gradient(165deg, #3a2c2c 0%, #2a2224 45%, #1f1a1b 100%);
-  border: 1px solid rgba(222, 150, 141, 0.28);
+    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(222, 150, 141, 0.18), transparent 58%),
+    linear-gradient(165deg, #322a2b 0%, #262122 50%, #1e1a1b 100%);
+  border: 1px solid rgba(222, 150, 141, 0.22);
   border-top: 3px solid var(--color-rose);
-  box-shadow: 0 14px 36px rgba(23, 21, 22, 0.16);
+  box-shadow: 0 10px 28px rgba(23, 21, 22, 0.12);
   overflow: hidden;
-  color: #f4ebe6;
+  color: #f7f0eb;
   transition:
     transform 0.35s var(--ease-story),
     box-shadow 0.35s var(--ease-story);
@@ -117,11 +116,11 @@ const visibleIncludes = computed(() =>
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.22;
+  opacity: 0.1;
   background-image: url('/images/flower.png');
   background-size: 5.5rem;
   background-repeat: repeat;
-  filter: saturate(1.45) brightness(1.15);
+  filter: saturate(1.2) brightness(1.08);
   mix-blend-mode: soft-light;
 }
 
@@ -129,8 +128,8 @@ const visibleIncludes = computed(() =>
   position: absolute;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.42;
-  filter: saturate(1.35) brightness(1.05);
+  opacity: 0.26;
+  filter: saturate(1.2) brightness(1.02);
 }
 
 .mellis-card__bloom--tr {
@@ -145,7 +144,7 @@ const visibleIncludes = computed(() =>
   bottom: -0.55rem;
   width: min(5rem, 34%);
   transform: rotate(-28deg);
-  opacity: 0.32;
+  opacity: 0.2;
 }
 
 .mellis-card > *:not(.mellis-card__bloom) {
@@ -181,8 +180,8 @@ const visibleIncludes = computed(() =>
 }
 
 .mellis-card--featured .mellis-card__bloom {
-  opacity: 0.55;
-  filter: saturate(1.25) brightness(1);
+  opacity: 0.38;
+  filter: saturate(1.15) brightness(1);
 }
 
 .mellis-card--featured .mellis-card__days {
@@ -284,12 +283,13 @@ const visibleIncludes = computed(() =>
 .mellis-card :deep(.site-btn) {
   width: 100%;
   max-width: 14rem;
+  margin-top: auto;
 }
 
 .mellis-card :deep(.site-btn--outline) {
-  background: rgba(255, 255, 255, 0.06);
-  color: #f8f2ee;
-  border-color: rgba(245, 216, 208, 0.55);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-color: rgba(245, 216, 208, 0.5);
 }
 
 .mellis-card :deep(.site-btn--outline:hover),
@@ -450,7 +450,7 @@ const visibleIncludes = computed(() =>
   margin: 0 0 0.85rem;
   max-width: 30ch;
   font: 500 0.9rem/1.55 var(--font-body);
-  color: rgba(248, 242, 238, 0.88);
+  color: rgba(255, 248, 244, 0.82);
 }
 
 .mellis-card__includes {
@@ -465,7 +465,7 @@ const visibleIncludes = computed(() =>
   position: relative;
   padding: 0.35rem 0 0.35rem 1.35rem;
   font: 600 0.88rem/1.35 var(--font-body);
-  color: rgba(248, 242, 238, 0.96);
+  color: rgba(255, 252, 249, 0.95);
 }
 
 .mellis-card__includes li::before {

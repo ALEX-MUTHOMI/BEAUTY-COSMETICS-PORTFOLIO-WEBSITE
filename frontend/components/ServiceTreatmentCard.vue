@@ -91,10 +91,10 @@ const highlightLine = computed(() =>
 .service-treatment__name {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.05rem, 2.4vw, 1.25rem);
+  font-size: clamp(1.08rem, 2.4vw, 1.28rem);
   font-weight: 500;
   line-height: 1.3;
-  color: #f8f2ee;
+  color: #fff;
 }
 
 .service-treatment__duration {
@@ -102,13 +102,13 @@ const highlightLine = computed(() =>
   font: 600 0.72rem/1.4 var(--font-body);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(248, 242, 238, 0.55);
+  color: rgba(255, 248, 244, 0.62);
 }
 
 .service-treatment__price {
   margin: 0;
   font: 700 0.92rem/1.3 var(--font-body);
-  color: var(--color-rose);
+  color: #f0b8ac;
 }
 
 .service-treatment__book {
@@ -125,7 +125,7 @@ const highlightLine = computed(() =>
 .service-treatment__highlights {
   margin: 0.55rem 0 0;
   font: 400 0.82rem/1.5 var(--font-body);
-  color: rgba(248, 242, 238, 0.62);
+  color: rgba(255, 248, 244, 0.7);
 }
 
 @media (min-width: 768px) {
