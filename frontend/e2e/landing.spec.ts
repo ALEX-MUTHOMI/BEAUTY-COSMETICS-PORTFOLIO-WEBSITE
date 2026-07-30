@@ -24,7 +24,10 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.locator('.site-boot-skeleton, .site-loader')).toHaveCount(0, { timeout: 5000 })
 
     await expect(page.getByRole('heading', { name: 'Shee', level: 1 })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Your hour to unwind', level: 2 })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Your Beauty Artist', level: 2 })).toBeVisible()
+    await expect(page.locator('#behind-the-glow')).toBeVisible()
+    await expect(page.locator('#behind-the-glow .glow__photo')).toBeVisible()
+    await expect(page.locator('#behind-the-glow .glow__tag')).toHaveCount(4)
     await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible()
 
     const logoLink = page.getByRole('banner').getByRole('link', { name: /Shee Aesthetics home/i })

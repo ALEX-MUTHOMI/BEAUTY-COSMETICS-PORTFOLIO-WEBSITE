@@ -88,52 +88,57 @@
     </section>
 
     <!-- Welcome — short story only; booking paths come after how-it-works -->
-    <section id="welcome" class="welcome home-section">
-      <div class="welcome__inner">
+    <section id="behind-the-glow" class="glow home-section">
+      <div class="glow__inner">
         <ScrollReveal variant="fade" :delay="40">
-          <div class="welcome__media-wrap">
-            <div class="welcome__media">
-              <div class="welcome__mirror" aria-hidden="true">
-                <img src="/images/welcome.jpg" alt="Spa treatment room with candles and warm lighting" class="welcome__photo" loading="lazy" decoding="async" width="800" height="800" />
-              </div>
-              <img src="/images/flower.png" alt="" class="welcome__flower" aria-hidden="true" loading="lazy" decoding="async" width="100" height="100" />
+          <div class="glow__media">
+            <div class="glow__ring">
+              <img
+                src="/images/therapist.png"
+                alt="Beauty artist portrait"
+                class="glow__photo"
+                loading="lazy"
+                decoding="async"
+                width="480"
+                height="480"
+              />
             </div>
+            <img
+              src="/images/flower.png"
+              alt=""
+              class="glow__flower glow__flower--top"
+              aria-hidden="true"
+              loading="lazy"
+              decoding="async"
+              width="72"
+              height="72"
+            />
+            <img
+              src="/images/flower.png"
+              alt=""
+              class="glow__flower glow__flower--bottom"
+              aria-hidden="true"
+              loading="lazy"
+              decoding="async"
+              width="56"
+              height="56"
+            />
           </div>
         </ScrollReveal>
         <ScrollReveal variant="up" :delay="120">
-          <div class="welcome__copy">
-            <p class="label">{{ LANDING_LOCATION_LABEL }}</p>
-            <div class="title-lockup title-lockup--start">
-              <img
-                src="/images/flower.png"
-                alt=""
-                class="title-lockup__flower title-lockup__flower--left"
-                width="56"
-                height="56"
-                loading="lazy"
-                decoding="async"
-                aria-hidden="true"
-              />
-              <h2>Your hour to unwind</h2>
-              <img
-                src="/images/flower.png"
-                alt=""
-                class="title-lockup__flower title-lockup__flower--right"
-                width="56"
-                height="56"
-                loading="lazy"
-                decoding="async"
-                aria-hidden="true"
-              />
+          <div class="glow__copy">
+            <p class="label">{{ GLOW_SECTION_LABEL }}</p>
+            <h2 class="glow__name">{{ GLOW_ARTIST_NAME }}</h2>
+            <p class="glow__role">{{ GLOW_ARTIST_ROLE }}</p>
+            <p class="glow__bio">{{ GLOW_ARTIST_BIO }}</p>
+            <div class="glow__tags">
+              <span v-for="tag in GLOW_ARTIST_SPECIALTIES" :key="tag" class="glow__tag">{{ tag }}</span>
             </div>
-            <p class="welcome__text">
-              Clean rooms, soft light, and therapists who take their time.
-            </p>
             <SiteButton
               v-if="primaryCtaIsExternal"
               :href="primaryCtaHref"
               variant="primary"
-              class="welcome__cta"
+              class="glow__cta"
             >
               {{ LANDING_PRIMARY_CTA }}
             </SiteButton>
@@ -141,7 +146,7 @@
               v-else
               :to="primaryCtaHref"
               variant="primary"
-              class="welcome__cta"
+              class="glow__cta"
             >
               {{ LANDING_PRIMARY_CTA }}
             </SiteButton>
@@ -825,7 +830,7 @@
 <script setup lang="ts">
 /**
  * Homepage composition (marketing only).
- * Section order: hero → welcome → our-work → offer → packages → reviews → visit.
+ * Section order: hero → behind-the-glow → our-work → offer → packages → reviews → visit.
  * Data helpers live under `src/landing/` — keep Django as the API, not Nuxt server routes.
  */
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
@@ -844,6 +849,11 @@ import {
   LANDING_TREATMENT_FLOOR,
   landingClientReviews,
   packageDayUrgency,
+  GLOW_SECTION_LABEL,
+  GLOW_ARTIST_NAME,
+  GLOW_ARTIST_ROLE,
+  GLOW_ARTIST_BIO,
+  GLOW_ARTIST_SPECIALTIES,
 } from '@/landing/landingContent'
 import { fetchHomeWorkGallery, STATIC_HOME_WORK, type HomeWorkImage } from '@/landing/homeWorkGallery'
 import {
@@ -1404,94 +1414,134 @@ const reviews = landingClientReviews
 }
 
 /* Welcome — quiet paper; local flower accent already on the media mirror */
-.welcome {
-  padding: var(--home-section-y) 1rem;
+.glow {
+  padding: clamp(3rem, 8vh, 5rem) 1rem;
   position: relative;
   z-index: 1;
   margin-top: 0;
-  background: var(--color-paper);
+  background: radial-gradient(ellipse at 30% 50%, #2a2224 0%, #1a1718 70%);
   border-bottom: var(--home-seam);
 }
 
 @media (max-width: 767px) {
-  .welcome {
+  .glow {
     padding-top: clamp(2.5rem, 6vh, 3.25rem);
+    padding-bottom: clamp(2.5rem, 6vh, 3.25rem);
   }
 
-  /* Hero + sticky bar already book — keep welcome focused on paths */
-  .welcome__cta {
+  .glow__cta {
     display: none;
   }
 }
 
-.welcome__inner {
+.glow__inner {
   width: var(--container);
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.35rem;
+  gap: 2rem;
   align-items: center;
 }
 
-.welcome__media-wrap,
-.welcome__copy {
-  height: 100%;
-}
-
-.welcome__media {
+.glow__media {
   position: relative;
   display: flex;
   justify-content: center;
 }
 
-.welcome__mirror {
+.glow__ring {
   position: relative;
-  width: min(260px, 68vw);
+  width: min(280px, 68vw);
   aspect-ratio: 1;
   margin: 0 auto;
-  padding: 6px;
+  padding: 4px;
   border-radius: 50%;
-  background: linear-gradient(145deg, var(--color-rose-soft), var(--color-surface-raised) 45%, var(--color-rose-soft));
+  background: linear-gradient(145deg, var(--color-rose), #1a1718 50%, var(--color-rose));
   box-shadow:
-    0 0 0 1px rgba(222, 150, 141, 0.35),
-    0 16px 48px rgba(39, 37, 42, 0.12);
+    0 0 0 1px rgba(222, 150, 141, 0.4),
+    0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
-.welcome__photo {
+.glow__photo {
   width: 100%;
   height: 100%;
   display: block;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid #fff;
+  border: 3px solid #2a2224;
 }
 
-.welcome__flower {
+.glow__flower {
   position: absolute;
-  right: max(-0.25rem, calc(50% - 150px));
-  bottom: 0.5rem;
-  z-index: 2;
-  width: min(100px, 28%);
   pointer-events: none;
+  opacity: 0.6;
+  filter: saturate(1.2) brightness(0.9);
 }
 
-.welcome__copy .title-lockup {
-  margin: 0 0 1.25rem;
+.glow__flower--top {
+  top: -0.5rem;
+  right: max(0.5rem, calc(50% - 170px));
+  width: min(72px, 22%);
 }
 
-.welcome__copy h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.95rem, 3.8vw, 2.75rem);
-  font-weight: 500;
-  line-height: 1.15;
-  letter-spacing: -0.025em;
+.glow__flower--bottom {
+  bottom: 0rem;
+  left: max(0.5rem, calc(50% - 160px));
+  width: min(56px, 18%);
 }
 
-.welcome__text {
-  margin: 0 0 1.5rem;
+.glow__copy {
+  text-align: center;
+}
+
+.glow__copy .label {
+  color: var(--color-rose);
+  letter-spacing: 0.15em;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.glow__name {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-script);
+  font-size: clamp(2.35rem, 5vw, 3.5rem);
+  font-weight: 400;
+  line-height: 1.2;
+  color: #f8f2ee;
+}
+
+.glow__role {
+  margin: 0 0 1rem;
+  font: 500 0.75rem/1.4 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(248, 242, 238, 0.6);
+}
+
+.glow__bio {
+  margin: 0 auto 1.25rem;
+  max-width: 36ch;
   font: 400 1rem/1.75 var(--font-body);
-  color: var(--color-muted);
+  color: rgba(248, 242, 238, 0.85);
+}
+
+.glow__tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.glow__tag {
+  padding: 0.3rem 0.85rem;
+  border: 1px solid var(--color-rose);
+  border-radius: 100px;
+  font: 500 0.72rem/1 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-rose);
 }
 
 /* Treatments — Mellis static-bg scroll chapter + colored Shee board */
@@ -3052,22 +3102,31 @@ const reviews = landingClientReviews
     letter-spacing: 0.3em;
   }
 
-  .welcome {
+  .glow {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
 
-  .welcome__inner {
-    gap: clamp(1.25rem, 3vw, 2rem);
+  .glow__inner {
+    grid-template-columns: auto 1fr;
+    gap: clamp(1.5rem, 4vw, 3rem);
+    text-align: left;
   }
 
-  .welcome__mirror {
-    width: min(320px, 42vw);
+  .glow__copy {
+    text-align: left;
   }
 
-  .welcome__flower {
-    right: -1rem;
-    width: min(130px, 30%);
+  .glow__tags {
+    justify-content: flex-start;
+  }
+
+  .glow__ring {
+    width: min(300px, 32vw);
+  }
+
+  .glow__bio {
+    margin-left: 0;
   }
 
   .work,
@@ -3104,9 +3163,12 @@ const reviews = landingClientReviews
     min-height: 44rem;
   }
 
-  .welcome__inner {
-    grid-template-columns: 1fr 1fr;
-    gap: clamp(1.5rem, 3vw, 2.75rem);
+  .glow__inner {
+    gap: clamp(2rem, 4vw, 3.5rem);
+  }
+
+  .glow__ring {
+    width: min(340px, 28vw);
   }
 
   .reviews__grid {

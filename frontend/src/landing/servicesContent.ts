@@ -29,7 +29,15 @@ export interface ServiceCategory {
 export const SERVICES_PAGE_INTRO = {
   eyebrow: LANDING_LOCATION_LABEL,
   title: 'How would you like to visit?',
-  lead: 'Packages Tue & Wed. Singles Mon, Thu–Sat.',
+  lead: 'Packages Tue & Wed. Treatments Mon, Thu–Sat.',
+}
+
+/** Short lines for the treatments category board. */
+export const SERVICE_CATEGORY_BOARD_LINES: Record<string, string> = {
+  facials: 'Skin-first care',
+  massage: 'Unwind deeply',
+  waxing: 'Clean, neat finish',
+  makeup: 'Event-ready glam',
 }
 
 export const serviceCategories: ServiceCategory[] = [

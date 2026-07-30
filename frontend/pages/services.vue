@@ -1,6 +1,18 @@
 <template>
   <main class="services-page">
     <header class="services-hero">
+      <div class="services-hero__media" aria-hidden="true">
+        <img
+          src="/images/stock-makeup-glam.jpg"
+          alt=""
+          class="services-hero__photo"
+          width="1600"
+          height="1000"
+          fetchpriority="high"
+          decoding="async"
+        />
+        <div class="services-hero__veil" />
+      </div>
       <div class="services-hero__inner">
         <p class="label">{{ pageIntro.eyebrow }}</p>
         <h1>{{ pageIntro.title }}</h1>
@@ -12,38 +24,110 @@
       <p class="services-chooser__days" role="note" aria-label="Booking days">
         <span>Tue &amp; Wed packages</span>
         <span class="services-chooser__days-sep" aria-hidden="true">·</span>
-        <span>{{ SINGLE_DAYS_LABEL }} singles</span>
+        <span>{{ SINGLE_DAYS_LABEL }} treatments</span>
       </p>
-      <nav class="services-paths">
+      <nav class="services-doors">
         <a
           href="#full-packages"
-          class="services-path services-path--primary"
+          class="services-door services-door--packages"
           @click="scrollToSection('full-packages', $event)"
         >
-          <span class="services-path__icon" aria-hidden="true">◆</span>
-          <span class="services-path__copy">
-            <strong>Package</strong>
-            <span>Facial, wax, massage &amp; makeup</span>
+          <img
+            src="/images/stock-makeup-glam.jpg"
+            alt=""
+            class="services-door__media"
+            loading="lazy"
+            decoding="async"
+            width="800"
+            height="1000"
+          />
+          <span class="services-door__wash" aria-hidden="true" />
+          <img
+            src="/images/flower.png"
+            alt=""
+            class="services-door__flower"
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            width="72"
+            height="72"
+          />
+          <span class="services-door__body">
+            <span class="services-door__title">Packages</span>
+            <span class="services-door__sub">Tue &amp; Wed · full glow</span>
           </span>
         </a>
         <a
           href="#single-sessions"
-          class="services-path"
+          class="services-door services-door--treatments"
           @click="scrollToSection('single-sessions', $event)"
         >
-          <span class="services-path__icon" aria-hidden="true">◇</span>
-          <span class="services-path__copy">
-            <strong>Singles</strong>
-            <span>One service</span>
+          <img
+            src="/images/stock-spa-skincare.jpg"
+            alt=""
+            class="services-door__media services-door__media--mono"
+            loading="lazy"
+            decoding="async"
+            width="800"
+            height="1000"
+          />
+          <span class="services-door__wash services-door__wash--photo" aria-hidden="true" />
+          <img
+            src="/images/flower.png"
+            alt=""
+            class="services-door__flower"
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            width="72"
+            height="72"
+          />
+          <span class="services-door__body">
+            <span class="services-door__title">Treatments</span>
+            <span class="services-door__sub">{{ SINGLE_DAYS_LABEL }} · one service</span>
           </span>
         </a>
       </nav>
     </section>
 
     <section id="full-packages" class="services-packages">
-      <header class="services-section-head">
+      <div class="services-packages__bg" aria-hidden="true">
+        <img
+          src="/images/stock-makeup-glam.jpg"
+          alt=""
+          class="services-packages__photo"
+          loading="lazy"
+          decoding="async"
+          width="1600"
+          height="1000"
+        />
+        <div class="services-packages__veil" />
+      </div>
+      <header class="services-section-head services-section-head--on-dark">
         <p class="label">Packages</p>
-        <h2>Complete visits</h2>
+        <div class="title-lockup">
+          <img
+            src="/images/flower.png"
+            alt=""
+            class="title-lockup__flower"
+            width="48"
+            height="48"
+            loading="lazy"
+            decoding="async"
+            aria-hidden="true"
+          />
+          <h2>Complete visits</h2>
+          <img
+            src="/images/flower.png"
+            alt=""
+            class="title-lockup__flower"
+            width="48"
+            height="48"
+            loading="lazy"
+            decoding="async"
+            aria-hidden="true"
+          />
+        </div>
         <p class="services-section-head__sub">
           Tue &amp; Wed — facial, wax, massage and makeup in one booking.
         </p>
@@ -65,10 +149,32 @@
       </div>
     </section>
 
-    <section id="single-sessions" class="services-packages services-packages--singles">
+    <section id="single-sessions" class="services-treatments">
       <header class="services-section-head">
-        <p class="label">Singles</p>
-        <h2>Choose a treatment</h2>
+        <p class="label">Treatments</p>
+        <div class="title-lockup">
+          <img
+            src="/images/flower.png"
+            alt=""
+            class="title-lockup__flower"
+            width="48"
+            height="48"
+            loading="lazy"
+            decoding="async"
+            aria-hidden="true"
+          />
+          <h2>Choose a treatment</h2>
+          <img
+            src="/images/flower.png"
+            alt=""
+            class="title-lockup__flower"
+            width="48"
+            height="48"
+            loading="lazy"
+            decoding="async"
+            aria-hidden="true"
+          />
+        </div>
         <p class="services-section-head__sub">
           {{ SINGLE_DAYS_LABEL }}. Pick a category, then book.
         </p>
@@ -76,26 +182,37 @@
 
       <div id="treatments" class="services-picker" aria-label="Treatments and prices">
         <div
-          class="services-tabs"
+          class="services-board"
           role="tablist"
           aria-label="Service categories"
         >
           <button
-            v-for="category in serviceCategories"
+            v-for="(category, index) in serviceCategories"
             :id="`tab-${category.id}`"
             :key="category.id"
             type="button"
             role="tab"
-            class="services-tab"
-            :class="{ 'services-tab--active': activeCategoryId === category.id }"
+            class="services-board__cell"
+            :class="{ 'services-board__cell--active': activeCategoryId === category.id }"
             :aria-selected="activeCategoryId === category.id"
             :aria-controls="`panel-${category.id}`"
             @click="selectCategory(category.id)"
           >
-            <span class="services-tab__icon-wrap" aria-hidden="true">
-              <img :src="category.icon" alt="" class="services-tab__icon" width="22" height="22" />
+            <img
+              :src="category.image"
+              alt=""
+              class="services-board__photo"
+              loading="lazy"
+              decoding="async"
+              width="480"
+              height="320"
+            />
+            <span class="services-board__veil" aria-hidden="true" />
+            <span class="services-board__copy">
+              <span class="services-board__num" aria-hidden="true">{{ padIndex(index) }}</span>
+              <span class="services-board__title">{{ category.cardTitle }}</span>
+              <span class="services-board__line">{{ boardLine(category.id) }}</span>
             </span>
-            <span class="services-tab__label">{{ category.cardTitle }}</span>
           </button>
         </div>
 
@@ -109,68 +226,36 @@
               :class="`services-panel--${activeCategory.id}`"
               :aria-labelledby="`tab-${activeCategory.id}`"
             >
-              <div class="services-panel__inner">
-                <div class="services-panel__intro">
-                  <div class="services-panel__visual">
-                    <img
-                      :src="activeCategory.image"
-                      :alt="activeCategory.imageAlt"
-                      class="services-panel__photo"
-                      loading="lazy"
-                      decoding="async"
-                      width="400"
-                      height="400"
-                    />
-                    <span class="services-panel__icon-wrap" aria-hidden="true">
-                      <img :src="activeCategory.icon" alt="" width="26" height="26" />
-                    </span>
-                  </div>
-                  <div class="services-panel__copy">
-                    <p class="label">{{ activeCategory.daysNote }}</p>
-                    <h2>{{ activeCategory.name }}</h2>
-                    <p class="services-panel__text">{{ activeCategory.intro }}</p>
-                    <p class="services-panel__hint">
-                      Tap a treatment below to select it, then book your visit.
-                    </p>
-                  </div>
-                </div>
-
-                <div class="services-panel__grid">
-                  <ServiceTreatmentCard
-                    v-for="(treatment, index) in activeCategory.treatments"
-                    :key="treatment.name"
-                    :name="treatment.name"
-                    :description="treatment.description"
-                    :duration="treatment.duration"
-                    :price="treatment.price"
-                    :highlights="treatment.highlights"
-                    :index="index"
-                    :variant="activeCategory.id"
-                    :selected="selectedTreatmentName === treatment.name"
-                    @select="selectTreatment(treatment.name)"
+              <div class="services-panel__intro">
+                <div class="services-panel__visual">
+                  <img
+                    :src="activeCategory.image"
+                    :alt="activeCategory.imageAlt"
+                    class="services-panel__photo"
+                    loading="lazy"
+                    decoding="async"
+                    width="720"
+                    height="480"
                   />
                 </div>
-
-                <div class="services-panel__book" :class="{ 'services-panel__book--ready': selectedTreatmentName }">
-                  <p v-if="selectedTreatmentName" class="services-panel__chosen">
-                    You selected <strong>{{ selectedTreatmentName }}</strong>
-                  </p>
-                  <p v-else class="services-panel__chosen services-panel__chosen--muted">
-                    Select a treatment above to continue
-                  </p>
-                  <SiteButton
-                    :to="treatmentBookHref"
-                    variant="primary"
-                    class="services-panel__cta"
-                    :class="{ 'services-panel__cta--disabled': !selectedTreatmentName }"
-                  >
-                    {{
-                      selectedTreatmentName
-                        ? `Book ${selectedTreatmentName}`
-                        : LANDING_PRIMARY_CTA
-                    }}
-                  </SiteButton>
+                <div class="services-panel__copy">
+                  <p class="label">{{ activeCategory.daysNote }}</p>
+                  <h2>{{ activeCategory.name }}</h2>
+                  <p class="services-panel__text">{{ activeCategory.intro }}</p>
                 </div>
+              </div>
+
+              <div class="services-panel__menu">
+                <ServiceTreatmentCard
+                  v-for="(treatment, index) in activeCategory.treatments"
+                  :key="treatment.name"
+                  :name="treatment.name"
+                  :duration="treatment.duration"
+                  :price="treatment.price"
+                  :highlights="treatment.highlights"
+                  :index="index"
+                  :book-to="bookHrefForTreatment(activeCategoryId, treatment.name)"
+                />
               </div>
             </div>
           </Transition>
@@ -188,8 +273,20 @@
         <h2>Ready when you are</h2>
         <p>Full package or single treatment — book online and pay to confirm your slot.</p>
         <div class="services-cta__actions">
-          <SiteButton to="/services#full-packages" variant="primary">View packages</SiteButton>
-          <SiteButton to="/services#single-sessions" variant="outline">View singles</SiteButton>
+          <SiteButton
+            href="#full-packages"
+            variant="primary"
+            @click="scrollToSection('full-packages', $event)"
+          >
+            View packages
+          </SiteButton>
+          <SiteButton
+            href="#single-sessions"
+            variant="ghost-light"
+            @click="scrollToSection('single-sessions', $event)"
+          >
+            View treatments
+          </SiteButton>
         </div>
       </div>
     </section>
@@ -199,11 +296,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import {
-  LANDING_PRIMARY_CTA,
   packages,
   SINGLE_DAYS_LABEL,
 } from '@/landing/landingContent'
 import {
+  SERVICE_CATEGORY_BOARD_LINES,
   SERVICES_PAGE_INTRO,
   serviceCategories,
 } from '@/landing/servicesContent'
@@ -222,27 +319,25 @@ const categoryIds = serviceCategories.map((c) => c.id)
 const activeCategoryId = ref<ServiceCategoryId>(
   (categoryIds[0] as ServiceCategoryId) ?? 'facials',
 )
-const selectedTreatmentName = ref<string | null>(null)
 
 const activeCategory = computed(
   () => serviceCategories.find((c) => c.id === activeCategoryId.value) ?? serviceCategories[0]!,
 )
 
-const treatmentBookHref = computed(() =>
-  bookHrefForTreatment(activeCategoryId.value, selectedTreatmentName.value),
-)
+function padIndex(index: number) {
+  return String(index + 1).padStart(2, '0')
+}
+
+function boardLine(id: string) {
+  return SERVICE_CATEGORY_BOARD_LINES[id] ?? ''
+}
 
 function selectCategory(id: string) {
   if (!isServiceCategoryId(id) || activeCategoryId.value === id) return
   activeCategoryId.value = id
-  selectedTreatmentName.value = null
   if (import.meta.client) {
     window.history.replaceState(null, '', `#${id}`)
   }
-}
-
-function selectTreatment(name: string) {
-  selectedTreatmentName.value = name
 }
 
 function applyHash(raw: string) {
@@ -258,7 +353,6 @@ function applyHash(raw: string) {
 
   if (category) {
     activeCategoryId.value = category
-    selectedTreatmentName.value = null
     requestAnimationFrame(() => {
       document.getElementById('treatments')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     })
@@ -270,7 +364,7 @@ function syncFromHash() {
   applyHash(window.location.hash)
 }
 
-function scrollToSection(id: string, event: MouseEvent) {
+function scrollToSection(id: string, event: Event) {
   event.preventDefault()
   const { section } = parseServicesHash(`#${id}`)
   if (!section) return
@@ -317,7 +411,6 @@ useHead({
 </script>
 
 <style scoped>
-/* Page shell — soft ivory canvas, room for fixed mobile book bar */
 .services-page {
   background: var(--color-paper);
   padding-bottom: calc(var(--mobile-book-bar-height) + env(safe-area-inset-bottom, 0px));
@@ -337,31 +430,42 @@ useHead({
   color: var(--color-rose);
 }
 
-/* Hero — light, low-contrast wash */
+/* Hero — full-bleed visual plane */
 .services-hero {
   position: relative;
   overflow: hidden;
-  padding: 1rem max(1rem, env(safe-area-inset-left)) 0.5rem;
-  background: var(--color-paper);
+  display: grid;
+  place-items: end center;
+  min-height: clamp(16rem, 42vh, 22rem);
+  padding: 0;
+  color: #f8f2ee;
 }
 
-.services-hero::before {
-  content: '';
+@media (min-width: 768px) {
+  .services-hero {
+    min-height: clamp(20rem, 48vh, 28rem);
+  }
+}
+
+.services-hero__media {
   position: absolute;
   inset: 0;
-  pointer-events: none;
+}
+
+.services-hero__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+  transform: scale(1.04);
+  animation: services-hero-drift 18s ease-in-out infinite alternate;
+}
+
+.services-hero__veil {
+  position: absolute;
+  inset: 0;
   background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(222, 150, 141, 0.05), transparent 70%);
-}
-
-.services-hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.02;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 6c-5 11-14 13-14 22a14 14 0 0 0 28 0c0-9-9-11-14-22z' fill='%23de968d'/%3E%3C/svg%3E");
-  background-size: 96px;
+    linear-gradient(180deg, rgba(18, 14, 16, 0.35) 0%, rgba(18, 14, 16, 0.72) 55%, rgba(18, 14, 16, 0.92) 100%);
 }
 
 .services-hero__inner {
@@ -370,32 +474,47 @@ useHead({
   width: var(--container);
   margin: 0 auto;
   max-width: 42rem;
+  padding: 2.5rem 1rem 2rem;
   text-align: center;
 }
 
+.services-hero .label {
+  color: rgba(240, 184, 172, 0.95);
+}
+
 .services-hero h1 {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.5rem;
   font-family: var(--font-display);
-  font-size: clamp(1.65rem, 4.5vw, 2.45rem);
+  font-size: clamp(1.75rem, 4.8vw, 2.65rem);
   font-weight: 400;
-  line-height: 1.2;
-  color: var(--color-ink);
+  line-height: 1.15;
+  color: #f8f2ee;
 }
 
 .services-hero__lead {
   margin: 0;
   font: 400 0.95rem/1.55 var(--font-body);
-  color: var(--color-muted);
+  color: rgba(248, 242, 238, 0.78);
 }
 
-/* One chooser: day caption + path tiles */
+@keyframes services-hero-drift {
+  from { transform: scale(1.04); }
+  to { transform: scale(1.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .services-hero__photo {
+    animation: none;
+  }
+}
+
+/* Twin path doors */
 .services-chooser {
   width: var(--container);
-  margin: 0.35rem auto 0;
-  padding: 0.75rem 0.85rem;
-  border: 1px solid var(--color-line);
-  border-radius: 2px;
-  background: var(--color-surface-raised);
+  margin: -1.5rem auto 0;
+  position: relative;
+  z-index: 2;
+  padding: 0 0 0.5rem;
 }
 
 .services-chooser__days {
@@ -404,7 +523,8 @@ useHead({
   align-items: center;
   justify-content: center;
   gap: 0.25rem 0.4rem;
-  margin: 0 0 0.65rem;
+  margin: 0 0 0.85rem;
+  padding: 0 1rem;
   font: 500 0.72rem/1.4 var(--font-body);
   letter-spacing: 0.02em;
   color: var(--color-muted);
@@ -415,149 +535,160 @@ useHead({
   color: var(--color-line);
 }
 
-.services-paths {
+.services-doors {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
 }
 
-@media (max-width: 420px) {
-  .services-paths {
-    grid-template-columns: 1fr;
+@media (min-width: 640px) {
+  .services-doors {
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
   }
 }
 
-.services-path {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  min-height: 2.75rem;
-  padding: 0.65rem 0.7rem;
-  border: 1px solid var(--color-line);
-  border-radius: 2px;
-  background: var(--color-surface-raised);
+.services-door {
+  position: relative;
+  display: block;
+  min-height: 11.5rem;
+  overflow: hidden;
   text-decoration: none;
-  color: inherit;
+  color: #f4ebe6;
+  background: var(--color-card-dark);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease,
-    box-shadow 0.15s ease;
+  transition: transform 0.35s var(--ease-story, ease);
 }
 
-@media (hover: hover) {
-  .services-path:hover {
-    border-color: rgba(222, 150, 141, 0.45);
-    background: var(--color-parchment);
-    box-shadow: 0 4px 14px rgba(39, 37, 42, 0.05);
-    transform: translateY(-1px);
+@media (min-width: 640px) {
+  .services-door {
+    min-height: 15rem;
   }
 }
 
-.services-path:active {
-  background: var(--color-cream);
-}
-
-.services-path--primary {
-  border-color: rgba(222, 150, 141, 0.35);
-  border-left: 3px solid var(--color-rose);
-  background: var(--color-surface-raised);
-  box-shadow: none;
-}
-
-.services-path--primary .services-path__icon {
-  color: var(--color-rose-dark);
-  background: var(--color-rose-soft);
-}
-
 @media (hover: hover) {
-  .services-path--primary:hover {
-    background: var(--color-parchment);
+  .services-door:hover {
+    transform: translateY(-2px);
+  }
+
+  .services-door:hover .services-door__media {
+    transform: scale(1.06);
   }
 }
 
-.services-path:focus-visible {
+.services-door:focus-visible {
   outline: 2px solid var(--color-rose);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
-.services-path__icon {
-  display: none;
-  flex-shrink: 0;
-  place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 50%;
-  font-size: 0.85rem;
-  color: var(--color-rose-dark);
-  background: var(--color-rose-soft);
+.services-door__media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+  transition: transform 0.7s var(--ease-story, ease);
 }
 
-.services-path__copy {
+.services-door__media--mono {
+  filter: grayscale(0.88) contrast(1.08) brightness(0.7);
+}
+
+.services-door__wash {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      105deg,
+      rgba(22, 16, 18, 0.9) 0%,
+      rgba(22, 16, 18, 0.72) 40%,
+      rgba(22, 16, 18, 0.42) 100%
+    );
+  pointer-events: none;
+}
+
+.services-door__wash--photo {
+  background:
+    linear-gradient(
+      105deg,
+      rgba(24, 16, 20, 0.88) 0%,
+      rgba(28, 18, 22, 0.62) 45%,
+      rgba(22, 16, 18, 0.4) 100%
+    );
+}
+
+.services-door__flower {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  width: min(64px, 18%);
+  opacity: 0.55;
+  pointer-events: none;
+  filter: saturate(1.15) brightness(0.95);
+}
+
+.services-door__body {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  height: 100%;
+  min-height: inherit;
+  padding: 1.35rem 1.25rem;
 }
 
-.services-path__copy strong {
-  font: 700 0.8rem var(--font-body);
-  letter-spacing: 0.03em;
-  color: var(--color-ink);
+.services-door__title {
+  font-family: var(--font-script);
+  font-size: clamp(2rem, 4.5vw, 2.75rem);
+  line-height: 1.1;
+  color: #f8f2ee;
 }
 
-.services-path__copy span {
-  font: 400 0.72rem/1.35 var(--font-body);
-  color: var(--color-muted);
+.services-door__sub {
+  font: 500 0.78rem/1.4 var(--font-body);
+  letter-spacing: 0.04em;
+  color: rgba(248, 242, 238, 0.78);
 }
 
-/* Package sections — soft canvas bands */
+/* Package stage — dark atmosphere */
 .services-packages {
-  padding: clamp(1.75rem, 4vh, 2.75rem) max(1rem, env(safe-area-inset-left));
-  margin-top: 0.5rem;
-  background: var(--color-paper);
+  position: relative;
+  overflow: clip;
+  padding: clamp(2.25rem, 6vh, 3.5rem) max(1rem, env(safe-area-inset-left));
+  margin-top: 1.25rem;
+  background: #171516;
   scroll-margin-top: calc(var(--header-height) + 0.5rem);
 }
 
-.services-packages--singles {
-  background: var(--color-parchment);
-  border-top: 1px solid var(--color-line);
+.services-packages__bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
-.services-packages--singles .services-picker {
-  width: var(--container);
-  margin: 0.85rem auto 0;
-  padding: 0 0 0.5rem;
-  scroll-margin-top: calc(var(--header-height) + 0.5rem);
+.services-packages__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  filter: grayscale(0.7) contrast(1.05) brightness(0.45) saturate(0.7);
+  opacity: 0.55;
 }
 
-.services-packages-link {
-  margin: 1.25rem 0 0;
-  text-align: center;
-  font: 500 0.88rem/1.5 var(--font-body);
-  color: var(--color-muted);
-}
-
-.services-packages-link a {
-  font-weight: 700;
-  color: var(--color-rose-dark);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.services-packages-link a:hover {
-  color: var(--color-rose);
-}
-
-.services-packages-link a:focus-visible {
-  outline: 2px solid var(--color-rose);
-  outline-offset: 2px;
+.services-packages__veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(23, 21, 22, 0.55) 0%, rgba(23, 21, 22, 0.88) 55%, #171516 100%);
 }
 
 .services-section-head {
+  position: relative;
+  z-index: 1;
   width: var(--container);
   margin: 0 auto 0.35rem;
   max-width: 40rem;
@@ -565,7 +696,7 @@ useHead({
 }
 
 .services-section-head h2 {
-  margin: 0 0 0.4rem;
+  margin: 0;
   font-family: var(--font-display);
   font-size: clamp(1.45rem, 3.2vw, 1.9rem);
   font-weight: 400;
@@ -574,18 +705,46 @@ useHead({
 }
 
 .services-section-head__sub {
-  margin: 0;
+  margin: 0.55rem 0 0;
   font: 400 0.9rem/1.55 var(--font-body);
   color: var(--color-muted);
 }
 
+.services-section-head--on-dark h2 {
+  color: #f8f2ee;
+}
+
+.services-section-head--on-dark .services-section-head__sub {
+  color: rgba(248, 242, 238, 0.72);
+}
+
+.services-section-head--on-dark .label {
+  color: rgba(240, 184, 172, 0.95);
+}
+
+.title-lockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.title-lockup__flower {
+  width: 40px;
+  height: 40px;
+  opacity: 0.75;
+  filter: saturate(1.15) brightness(0.95);
+}
+
 .services-packages__grid {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.25rem;
   width: var(--container);
   margin: 0 auto;
-  padding-top: 0.85rem;
+  padding-top: 1rem;
   align-items: stretch;
 }
 
@@ -593,99 +752,151 @@ useHead({
   min-width: 0;
 }
 
-.services-packages__grid--singles {
-  grid-template-columns: 1fr;
+/* Treatments section */
+.services-treatments {
+  padding: clamp(2rem, 5vh, 3.25rem) max(1rem, env(safe-area-inset-left));
+  background: #1a1718;
+  border-top: 1px solid rgba(248, 242, 238, 0.06);
+  scroll-margin-top: calc(var(--header-height) + 0.5rem);
 }
 
-/* Treatment picker */
+.services-treatments .services-section-head h2 {
+  color: #f8f2ee;
+}
+
+.services-treatments .services-section-head__sub {
+  color: rgba(248, 242, 238, 0.7);
+}
+
+.services-treatments .label {
+  color: rgba(240, 184, 172, 0.95);
+}
+
 .services-picker {
   width: var(--container);
-  margin: 0 auto;
-  padding: 0 0 calc(2rem + env(safe-area-inset-bottom, 0px));
-  scroll-margin-top: 5.5rem;
+  margin: 1rem auto 0;
+  padding: 0 0 0.5rem;
+  scroll-margin-top: calc(var(--header-height) + 0.5rem);
 }
 
-.services-tabs {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+.services-packages-link {
+  margin: 1.5rem 0 0;
+  text-align: center;
+  font: 500 0.88rem/1.5 var(--font-body);
+  color: rgba(248, 242, 238, 0.65);
 }
 
-.services-tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  min-height: 3.25rem;
-  padding: 0.7rem 0.45rem;
-  border: 1px solid var(--color-line);
-  border-radius: 2px;
-  background: var(--color-surface-raised);
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    border-color 0.12s ease,
-    background-color 0.12s ease,
-    box-shadow 0.12s ease,
-    color 0.12s ease;
+.services-packages-link a {
+  font-weight: 700;
+  color: var(--color-rose);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
-@media (hover: hover) {
-  .services-tab:hover:not(.services-tab--active) {
-    border-color: rgba(222, 150, 141, 0.35);
-    background: var(--color-parchment);
-  }
-}
-
-.services-tab:active:not(.services-tab--active) {
-  background: var(--color-cream);
-}
-
-.services-tab:focus-visible {
+.services-packages-link a:focus-visible {
   outline: 2px solid var(--color-rose);
   outline-offset: 2px;
 }
 
-.services-tab--active {
-  border-color: var(--color-rose);
-  background: var(--color-rose-soft);
-  box-shadow: none;
-  color: var(--color-ink);
-}
-
-.services-tab__icon-wrap {
+/* Category photo board */
+.services-board {
   display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--color-rose-soft);
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1.15rem;
 }
 
-.services-tab--active .services-tab__icon-wrap {
-  background: rgba(222, 150, 141, 0.2);
+.services-board__cell {
+  position: relative;
+  display: block;
+  min-height: 7.5rem;
+  padding: 0;
+  border: 1px solid transparent;
+  overflow: hidden;
+  background: #121012;
+  color: #f8f2ee;
+  cursor: pointer;
+  text-align: left;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color 0.18s ease,
+    transform 0.2s ease;
 }
 
-.services-tab__icon {
-  object-fit: contain;
-  filter: brightness(0) saturate(100%) invert(72%) sepia(18%) saturate(749%) hue-rotate(319deg) brightness(92%) contrast(89%);
+.services-board__cell:focus-visible {
+  outline: 2px solid var(--color-rose);
+  outline-offset: 2px;
 }
 
-.services-tab--active .services-tab__icon {
-  filter: brightness(0) saturate(100%) invert(72%) sepia(18%) saturate(749%) hue-rotate(319deg) brightness(92%) contrast(89%);
+.services-board__cell--active {
+  border-color: var(--color-rose);
+  box-shadow: 0 0 0 1px rgba(222, 150, 141, 0.35);
 }
 
-.services-tab__label {
-  font: 700 0.68rem var(--font-body);
-  letter-spacing: 0.1em;
+.services-board__cell:not(.services-board__cell--active) .services-board__veil {
+  background: linear-gradient(180deg, rgba(12, 10, 11, 0.45), rgba(12, 10, 11, 0.88));
+}
+
+.services-board__cell--active .services-board__veil {
+  background: linear-gradient(180deg, rgba(28, 18, 20, 0.28), rgba(28, 18, 20, 0.72));
+}
+
+@media (hover: hover) {
+  .services-board__cell:hover:not(.services-board__cell--active) {
+    transform: translateY(-1px);
+  }
+}
+
+.services-board__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(0.35) brightness(0.75);
+}
+
+.services-board__cell--active .services-board__photo {
+  filter: grayscale(0.1) brightness(0.9);
+}
+
+.services-board__veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.services-board__copy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.2rem;
+  height: 100%;
+  min-height: inherit;
+  padding: 0.85rem 0.8rem;
+}
+
+.services-board__num {
+  font: 700 0.68rem/1 var(--font-body);
+  letter-spacing: 0.14em;
+  color: var(--color-rose);
+}
+
+.services-board__title {
+  font: 700 0.78rem/1.25 var(--font-body);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  text-align: center;
-  line-height: 1.25;
 }
 
+.services-board__line {
+  font: 400 0.72rem/1.35 var(--font-body);
+  color: rgba(248, 242, 238, 0.7);
+}
+
+/* Active panel */
 .services-panel-wrap {
   position: relative;
   min-height: 12rem;
@@ -706,138 +917,53 @@ useHead({
 }
 
 .services-panel {
-  border-radius: 2px;
-  border: 1px solid var(--color-line);
+  border: 1px solid rgba(248, 242, 238, 0.1);
+  background: rgba(23, 21, 22, 0.92);
   overflow: hidden;
-  background: var(--color-surface-raised);
-}
-
-.services-panel--facials,
-.services-panel--massage,
-.services-panel--waxing,
-.services-panel--makeup {
-  background: var(--color-surface-raised);
-}
-
-.services-panel__inner {
-  padding: 1.5rem 1rem 1.25rem;
 }
 
 .services-panel__intro {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(39, 37, 42, 0.08);
+  gap: 1.15rem;
+  padding: 1.15rem 1rem 1.25rem;
+  border-bottom: 1px solid rgba(248, 242, 238, 0.1);
 }
 
 .services-panel__visual {
   position: relative;
-  width: min(160px, 42vw);
-  margin: 0 auto;
-  aspect-ratio: 1;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
 }
 
 .services-panel__photo {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
   object-fit: cover;
-  border: 4px solid var(--color-surface-raised);
-  box-shadow: 0 10px 32px rgba(39, 37, 42, 0.12);
+  filter: grayscale(0.15) contrast(1.05) brightness(0.9);
 }
 
-.services-panel__icon-wrap {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--color-rose);
-  border: 3px solid var(--color-surface-raised);
-  box-shadow: 0 4px 14px rgba(222, 150, 141, 0.45);
-}
-
-.services-panel__icon-wrap img {
-  filter: brightness(0) invert(1);
+.services-panel__copy .label {
+  color: rgba(240, 184, 172, 0.95);
 }
 
 .services-panel__copy h2 {
-  margin: 0 0 0.65rem;
+  margin: 0 0 0.55rem;
   font-family: var(--font-display);
-  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-size: clamp(1.45rem, 3.2vw, 1.95rem);
   font-weight: 400;
   line-height: 1.25;
-  text-align: center;
-  color: var(--color-ink);
+  color: #f8f2ee;
 }
 
 .services-panel__text {
-  margin: 0 0 0.65rem;
-  font: 400 0.95rem/1.7 var(--font-body);
-  color: var(--color-muted);
-  text-align: center;
-}
-
-.services-panel__hint {
   margin: 0;
-  font: 600 0.8rem var(--font-body);
-  color: var(--color-rose-dark);
-  text-align: center;
+  font: 400 0.95rem/1.7 var(--font-body);
+  color: rgba(248, 242, 238, 0.75);
 }
 
-.services-panel__grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.85rem;
-}
-
-.services-panel__book {
-  margin-top: 1.5rem;
-  padding: 1.15rem 1rem;
-  border-radius: 2px;
-  background: var(--color-parchment);
-  border: 1px dashed var(--color-line);
-  text-align: center;
-  transition: border-color 0.2s, background-color 0.2s;
-}
-
-.services-panel__book--ready {
-  background: var(--color-surface-raised);
-  border: 1px solid rgba(222, 150, 141, 0.35);
-  box-shadow: 0 4px 16px rgba(39, 37, 42, 0.05);
-}
-
-.services-panel__book :deep(.site-btn) {
-  width: 100%;
-  max-width: 20rem;
-  min-height: 3rem;
-}
-
-.services-panel__chosen {
-  margin: 0 0 1rem;
-  font: 400 0.95rem var(--font-body);
-  color: var(--color-ink);
-}
-
-.services-panel__chosen--muted {
-  color: var(--color-muted);
-}
-
-.services-panel__chosen strong {
-  font-weight: 700;
-  color: var(--color-rose-dark);
-}
-
-.services-panel__cta--disabled {
-  opacity: 0.45;
-  pointer-events: none;
+.services-panel__menu {
+  padding: 0 1rem 0.35rem;
 }
 
 .services-cta {
@@ -879,140 +1005,66 @@ useHead({
   min-width: 11rem;
 }
 
-@media (max-width: 767px) {
-  .services-hero {
-    padding: 0.85rem max(1rem, env(safe-area-inset-left)) 0.35rem;
-  }
-
-  .services-hero h1 {
-    font-size: clamp(1.5rem, 6.5vw, 1.85rem);
-  }
-
+@media (max-width: 639px) {
   .services-chooser {
-    margin-top: 0.25rem;
     margin-left: max(1rem, env(safe-area-inset-left));
     margin-right: max(1rem, env(safe-area-inset-right));
     width: auto;
-    max-width: none;
-  }
-
-  .services-packages {
-    margin-top: 1.25rem;
-    padding-top: 1.75rem;
-  }
-
-  .services-packages__grid {
-    gap: 1rem;
-  }
-
-  .services-panel__inner {
-    padding: 1.25rem 0.85rem 1rem;
-  }
-
-  .services-panel__visual {
-    width: min(140px, 38vw);
   }
 }
 
 @media (min-width: 640px) {
-  .services-hero {
-    padding: clamp(1.25rem, 3.5vh, 2rem) max(1rem, env(safe-area-inset-left)) 0.75rem;
-  }
-
-  .services-chooser {
-    margin-top: 0.65rem;
-    padding: 1rem 1.1rem;
-  }
-
-  .services-chooser__days {
-    margin-bottom: 0.85rem;
-    font-size: 0.78rem;
-  }
-
-  .services-paths {
-    gap: 0.75rem;
-  }
-
-  .services-path {
-    min-height: 3.25rem;
-    padding: 0.9rem 1rem;
-    gap: 0.85rem;
-  }
-
-  .services-path__icon {
-    display: grid;
-  }
-
-  .services-path__copy strong {
-    font-size: 0.88rem;
-  }
-
-  .services-path__copy span {
-    font-size: 0.8rem;
-    line-height: 1.4;
-  }
-
-  .services-packages {
-    margin-top: 1.5rem;
-  }
-
-  .services-tabs {
+  .services-board {
     grid-template-columns: repeat(4, 1fr);
+    gap: 0.55rem;
   }
 
-  .services-panel__grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+  .services-board__cell {
+    min-height: 9rem;
   }
 
   .services-packages__grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .services-packages__grid--singles {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (min-width: 768px) {
-  .services-panel__inner {
-    padding: 2rem 1.5rem 1.5rem;
-  }
-
   .services-panel__intro {
-    grid-template-columns: auto 1fr;
-    gap: 2rem;
+    grid-template-columns: minmax(220px, 0.9fr) 1.1fr;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1.35rem 1.35rem 1.4rem;
   }
 
   .services-panel__visual {
-    margin: 0;
-    width: 180px;
+    aspect-ratio: 4 / 5;
+    max-height: 20rem;
   }
 
-  .services-panel__copy h2,
-  .services-panel__text,
-  .services-panel__hint {
-    text-align: left;
+  .services-panel__menu {
+    padding: 0 1.35rem 0.5rem;
   }
 }
 
 @media (min-width: 1024px) {
-  .services-panel__grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
   .services-packages__grid {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .services-packages__grid--singles {
-    grid-template-columns: repeat(4, 1fr);
+  .services-door {
+    min-height: 17rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .panel-fade-enter-active,
   .panel-fade-leave-active {
+    transition: none;
+  }
+
+  .services-door,
+  .services-door__media,
+  .services-board__cell {
     transition: none;
   }
 }

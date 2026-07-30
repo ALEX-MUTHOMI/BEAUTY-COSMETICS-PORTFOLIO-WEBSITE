@@ -89,7 +89,7 @@ async function runClient(client) {
   // 2) Generic CTA surfaces (services / home)
   if (client.intent === 'browse' || client.intent === 'home') {
     const services = await fetchText(`${FRONT}/services`)
-    if (services.ok && /Select a treatment|Complete visits in one booking|How would you like to visit/i.test(services.text)) {
+    if (services.ok && /Choose a treatment|Complete visits|How would you like to visit/i.test(services.text)) {
       pass('browse_services', `${services.ms}ms`)
     } else {
       fail('browse_services', `${services.status}`)
