@@ -44,7 +44,6 @@
         <div :key="currentHero.service" class="hero__copy">
           <p class="hero__eyebrow">{{ currentHero.eyebrow }}</p>
           <HeroHandwriteTitle :text="currentHero.headline" class="hero__title" />
-          <p class="hero__price">{{ LANDING_PRICE_ANCHOR }}</p>
           <SiteButton
             v-if="heroCtaIsExternal"
             :href="heroCta.to"
@@ -65,20 +64,48 @@
           </SiteButton>
         </div>
       </div>
-      <div class="hero__dots" role="tablist" aria-label="Gallery slides">
+      <div class="hero__controls" aria-label="Gallery controls">
         <button
-          v-for="(slide, index) in heroSlides"
-          :key="`dot-${slide.service}`"
           type="button"
-          class="hero__dot"
-          :class="{ 'hero__dot--active': activeSlide === index }"
-          role="tab"
-          :aria-selected="activeSlide === index"
-          :aria-label="slide.headline"
-          @click="goToHeroSlide(index)"
-        />
+          class="hero__nav hero__nav--prev"
+          aria-label="Previous slide"
+          @click="prevHeroSlide"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+            />
+          </svg>
+        </button>
+        <div class="hero__dots" role="tablist" aria-label="Gallery slides">
+          <button
+            v-for="(slide, index) in heroSlides"
+            :key="`dot-${slide.service}`"
+            type="button"
+            class="hero__dot"
+            :class="{ 'hero__dot--active': activeSlide === index }"
+            role="tab"
+            :aria-selected="activeSlide === index"
+            :aria-label="slide.headline"
+            @click="goToHeroSlide(index)"
+          />
+        </div>
+        <button
+          type="button"
+          class="hero__nav hero__nav--next"
+          aria-label="Next slide"
+          @click="nextHeroSlide"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+            />
+          </svg>
+        </button>
       </div>
-      <!-- Soft wave seam into paper — structure, not ash fog -->
+      <!-- Soft wave seam into Get to know us (paper) -->
       <svg class="hero__wave" viewBox="0 0 1440 72" preserveAspectRatio="none" aria-hidden="true">
         <path
           fill="var(--color-paper)"
@@ -87,71 +114,48 @@
       </svg>
     </section>
 
-    <!-- Welcome — short story only; booking paths come after how-it-works -->
-    <section id="behind-the-glow" class="glow home-section">
+    <!-- Get to know us — portrait first on mobile; mirror left + copy right on desktop → Clients by Shee -->
+    <section id="behind-the-glow" class="glow home-section" aria-labelledby="glow-heading">
       <div class="glow__inner">
-        <ScrollReveal variant="fade" :delay="40">
-          <div class="glow__media">
-            <div class="glow__ring">
-              <img
-                src="/images/therapist.png"
-                alt="Beauty artist portrait"
-                class="glow__photo"
-                loading="lazy"
-                decoding="async"
-                width="480"
-                height="480"
-              />
-            </div>
+        <div class="glow__media">
+          <img
+            src="/images/flower.png"
+            alt=""
+            class="glow__bloom"
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            width="160"
+            height="160"
+          />
+          <figure class="glow__mirror">
             <img
-              src="/images/flower.png"
-              alt=""
-              class="glow__flower glow__flower--top"
-              aria-hidden="true"
+              src="/images/therapist.png"
+              alt="Shee, beauty artist and founder at Shee Aesthetics"
+              class="glow__photo"
               loading="lazy"
               decoding="async"
-              width="72"
-              height="72"
+              width="480"
+              height="600"
             />
-            <img
-              src="/images/flower.png"
-              alt=""
-              class="glow__flower glow__flower--bottom"
-              aria-hidden="true"
-              loading="lazy"
-              decoding="async"
-              width="56"
-              height="56"
-            />
-          </div>
-        </ScrollReveal>
-        <ScrollReveal variant="up" :delay="120">
-          <div class="glow__copy">
-            <p class="label">{{ GLOW_SECTION_LABEL }}</p>
-            <h2 class="glow__name">{{ GLOW_ARTIST_NAME }}</h2>
-            <p class="glow__role">{{ GLOW_ARTIST_ROLE }}</p>
-            <p class="glow__bio">{{ GLOW_ARTIST_BIO }}</p>
-            <div class="glow__tags">
-              <span v-for="tag in GLOW_ARTIST_SPECIALTIES" :key="tag" class="glow__tag">{{ tag }}</span>
-            </div>
-            <SiteButton
-              v-if="primaryCtaIsExternal"
-              :href="primaryCtaHref"
-              variant="primary"
-              class="glow__cta"
-            >
-              {{ LANDING_PRIMARY_CTA }}
-            </SiteButton>
-            <SiteButton
-              v-else
-              :to="primaryCtaHref"
-              variant="primary"
-              class="glow__cta"
-            >
-              {{ LANDING_PRIMARY_CTA }}
-            </SiteButton>
-          </div>
-        </ScrollReveal>
+          </figure>
+        </div>
+        <div class="glow__copy">
+          <p class="glow__eyebrow">{{ GLOW_SECTION_EYEBROW }}</p>
+          <h2 id="glow-heading" class="glow__heading">{{ GLOW_SECTION_HEADING }}</h2>
+          <p class="glow__text">{{ GLOW_SECTION_TEXT }}</p>
+          <p class="glow__artist">
+            <span class="glow__name">{{ GLOW_ARTIST_NAME }}</span>
+            <span class="glow__line">{{ GLOW_ARTIST_LINE }}</span>
+          </p>
+          <a
+            class="glow__continue"
+            :href="GLOW_CONTINUE_HASH"
+            @click="scrollToGlowWork"
+          >
+            {{ GLOW_CONTINUE_LABEL }}
+          </a>
+        </div>
       </div>
     </section>
 
@@ -494,7 +498,7 @@
           <div class="mellis-cta__content">
             <ScrollReveal variant="up" :delay="40">
               <header class="mellis-cta__head">
-                <div class="title-lockup">
+                <div class="title-lockup title-lockup--on-dark">
                   <img
                     src="/images/flower.png"
                     alt=""
@@ -830,7 +834,7 @@
 <script setup lang="ts">
 /**
  * Homepage composition (marketing only).
- * Section order: hero → behind-the-glow → our-work → offer → packages → reviews → visit.
+ * Section order: hero → Get to know us → Clients by Shee → offer → packages → reviews → visit.
  * Data helpers live under `src/landing/` — keep Django as the API, not Nuxt server routes.
  */
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
@@ -844,16 +848,17 @@ import {
   LANDING_MAPS_URL,
   LANDING_PACKAGE_FLOOR,
   LANDING_PACKAGE_FLOOR_SHORT,
-  LANDING_PRICE_ANCHOR,
   LANDING_PRIMARY_CTA,
   LANDING_TREATMENT_FLOOR,
   landingClientReviews,
   packageDayUrgency,
-  GLOW_SECTION_LABEL,
+  GLOW_SECTION_EYEBROW,
+  GLOW_SECTION_HEADING,
+  GLOW_SECTION_TEXT,
   GLOW_ARTIST_NAME,
-  GLOW_ARTIST_ROLE,
-  GLOW_ARTIST_BIO,
-  GLOW_ARTIST_SPECIALTIES,
+  GLOW_ARTIST_LINE,
+  GLOW_CONTINUE_LABEL,
+  GLOW_CONTINUE_HASH,
 } from '@/landing/landingContent'
 import { fetchHomeWorkGallery, STATIC_HOME_WORK, type HomeWorkImage } from '@/landing/homeWorkGallery'
 import {
@@ -943,6 +948,17 @@ function closeWorkLightbox() {
   lightboxImage.value = null
 }
 
+function scrollToGlowWork(event: Event) {
+  event.preventDefault()
+  const el = document.getElementById('our-work')
+  if (!el) return
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+  if (import.meta.client) {
+    window.history.replaceState(null, '', '#our-work')
+  }
+}
+
 function onHeroBook() {
   trackFunnelEvent('cta_book_click', { surface: 'hero', href: heroCta.value.to })
 }
@@ -956,6 +972,16 @@ function advanceHero() {
 
 function goToHeroSlide(index: number) {
   activeSlide.value = index
+  startHeroAutoplay()
+}
+
+function nextHeroSlide() {
+  activeSlide.value = (activeSlide.value + 1) % heroSlides.length
+  startHeroAutoplay()
+}
+
+function prevHeroSlide() {
+  activeSlide.value = (activeSlide.value - 1 + heroSlides.length) % heroSlides.length
   startHeroAutoplay()
 }
 
@@ -1332,15 +1358,6 @@ const reviews = landingClientReviews
   margin: 0;
 }
 
-.hero__price {
-  margin: 0.45rem 0 0;
-  max-width: 22rem;
-  font: 500 0.8rem/1.35 var(--font-body);
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.9);
-  text-align: center;
-}
-
 .hero__cta {
   display: inline-flex;
   min-height: 3.1rem;
@@ -1351,23 +1368,70 @@ const reviews = landingClientReviews
   letter-spacing: 0.16em !important;
 }
 
-.hero__dots {
+.hero__controls {
   position: absolute;
   left: 50%;
   bottom: calc(
-    var(--mobile-book-bar-height, 4.15rem) + env(safe-area-inset-bottom, 0px) + 0.85rem
+    var(--mobile-book-bar-height, 4.15rem) + env(safe-area-inset-bottom, 0px) + 0.75rem
   );
   z-index: 4;
   display: flex;
-  gap: 0.1rem;
+  align-items: center;
+  gap: 0.2rem;
   transform: translateX(-50%);
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.hero__nav {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(20, 16, 18, 0.28);
+  cursor: pointer;
+  box-shadow: none;
+  transition: color 0.2s ease, background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hero__nav svg {
+  width: 16px;
+  height: 16px;
+}
+
+.hero__nav:hover,
+.hero__nav:focus-visible {
+  color: #fff;
+  background: rgba(20, 16, 18, 0.48);
+  outline: none;
+}
+
+.hero__nav:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
+}
+
+.hero__nav:active {
+  transform: scale(0.96);
+}
+
+.hero__dots {
+  display: flex;
+  align-items: center;
+  gap: 0.05rem;
 }
 
 .hero__dot {
-  /* Visible bead stays small; hit area meets 44px touch target */
   position: relative;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 1.65rem;
+  height: 1.65rem;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -1381,24 +1445,24 @@ const reviews = landingClientReviews
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.35);
+  width: 0.32rem;
+  height: 0.32rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
   transform: translate(-50%, -50%);
-  transition: background-color 0.25s ease, transform 0.25s ease, width 0.25s ease, height 0.25s ease;
+  transition:
+    background-color 0.25s ease,
+    width 0.25s ease;
 }
 
 .hero__dot--active::after {
   background: #fff;
-  width: 0.58rem;
-  height: 0.58rem;
-  transform: translate(-50%, -50%) scale(1.15);
+  width: 0.85rem;
 }
 
 .hero__dot:focus-visible {
   outline: 2px solid #fff;
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 
 .sr-only {
@@ -1413,135 +1477,203 @@ const reviews = landingClientReviews
   border: 0;
 }
 
-/* Welcome — quiet paper; local flower accent already on the media mirror */
+/* Get to know us — content-first mobile; vanity mirror; desktop image-left */
 .glow {
-  padding: clamp(3rem, 8vh, 5rem) 1rem;
   position: relative;
   z-index: 1;
-  margin-top: 0;
-  background: radial-gradient(ellipse at 30% 50%, #2a2224 0%, #1a1718 70%);
-  border-bottom: var(--home-seam);
-}
-
-@media (max-width: 767px) {
-  .glow {
-    padding-top: clamp(2.5rem, 6vh, 3.25rem);
-    padding-bottom: clamp(2.5rem, 6vh, 3.25rem);
-  }
-
-  .glow__cta {
-    display: none;
-  }
+  margin-top: -1px;
+  padding: clamp(1.5rem, 4.5vw, 2.75rem) 1rem clamp(1.15rem, 3vw, 1.85rem);
+  overflow: hidden;
+  background: var(--color-paper);
 }
 
 .glow__inner {
   width: var(--container);
+  max-width: 58rem;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2rem;
+  gap: 1.35rem;
   align-items: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.glow__copy {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .glow__media {
   position: relative;
-  display: flex;
-  justify-content: center;
+  width: auto;
+  margin: 0 auto;
 }
 
-.glow__ring {
+.glow__bloom {
+  position: absolute;
+  right: -18%;
+  bottom: -8%;
+  width: 4.5rem;
+  opacity: 0.32;
+  pointer-events: none;
+  filter: saturate(1.15);
+  z-index: 0;
+}
+
+/* Compact vanity mirror — oval frame, low height cost */
+.glow__mirror {
   position: relative;
-  width: min(280px, 68vw);
-  aspect-ratio: 1;
-  margin: 0 auto;
-  padding: 4px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, var(--color-rose), #1a1718 50%, var(--color-rose));
+  z-index: 1;
+  margin: 0;
+  width: clamp(8.75rem, 34vw, 11rem);
+  aspect-ratio: 3 / 4;
+  padding: 0.35rem;
+  border-radius: 50% / 42%;
+  background:
+    linear-gradient(145deg, #f5d0c8 0%, #c48a7e 28%, #6e524c 52%, #e8b4a8 78%, #f0b8ac 100%);
   box-shadow:
-    0 0 0 1px rgba(222, 150, 141, 0.4),
-    0 20px 60px rgba(0, 0, 0, 0.4);
+    0 10px 28px rgba(39, 37, 42, 0.14),
+    0 0 0 1px rgba(222, 150, 141, 0.25);
 }
 
 .glow__photo {
   width: 100%;
   height: 100%;
   display: block;
-  border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #2a2224;
+  object-position: center 16%;
+  border-radius: 50% / 42%;
+  border: 2px solid #fff;
+  background: #ebe4de;
 }
 
-.glow__flower {
-  position: absolute;
-  pointer-events: none;
-  opacity: 0.6;
-  filter: saturate(1.2) brightness(0.9);
-}
-
-.glow__flower--top {
-  top: -0.5rem;
-  right: max(0.5rem, calc(50% - 170px));
-  width: min(72px, 22%);
-}
-
-.glow__flower--bottom {
-  bottom: 0rem;
-  left: max(0.5rem, calc(50% - 160px));
-  width: min(56px, 18%);
-}
-
-.glow__copy {
-  text-align: center;
-}
-
-.glow__copy .label {
-  color: var(--color-rose);
-  letter-spacing: 0.15em;
-  font-size: 0.7rem;
+.glow__eyebrow {
+  margin: 0 0 0.5rem;
+  font: 700 0.68rem/1.3 var(--font-body);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  margin-bottom: 0.75rem;
+  color: var(--color-rose);
+}
+
+.glow__heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 5.5vw, 2.35rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--color-ink);
+}
+
+.glow__text {
+  margin: 0.7rem auto 0;
+  max-width: 36ch;
+  font: 400 0.95rem/1.6 var(--font-body);
+  color: var(--color-muted);
+}
+
+.glow__artist {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  margin: 0.95rem 0 0;
 }
 
 .glow__name {
-  margin: 0 0 0.25rem;
   font-family: var(--font-script);
-  font-size: clamp(2.35rem, 5vw, 3.5rem);
+  font-size: clamp(1.55rem, 4vw, 1.95rem);
   font-weight: 400;
-  line-height: 1.2;
-  color: #f8f2ee;
+  line-height: 1.05;
+  color: var(--color-rose-dark, #b56b62);
 }
 
-.glow__role {
-  margin: 0 0 1rem;
-  font: 500 0.75rem/1.4 var(--font-body);
+.glow__line {
+  font: 600 0.7rem/1.35 var(--font-body);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(248, 242, 238, 0.6);
+  color: var(--color-muted);
 }
 
-.glow__bio {
-  margin: 0 auto 1.25rem;
-  max-width: 36ch;
-  font: 400 1rem/1.75 var(--font-body);
-  color: rgba(248, 242, 238, 0.85);
-}
-
-.glow__tags {
-  display: flex;
-  flex-wrap: wrap;
+.glow__continue {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  margin-top: 1.1rem;
+  min-height: 2.75rem;
+  min-width: 11rem;
+  padding: 0.65rem 1.4rem;
+  font: 700 0.7rem/1 var(--font-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #fff;
+  background: var(--color-rose);
+  transition: background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.glow__tag {
-  padding: 0.3rem 0.85rem;
-  border: 1px solid var(--color-rose);
-  border-radius: 100px;
-  font: 500 0.72rem/1 var(--font-body);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-rose);
+.glow__continue:hover,
+.glow__continue:focus-visible {
+  background: var(--color-rose-dark, #b56b62);
+  outline: none;
+}
+
+.glow__continue:focus-visible {
+  outline: 2px solid var(--color-rose);
+  outline-offset: 3px;
+}
+
+@media (min-width: 900px) {
+  .glow {
+    padding: clamp(2rem, 4vw, 3rem) 1.5rem clamp(1.5rem, 3vw, 2.25rem);
+  }
+
+  .glow__inner {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: clamp(1.75rem, 3.5vw, 3rem);
+    justify-items: start;
+    text-align: left;
+    align-items: center;
+  }
+
+  .glow__media {
+    margin: 0;
+  }
+
+  .glow__copy {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .glow__mirror {
+    width: clamp(10.5rem, 14vw, 13.5rem);
+  }
+
+  .glow__bloom {
+    right: -22%;
+    bottom: -10%;
+    width: 5.5rem;
+  }
+
+  .glow__text {
+    margin-left: 0;
+    margin-right: 0;
+    max-width: 38ch;
+  }
+
+  .glow__artist {
+    align-items: flex-start;
+  }
+
+  .glow__heading {
+    font-size: clamp(2rem, 2.6vw, 2.55rem);
+  }
 }
 
 /* Treatments — Mellis static-bg scroll chapter + colored Shee board */
@@ -2287,7 +2419,7 @@ const reviews = landingClientReviews
   }
 }
 
-/* Full packages — soft glam atmosphere; black card sits on top */
+/* Full packages — services warm charcoal stage; white featured card pops */
 .book-visit__stage {
   position: relative;
   isolation: isolate;
@@ -2295,7 +2427,9 @@ const reviews = landingClientReviews
   padding: clamp(2.5rem, 6vw, 3.75rem) 1rem clamp(2.25rem, 5vw, 3.25rem);
   overflow: hidden;
   border-block: var(--home-seam);
-  background: var(--color-paper);
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 0%, rgba(222, 150, 141, 0.2), transparent 60%),
+    linear-gradient(180deg, #2a2324 0%, #221c1e 48%, #1a1718 100%);
 }
 
 .mellis-cta__atmosphere {
@@ -2303,6 +2437,7 @@ const reviews = landingClientReviews
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  opacity: 0.28;
 }
 
 .mellis-cta__bg {
@@ -2311,8 +2446,8 @@ const reviews = landingClientReviews
   object-fit: cover;
   object-position: center 22%;
   transform: scale(1.04);
-  opacity: 0.42;
-  filter: grayscale(1) contrast(1.06);
+  opacity: 0.55;
+  filter: grayscale(0.35) contrast(1.05) brightness(0.72) saturate(0.85);
 }
 
 .mellis-cta__veil {
@@ -2321,18 +2456,16 @@ const reviews = landingClientReviews
   z-index: 1;
   background:
     radial-gradient(
-      ellipse 46% 54% at 50% 46%,
-      rgba(229, 225, 220, 0.88) 0%,
-      rgba(229, 225, 220, 0.55) 42%,
-      rgba(229, 225, 220, 0.12) 72%,
-      transparent 100%
+      ellipse 48% 52% at 50% 45%,
+      rgba(34, 28, 30, 0.35) 0%,
+      rgba(26, 23, 24, 0.72) 55%,
+      rgba(26, 23, 24, 0.92) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(229, 225, 220, 0.55) 0%,
-      rgba(229, 225, 220, 0.12) 28%,
-      rgba(229, 225, 220, 0.1) 72%,
-      rgba(229, 225, 220, 0.6) 100%
+      rgba(42, 35, 36, 0.55) 0%,
+      rgba(26, 23, 24, 0.35) 40%,
+      rgba(26, 23, 24, 0.85) 100%
     );
 }
 
@@ -2354,8 +2487,8 @@ const reviews = landingClientReviews
   font-weight: 500;
   line-height: 1.15;
   letter-spacing: -0.025em;
-  color: var(--color-ink);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+  color: #fff8f4;
+  text-shadow: none;
 }
 
 .mellis-cta__card-wrap {
@@ -2368,8 +2501,10 @@ const reviews = landingClientReviews
 .mellis-cta__card {
   position: relative;
   z-index: 3;
-  background: var(--color-card-dark) !important;
-  box-shadow: 0 22px 48px rgba(23, 21, 22, 0.32);
+  /* Let featured white / services charcoal styles win — do not force dark */
+  box-shadow:
+    0 22px 48px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(222, 150, 141, 0.2);
 }
 
 @media (max-width: 479px) {
@@ -2396,10 +2531,6 @@ const reviews = landingClientReviews
     padding-inline: 1rem;
     gap: 0;
   }
-
-  .hero__price {
-    font-size: 0.74rem;
-  }
 }
 
 .mellis-cta__note {
@@ -2407,13 +2538,13 @@ const reviews = landingClientReviews
   max-width: 28rem;
   text-align: center;
   font: 500 0.8rem/1.45 var(--font-body);
-  color: var(--color-rose-dark);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+  color: #f0b8ac;
+  text-shadow: none;
 }
 
 .mellis-cta__note--soft {
   margin-top: 0.35rem;
-  color: var(--color-muted);
+  color: rgba(255, 248, 244, 0.58);
 }
 
 @media (min-width: 768px) {
@@ -2572,11 +2703,12 @@ const reviews = landingClientReviews
   }
 }
 
-/* Our work — quiet paper; photos carry texture (no floral + no second cream band) */
+/* Our work — quiet paper; tight seam after Meet your therapist */
 .work {
-  padding: var(--home-section-y-lg) 1rem;
+  padding: clamp(1.35rem, 3.5vw, 2.25rem) 1rem var(--home-section-y-lg);
   background: var(--color-paper);
   border-bottom: var(--home-seam);
+  scroll-margin-top: calc(var(--site-header-height, 4rem) + 0.5rem);
 }
 
 .work__masonry {
@@ -3093,40 +3225,18 @@ const reviews = landingClientReviews
     }
   }
 
-  .hero__dots {
-    bottom: 2.5rem;
+  .hero__controls {
+    bottom: 2.35rem;
+  }
+
+  .hero__nav {
+    width: 2.15rem;
+    height: 2.15rem;
   }
 
   .hero__eyebrow {
     font-size: clamp(0.9rem, 1.15vw, 1.1rem);
     letter-spacing: 0.3em;
-  }
-
-  .glow {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
-
-  .glow__inner {
-    grid-template-columns: auto 1fr;
-    gap: clamp(1.5rem, 4vw, 3rem);
-    text-align: left;
-  }
-
-  .glow__copy {
-    text-align: left;
-  }
-
-  .glow__tags {
-    justify-content: flex-start;
-  }
-
-  .glow__ring {
-    width: min(300px, 32vw);
-  }
-
-  .glow__bio {
-    margin-left: 0;
   }
 
   .work,
@@ -3161,14 +3271,6 @@ const reviews = landingClientReviews
     /* Locked: desktop 100vh — Mellis full viewport */
     height: 100vh;
     min-height: 44rem;
-  }
-
-  .glow__inner {
-    gap: clamp(2rem, 4vw, 3.5rem);
-  }
-
-  .glow__ring {
-    width: min(340px, 28vw);
   }
 
   .reviews__grid {
