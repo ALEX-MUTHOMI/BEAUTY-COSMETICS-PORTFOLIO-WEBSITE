@@ -11,8 +11,7 @@
 
     <aside
       v-if="welcomeBackHref"
-      class="welcome-back"
-      :class="{ 'welcome-back--hero': isHome }"
+      class="welcome-back welcome-back--overlay"
       role="status"
       aria-label="Continue your last booking"
     >
@@ -142,9 +141,9 @@ useHead({
   );
 }
 
-/* Floating resume chip on home — does not push hero or bleach the header */
-.welcome-back--hero {
-  position: absolute;
+/* Floating resume chip — overlays content, never pushes layout */
+.welcome-back--overlay {
+  position: fixed;
   z-index: 46;
   top: calc(var(--site-header-height, 4.25rem) + 0.55rem);
   left: 50%;
@@ -156,17 +155,17 @@ useHead({
   pointer-events: none;
 }
 
-.welcome-back--hero .welcome-back__inner {
+.welcome-back--overlay .welcome-back__inner {
   pointer-events: auto;
   display: flex;
   align-items: center;
   gap: 0.65rem;
   padding: 0.55rem 0.55rem 0.55rem 0.75rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(232, 228, 225, 0.95);
   box-shadow:
-    0 10px 28px rgba(20, 16, 18, 0.18),
+    0 10px 28px rgba(20, 16, 18, 0.16),
     0 1px 0 rgba(255, 255, 255, 0.85) inset;
   backdrop-filter: blur(14px) saturate(1.1);
   -webkit-backdrop-filter: blur(14px) saturate(1.1);
@@ -224,35 +223,13 @@ useHead({
   background: var(--color-rose-dark, #b56b62);
 }
 
-/* Off-home: compact strip under solid sticky header */
-.welcome-back:not(.welcome-back--hero) {
-  position: relative;
-  z-index: 40;
-  display: flex;
-  justify-content: center;
-  padding: 0.45rem 0.85rem;
-  background: #f7ece9;
-  border-bottom: 1px solid var(--color-line, #e8e4e1);
-}
-
-.welcome-back:not(.welcome-back--hero) .welcome-back__inner {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  width: min(100%, 36rem);
-}
-
-.welcome-back:not(.welcome-back--hero) .welcome-back__cta {
-  min-height: 2.5rem;
-}
-
 @media (max-width: 419px) {
-  .welcome-back--hero {
+  .welcome-back--overlay {
     width: min(calc(100% - 1rem), 26rem);
     top: calc(var(--site-header-height, 3.5rem) + 0.4rem);
   }
 
-  .welcome-back--hero .welcome-back__inner {
+  .welcome-back--overlay .welcome-back__inner {
     gap: 0.45rem;
     padding: 0.45rem 0.45rem 0.45rem 0.65rem;
   }
@@ -269,7 +246,7 @@ useHead({
 }
 
 @media (min-width: 768px) {
-  .welcome-back--hero {
+  .welcome-back--overlay {
     width: min(calc(100% - 2rem), 28rem);
     top: calc(var(--site-header-height, 5rem) + 0.75rem);
   }

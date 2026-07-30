@@ -59,7 +59,7 @@ for (const d of devices) {
       logoColor,
       headerBg,
       overHero,
-      welcomeOnHero: welcome?.classList.contains('welcome-back--hero') || false,
+      welcomeOnHero: welcome?.classList.contains('welcome-back--overlay') || false,
       welcomeTop: wr ? Math.round(wr.top) : null,
       welcomeOverlapsLogo:
         wr && lr

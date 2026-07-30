@@ -44,7 +44,7 @@ for (const d of devices) {
     const name = logo?.querySelector('.shee-logo__name')
     return {
       hasWelcome: !!welcome,
-      welcomeOnHero: welcome?.classList.contains('welcome-back--hero') || false,
+      welcomeOnHero: welcome?.classList.contains('welcome-back--overlay') || false,
       welcomeText: welcome?.textContent?.replace(/\s+/g, ' ').trim(),
       welcomeTop: wr ? Math.round(wr.top) : null,
       welcomeW: wr ? Math.round(wr.width) : null,
