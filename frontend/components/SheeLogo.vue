@@ -121,7 +121,7 @@ const logoClasses = computed(() => [
   font-weight: 400;
   letter-spacing: 0.02em;
   line-height: 1;
-  color: var(--color-ink);
+  color: var(--color-rose-dark, #b56b62);
 }
 
 .shee-logo__tag {
@@ -131,7 +131,7 @@ const logoClasses = computed(() => [
   font-weight: 600;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: var(--color-muted);
+  color: var(--color-rose);
 }
 
 .shee-logo--lg .shee-logo__name {
@@ -145,19 +145,19 @@ const logoClasses = computed(() => [
 
 .shee-logo--light .shee-logo__name,
 .shee-logo--hero .shee-logo__name {
-  color: #fff;
+  color: #f0b8ac;
 }
 
 .shee-logo--light .shee-logo__tag,
 .shee-logo--hero .shee-logo__tag {
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(240, 184, 172, 0.85);
 }
 
 .shee-logo--light .shee-logo__mark-wrap,
 .shee-logo--hero .shee-logo__mark-wrap {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--color-rose);
   border: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow: none;
+  box-shadow: 0 4px 14px rgba(222, 150, 141, 0.35);
 }
 
 /* Mellis Home 3 — mark above brand, centered */
@@ -210,13 +210,13 @@ const logoClasses = computed(() => [
 
 .shee-logo--stacked.shee-logo--light .shee-logo__mark-wrap,
 .shee-logo--stacked.shee-logo--hero .shee-logo__mark-wrap {
-  background: transparent;
+  background: var(--color-rose);
   border: 1.5px solid rgba(255, 255, 255, 0.85);
-  box-shadow: none;
+  box-shadow: 0 4px 14px rgba(222, 150, 141, 0.4);
 }
 
 .shee-logo--stacked.shee-logo--light .shee-logo__tag,
 .shee-logo--stacked.shee-logo--hero .shee-logo__tag {
-  color: rgba(255, 255, 255, 0.88);
+  color: #f0c4be;
 }
 </style>

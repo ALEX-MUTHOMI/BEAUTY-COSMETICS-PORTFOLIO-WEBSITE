@@ -350,7 +350,7 @@ onUnmounted(() => {
   position: absolute;
   left: 0;
   right: 0;
-  top: 0;
+  top: var(--welcome-bar-offset, 0px);
   width: 100%;
 }
 
@@ -358,7 +358,7 @@ onUnmounted(() => {
   position: fixed;
   left: 0;
   right: 0;
-  top: 0;
+  top: var(--welcome-bar-offset, 0px);
   width: 100%;
   animation: header-solid-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -454,7 +454,7 @@ onUnmounted(() => {
 }
 
 .site-header--over-hero .site-header__logo--stacked :deep(.shee-logo__name) {
-  color: #fff;
+  color: #f0b8ac;
   font-size: clamp(1.5rem, 3.2vw, 1.9rem);
   text-shadow:
     0 1px 2px rgba(20, 16, 18, 0.75),
@@ -462,7 +462,7 @@ onUnmounted(() => {
 }
 
 .site-header--over-hero .site-header__logo--stacked :deep(.shee-logo__tag) {
-  color: #f0c4be;
+  color: #f0b8ac;
   font-size: 0.62rem;
   letter-spacing: 0.3em;
   font-weight: 700;
@@ -618,7 +618,7 @@ onUnmounted(() => {
   }
 
   .site-header--home.site-header--over-hero .site-header__logo--compact :deep(.shee-logo__name) {
-    color: #fff;
+    color: #f0b8ac;
     font-size: 1.15rem;
     text-shadow:
       0 1px 2px rgba(20, 16, 18, 0.75),
@@ -626,7 +626,7 @@ onUnmounted(() => {
   }
 
   .site-header--home.site-header--over-hero .site-header__logo--compact :deep(.shee-logo__tag) {
-    color: #f0c4be;
+    color: #f0b8ac;
     font-size: 0.5rem;
     letter-spacing: 0.24em;
     font-weight: 700;
