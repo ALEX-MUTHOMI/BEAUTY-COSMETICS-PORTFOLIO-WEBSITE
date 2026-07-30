@@ -1,296 +1,385 @@
 <template>
-  <main class="services-page">
-    <header class="services-hero">
-      <div class="services-hero__media" aria-hidden="true">
+  <div>
+    <SiteLoader
+      variant="services"
+      :assets="[
+        '/images/logo-mark.png',
+        '/images/flower.png',
+        '/images/icon-facial.png',
+        '/images/icon-massage.png',
+        '/images/icon-waxing.png',
+        '/images/icon-makeup.png',
+      ]"
+    />
+    <main class="services-page">
+      <header class="services-hero">
         <img
-          src="/images/stock-makeup-glam.jpg"
+          src="/images/flower.png"
           alt=""
-          class="services-hero__photo"
-          width="1600"
-          height="1000"
-          fetchpriority="high"
+          class="services-hero__bloom services-hero__bloom--tl"
+          aria-hidden="true"
+          width="120"
+          height="120"
           decoding="async"
         />
-        <div class="services-hero__veil" />
-      </div>
-      <div class="services-hero__inner">
-        <p class="label">{{ pageIntro.eyebrow }}</p>
-        <h1>{{ pageIntro.title }}</h1>
-        <p class="services-hero__lead">{{ pageIntro.lead }}</p>
-      </div>
-    </header>
-
-    <section class="services-chooser" aria-label="Choose how you want to book">
-      <p class="services-chooser__days" role="note" aria-label="Booking days">
-        <span>Tue &amp; Wed packages</span>
-        <span class="services-chooser__days-sep" aria-hidden="true">·</span>
-        <span>{{ SINGLE_DAYS_LABEL }} treatments</span>
-      </p>
-      <nav class="services-doors">
-        <a
-          href="#full-packages"
-          class="services-door services-door--packages"
-          @click="scrollToSection('full-packages', $event)"
-        >
-          <img
-            src="/images/stock-makeup-glam.jpg"
-            alt=""
-            class="services-door__media"
-            loading="lazy"
-            decoding="async"
-            width="800"
-            height="1000"
-          />
-          <span class="services-door__wash" aria-hidden="true" />
-          <img
-            src="/images/flower.png"
-            alt=""
-            class="services-door__flower"
-            aria-hidden="true"
-            loading="lazy"
-            decoding="async"
-            width="72"
-            height="72"
-          />
-          <span class="services-door__body">
-            <span class="services-door__title">Packages</span>
-            <span class="services-door__sub">Tue &amp; Wed · full glow</span>
-          </span>
-        </a>
-        <a
-          href="#single-sessions"
-          class="services-door services-door--treatments"
-          @click="scrollToSection('single-sessions', $event)"
-        >
-          <img
-            src="/images/stock-spa-skincare.jpg"
-            alt=""
-            class="services-door__media services-door__media--mono"
-            loading="lazy"
-            decoding="async"
-            width="800"
-            height="1000"
-          />
-          <span class="services-door__wash services-door__wash--photo" aria-hidden="true" />
-          <img
-            src="/images/flower.png"
-            alt=""
-            class="services-door__flower"
-            aria-hidden="true"
-            loading="lazy"
-            decoding="async"
-            width="72"
-            height="72"
-          />
-          <span class="services-door__body">
-            <span class="services-door__title">Treatments</span>
-            <span class="services-door__sub">{{ SINGLE_DAYS_LABEL }} · one service</span>
-          </span>
-        </a>
-      </nav>
-    </section>
-
-    <section id="full-packages" class="services-packages">
-      <div class="services-packages__bg" aria-hidden="true">
         <img
-          src="/images/stock-makeup-glam.jpg"
+          src="/images/flower.png"
           alt=""
-          class="services-packages__photo"
+          class="services-hero__bloom services-hero__bloom--br"
+          aria-hidden="true"
+          width="140"
+          height="140"
+          decoding="async"
+        />
+        <div class="services-hero__inner">
+          <p class="label">{{ pageIntro.eyebrow }}</p>
+          <h1>{{ pageIntro.title }}</h1>
+        </div>
+      </header>
+
+      <section class="services-chooser" aria-label="Choose how you want to book">
+        <img
+          src="/images/flower.png"
+          alt=""
+          class="services-bloom services-bloom--chooser-l"
+          aria-hidden="true"
+          width="100"
+          height="100"
           loading="lazy"
           decoding="async"
-          width="1600"
-          height="1000"
         />
-        <div class="services-packages__veil" />
-      </div>
-      <header class="services-section-head services-section-head--on-dark">
-        <p class="label">Packages</p>
-        <div class="title-lockup">
-          <img
-            src="/images/flower.png"
-            alt=""
-            class="title-lockup__flower"
-            width="48"
-            height="48"
-            loading="lazy"
-            decoding="async"
-            aria-hidden="true"
-          />
-          <h2>Complete visits</h2>
-          <img
-            src="/images/flower.png"
-            alt=""
-            class="title-lockup__flower"
-            width="48"
-            height="48"
-            loading="lazy"
-            decoding="async"
-            aria-hidden="true"
-          />
-        </div>
-        <p class="services-section-head__sub">
-          Tue &amp; Wed — facial, wax, massage and makeup in one booking.
-        </p>
-      </header>
-      <div class="services-packages__grid">
-        <MellisPackageCard
-          v-for="pkg in packages"
-          :key="pkg.name"
-          :name="pkg.name"
-          :text="pkg.text"
-          :price="pkg.price"
-          :includes="pkg.includes"
-          :featured="pkg.featured"
-          :badge="pkg.badge"
-          :days-label="pkg.daysLabel"
-          :cta-label="pkg.ctaLabel || 'Book this package'"
-          :cta-to="bookHrefForPackageName(pkg.name)"
+        <img
+          src="/images/flower.png"
+          alt=""
+          class="services-bloom services-bloom--chooser-r"
+          aria-hidden="true"
+          width="110"
+          height="110"
+          loading="lazy"
+          decoding="async"
         />
-      </div>
-    </section>
-
-    <section id="single-sessions" class="services-treatments">
-      <header class="services-section-head">
-        <p class="label">Treatments</p>
-        <div class="title-lockup">
-          <img
-            src="/images/flower.png"
-            alt=""
-            class="title-lockup__flower"
-            width="48"
-            height="48"
-            loading="lazy"
-            decoding="async"
-            aria-hidden="true"
-          />
-          <h2>Choose a treatment</h2>
-          <img
-            src="/images/flower.png"
-            alt=""
-            class="title-lockup__flower"
-            width="48"
-            height="48"
-            loading="lazy"
-            decoding="async"
-            aria-hidden="true"
-          />
+        <div class="services-chooser__inner">
+          <nav class="services-doors" aria-label="Visit type">
+            <a
+              href="#full-packages"
+              class="services-door services-door--packages"
+              @click="scrollToSection('full-packages', $event)"
+            >
+              <img
+                src="/images/flower.png"
+                alt=""
+                class="services-door__flower services-door__flower--main"
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+                width="100"
+                height="100"
+              />
+              <img
+                src="/images/flower.png"
+                alt=""
+                class="services-door__flower services-door__flower--accent"
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+                width="56"
+                height="56"
+              />
+              <span class="services-door__body">
+                <span class="services-door__num" aria-hidden="true">01</span>
+                <span class="services-door__title">Packages</span>
+                <span class="services-door__sub">Full visit · Tue &amp; Wed</span>
+                <span class="services-door__cta">See packages</span>
+              </span>
+            </a>
+            <a
+              href="#single-sessions"
+              class="services-door services-door--treatments"
+              @click="scrollToSection('single-sessions', $event)"
+            >
+              <img
+                src="/images/flower.png"
+                alt=""
+                class="services-door__flower services-door__flower--main"
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+                width="100"
+                height="100"
+              />
+              <img
+                src="/images/flower.png"
+                alt=""
+                class="services-door__flower services-door__flower--accent"
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+                width="56"
+                height="56"
+              />
+              <span class="services-door__body">
+                <span class="services-door__num" aria-hidden="true">02</span>
+                <span class="services-door__title">Treatments</span>
+                <span class="services-door__sub">One service · {{ SINGLE_DAYS_LABEL }}</span>
+                <span class="services-door__cta">Browse &amp; book</span>
+              </span>
+            </a>
+          </nav>
         </div>
-        <p class="services-section-head__sub">
-          {{ SINGLE_DAYS_LABEL }}. Pick a category, then book.
-        </p>
-      </header>
+      </section>
 
-      <div id="treatments" class="services-picker" aria-label="Treatments and prices">
-        <div
-          class="services-board"
-          role="tablist"
-          aria-label="Service categories"
-        >
-          <button
-            v-for="(category, index) in serviceCategories"
-            :id="`tab-${category.id}`"
-            :key="category.id"
-            type="button"
-            role="tab"
-            class="services-board__cell"
-            :class="{ 'services-board__cell--active': activeCategoryId === category.id }"
-            :aria-selected="activeCategoryId === category.id"
-            :aria-controls="`panel-${category.id}`"
-            @click="selectCategory(category.id)"
-          >
+      <section id="full-packages" class="services-packages">
+        <img
+          src="/images/flower.png"
+          alt=""
+          class="services-bloom services-bloom--pkg-tl"
+          aria-hidden="true"
+          width="120"
+          height="120"
+          loading="lazy"
+          decoding="async"
+        />
+        <img
+          src="/images/flower.png"
+          alt=""
+          class="services-bloom services-bloom--pkg-br"
+          aria-hidden="true"
+          width="140"
+          height="140"
+          loading="lazy"
+          decoding="async"
+        />
+        <header class="services-section-head">
+          <p class="label">Packages</p>
+          <div class="title-lockup">
             <img
-              :src="category.image"
+              src="/images/flower.png"
               alt=""
-              class="services-board__photo"
+              class="title-lockup__flower"
+              width="48"
+              height="48"
               loading="lazy"
               decoding="async"
-              width="480"
-              height="320"
+              aria-hidden="true"
             />
-            <span class="services-board__veil" aria-hidden="true" />
-            <span class="services-board__copy">
-              <span class="services-board__num" aria-hidden="true">{{ padIndex(index) }}</span>
-              <span class="services-board__title">{{ category.cardTitle }}</span>
-              <span class="services-board__line">{{ boardLine(category.id) }}</span>
-            </span>
-          </button>
+            <h2>Complete visits</h2>
+            <img
+              src="/images/flower.png"
+              alt=""
+              class="title-lockup__flower"
+              width="48"
+              height="48"
+              loading="lazy"
+              decoding="async"
+              aria-hidden="true"
+            />
+          </div>
+          <p class="services-section-head__sub">
+            One booking. Full glow. Tue &amp; Wed only.
+          </p>
+        </header>
+        <div class="services-packages__scroll">
+          <div class="services-packages__grid">
+            <MellisPackageCard
+              v-for="pkg in packages"
+              :key="pkg.name"
+              :name="pkg.name"
+              :text="pkg.text"
+              :price="pkg.price"
+              hide-price
+              :includes="pkg.includes"
+              :featured="pkg.featured"
+              :badge="pkg.badge"
+              :days-label="pkg.daysLabel"
+              :cta-label="pkg.ctaLabel || 'Book this package'"
+              :cta-to="bookHrefForPackageName(pkg.name)"
+            />
+          </div>
         </div>
+      </section>
 
-        <div class="services-panel-wrap">
-          <Transition name="panel-fade" mode="out-in">
-            <div
-              :id="`panel-${activeCategory.id}`"
-              :key="activeCategoryId"
-              role="tabpanel"
-              class="services-panel"
-              :class="`services-panel--${activeCategory.id}`"
-              :aria-labelledby="`tab-${activeCategory.id}`"
+      <section id="single-sessions" class="services-treatments">
+        <img
+          src="/images/flower.png"
+          alt=""
+          class="services-bloom services-bloom--treat-l"
+          aria-hidden="true"
+          width="110"
+          height="110"
+          loading="lazy"
+          decoding="async"
+        />
+        <img
+          src="/images/flower.png"
+          alt=""
+          class="services-bloom services-bloom--treat-r"
+          aria-hidden="true"
+          width="130"
+          height="130"
+          loading="lazy"
+          decoding="async"
+        />
+        <header class="services-section-head">
+          <p class="label">Treatments</p>
+          <div class="title-lockup">
+            <img
+              src="/images/flower.png"
+              alt=""
+              class="title-lockup__flower"
+              width="48"
+              height="48"
+              loading="lazy"
+              decoding="async"
+              aria-hidden="true"
+            />
+            <h2>Choose a treatment</h2>
+            <img
+              src="/images/flower.png"
+              alt=""
+              class="title-lockup__flower"
+              width="48"
+              height="48"
+              loading="lazy"
+              decoding="async"
+              aria-hidden="true"
+            />
+          </div>
+          <p class="services-section-head__sub">
+            Pick a category, then book the exact service.
+          </p>
+        </header>
+
+        <div id="treatments" class="services-picker" aria-label="Treatments and prices">
+          <div
+            class="services-board"
+            role="tablist"
+            aria-label="Service categories"
+          >
+            <button
+              v-for="(category, index) in serviceCategories"
+              :id="`tab-${category.id}`"
+              :key="category.id"
+              type="button"
+              role="tab"
+              class="services-board__cell"
+              :class="{ 'services-board__cell--active': activeCategoryId === category.id }"
+              :aria-selected="activeCategoryId === category.id"
+              :aria-controls="`panel-${category.id}`"
+              @click="selectCategory(category.id)"
             >
-              <div class="services-panel__intro">
-                <div class="services-panel__visual">
+              <img
+                src="/images/flower.png"
+                alt=""
+                class="services-board__flower"
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+                width="48"
+                height="48"
+              />
+              <span class="services-board__icon-wrap" aria-hidden="true">
+                <img
+                  :src="category.icon"
+                  alt=""
+                  class="services-board__icon"
+                  loading="lazy"
+                  decoding="async"
+                  width="48"
+                  height="48"
+                />
+              </span>
+              <span class="services-board__copy">
+                <span class="services-board__num" aria-hidden="true">{{ padIndex(index) }}</span>
+                <span class="services-board__title">{{ category.cardTitle }}</span>
+              </span>
+            </button>
+          </div>
+
+          <div class="services-panel-wrap">
+            <Transition name="panel-fade" mode="out-in">
+              <div
+                :id="`panel-${activeCategory.id}`"
+                :key="activeCategoryId"
+                role="tabpanel"
+                class="services-panel"
+                :class="`services-panel--${activeCategory.id}`"
+                :aria-labelledby="`tab-${activeCategory.id}`"
+              >
+                <div class="services-panel__intro">
                   <img
-                    :src="activeCategory.image"
-                    :alt="activeCategory.imageAlt"
-                    class="services-panel__photo"
+                    :src="activeCategory.icon"
+                    alt=""
+                    class="services-panel__icon"
                     loading="lazy"
                     decoding="async"
-                    width="720"
-                    height="480"
+                    width="40"
+                    height="40"
+                    aria-hidden="true"
+                  />
+                  <div class="services-panel__copy">
+                    <p class="label">{{ activeCategory.daysNote }}</p>
+                    <h2>{{ activeCategory.name }}</h2>
+                    <p class="services-panel__hint">Tap Book on any row to reserve your slot.</p>
+                  </div>
+                </div>
+
+                <div class="services-panel__menu">
+                  <ServiceTreatmentCard
+                    v-for="(treatment, index) in activeCategory.treatments"
+                    :key="treatment.name"
+                    :name="treatment.name"
+                    :duration="treatment.duration"
+                    :price="treatment.price"
+                    :highlights="treatment.highlights"
+                    :index="index"
+                    :book-to="bookHrefForTreatment(activeCategoryId, treatment.name)"
                   />
                 </div>
-                <div class="services-panel__copy">
-                  <p class="label">{{ activeCategory.daysNote }}</p>
-                  <h2>{{ activeCategory.name }}</h2>
-                  <p class="services-panel__text">{{ activeCategory.intro }}</p>
-                </div>
               </div>
+            </Transition>
+          </div>
 
-              <div class="services-panel__menu">
-                <ServiceTreatmentCard
-                  v-for="(treatment, index) in activeCategory.treatments"
-                  :key="treatment.name"
-                  :name="treatment.name"
-                  :duration="treatment.duration"
-                  :price="treatment.price"
-                  :highlights="treatment.highlights"
-                  :index="index"
-                  :book-to="bookHrefForTreatment(activeCategoryId, treatment.name)"
-                />
-              </div>
-            </div>
-          </Transition>
+          <p class="services-packages-link">
+            Prefer a full visit?
+            <a href="#full-packages" @click="scrollToSection('full-packages', $event)">See packages</a>
+          </p>
         </div>
+      </section>
 
-        <p class="services-packages-link">
-          Prefer a full visit?
-          <a href="#full-packages" @click="scrollToSection('full-packages', $event)">See packages</a>
-        </p>
-      </div>
-    </section>
-
-    <section class="services-cta">
-      <div class="services-cta__inner">
-        <h2>Ready when you are</h2>
-        <p>Full package or single treatment — book online and pay to confirm your slot.</p>
-        <div class="services-cta__actions">
-          <SiteButton
-            href="#full-packages"
-            variant="primary"
-            @click="scrollToSection('full-packages', $event)"
-          >
-            View packages
-          </SiteButton>
-          <SiteButton
-            href="#single-sessions"
-            variant="ghost-light"
-            @click="scrollToSection('single-sessions', $event)"
-          >
-            View treatments
-          </SiteButton>
+      <section class="services-cta">
+        <div class="services-cta__inner">
+          <img
+            src="/images/flower.png"
+            alt=""
+            class="services-cta__flower"
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            width="72"
+            height="72"
+          />
+          <h2>Ready when you are</h2>
+          <p>Full package or single treatment — book online and pay to confirm your slot.</p>
+          <div class="services-cta__actions">
+            <SiteButton
+              href="#full-packages"
+              variant="primary"
+              @click="scrollToSection('full-packages', $event)"
+            >
+              View packages
+            </SiteButton>
+            <SiteButton
+              href="#single-sessions"
+              variant="ghost-light"
+              @click="scrollToSection('single-sessions', $event)"
+            >
+              View treatments
+            </SiteButton>
+          </div>
         </div>
-      </div>
-    </section>
-  </main>
+      </section>
+    </main>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -300,7 +389,6 @@ import {
   SINGLE_DAYS_LABEL,
 } from '@/landing/landingContent'
 import {
-  SERVICE_CATEGORY_BOARD_LINES,
   SERVICES_PAGE_INTRO,
   serviceCategories,
 } from '@/landing/servicesContent'
@@ -326,10 +414,6 @@ const activeCategory = computed(
 
 function padIndex(index: number) {
   return String(index + 1).padStart(2, '0')
-}
-
-function boardLine(id: string) {
-  return SERVICE_CATEGORY_BOARD_LINES[id] ?? ''
 }
 
 function selectCategory(id: string) {
@@ -412,7 +496,7 @@ useHead({
 
 <style scoped>
 .services-page {
-  background: var(--color-paper);
+  background: #fff;
   padding-bottom: calc(var(--mobile-book-bar-height) + env(safe-area-inset-bottom, 0px));
 }
 
@@ -430,42 +514,35 @@ useHead({
   color: var(--color-rose);
 }
 
-/* Hero — full-bleed visual plane */
+/* Hero — question only */
 .services-hero {
   position: relative;
   overflow: hidden;
-  display: grid;
-  place-items: end center;
-  min-height: clamp(16rem, 42vh, 22rem);
-  padding: 0;
-  color: #f8f2ee;
-}
-
-@media (min-width: 768px) {
-  .services-hero {
-    min-height: clamp(20rem, 48vh, 28rem);
-  }
-}
-
-.services-hero__media {
-  position: absolute;
-  inset: 0;
-}
-
-.services-hero__photo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 28%;
-  transform: scale(1.04);
-  animation: services-hero-drift 18s ease-in-out infinite alternate;
-}
-
-.services-hero__veil {
-  position: absolute;
-  inset: 0;
+  padding: clamp(1.75rem, 5vh, 3rem) 1rem 0.85rem;
   background:
-    linear-gradient(180deg, rgba(18, 14, 16, 0.35) 0%, rgba(18, 14, 16, 0.72) 55%, rgba(18, 14, 16, 0.92) 100%);
+    radial-gradient(ellipse 70% 55% at 50% 0%, rgba(222, 150, 141, 0.12), transparent 68%),
+    #fff;
+  text-align: center;
+}
+
+.services-hero__bloom {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.28;
+  filter: saturate(1.25);
+}
+
+.services-hero__bloom--tl {
+  top: -1.5rem;
+  left: -1rem;
+  width: min(140px, 30vw);
+}
+
+.services-hero__bloom--br {
+  right: -1.25rem;
+  bottom: -2rem;
+  width: min(160px, 34vw);
+  transform: rotate(160deg);
 }
 
 .services-hero__inner {
@@ -473,107 +550,165 @@ useHead({
   z-index: 1;
   width: var(--container);
   margin: 0 auto;
-  max-width: 42rem;
-  padding: 2.5rem 1rem 2rem;
-  text-align: center;
-}
-
-.services-hero .label {
-  color: rgba(240, 184, 172, 0.95);
+  max-width: 40rem;
 }
 
 .services-hero h1 {
-  margin: 0 0 0.5rem;
+  margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.75rem, 4.8vw, 2.65rem);
+  font-size: clamp(1.75rem, 6.5vw, 2.75rem);
   font-weight: 400;
   line-height: 1.15;
-  color: #f8f2ee;
+  color: var(--color-ink);
 }
 
-.services-hero__lead {
-  margin: 0;
-  font: 400 0.95rem/1.55 var(--font-body);
-  color: rgba(248, 242, 238, 0.78);
+/* Soft flower accents in white space */
+.services-bloom {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.2;
+  filter: saturate(1.3) brightness(1.02);
 }
 
-@keyframes services-hero-drift {
-  from { transform: scale(1.04); }
-  to { transform: scale(1.1); }
+.services-bloom--chooser-l {
+  left: max(0.25rem, env(safe-area-inset-left));
+  top: 10%;
+  width: min(88px, 18vw);
+  transform: rotate(-20deg);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .services-hero__photo {
-    animation: none;
-  }
+.services-bloom--chooser-r {
+  right: max(0.25rem, env(safe-area-inset-right));
+  bottom: 5%;
+  width: min(96px, 20vw);
+  transform: rotate(25deg);
 }
 
-/* Twin path doors */
+.services-bloom--pkg-tl {
+  top: 0.5rem;
+  left: max(0.5rem, env(safe-area-inset-left));
+  width: min(110px, 22vw);
+  opacity: 0.22;
+}
+
+.services-bloom--pkg-br {
+  right: max(0.5rem, env(safe-area-inset-right));
+  bottom: 1rem;
+  width: min(130px, 26vw);
+  transform: rotate(150deg);
+  opacity: 0.2;
+}
+
+.services-bloom--treat-l {
+  left: max(0.35rem, env(safe-area-inset-left));
+  top: 2.5rem;
+  width: min(100px, 20vw);
+  transform: rotate(-15deg);
+}
+
+.services-bloom--treat-r {
+  right: max(0.35rem, env(safe-area-inset-right));
+  top: 1rem;
+  width: min(120px, 24vw);
+  transform: rotate(40deg);
+}
+
+/* Path cards — horizontal scroll on mobile */
 .services-chooser {
-  width: var(--container);
-  margin: -1.5rem auto 0;
   position: relative;
-  z-index: 2;
-  padding: 0 0 0.5rem;
+  margin: 0;
+  padding: 0.85rem 0 1.5rem;
+  background: #fff;
+  overflow: hidden;
 }
 
-.services-chooser__days {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem 0.4rem;
-  margin: 0 0 0.85rem;
-  padding: 0 1rem;
-  font: 500 0.72rem/1.4 var(--font-body);
-  letter-spacing: 0.02em;
-  color: var(--color-muted);
-  text-align: center;
-}
-
-.services-chooser__days-sep {
-  color: var(--color-line);
+.services-chooser__inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0;
 }
 
 .services-doors {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.65rem;
+  display: flex;
+  gap: 0.85rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  padding: 0.15rem 1rem 0.35rem;
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
 }
 
-@media (min-width: 640px) {
-  .services-doors {
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-  }
+.services-doors::-webkit-scrollbar {
+  display: none;
 }
 
 .services-door {
   position: relative;
+  flex: 0 0 min(78vw, 17.5rem);
+  scroll-snap-align: start;
   display: block;
-  min-height: 11.5rem;
+  min-height: 12.75rem;
   overflow: hidden;
   text-decoration: none;
   color: #f4ebe6;
-  background: var(--color-card-dark);
+  background:
+    radial-gradient(ellipse 85% 75% at 100% 0%, rgba(240, 184, 172, 0.45), transparent 52%),
+    radial-gradient(ellipse 55% 50% at 0% 100%, rgba(181, 107, 98, 0.35), transparent 55%),
+    linear-gradient(155deg, #4a3434 0%, #322628 48%, #261e20 100%);
+  border: 1px solid rgba(222, 150, 141, 0.35);
+  box-shadow:
+    0 12px 30px rgba(23, 21, 22, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.2) inset;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.35s var(--ease-story, ease);
+  transition:
+    transform 0.3s var(--ease-story, ease),
+    box-shadow 0.3s var(--ease-story, ease);
+}
+
+.services-door--treatments {
+  background:
+    radial-gradient(ellipse 85% 75% at 0% 0%, rgba(240, 184, 172, 0.4), transparent 52%),
+    radial-gradient(ellipse 55% 50% at 100% 100%, rgba(181, 107, 98, 0.32), transparent 55%),
+    linear-gradient(205deg, #453032 0%, #2e2426 50%, #231c1e 100%);
 }
 
 @media (min-width: 640px) {
+  .services-chooser__inner {
+    width: var(--container);
+    padding: 0 max(1rem, env(safe-area-inset-left));
+  }
+
+  .services-doors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.15rem;
+    overflow: visible;
+    scroll-snap-type: none;
+    padding: 0;
+  }
+
   .services-door {
-    min-height: 15rem;
+    flex: none;
+    min-height: 14.5rem;
   }
 }
 
 @media (hover: hover) {
   .services-door:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    box-shadow: 0 18px 40px rgba(23, 21, 22, 0.16);
   }
 
-  .services-door:hover .services-door__media {
-    transform: scale(1.06);
+  .services-door:hover .services-door__cta {
+    color: #fff;
   }
 }
 
@@ -582,51 +717,26 @@ useHead({
   outline-offset: 3px;
 }
 
-.services-door__media {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 28%;
-  transition: transform 0.7s var(--ease-story, ease);
-}
-
-.services-door__media--mono {
-  filter: grayscale(0.88) contrast(1.08) brightness(0.7);
-}
-
-.services-door__wash {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      105deg,
-      rgba(22, 16, 18, 0.9) 0%,
-      rgba(22, 16, 18, 0.72) 40%,
-      rgba(22, 16, 18, 0.42) 100%
-    );
-  pointer-events: none;
-}
-
-.services-door__wash--photo {
-  background:
-    linear-gradient(
-      105deg,
-      rgba(24, 16, 20, 0.88) 0%,
-      rgba(28, 18, 22, 0.62) 45%,
-      rgba(22, 16, 18, 0.4) 100%
-    );
-}
-
 .services-door__flower {
   position: absolute;
-  right: 0.75rem;
-  bottom: 0.75rem;
-  width: min(64px, 18%);
-  opacity: 0.55;
   pointer-events: none;
-  filter: saturate(1.15) brightness(0.95);
+  z-index: 0;
+  filter: saturate(1.35) brightness(1.05);
+}
+
+.services-door__flower--main {
+  right: 0.35rem;
+  bottom: 0.25rem;
+  width: min(92px, 36%);
+  opacity: 0.55;
+}
+
+.services-door__flower--accent {
+  top: 0.55rem;
+  right: 0.65rem;
+  width: min(48px, 18%);
+  opacity: 0.4;
+  transform: rotate(22deg);
 }
 
 .services-door__body {
@@ -638,52 +748,50 @@ useHead({
   gap: 0.35rem;
   height: 100%;
   min-height: inherit;
-  padding: 1.35rem 1.25rem;
+  padding: 1.35rem 1.2rem 1.35rem;
+}
+
+.services-door__num {
+  font: 700 0.72rem/1 var(--font-body);
+  letter-spacing: 0.16em;
+  color: #f0b8ac;
+  margin-bottom: 0.15rem;
 }
 
 .services-door__title {
   font-family: var(--font-script);
-  font-size: clamp(2rem, 4.5vw, 2.75rem);
-  line-height: 1.1;
-  color: #f8f2ee;
+  font-size: clamp(2.2rem, 6.5vw, 3rem);
+  line-height: 1.05;
+  color: #fff;
+  text-shadow: 0 2px 18px rgba(23, 21, 22, 0.25);
 }
 
 .services-door__sub {
-  font: 500 0.78rem/1.4 var(--font-body);
-  letter-spacing: 0.04em;
-  color: rgba(248, 242, 238, 0.78);
+  font: 600 0.86rem/1.4 var(--font-body);
+  letter-spacing: 0.02em;
+  color: rgba(255, 248, 244, 0.9);
 }
 
-/* Package stage — dark atmosphere */
+.services-door__cta {
+  margin-top: 0.85rem;
+  font: 700 0.72rem/1 var(--font-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f0b8ac;
+  transition: color 0.2s ease;
+}
+
+/* Packages */
 .services-packages {
   position: relative;
-  overflow: clip;
-  padding: clamp(2.25rem, 6vh, 3.5rem) max(1rem, env(safe-area-inset-left));
-  margin-top: 1.25rem;
-  background: #171516;
-  scroll-margin-top: calc(var(--header-height) + 0.5rem);
-}
-
-.services-packages__bg {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.services-packages__photo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 30%;
-  filter: grayscale(0.7) contrast(1.05) brightness(0.45) saturate(0.7);
-  opacity: 0.55;
-}
-
-.services-packages__veil {
-  position: absolute;
-  inset: 0;
+  overflow: hidden;
+  padding: clamp(2rem, 5vh, 3.25rem) 0;
+  margin-top: 0;
   background:
-    linear-gradient(180deg, rgba(23, 21, 22, 0.55) 0%, rgba(23, 21, 22, 0.88) 55%, #171516 100%);
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(222, 150, 141, 0.08), transparent 70%),
+    #fff;
+  border-top: 1px solid rgba(39, 37, 42, 0.06);
+  scroll-margin-top: calc(var(--header-height) + 0.5rem);
 }
 
 .services-section-head {
@@ -692,13 +800,14 @@ useHead({
   width: var(--container);
   margin: 0 auto 0.35rem;
   max-width: 40rem;
+  padding: 0 max(1rem, env(safe-area-inset-left));
   text-align: center;
 }
 
 .services-section-head h2 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.45rem, 3.2vw, 1.9rem);
+  font-size: clamp(1.45rem, 3.2vw, 1.95rem);
   font-weight: 400;
   line-height: 1.25;
   color: var(--color-ink);
@@ -708,18 +817,6 @@ useHead({
   margin: 0.55rem 0 0;
   font: 400 0.9rem/1.55 var(--font-body);
   color: var(--color-muted);
-}
-
-.services-section-head--on-dark h2 {
-  color: #f8f2ee;
-}
-
-.services-section-head--on-dark .services-section-head__sub {
-  color: rgba(248, 242, 238, 0.72);
-}
-
-.services-section-head--on-dark .label {
-  color: rgba(240, 184, 172, 0.95);
 }
 
 .title-lockup {
@@ -732,63 +829,119 @@ useHead({
 .title-lockup__flower {
   width: 40px;
   height: 40px;
-  opacity: 0.75;
-  filter: saturate(1.15) brightness(0.95);
+  opacity: 0.85;
+  filter: saturate(1.2) brightness(0.95);
+}
+
+.services-packages__scroll {
+  position: relative;
+  z-index: 1;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  padding: 1.35rem 0 0.5rem;
+}
+
+.services-packages__scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .services-packages__grid {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.25rem;
-  width: var(--container);
-  margin: 0 auto;
-  padding-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  width: max-content;
+  min-width: 100%;
+  padding: 0 max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
   align-items: stretch;
 }
 
 .services-packages__grid > * {
+  flex: 0 0 min(85vw, 20rem);
+  scroll-snap-align: start;
   min-width: 0;
 }
 
-/* Treatments section */
+/* Most booked (middle) peeks larger on mobile scroll */
+.services-packages__grid > *:nth-child(2) {
+  flex-basis: min(88vw, 21.5rem);
+}
+
+@media (min-width: 640px) {
+  .services-packages {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .services-packages__scroll {
+    overflow: visible;
+    scroll-snap-type: none;
+    padding-top: 1.15rem;
+  }
+
+  .services-packages__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.15rem;
+    width: var(--container);
+    margin: 0 auto;
+    padding: 0;
+    min-width: 0;
+  }
+
+  .services-packages__grid > * {
+    flex: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .services-packages__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Treatments — icon cards + horizontal scroll */
 .services-treatments {
-  padding: clamp(2rem, 5vh, 3.25rem) max(1rem, env(safe-area-inset-left));
-  background: #1a1718;
-  border-top: 1px solid rgba(248, 242, 238, 0.06);
+  position: relative;
+  overflow: hidden;
+  padding: clamp(2rem, 5vh, 3.25rem) 0;
+  background: #fff;
+  border-top: 1px solid rgba(39, 37, 42, 0.06);
   scroll-margin-top: calc(var(--header-height) + 0.5rem);
 }
 
-.services-treatments .services-section-head h2 {
-  color: #f8f2ee;
-}
-
-.services-treatments .services-section-head__sub {
-  color: rgba(248, 242, 238, 0.7);
-}
-
-.services-treatments .label {
-  color: rgba(240, 184, 172, 0.95);
-}
-
 .services-picker {
-  width: var(--container);
+  position: relative;
+  z-index: 1;
+  width: 100%;
   margin: 1rem auto 0;
   padding: 0 0 0.5rem;
   scroll-margin-top: calc(var(--header-height) + 0.5rem);
 }
 
+@media (min-width: 640px) {
+  .services-treatments {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .services-picker {
+    width: var(--container);
+  }
+}
+
 .services-packages-link {
-  margin: 1.5rem 0 0;
+  margin: 1.5rem 1rem 0;
   text-align: center;
   font: 500 0.88rem/1.5 var(--font-body);
-  color: rgba(248, 242, 238, 0.65);
+  color: var(--color-muted);
 }
 
 .services-packages-link a {
   font-weight: 700;
-  color: var(--color-rose);
+  color: var(--color-rose-dark);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -798,30 +951,51 @@ useHead({
   outline-offset: 2px;
 }
 
-/* Category photo board */
 .services-board {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
   margin-bottom: 1.15rem;
+  padding: 0.1rem 1rem 0.35rem;
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+.services-board::-webkit-scrollbar {
+  display: none;
 }
 
 .services-board__cell {
   position: relative;
-  display: block;
-  min-height: 7.5rem;
-  padding: 0;
-  border: 1px solid transparent;
+  flex: 0 0 min(42vw, 9.5rem);
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  min-height: 9.25rem;
+  padding: 0.95rem 0.85rem 1rem;
+  border: 1px solid rgba(222, 150, 141, 0.32);
   overflow: hidden;
-  background: #121012;
+  background:
+    radial-gradient(ellipse 90% 80% at 110% -10%, rgba(240, 184, 172, 0.42), transparent 50%),
+    linear-gradient(160deg, #433032 0%, #2c2325 55%, #221c1e 100%);
   color: #f8f2ee;
   cursor: pointer;
   text-align: left;
+  box-shadow: 0 8px 22px rgba(23, 21, 22, 0.1);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition:
     border-color 0.18s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .services-board__cell:focus-visible {
@@ -831,40 +1005,49 @@ useHead({
 
 .services-board__cell--active {
   border-color: var(--color-rose);
-  box-shadow: 0 0 0 1px rgba(222, 150, 141, 0.35);
-}
-
-.services-board__cell:not(.services-board__cell--active) .services-board__veil {
-  background: linear-gradient(180deg, rgba(12, 10, 11, 0.45), rgba(12, 10, 11, 0.88));
-}
-
-.services-board__cell--active .services-board__veil {
-  background: linear-gradient(180deg, rgba(28, 18, 20, 0.28), rgba(28, 18, 20, 0.72));
+  background:
+    radial-gradient(ellipse 90% 80% at 110% -10%, rgba(240, 184, 172, 0.55), transparent 50%),
+    linear-gradient(160deg, #5a3c3c 0%, #3a2a2c 55%, #2a2022 100%);
+  box-shadow:
+    0 0 0 1px var(--color-rose),
+    0 12px 28px rgba(222, 150, 141, 0.22);
 }
 
 @media (hover: hover) {
   .services-board__cell:hover:not(.services-board__cell--active) {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(23, 21, 22, 0.14);
   }
 }
 
-.services-board__photo {
+.services-board__flower {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: grayscale(0.35) brightness(0.75);
-}
-
-.services-board__cell--active .services-board__photo {
-  filter: grayscale(0.1) brightness(0.9);
-}
-
-.services-board__veil {
-  position: absolute;
-  inset: 0;
+  right: -0.15rem;
+  top: -0.15rem;
+  width: 48px;
+  opacity: 0.45;
   pointer-events: none;
+  z-index: 0;
+  filter: saturate(1.3);
+}
+
+.services-board__icon-wrap {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2.65rem;
+  height: 2.65rem;
+  border-radius: 50%;
+  background: rgba(248, 242, 238, 0.1);
+  border: 1px solid rgba(240, 184, 172, 0.4);
+}
+
+.services-board__icon {
+  width: 1.55rem;
+  height: 1.55rem;
+  object-fit: contain;
+  filter: brightness(0) invert(1) opacity(0.92);
 }
 
 .services-board__copy {
@@ -872,34 +1055,50 @@ useHead({
   z-index: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   gap: 0.2rem;
-  height: 100%;
-  min-height: inherit;
-  padding: 0.85rem 0.8rem;
+  width: 100%;
 }
 
 .services-board__num {
-  font: 700 0.68rem/1 var(--font-body);
+  font: 700 0.65rem/1 var(--font-body);
   letter-spacing: 0.14em;
-  color: var(--color-rose);
+  color: #f0b8ac;
 }
 
 .services-board__title {
-  font: 700 0.78rem/1.25 var(--font-body);
-  letter-spacing: 0.06em;
+  font: 700 0.82rem/1.25 var(--font-body);
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+  color: #fff;
 }
 
-.services-board__line {
-  font: 400 0.72rem/1.35 var(--font-body);
-  color: rgba(248, 242, 238, 0.7);
+@media (min-width: 640px) {
+  .services-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    overflow: visible;
+    scroll-snap-type: none;
+    padding: 0;
+  }
+
+  .services-board__cell {
+    flex: none;
+    min-height: 10rem;
+  }
 }
 
-/* Active panel */
 .services-panel-wrap {
   position: relative;
-  min-height: 12rem;
+  min-height: 10rem;
+  padding: 0 max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+@media (min-width: 640px) {
+  .services-panel-wrap {
+    padding: 0;
+  }
 }
 
 .panel-fade-enter-active {
@@ -917,66 +1116,111 @@ useHead({
 }
 
 .services-panel {
-  border: 1px solid rgba(248, 242, 238, 0.1);
-  background: rgba(23, 21, 22, 0.92);
+  position: relative;
   overflow: hidden;
+  border: 1px solid rgba(222, 150, 141, 0.28);
+  background:
+    radial-gradient(ellipse 70% 55% at 100% 0%, rgba(222, 150, 141, 0.28), transparent 55%),
+    linear-gradient(165deg, #3a2c2e 0%, #2a2224 50%, #1f1a1c 100%);
+  box-shadow: 0 12px 32px rgba(23, 21, 22, 0.12);
+}
+
+.services-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.14;
+  background-image: url('/images/flower.png');
+  background-size: 5.5rem;
+  background-repeat: repeat;
+  filter: saturate(1.4);
+  mix-blend-mode: soft-light;
 }
 
 .services-panel__intro {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.15rem;
-  padding: 1.15rem 1rem 1.25rem;
-  border-bottom: 1px solid rgba(248, 242, 238, 0.1);
-}
-
-.services-panel__visual {
   position: relative;
-  aspect-ratio: 16 / 10;
-  overflow: hidden;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1.15rem 1rem 1rem;
+  border-bottom: 1px solid rgba(248, 242, 238, 0.12);
 }
 
-.services-panel__photo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: grayscale(0.15) contrast(1.05) brightness(0.9);
+.services-panel__icon {
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-top: 0.15rem;
+  object-fit: contain;
+  filter: brightness(0) invert(1) opacity(0.9);
+}
+
+.services-panel__copy {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .services-panel__copy .label {
-  color: rgba(240, 184, 172, 0.95);
+  color: #f0b8ac;
+  margin-bottom: 0.35rem;
 }
 
 .services-panel__copy h2 {
-  margin: 0 0 0.55rem;
+  margin: 0 0 0.45rem;
   font-family: var(--font-display);
-  font-size: clamp(1.45rem, 3.2vw, 1.95rem);
-  font-weight: 400;
-  line-height: 1.25;
-  color: #f8f2ee;
+  font-size: clamp(1.55rem, 3.5vw, 2.05rem);
+  font-weight: 500;
+  line-height: 1.2;
+  color: #fff;
 }
 
-.services-panel__text {
+.services-panel__hint {
   margin: 0;
-  font: 400 0.95rem/1.7 var(--font-body);
-  color: rgba(248, 242, 238, 0.75);
+  font: 600 0.82rem/1.4 var(--font-body);
+  color: #f0b8ac;
 }
 
 .services-panel__menu {
+  position: relative;
+  z-index: 1;
   padding: 0 1rem 0.35rem;
 }
 
+@media (min-width: 768px) {
+  .services-panel__intro {
+    padding: 1.35rem 1.35rem 1.15rem;
+  }
+
+  .services-panel__menu {
+    padding: 0 1.35rem 0.5rem;
+  }
+}
+
 .services-cta {
+  position: relative;
+  overflow: hidden;
   padding: clamp(2.5rem, 6vh, 4rem) 1rem;
-  background: var(--color-footer);
+  background: #171516;
   color: #fff;
   text-align: center;
 }
 
 .services-cta__inner {
+  position: relative;
+  z-index: 1;
   width: var(--container);
   margin: 0 auto;
   max-width: 36rem;
+}
+
+.services-cta__flower {
+  width: 56px;
+  margin-bottom: 0.85rem;
+  opacity: 0.55;
+  filter: saturate(1.2);
 }
 
 .services-cta h2 {
@@ -1005,54 +1249,9 @@ useHead({
   min-width: 11rem;
 }
 
-@media (max-width: 639px) {
-  .services-chooser {
-    margin-left: max(1rem, env(safe-area-inset-left));
-    margin-right: max(1rem, env(safe-area-inset-right));
-    width: auto;
-  }
-}
-
-@media (min-width: 640px) {
-  .services-board {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.55rem;
-  }
-
-  .services-board__cell {
-    min-height: 9rem;
-  }
-
-  .services-packages__grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 768px) {
-  .services-panel__intro {
-    grid-template-columns: minmax(220px, 0.9fr) 1.1fr;
-    gap: 1.5rem;
-    align-items: center;
-    padding: 1.35rem 1.35rem 1.4rem;
-  }
-
-  .services-panel__visual {
-    aspect-ratio: 4 / 5;
-    max-height: 20rem;
-  }
-
-  .services-panel__menu {
-    padding: 0 1.35rem 0.5rem;
-  }
-}
-
 @media (min-width: 1024px) {
-  .services-packages__grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
   .services-door {
-    min-height: 17rem;
+    min-height: 16.5rem;
   }
 }
 
@@ -1063,7 +1262,6 @@ useHead({
   }
 
   .services-door,
-  .services-door__media,
   .services-board__cell {
     transition: none;
   }

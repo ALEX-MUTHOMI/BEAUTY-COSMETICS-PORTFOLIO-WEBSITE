@@ -11,9 +11,10 @@ test.describe('Services page mobile UX', () => {
 
     await expect(page.locator('.mobile-book-bar')).toBeVisible()
     await expect(page.getByRole('heading', { name: /How would you like to visit/i, level: 1 })).toBeVisible()
-    await expect(page.getByRole('note', { name: 'Booking days' })).toBeVisible()
     await expect(page.locator('.services-chooser')).toBeVisible()
-    await expect(page.locator('.services-hero__photo')).toBeVisible()
+    await expect(page.locator('.services-hero__lead')).toHaveCount(0)
+    await expect(page.locator('.services-door__media')).toHaveCount(0)
+    await expect(page.locator('.services-door')).toHaveCount(2)
   })
 
   test('shows package and treatment path doors', async ({ page }) => {
@@ -30,15 +31,18 @@ test.describe('Services page mobile UX', () => {
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)
   })
 
-  test('shows 2x2 category board under treatments header', async ({ page }) => {
+  test('category board scrolls horizontally on mobile', async ({ page }) => {
     await page.goto(`${BASE_URL}/services#single-sessions`, { waitUntil: 'networkidle' })
 
     await expect(page.getByRole('heading', { name: /^Choose a treatment$/i })).toBeVisible()
 
     const board = page.getByRole('tablist', { name: 'Service categories' })
     await board.scrollIntoViewIfNeeded()
-    const tabCols = await board.evaluate((el) => getComputedStyle(el).gridTemplateColumns)
-    expect(tabCols.split(' ').length).toBe(2)
+    const overflowX = await board.evaluate((el) => getComputedStyle(el).overflowX)
+    expect(overflowX).toMatch(/auto|scroll/)
+
+    await expect(page.locator('.services-board__photo')).toHaveCount(0)
+    await expect(page.locator('.services-board__icon')).toHaveCount(4)
 
     const waxingTab = page.getByRole('tab', { name: /Waxing/i })
     const box = await waxingTab.boundingBox()

@@ -29,7 +29,6 @@ export interface ServiceCategory {
 export const SERVICES_PAGE_INTRO = {
   eyebrow: LANDING_LOCATION_LABEL,
   title: 'How would you like to visit?',
-  lead: 'Packages Tue & Wed. Treatments Mon, Thu–Sat.',
 }
 
 /** Short lines for the treatments category board. */
@@ -47,7 +46,7 @@ export const serviceCategories: ServiceCategory[] = [
     cardTitle: 'Facial Care',
     intro:
       'Skin-first facials tailored to your type — from deep cleanse to brightening and hydration. We start with a consultation so every step suits you.',
-    image: '/images/service-facial.jpg',
+    image: '/images/showcase-facial.jpg',
     icon: '/images/icon-facial.png',
     imageAlt: 'Client receiving a relaxing facial treatment',
     daysNote: SINGLE_DAYS_LABEL,
@@ -100,7 +99,7 @@ export const serviceCategories: ServiceCategory[] = [
     cardTitle: 'Massages',
     intro:
       'Swedish and deep tissue work for back, neck and shoulders — or a full-body reset when you need to switch off.',
-    image: '/images/service-massage.jpg',
+    image: '/images/showcase-massage.jpg',
     icon: '/images/icon-massage.png',
     imageAlt: 'Therapist performing a back massage',
     daysNote: SINGLE_DAYS_LABEL,
@@ -145,7 +144,7 @@ export const serviceCategories: ServiceCategory[] = [
     cardTitle: 'Waxing',
     intro:
       'Face and body waxing with hot wax for a clean, lasting finish. Sensitive-skin options and after-care guidance included.',
-    image: '/images/service-waxing.jpg',
+    image: '/images/showcase-waxing.jpg',
     icon: '/images/icon-waxing.png',
     imageAlt: 'Professional waxing treatment setup',
     daysNote: SINGLE_DAYS_LABEL,
@@ -210,7 +209,7 @@ export const serviceCategories: ServiceCategory[] = [
     cardTitle: 'Makeup',
     intro:
       'Everyday polish through to full bridal and event glam. Skin prep first so your look lasts in photos and in person.',
-    image: '/images/service-makeup.jpg',
+    image: '/images/showcase-makeup.jpg',
     icon: '/images/icon-makeup.png',
     imageAlt: 'Makeup artist applying glam makeup',
     daysNote: SINGLE_DAYS_LABEL,

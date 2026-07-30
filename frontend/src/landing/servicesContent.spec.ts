@@ -26,7 +26,7 @@ describe('servicesContent', () => {
     expect(serviceCategories.find((c) => c.id === 'waxing')?.treatments.length).toBeGreaterThanOrEqual(5)
     expect(serviceCategories.find((c) => c.id === 'makeup')?.treatments.length).toBeGreaterThanOrEqual(3)
     expect(SERVICES_PAGE_INTRO.title).toMatch(/how would you like to visit/i)
-    expect(SERVICES_PAGE_INTRO.lead.toLowerCase()).toMatch(/private/)
+    expect(SERVICES_PAGE_INTRO).not.toHaveProperty('lead')
     expect(SERVICES_PAGE_INTRO).not.toHaveProperty('note')
   })
 
