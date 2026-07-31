@@ -114,20 +114,26 @@
       </svg>
     </section>
 
-    <!-- Get to know us — portrait first on mobile; mirror left + copy right on desktop → Clients by Shee -->
+    <!-- Get to know us — Mellis Theme therapist spotlight image redesign -->
     <section id="behind-the-glow" class="glow home-section" aria-labelledby="glow-heading">
       <div class="glow__inner">
         <div class="glow__media">
-          <img
-            src="/images/flower.png"
-            alt=""
-            class="glow__bloom"
-            aria-hidden="true"
-            loading="lazy"
-            decoding="async"
-            width="160"
-            height="160"
-          />
+          <!-- Mellis Botanical Floral Line-Art Background (Bottom Left) -->
+          <div class="glow__flower-sketch" aria-hidden="true">
+            <svg viewBox="0 0 240 280" fill="none" xmlns="http://www.w3.org/2000/svg" class="glow__flower-svg">
+              <path d="M120 270 C110 210 95 160 75 110 C65 85 45 60 20 40 C38 65 50 95 55 130 C60 165 65 210 70 270" stroke="#c88478" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.65"/>
+              <path d="M115 200 C140 180 175 170 210 165 C180 185 150 210 125 240" stroke="#c88478" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+              <path d="M80 120 C65 90 85 60 115 40 C105 70 95 98 80 120 Z" stroke="#c88478" stroke-width="1.5" fill="rgba(230, 165, 152, 0.15)" stroke-linecap="round" opacity="0.7"/>
+              <path d="M115 40 C140 22 180 28 200 58 C170 65 140 82 115 105 C110 82 112 58 115 40 Z" stroke="#c88478" stroke-width="1.5" fill="rgba(230, 165, 152, 0.18)" stroke-linecap="round" opacity="0.7"/>
+              <path d="M80 120 C50 128 25 150 10 180 C32 168 60 156 90 148" stroke="#c88478" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>
+              <circle cx="110" cy="72" r="3.5" fill="#c88478" opacity="0.75"/>
+              <circle cx="128" cy="60" r="3" fill="#c88478" opacity="0.75"/>
+              <circle cx="142" cy="78" r="3" fill="#c88478" opacity="0.75"/>
+            </svg>
+          </div>
+          <!-- Mellis Rose Pink Offset Accent Circle (Bottom Right) -->
+          <div class="glow__accent-circle" aria-hidden="true" />
+          <!-- Mellis Oval Frame with Photographer Image -->
           <figure class="glow__mirror">
             <img
               src="/images/therapist.png"
@@ -1239,6 +1245,7 @@ const reviews = landingClientReviews
   position: absolute;
   inset: 0;
   opacity: 0;
+  overflow: hidden;
   transition: opacity var(--hero-crossfade-ms) cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity;
   pointer-events: none;
@@ -1477,23 +1484,23 @@ const reviews = landingClientReviews
   border: 0;
 }
 
-/* Get to know us — content-first mobile; vanity mirror; desktop image-left */
+/* Get to know us — Mellis Theme therapist spotlight redesign (oval frame, offset accent circle, botanical line art) */
 .glow {
   position: relative;
   z-index: 1;
   margin-top: -1px;
-  padding: clamp(1.5rem, 4.5vw, 2.75rem) 1rem clamp(1.15rem, 3vw, 1.85rem);
+  padding: clamp(2rem, 5vw, 3.5rem) 1rem;
   overflow: hidden;
   background: var(--color-paper);
 }
 
 .glow__inner {
   width: var(--container);
-  max-width: 58rem;
+  max-width: 64rem;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.35rem;
+  gap: clamp(2rem, 5vw, 3.5rem);
   align-items: center;
   justify-items: center;
   text-align: center;
@@ -1510,35 +1517,58 @@ const reviews = landingClientReviews
 
 .glow__media {
   position: relative;
-  width: auto;
+  width: 100%;
+  max-width: min(100%, 22rem);
   margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.glow__bloom {
+/* Mellis Botanical Flower Sketch (Bottom Left) */
+.glow__flower-sketch {
   position: absolute;
-  right: -18%;
-  bottom: -8%;
-  width: 4.5rem;
-  opacity: 0.32;
+  left: -16%;
+  bottom: -10%;
+  width: 62%;
+  max-width: 15rem;
   pointer-events: none;
-  filter: saturate(1.15);
   z-index: 0;
 }
 
-/* Compact vanity mirror — oval frame, low height cost */
+.glow__flower-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Mellis Offset Blush/Rose Pink Circle (Bottom Right) */
+.glow__accent-circle {
+  position: absolute;
+  right: -6%;
+  bottom: -4%;
+  width: 68%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #f4d0c8 0%, #e8a99d 70%, #d89689 100%);
+  box-shadow: 0 10px 24px rgba(216, 150, 137, 0.25);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Mellis Oval Photo Frame */
 .glow__mirror {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   margin: 0;
-  width: clamp(8.75rem, 34vw, 11rem);
-  aspect-ratio: 3 / 4;
-  padding: 0.35rem;
-  border-radius: 50% / 42%;
-  background:
-    linear-gradient(145deg, #f5d0c8 0%, #c48a7e 28%, #6e524c 52%, #e8b4a8 78%, #f0b8ac 100%);
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: 50% / 46%;
+  overflow: hidden;
   box-shadow:
-    0 10px 28px rgba(39, 37, 42, 0.14),
-    0 0 0 1px rgba(222, 150, 141, 0.25);
+    0 18px 42px rgba(45, 30, 25, 0.16),
+    0 0 0 4px #ffffff;
+  background: #ebe4de;
 }
 
 .glow__photo {
@@ -1546,10 +1576,13 @@ const reviews = landingClientReviews
   height: 100%;
   display: block;
   object-fit: cover;
-  object-position: center 16%;
-  border-radius: 50% / 42%;
-  border: 2px solid #fff;
-  background: #ebe4de;
+  object-position: center 18%;
+  border-radius: 50% / 46%;
+  transition: transform 0.4s ease;
+}
+
+.glow__mirror:hover .glow__photo {
+  transform: scale(1.03);
 }
 
 .glow__eyebrow {
@@ -1563,7 +1596,7 @@ const reviews = landingClientReviews
 .glow__heading {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.75rem, 5.5vw, 2.35rem);
+  font-size: clamp(1.85rem, 5vw, 2.5rem);
   font-weight: 500;
   line-height: 1.15;
   letter-spacing: -0.025em;
@@ -1571,9 +1604,9 @@ const reviews = landingClientReviews
 }
 
 .glow__text {
-  margin: 0.7rem auto 0;
-  max-width: 36ch;
-  font: 400 0.95rem/1.6 var(--font-body);
+  margin: 0.85rem auto 0;
+  max-width: 42ch;
+  font: 400 0.98rem/1.65 var(--font-body);
   color: var(--color-muted);
 }
 
@@ -1582,12 +1615,12 @@ const reviews = landingClientReviews
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
-  margin: 0.95rem 0 0;
+  margin: 1.1rem 0 0;
 }
 
 .glow__name {
   font-family: var(--font-script);
-  font-size: clamp(1.55rem, 4vw, 1.95rem);
+  font-size: clamp(1.65rem, 4.5vw, 2.1rem);
   font-weight: 400;
   line-height: 1.05;
   color: var(--color-rose-dark, #b56b62);
@@ -1604,7 +1637,7 @@ const reviews = landingClientReviews
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 1.1rem;
+  margin-top: 1.25rem;
   min-height: 2.75rem;
   min-width: 11rem;
   padding: 0.65rem 1.4rem;
@@ -1631,18 +1664,20 @@ const reviews = landingClientReviews
 
 @media (min-width: 900px) {
   .glow {
-    padding: clamp(2rem, 4vw, 3rem) 1.5rem clamp(1.5rem, 3vw, 2.25rem);
+    padding: clamp(2.5rem, 5vw, 4rem) 1.5rem;
   }
 
   .glow__inner {
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: clamp(1.75rem, 3.5vw, 3rem);
+    grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
+    gap: clamp(3rem, 5vw, 5rem);
     justify-items: start;
     text-align: left;
     align-items: center;
   }
 
   .glow__media {
+    width: 100%;
+    max-width: 26rem;
     margin: 0;
   }
 
@@ -1651,28 +1686,12 @@ const reviews = landingClientReviews
     text-align: left;
   }
 
-  .glow__mirror {
-    width: clamp(10.5rem, 14vw, 13.5rem);
-  }
-
-  .glow__bloom {
-    right: -22%;
-    bottom: -10%;
-    width: 5.5rem;
-  }
-
   .glow__text {
     margin-left: 0;
-    margin-right: 0;
-    max-width: 38ch;
   }
 
   .glow__artist {
     align-items: flex-start;
-  }
-
-  .glow__heading {
-    font-size: clamp(2rem, 2.6vw, 2.55rem);
   }
 }
 
@@ -1685,7 +1704,7 @@ const reviews = landingClientReviews
 .offer {
   position: relative;
   padding: 0;
-  overflow: clip;
+  overflow: hidden;
   background: var(--color-card-dark);
   border-block: var(--home-seam);
 }
@@ -1695,6 +1714,7 @@ const reviews = landingClientReviews
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  overflow: hidden;
 }
 
 .offer__photo {
@@ -2438,6 +2458,7 @@ const reviews = landingClientReviews
   z-index: 0;
   pointer-events: none;
   opacity: 0.28;
+  overflow: hidden;
 }
 
 .mellis-cta__bg {
