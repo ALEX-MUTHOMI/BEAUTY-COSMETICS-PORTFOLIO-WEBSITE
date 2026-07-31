@@ -3,6 +3,10 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * Contact Page
+ * Renders the primary support and contact interface for users to reach out.
+ */
 import SupportPage from './support.vue'
 
 definePageMeta({ layout: 'landing' })
