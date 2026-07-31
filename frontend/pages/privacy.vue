@@ -132,6 +132,10 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * Privacy Policy Page
+ * Handles displaying privacy terms and submitting data rights requests.
+ */
 import { reactive, ref } from 'vue'
 
 import {
