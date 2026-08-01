@@ -150,6 +150,10 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * Support Page
+ * Provides direct contact channels (WhatsApp, Phone, Email) and studio information.
+ */
 import { computed } from 'vue'
 
 import {
