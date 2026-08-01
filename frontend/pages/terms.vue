@@ -74,6 +74,10 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * Terms of Service Page
+ * Displays studio policies, guidelines, and booking conditions.
+ */
 import { TERMS_SECTIONS } from '~/src/landing/clientPagesContent'
 
 definePageMeta({ layout: 'landing' })
