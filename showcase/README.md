@@ -70,3 +70,8 @@ Full implementation: **[github.com/ALEX-MUTHOMI/aesthetic-os](https://github.com
 ## Contact
 
 **Alex Muthomi** · GitHub: [@ALEX-MUTHOMI](https://github.com/ALEX-MUTHOMI)
+
+
+## Tech Highlights
+
+This showcase demonstrates real-world application components, including responsive Vue 3 components, accessible design patterns, and smooth booking flows.
