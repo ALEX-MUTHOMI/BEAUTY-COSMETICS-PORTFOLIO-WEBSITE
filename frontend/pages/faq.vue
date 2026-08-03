@@ -147,6 +147,10 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * FAQ Page
+ * Renders frequently asked questions regarding services, payments, and appointments.
+ */
 import { computed, ref } from 'vue'
 
 import { buildFaqPageJsonLd } from '~/src/landing/agentSeo'
