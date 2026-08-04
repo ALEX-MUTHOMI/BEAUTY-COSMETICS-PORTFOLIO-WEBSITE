@@ -33,6 +33,7 @@
             {{ handoff.type === 'package' ? 'Package' : 'Treatment' }}
           </p>
           <h2>{{ selectionName }}</h2>
+          <p class="book-summary__capacity" data-testid="book-capacity-hint">{{ capacityHint }}</p>
           <p v-if="flow.selection.value" class="book-summary__meta">
             {{ flow.selection.value.durationMinutes }} min
           </p>
@@ -85,7 +86,7 @@
             :range="flow.calendar.value?.range ?? null"
             :loading="flow.loading.value"
             :interaction-locked="calendarLocked"
-            :capacity-hint="capacityHint"
+            capacity-hint=""
             aria-label="Pick your visit date"
             @select="onSelectDate"
           />
@@ -408,8 +409,15 @@ const pageLead = computed(() => {
   color: var(--color-rose-dark);
 }
 
+.book-summary__capacity {
+  margin: 0.35rem 0 0;
+  color: var(--color-rose-dark, #b56b62);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 .book-summary__meta {
-  margin: 0;
+  margin: 0.35rem 0 0;
   color: var(--color-muted);
   font-size: 0.88rem;
 }

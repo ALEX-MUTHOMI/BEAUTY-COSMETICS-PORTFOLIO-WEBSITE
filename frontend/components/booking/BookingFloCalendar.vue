@@ -7,7 +7,7 @@
   >
     <header v-if="loading || orderedDays.length > 0" class="flo-calendar__head">
       <p class="flo-calendar__range">Next open dates</p>
-      <p class="flo-calendar__capacity">{{ capacityHint }}</p>
+      <p v-if="capacityHint" class="flo-calendar__capacity">{{ capacityHint }}</p>
     </header>
 
     <div v-if="loading" class="flo-calendar__loading" aria-live="polite">

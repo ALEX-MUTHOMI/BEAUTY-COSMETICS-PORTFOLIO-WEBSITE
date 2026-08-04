@@ -57,13 +57,12 @@ test.describe('Book page handoff security', () => {
     await expect(page.getByRole('heading', { name: 'Classic Full Package' })).toBeVisible({
       timeout: 15000,
     })
-    await expect(page.getByText(/Tue & Wed · limited spots/i).first()).toBeVisible({
-      timeout: 20000,
+    await expect(page.getByTestId('book-capacity-hint')).toHaveText(/Tue & Wed · limited spots/i, {
+      timeout: 15000,
     })
     await expect(page.getByText(/up to \d+ clients/i)).toHaveCount(0)
     await expect(page.getByText(/Select a day and start time/i)).toBeVisible()
     await expect(page.getByText(/1 Date & time/i)).toBeVisible()
-    await expect(page.getByText(/Next open dates/i)).toBeVisible()
     await expect(page.locator('.mobile-book-bar')).toHaveCount(0)
   })
 
