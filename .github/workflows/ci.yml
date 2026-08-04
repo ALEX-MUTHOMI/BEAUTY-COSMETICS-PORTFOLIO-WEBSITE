@@ -18,7 +18,7 @@ on:
     branches:
       - staging
       - main
-  # Full fortress (load / ZAP / chaos / latency) — not on every PR (self-hosted serializes).
+  # Full fortress (load / ZAP / chaos / latency) — not on every PR (cost + runtime).
   schedule:
     - cron: "0 2 * * 1-5"
   workflow_dispatch:
@@ -63,14 +63,14 @@ env:
   DARAJA_TRANSACTION_DESC: ""
   DARAJA_TEST_MSISDN: ""
 
-# Self-hosted Linux runner (WSL2) — see docs/ops/SELF_HOSTED_RUNNER.md.
-# Avoids GitHub-hosted minute burn; jobs serialize on a single runner.
+# GitHub-hosted Linux runners (ubuntu-latest).
+# Self-hosted fallback: docs/ops/SELF_HOSTED_RUNNER.md.
 defaults:
   run:
     shell: bash
 
 # =============================================================================
-# Two lanes (self-hosted single runner):
+# Two lanes (promotion gate vs full fortress):
 #
 # PROMOTION GATE (push / pull_request) — keep under ~60–90m serial:
 #   T0 validate → lint-security
@@ -92,7 +92,7 @@ jobs:
   # --- T0 -------------------------------------------------------------------
   validate:
     name: validate
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -110,7 +110,7 @@ jobs:
 
   lint-security:
     name: lint-security
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: validate
     steps:
@@ -145,7 +145,7 @@ jobs:
   # --- T1 -------------------------------------------------------------------
   django-smoke:
     name: django-smoke
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: lint-security
     steps:
@@ -191,7 +191,7 @@ jobs:
   # --- T2 parallel ----------------------------------------------------------
   bookings-unit:
     name: bookings-unit
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: django-smoke
     permissions:
@@ -219,7 +219,7 @@ jobs:
 
   billing-unit:
     name: billing-unit
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: django-smoke
     steps:
@@ -235,7 +235,7 @@ jobs:
 
   checkout-unit:
     name: checkout-unit
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: django-smoke
     steps:
@@ -251,7 +251,7 @@ jobs:
 
   tests-api-unit:
     name: tests-api-unit
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: django-smoke
     permissions:
@@ -279,7 +279,7 @@ jobs:
 
   cass-calendar-service:
     name: cass-calendar-service
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: django-smoke
     permissions:
@@ -318,7 +318,7 @@ jobs:
 
   frontend-test:
     name: frontend-test
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: django-smoke
     steps:
@@ -344,7 +344,7 @@ jobs:
   # --- T3 money-path security (before heavy integration / load) -------------
   payment-security:
     name: payment-security
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     needs:
       - bookings-unit
@@ -367,7 +367,7 @@ jobs:
   # --- T4 business lifecycle ------------------------------------------------
   checkout-billing-integration:
     name: checkout-billing-integration
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     needs:
       - billing-unit
@@ -386,7 +386,7 @@ jobs:
 
   receipt-pipeline:
     name: receipt-pipeline
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: checkout-billing-integration
     steps:
@@ -414,7 +414,7 @@ jobs:
   # --- T5 contract + OWASP ZAP passive --------------------------------------
   newman-acceptance:
     name: newman-acceptance
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     needs:
       - cass-calendar-service
@@ -449,7 +449,7 @@ jobs:
 
   zap-passive-newman:
     name: zap-passive-newman
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     if: >-
       github.event_name == 'schedule' ||
@@ -486,7 +486,7 @@ jobs:
   # --- T6 perf / load (after money-path security) ---------------------------
   payment-load-resilience:
     name: payment-load-resilience
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     if: >-
       github.event_name == 'schedule' ||
@@ -512,7 +512,7 @@ jobs:
 
   notification-backlog-load:
     name: notification-backlog-load
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     if: >-
       github.event_name == 'schedule' ||
@@ -534,7 +534,7 @@ jobs:
 
   latency:
     name: latency
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     if: >-
       github.event_name == 'schedule' ||
@@ -556,7 +556,7 @@ jobs:
   # --- T7 chaos -------------------------------------------------------------
   chaos:
     name: chaos
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     if: >-
       github.event_name == 'schedule' ||
@@ -584,7 +584,7 @@ jobs:
   # --- T8 certify + image ---------------------------------------------------
   cass-certification:
     name: cass-certification
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     if: >-
       github.event_name == 'schedule' ||
@@ -620,7 +620,7 @@ jobs:
 
   docker-build:
     name: docker-build
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     # Promotion lane: do not wait on fortress-only jobs (skipped on PR/push).
     needs:
@@ -635,7 +635,7 @@ jobs:
   # Opt-in only — real Daraja HTTP callback; never on push.
   daraja-sandbox-contract:
     name: daraja-sandbox-contract
-    runs-on: [self-hosted, linux, aesthetic-os]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     if: github.event_name == 'workflow_dispatch' && inputs.run_daraja_sandbox == 'true'
     needs: docker-build
