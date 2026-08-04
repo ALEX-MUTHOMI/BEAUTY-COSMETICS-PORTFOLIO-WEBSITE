@@ -28,6 +28,12 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.getByRole('heading', { name: 'Meet your therapist', level: 2 })).toBeVisible()
     await expect(page.locator('#behind-the-glow .glow__eyebrow')).toHaveText('Get to know us')
     await expect(page.locator('#behind-the-glow .glow__mirror .glow__photo')).toBeVisible()
+    await expect(page.locator('#behind-the-glow .glow__mirror .glow__photo')).toHaveAttribute(
+      'src',
+      '/images/therapist.png',
+    )
+    await expect(page.locator('#behind-the-glow .glow__flower-sketch')).toBeVisible()
+    await expect(page.locator('#behind-the-glow .glow__accent-circle')).toBeAttached()
     await expect(page.locator('#behind-the-glow .glow__name')).toHaveText('Shee')
     await expect(page.locator('#behind-the-glow .glow__line')).toHaveText('Beauty artist · Meru Town')
     await expect(page.locator('#behind-the-glow .glow__continue')).toHaveText(/See her work/i)

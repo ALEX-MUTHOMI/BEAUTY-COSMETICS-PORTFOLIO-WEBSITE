@@ -114,7 +114,7 @@
       </svg>
     </section>
 
-    <!-- Get to know us — content first on mobile; compact mirror left on desktop -->
+    <!-- Get to know us — content first on mobile; Mellis oval left on desktop -->
     <section id="behind-the-glow" class="glow home-section" aria-labelledby="glow-heading">
       <div class="glow__inner">
         <div class="glow__copy">
@@ -1481,23 +1481,23 @@ const reviews = landingClientReviews
   border: 0;
 }
 
-/* Get to know us — content-first mobile; compact vanity mirror; desktop mirror-left */
+/* Get to know us — content-first mobile; Mellis oval frame; desktop image-left */
 .glow {
   position: relative;
   z-index: 1;
   margin-top: -1px;
-  padding: clamp(1.5rem, 4.5vw, 2.75rem) 1rem clamp(1.25rem, 3.5vw, 2rem);
+  padding: clamp(1.75rem, 5vw, 3.25rem) 1rem clamp(1.5rem, 4vw, 2.5rem);
   overflow: hidden;
   background: var(--color-paper);
 }
 
 .glow__inner {
   width: var(--container);
-  max-width: 56rem;
+  max-width: 64rem;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.35rem;
+  gap: 1.65rem;
   align-items: center;
   justify-items: center;
   text-align: center;
@@ -1515,7 +1515,7 @@ const reviews = landingClientReviews
 
 .glow__media {
   position: relative;
-  width: auto;
+  width: min(100%, 22rem);
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -1525,12 +1525,12 @@ const reviews = landingClientReviews
 
 .glow__flower-sketch {
   position: absolute;
-  left: -22%;
-  bottom: -8%;
-  width: 4.75rem;
+  left: -18%;
+  bottom: -6%;
+  width: clamp(7.5rem, 42%, 10.5rem);
   pointer-events: none;
   z-index: 0;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .glow__flower-svg {
@@ -1541,32 +1541,32 @@ const reviews = landingClientReviews
 
 .glow__accent-circle {
   position: absolute;
-  right: -10%;
-  bottom: -6%;
-  width: 4.25rem;
+  right: -8%;
+  bottom: -4%;
+  width: clamp(5.5rem, 32%, 7.5rem);
   aspect-ratio: 1;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #f4d0c8 0%, #e8a99d 70%, #d89689 100%);
-  box-shadow: 0 6px 16px rgba(216, 150, 137, 0.22);
+  background: radial-gradient(circle at 32% 28%, #f7d8d0 0%, #e8a99d 68%, #d89689 100%);
+  box-shadow: 0 10px 28px rgba(216, 150, 137, 0.28);
   z-index: 1;
   pointer-events: none;
 }
 
-/* Compact vanity mirror — low height cost on mobile */
+/* Mellis Theme vertical oval — soft frame, white rim, botanical accents */
 .glow__mirror {
   position: relative;
   z-index: 2;
   margin: 0;
-  width: clamp(8.5rem, 32vw, 10.75rem);
-  aspect-ratio: 3 / 4;
-  padding: 0.32rem;
-  border-radius: 50% / 42%;
+  width: min(100%, 22rem);
+  aspect-ratio: 4 / 5;
+  padding: 0;
+  border-radius: 50% / 46%;
   overflow: hidden;
-  background:
-    linear-gradient(145deg, #f5d0c8 0%, #c48a7e 28%, #6e524c 52%, #e8b4a8 78%, #f0b8ac 100%);
+  background: #ebe4de;
+  border: 4px solid #fff;
   box-shadow:
-    0 10px 26px rgba(39, 37, 42, 0.14),
-    0 0 0 1px rgba(222, 150, 141, 0.28);
+    0 18px 42px rgba(39, 37, 42, 0.16),
+    0 0 0 1px rgba(222, 150, 141, 0.22);
 }
 
 .glow__photo {
@@ -1575,8 +1575,7 @@ const reviews = landingClientReviews
   display: block;
   object-fit: cover;
   object-position: center 16%;
-  border-radius: 50% / 42%;
-  border: 2px solid #fff;
+  border-radius: 50% / 46%;
   background: #ebe4de;
 }
 
@@ -1659,20 +1658,21 @@ const reviews = landingClientReviews
 
 @media (min-width: 900px) {
   .glow {
-    padding: clamp(2rem, 4vw, 3rem) 1.5rem clamp(1.5rem, 3vw, 2.25rem);
+    padding: clamp(2.25rem, 4.5vw, 3.5rem) 1.5rem clamp(1.75rem, 3.5vw, 2.75rem);
   }
 
   .glow__inner {
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: clamp(1.75rem, 3.5vw, 3rem);
+    grid-template-columns: 24rem minmax(0, 1fr);
+    gap: clamp(2rem, 4vw, 3.5rem);
     justify-items: start;
     text-align: left;
     align-items: center;
   }
 
-  /* Desktop: mirror left, story right */
+  /* Desktop: Mellis oval left, story right */
   .glow__media {
     order: 1;
+    width: 24rem;
     margin: 0;
   }
 
@@ -1683,17 +1683,19 @@ const reviews = landingClientReviews
   }
 
   .glow__mirror {
-    width: clamp(10.25rem, 13vw, 12.75rem);
+    width: 24rem;
   }
 
   .glow__flower-sketch {
-    left: -28%;
-    width: 5.5rem;
+    left: -22%;
+    bottom: -8%;
+    width: 11.5rem;
   }
 
   .glow__accent-circle {
-    width: 4.75rem;
-    right: -14%;
+    width: 8rem;
+    right: -12%;
+    bottom: -6%;
   }
 
   .glow__text {
