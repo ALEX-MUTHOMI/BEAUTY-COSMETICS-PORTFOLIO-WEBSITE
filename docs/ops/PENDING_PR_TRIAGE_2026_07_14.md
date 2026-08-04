@@ -6,10 +6,10 @@ All target **`development`**. Default branch is `development`.
 ## Promotion path (this train)
 
 `development` → `staging` → `main` only after Secure Enterprise CI is green
-on the **self-hosted** runner (`runs-on: [self-hosted, linux, aesthetic-os]`).
-See [`docs/ops/SELF_HOSTED_RUNNER.md`](SELF_HOSTED_RUNNER.md).
+on **GitHub-hosted** `ubuntu-latest` (self-hosted is fallback only — see
+[`docs/ops/SELF_HOSTED_RUNNER.md`](SELF_HOSTED_RUNNER.md)).
 Do **not** auto-merge Dependabot majors into this train.
-Do **not** merge while GitHub-hosted minutes are exhausted and no Idle self-hosted runner is online.
+Do **not** merge while CI is red or Actions runners cannot start.
 
 ## Open Dependabot PRs (deferred)
 

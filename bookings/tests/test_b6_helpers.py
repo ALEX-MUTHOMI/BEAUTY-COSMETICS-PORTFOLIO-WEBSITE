@@ -23,7 +23,8 @@ def future_monday():
 
 
 def future_tuesday():
-    return utc_from_eat(2030, 6, 4, 9)
+    # Package hybrid anchors start at studio open (07:00), not 09:00.
+    return utc_from_eat(2030, 6, 4, 7)
 
 
 def future_wednesday():

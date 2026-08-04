@@ -1,12 +1,17 @@
 # Self-hosted GitHub Actions runner (AestheticOS)
 
-Secure Enterprise CI ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)) runs on:
+**Primary CI path (2026-08-04+):** Secure Enterprise uses GitHub-hosted
+`ubuntu-latest` again (minutes restored). Keep this doc as the **fallback**
+when hosted minutes are exhausted.
+
+Optional self-hosted labels:
 
 ```yaml
 runs-on: [self-hosted, linux, aesthetic-os]
 ```
 
-GitHub still owns the control plane (PR checks, logs, concurrency). **Compute** runs on your machine so private-repo hosted minutes are not required.
+GitHub still owns the control plane (PR checks, logs, concurrency). **Compute**
+on a self-hosted runner avoids private-repo hosted minute burn when needed.
 
 ## Labels (required)
 
@@ -112,4 +117,4 @@ gh run watch --exit-status
 
 ## Promotion gate
 
-Merge [PR #19](https://github.com/ALEX-MUTHOMI/aesthetic-os/pull/19) (`development` → `staging`) only when Secure Enterprise is **green on self-hosted**. Then open `staging` → `main`.
+Merge [PR #19](https://github.com/ALEX-MUTHOMI/aesthetic-os/pull/19) (`development` → `staging`) only when Secure Enterprise is **green on GitHub-hosted** (or self-hosted fallback). Then open `staging` → `main`.

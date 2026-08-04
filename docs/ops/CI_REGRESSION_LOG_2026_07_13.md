@@ -121,3 +121,15 @@ Ops: [`docs/ops/SELF_HOSTED_RUNNER.md`](SELF_HOSTED_RUNNER.md),
 `scripts/ci/install_self_hosted_runner.sh`.
 
 Promotion resume: runner Idle → green PR #19 → merge staging → main.
+
+## CI catch-up after hosted-minutes restore (2026-08-04)
+
+| Item | Status |
+|------|--------|
+| Runner restore | `9c31e82` switched Secure Enterprise back to `ubuntu-latest` |
+| First real signal | [run 30916712482](https://github.com/ALEX-MUTHOMI/aesthetic-os/actions/runs/30916712482) — 3 jobs failed |
+| `frontend-test` | `npm audit --audit-level=high` (tar/postcss/undici/…) — fixed via `npm audit fix` |
+| `bookings-unit` | Hybrid package anchors ≠ test 09:00; dynamic day cap 16 ≠ legacy max=5; stale gallery copy |
+| `cass-calendar-service` | Resolve allowlist failed on public `turnaround_minutes` (policy_profile already scrubbed) |
+| Fix train | Scrub resolve payload; package helper `future_tuesday` → 07:00; dynamic day-cap test; gallery contract; lockfile |
+| PR | [#19](https://github.com/ALEX-MUTHOMI/aesthetic-os/pull/19) remains the single promotion vehicle |

@@ -47,13 +47,13 @@ class BookableSelection:
         )
 
     def to_api_payload(self) -> dict:
+        # Public allowlist only — never leak policy_profile or turnaround internals.
         return {
             "selection_type": self.selection_type,
             "public_id": str(self.public_id),
             "slug": self.slug,
             "name": self.name,
             "duration_minutes": self.duration_minutes,
-            "turnaround_minutes": self.turnaround_minutes,
         }
 
     @property

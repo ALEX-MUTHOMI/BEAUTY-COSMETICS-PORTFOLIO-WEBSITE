@@ -30,9 +30,8 @@ def test_staff_gallery_frontend_is_wired_to_upload_flow_without_backend_jargon()
 
     assert "Uploads are disabled" not in component
     assert "Upload images unavailable" not in component
-    assert "Checking image" in component
-    assert "Preparing for website" in component
-    assert "Ready to publish" in component
-    assert "Could not use this image" in component
+    assert "Uploading…" in component
+    assert "Photos uploaded." in component
+    assert "Could not upload this photo." in component
     assert "quarantine" not in component.lower()
     assert "storage key" not in component.lower()
