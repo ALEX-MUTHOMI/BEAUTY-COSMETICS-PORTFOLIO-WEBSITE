@@ -24,8 +24,15 @@ connections when interrupted.
 | `cass-calendar-service` | Marketing contract, Option A policy, calendar API/policy/latency/security | `reports/ci/junit/cass-calendar.xml` |
 | `tests-api-unit` | `tests/api` + `tests/unit` | `reports/ci/junit/api-unit.xml` |
 | `newman-acceptance` | Full acceptance incl. folder `06 Calendar and Handoff` | `reports/ci/newman/newman-local.json` |
-| `zap-passive-newman` | ZAP passive scan through Newman traffic | `reports/security/zap/` |
-| `cass-certification` | Aggregated markdown sign-off when all CASS jobs green | `reports/ci/cass-certification.md` |
+| `frontend-e2e` | Playwright chromium vs compose frontend edge (`PLAYWRIGHT_SKIP_WEBSERVER=1`) | `frontend-e2e-playwright` |
+| `docker-build` | Prod image + compose config; push digest to GHCR | `image-digest` |
+| `promotion-gate` | Aggregator — **required branch-protection check** when enabled | (status only) |
+| `zap-passive-newman` | ZAP passive scan through Newman traffic (fortress) | `reports/security/zap/` |
+| `cass-certification` | Aggregated markdown sign-off when all CASS jobs green (fortress) | `reports/ci/cass-certification.md` |
+
+CD / release: [`docs/ops/BRANCH_PROTECTION.md`](../ops/BRANCH_PROTECTION.md),
+[`docs/ops/RELEASE_CHECKLIST.md`](../ops/RELEASE_CHECKLIST.md),
+[`.github/workflows/deploy-staging.yml`](../../.github/workflows/deploy-staging.yml).
 
 ## Canonical Gates
 

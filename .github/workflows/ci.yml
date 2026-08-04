@@ -1,13 +1,19 @@
 name: Secure Enterprise CI Pipeline
 
-# CICD-SEC-5: fail-closed default. GITHUB_TOKEN is read-only unless a job
-# explicitly elevates it. No job in this pipeline currently needs write access.
+# CICD-SEC-5: fail-closed default. Jobs elevate packages:write only where needed
+# (docker-build → GHCR). GITHUB_TOKEN stays least-privilege otherwise.
 permissions:
   contents: read
 
-# Cancel superseded pushes on the same ref — fail-fast cushion for money-path CI.
+# Split lanes so a promo push cannot cancel a fortress/schedule run (and vice versa).
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: >-
+    ${{
+      (github.event_name == 'schedule' ||
+       (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true'))
+      && format('ci-fortress-{0}', github.ref)
+      || format('ci-promo-{0}', github.ref)
+    }}
   cancel-in-progress: true
 
 on:
@@ -79,7 +85,9 @@ defaults:
 #   T3 payment-security
 #   T4 checkout-billing-integration → receipt-pipeline
 #   T5 newman-acceptance
-#   T8 docker-build
+#   T5b frontend-e2e (Playwright chromium)
+#   T8 docker-build (+ GHCR digest)
+#   promotion-gate aggregator (required branch-protection check)
 #
 # FULL FORTRESS (schedule weeknights 02:00 UTC, or workflow_dispatch
 #   run_full_fortress=true) — adds:
@@ -618,19 +626,177 @@ jobs:
           name: cass-certification-report
           path: reports/ci/cass-certification.md
 
+  frontend-e2e:
+    name: frontend-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs:
+      - frontend-test
+      - django-smoke
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - name: Build and start frontend edge stack
+        run: docker compose up -d --build frontend frontend-edge
+      - name: Wait for frontend edge
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS "http://127.0.0.1:3000/" >/dev/null; then
+              echo "frontend edge ready"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "frontend edge did not become ready"
+          docker compose logs --tail=200 frontend frontend-edge || true
+          exit 1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend deps + Playwright chromium
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Run landing Playwright e2e (chromium)
+        working-directory: frontend
+        env:
+          CI: "true"
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+          PLAYWRIGHT_SKIP_WEBSERVER: "1"
+        run: npx playwright test --project=chromium
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-e2e-playwright
+          path: frontend/playwright-report/
+          if-no-files-found: warn
+      - if: failure()
+        run: docker compose logs --tail=300 frontend frontend-edge || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
   docker-build:
     name: docker-build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     # Promotion lane: do not wait on fortress-only jobs (skipped on PR/push).
     needs:
       - newman-acceptance
       - frontend-test
+      - frontend-e2e
       - receipt-pipeline
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_digest: ${{ steps.push.outputs.digest }}
+      image_tag: ${{ steps.push.outputs.tag }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - run: docker build -t aesthetic-os-prod:latest .
-      - run: docker compose config -q
+      - name: Build production image
+        run: docker build -t aesthetic-os-prod:latest .
+      - name: Validate compose config
+        run: docker compose config -q
+      - name: Login to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push image digest to GHCR
+        id: push
+        run: |
+          set -euo pipefail
+          OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          REPO="$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')"
+          IMAGE="ghcr.io/${OWNER}/${REPO}/aesthetic-os-prod"
+          TAG="${{ github.sha }}"
+          docker tag aesthetic-os-prod:latest "${IMAGE}:${TAG}"
+          docker tag aesthetic-os-prod:latest "${IMAGE}:sha-${TAG}"
+          docker push "${IMAGE}:${TAG}"
+          docker push "${IMAGE}:sha-${TAG}"
+          DIGEST="$(docker image inspect --format='{{index .RepoDigests 0}}' "${IMAGE}:${TAG}" 2>/dev/null || true)"
+          if [[ -z "${DIGEST}" || "${DIGEST}" == "<no value>" ]]; then
+            DIGEST="${IMAGE}:${TAG}"
+            echo "::warning::RepoDigests empty after push; recording tag ${DIGEST}"
+          fi
+          echo "digest=${DIGEST}" >> "${GITHUB_OUTPUT}"
+          echo "tag=${IMAGE}:${TAG}" >> "${GITHUB_OUTPUT}"
+          mkdir -p reports/ci
+          {
+            echo "image_tag=${IMAGE}:${TAG}"
+            echo "image_digest=${DIGEST}"
+            echo "git_sha=${TAG}"
+          } > reports/ci/image-digest.txt
+          echo "Published ${DIGEST}"
+      - name: Upload image digest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-digest
+          path: reports/ci/image-digest.txt
+          if-no-files-found: error
+
+  promotion-gate:
+    name: promotion-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+    needs:
+      - validate
+      - lint-security
+      - django-smoke
+      - bookings-unit
+      - billing-unit
+      - checkout-unit
+      - tests-api-unit
+      - cass-calendar-service
+      - frontend-test
+      - payment-security
+      - checkout-billing-integration
+      - receipt-pipeline
+      - newman-acceptance
+      - frontend-e2e
+      - docker-build
+    steps:
+      - name: Assert all promotion jobs succeeded
+        env:
+          RESULTS: >-
+            validate=${{ needs.validate.result }}
+            lint-security=${{ needs.lint-security.result }}
+            django-smoke=${{ needs.django-smoke.result }}
+            bookings-unit=${{ needs.bookings-unit.result }}
+            billing-unit=${{ needs.billing-unit.result }}
+            checkout-unit=${{ needs.checkout-unit.result }}
+            tests-api-unit=${{ needs.tests-api-unit.result }}
+            cass-calendar-service=${{ needs.cass-calendar-service.result }}
+            frontend-test=${{ needs.frontend-test.result }}
+            payment-security=${{ needs.payment-security.result }}
+            checkout-billing-integration=${{ needs.checkout-billing-integration.result }}
+            receipt-pipeline=${{ needs.receipt-pipeline.result }}
+            newman-acceptance=${{ needs.newman-acceptance.result }}
+            frontend-e2e=${{ needs.frontend-e2e.result }}
+            docker-build=${{ needs.docker-build.result }}
+        run: |
+          set -euo pipefail
+          failed=0
+          for pair in ${RESULTS}; do
+            name="${pair%%=*}"
+            result="${pair#*=}"
+            echo "${name}: ${result}"
+            if [[ "${result}" != "success" ]]; then
+              failed=1
+            fi
+          done
+          if [[ "${failed}" -ne 0 ]]; then
+            echo "::error::promotion-gate red — one or more promotion jobs did not succeed"
+            exit 1
+          fi
+          echo "promotion-gate green"
 
   # Opt-in only — real Daraja HTTP callback; never on push.
   daraja-sandbox-contract:

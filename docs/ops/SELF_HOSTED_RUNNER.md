@@ -92,10 +92,19 @@ One runner ⇒ jobs **serialize** (T2 units queue). Scale later with more contai
 
 | Lane | When | Jobs |
 |------|------|------|
-| **Promotion gate** | `push` / `pull_request` | validate → lint → django-smoke → units → frontend → payment-security → integration → receipt → newman → docker-build |
+| **Promotion gate** | `push` / `pull_request` | validate → lint → django-smoke → units → frontend → payment-security → integration → receipt → newman → frontend-e2e → docker-build → **`promotion-gate`** |
 | **Full fortress** | weeknights `02:00` UTC schedule, or Actions → Run workflow with `run_full_fortress=true` | adds ZAP passive, payment-load, notification-backlog, latency, chaos, cass-certification |
 
-Do not require fortress-only job names in branch protection for staging merges.
+Branch protection (when the GitHub plan allows it) must require the single check
+**`promotion-gate`**, not fortress job names. See
+[`BRANCH_PROTECTION.md`](BRANCH_PROTECTION.md) and
+[`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md).
+
+Concurrency groups are split: `ci-promo-<ref>` vs `ci-fortress-<ref>` so a
+docs push cannot cancel a fortress run.
+
+Staging promote: [`.github/workflows/deploy-staging.yml`](../../.github/workflows/deploy-staging.yml)
+(GHCR pull + fortress freshness + smoke).
 
 ## Security
 
