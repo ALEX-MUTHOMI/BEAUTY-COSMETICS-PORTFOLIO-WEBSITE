@@ -659,6 +659,9 @@ jobs:
       - name: Install frontend deps + Playwright chromium
         working-directory: frontend
         run: |
+          # packageManager pin (npm@10.9.8) — keep lockfile strict on the same major as local/CI.
+          corepack enable
+          corepack prepare npm@10.9.8 --activate
           npm ci
           npx playwright install --with-deps chromium
       - name: Run landing Playwright e2e (chromium)
