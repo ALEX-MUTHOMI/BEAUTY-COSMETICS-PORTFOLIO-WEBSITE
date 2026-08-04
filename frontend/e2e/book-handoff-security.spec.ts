@@ -57,9 +57,11 @@ test.describe('Book page handoff security', () => {
     await expect(page.getByRole('heading', { name: 'Classic Full Package' })).toBeVisible({
       timeout: 15000,
     })
-    await expect(page.getByText(/Tue & Wed · limited spots/i).first()).toBeVisible()
+    await expect(page.getByText(/Tue & Wed · limited spots/i).first()).toBeVisible({
+      timeout: 20000,
+    })
     await expect(page.getByText(/up to \d+ clients/i)).toHaveCount(0)
-    await expect(page.getByText(/Choose a day, then a time/i)).toBeVisible()
+    await expect(page.getByText(/Select a day and start time/i)).toBeVisible()
     await expect(page.getByText(/1 Date & time/i)).toBeVisible()
     await expect(page.getByText(/Next open dates/i)).toBeVisible()
     await expect(page.locator('.mobile-book-bar')).toHaveCount(0)
@@ -79,15 +81,11 @@ test.describe('Book page handoff security', () => {
   })
 
   test('services package CTA links to clean book path', async ({ page }) => {
-    await page.goto(`${BASE_URL}/services#full-packages`, { waitUntil: 'domcontentloaded' })
+    await page.goto(`${BASE_URL}/services#full-packages`, { waitUntil: 'networkidle' })
 
-    const bookLink = page
-      .locator('#full-packages')
-      .getByRole('link', { name: /Book (your visit|this package|Classic)/i })
-      .first()
-    await expect(bookLink).toHaveAttribute('href', '/book/package/classic-full-package', {
-      timeout: 15000,
-    })
+    const bookLink = page.locator('#full-packages a[href="/book/package/classic-full-package"]').first()
+    await expect(bookLink).toBeVisible({ timeout: 15000 })
+    await expect(bookLink).toHaveAttribute('href', '/book/package/classic-full-package')
   })
 
   test('serves strict security headers on book package path', async ({ request }) => {

@@ -24,8 +24,8 @@ test.describe('Services page mobile UX', () => {
     const treatmentsDoor = page.locator('.services-door--treatments')
     await expect(packagesDoor).toBeVisible()
     await expect(treatmentsDoor).toBeVisible()
-    await expect(packagesDoor.getByText('Packages')).toBeVisible()
-    await expect(treatmentsDoor.getByText('Treatments')).toBeVisible()
+    await expect(packagesDoor.locator('.services-door__title')).toHaveText('Packages')
+    await expect(treatmentsDoor.locator('.services-door__title')).toHaveText('Treatments')
 
     const box = await packagesDoor.boundingBox()
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)

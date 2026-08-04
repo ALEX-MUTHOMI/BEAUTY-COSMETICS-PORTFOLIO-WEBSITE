@@ -637,19 +637,28 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - name: Build and start frontend edge stack
-        run: docker compose up -d --build frontend frontend-edge
-      - name: Wait for frontend edge
+      - name: Build and start API + frontend edge stack
+        # Book/availability e2e needs Django+Redis; browser hits NUXT_PUBLIC_API_BASE_URL on :8000.
+        run: docker compose up -d --build db redis web frontend frontend-edge
+      - name: Wait for API readiness + frontend edge
         run: |
-          for i in $(seq 1 60); do
+          for i in $(seq 1 90); do
+            api_ok=0
+            fe_ok=0
+            if curl -fsS "http://127.0.0.1:8000/api/health-check/" >/dev/null; then
+              api_ok=1
+            fi
             if curl -fsS "http://127.0.0.1:3000/" >/dev/null; then
-              echo "frontend edge ready"
+              fe_ok=1
+            fi
+            if [[ "${api_ok}" -eq 1 && "${fe_ok}" -eq 1 ]]; then
+              echo "api + frontend edge ready"
               exit 0
             fi
             sleep 3
           done
-          echo "frontend edge did not become ready"
-          docker compose logs --tail=200 frontend frontend-edge || true
+          echo "stack did not become ready"
+          docker compose logs --tail=200 db redis web frontend frontend-edge || true
           exit 1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -664,7 +673,7 @@ jobs:
           corepack prepare npm@10.9.8 --activate
           npm ci
           npx playwright install --with-deps chromium
-      - name: Run landing Playwright e2e (chromium)
+      - name: Run Playwright e2e (chromium)
         working-directory: frontend
         env:
           CI: "true"
@@ -679,7 +688,7 @@ jobs:
           path: frontend/playwright-report/
           if-no-files-found: warn
       - if: failure()
-        run: docker compose logs --tail=300 frontend frontend-edge || true
+        run: docker compose logs --tail=300 db redis web frontend frontend-edge || true
       - if: always()
         run: bash scripts/ci/compose_reset.sh
 

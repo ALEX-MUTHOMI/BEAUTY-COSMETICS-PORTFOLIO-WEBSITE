@@ -52,7 +52,10 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.locator('.steps__compact').getByText('Pay with M-Pesa')).toBeVisible()
     await expect(page.locator('.steps__compact').getByText('Come in glowing')).toBeVisible()
     await expect(page.locator('.steps .steps__cta')).toHaveCount(0)
-    await expect(page.locator('.steps img')).toHaveCount(0)
+    // Compact list stays text-only; floral edge/title art is intentional.
+    await expect(page.locator('.steps__compact img')).toHaveCount(0)
+    await expect(page.locator('.steps .home-floral__edge')).toHaveCount(2)
+    await expect(page.locator('.steps .title-lockup__flower')).toHaveCount(2)
     await expect(page.getByRole('heading', { name: 'Clients by Shee', level: 2 })).toBeVisible()
     await expect(page.locator('#our-work .work__tile').count()).resolves.toBeGreaterThanOrEqual(8)
     await expect(page.getByRole('heading', { name: 'What we offer', level: 2 })).toBeAttached()
