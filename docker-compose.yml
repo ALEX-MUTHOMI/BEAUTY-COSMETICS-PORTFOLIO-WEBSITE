@@ -1,0 +1,716 @@
+networks:
+  aesthetic_os_isolated_net:
+    driver: bridge
+    internal: false # Allows web/worker outbound integration APIs while keeping services isolated on the Docker network.
+    name: aesthetic_os_isolated_network
+
+volumes:
+  postgres_data:
+    driver: local
+  receipt_artifacts:
+    driver: local
+  gallery_storage:
+    driver: local
+  pytest_cache:
+    driver: local
+
+services:
+  # ============================================================================
+  # 1. POSTGRES DATABASE SERVICE
+  # ============================================================================
+  db:
+    image: postgres:16-alpine
+    container_name: aesthetic_os_postgres_db
+    command:
+      [
+        "postgres",
+        "-c",
+        "log_min_error_statement=fatal",
+        "-c",
+        "log_error_verbosity=terse",
+      ]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aesthetic_os_db}
+      POSTGRES_USER: ${POSTGRES_USER:-aesthetic_os_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aesthetic_os_secure_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data:rw
+    expose:
+      - "5432"
+    networks:
+      - aesthetic_os_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER:-aesthetic_os_user} -d $${POSTGRES_DB:-aesthetic_os_db}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+    restart: unless-stopped
+
+  # ============================================================================
+  # 2. REDIS CACHE / BROKER SERVICE
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: aesthetic_os_redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}
+    expose:
+      - "6379"
+    networks:
+      - aesthetic_os_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "-a",
+          "${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}",
+          "ping",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+    restart: unless-stopped
+
+  # ============================================================================
+  # 3. DJANGO DRF WEB APPLICATION SERVICE
+  # ============================================================================
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: aesthetic_os_web_app:latest
+    container_name: aesthetic_os_web_app
+    # Sync workers ~250–400MB each. Default 1 under the 1G memory limit avoids OOM/SIGKILL
+    # death spirals that stall CSRF/login for hours. Raise GUNICORN_WORKERS only with more RAM.
+    command:
+      - sh
+      - -c
+      - >-
+        gunicorn --bind 0.0.0.0:8000
+        --workers $${GUNICORN_WORKERS:-1}
+        --timeout $${GUNICORN_TIMEOUT:-60}
+        --graceful-timeout $${GUNICORN_GRACEFUL_TIMEOUT:-30}
+        --max-requests $${GUNICORN_MAX_REQUESTS:-500}
+        --max-requests-jitter $${GUNICORN_MAX_REQUESTS_JITTER:-50}
+        core.wsgi:application
+    volumes:
+      # Live `.:/app` bind is local-only (see docker-compose.windows.yml).
+      # CI/self-hosted runners use the image build context only.
+      - receipt_artifacts:/app/var/receipt-artifacts:rw
+      - gallery_storage:/app/var/gallery-storage:rw
+      - pytest_cache:/app/var/pytest-cache:rw
+    ports:
+      - "8000:8000"
+    environment:
+      # ------------------------------------------------------------------------
+      # Runtime
+      # ------------------------------------------------------------------------
+      - DEBUG=${DEBUG:-False}
+      - POETRY_VIRTUALENVS_CREATE=false
+      - PATH=/app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+      - SECRET_KEY=${SECRET_KEY:-phase1-phase2-prod-verification-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f}
+      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-False}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,web,testserver}
+      - DISABLE_DJANGO_ADMIN=${DISABLE_DJANGO_ADMIN:-False}
+      - DRF_DISABLE_BROWSABLE_API=${DRF_DISABLE_BROWSABLE_API:-False}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PII_HASH_PEPPER=${PII_HASH_PEPPER:-local-test-pii-hash-pepper-change-me}
+      - PII_ENCRYPTION_KEY=${PII_ENCRYPTION_KEY:-local-test-pii-encryption-key-change-me}
+      # Gunicorn sizing (consumed by web command). Keep workers=1 on 1G Docker Desktop.
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-1}
+      - GUNICORN_TIMEOUT=${GUNICORN_TIMEOUT:-60}
+      - GUNICORN_GRACEFUL_TIMEOUT=${GUNICORN_GRACEFUL_TIMEOUT:-30}
+      - GUNICORN_MAX_REQUESTS=${GUNICORN_MAX_REQUESTS:-500}
+      - GUNICORN_MAX_REQUESTS_JITTER=${GUNICORN_MAX_REQUESTS_JITTER:-50}
+
+      # ------------------------------------------------------------------------
+      # Database
+      # ------------------------------------------------------------------------
+      - POSTGRES_DB=${POSTGRES_DB:-aesthetic_os_db}
+      - POSTGRES_USER=${POSTGRES_USER:-aesthetic_os_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-aesthetic_os_secure_password}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+
+      # ------------------------------------------------------------------------
+      # Redis / Celery
+      # ------------------------------------------------------------------------
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+
+      # ------------------------------------------------------------------------
+      # Browser / proxy safety
+      # ------------------------------------------------------------------------
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://frontend:3000,http://localhost:3000,http://127.0.0.1:3000}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://frontend:3000,http://localhost:3000,http://127.0.0.1:3000}
+
+      # ------------------------------------------------------------------------
+      # Default payment provider safety
+      # Normal/default tests must remain fake-provider only.
+      # Real Daraja tests must remain opt-in through external pytest flags.
+      # ------------------------------------------------------------------------
+      - CHECKOUT_MPESA_PROVIDER=fake
+      - PAYMENT_PROVIDER_MODE=fake
+
+      # ------------------------------------------------------------------------
+      # Daraja sandbox / external payment verification
+      # Never commit real values. Values come from local .env / shell env only.
+      # ------------------------------------------------------------------------
+      - DARAJA_ENV=${DARAJA_ENV:-}
+      - DARAJA_CONSUMER_KEY=${DARAJA_CONSUMER_KEY:-}
+      - DARAJA_CONSUMER_SECRET=${DARAJA_CONSUMER_SECRET:-}
+      - DARAJA_SHORTCODE=${DARAJA_SHORTCODE:-}
+      - DARAJA_PASSKEY=${DARAJA_PASSKEY:-}
+      - DARAJA_CALLBACK_URL=${DARAJA_CALLBACK_URL:-}
+      - DARAJA_ACCOUNT_REFERENCE=${DARAJA_ACCOUNT_REFERENCE:-}
+      - DARAJA_TRANSACTION_DESC=${DARAJA_TRANSACTION_DESC:-}
+      - DARAJA_TEST_MSISDN=${DARAJA_TEST_MSISDN:-}
+      - DARAJA_TEST_AMOUNT=${DARAJA_TEST_AMOUNT:-1}
+
+      # ------------------------------------------------------------------------
+      # Real callback verification controls
+      # These are the missing settings that must reach Django for tunnel testing.
+      # ------------------------------------------------------------------------
+      - DARAJA_REQUIRE_CALLBACK=${DARAJA_REQUIRE_CALLBACK:-false}
+      - DARAJA_CALLBACK_WAIT_SECONDS=${DARAJA_CALLBACK_WAIT_SECONDS:-0}
+      - DARAJA_CALLBACK_POLL_INTERVAL_SECONDS=${DARAJA_CALLBACK_POLL_INTERVAL_SECONDS:-5}
+      - DARAJA_SANDBOX_ALLOW_TUNNEL_CALLBACKS=${DARAJA_SANDBOX_ALLOW_TUNNEL_CALLBACKS:-false}
+      - DARAJA_SANDBOX_CALLBACK_TUNNEL_DOMAINS=${DARAJA_SANDBOX_CALLBACK_TUNNEL_DOMAINS:-}
+
+      # ------------------------------------------------------------------------
+      # Daraja network/client config
+      # ------------------------------------------------------------------------
+      - DARAJA_BASE_URL=${DARAJA_BASE_URL:-https://sandbox.safaricom.co.ke}
+      - DARAJA_CONNECT_TIMEOUT_SECONDS=${DARAJA_CONNECT_TIMEOUT_SECONDS:-2}
+      - DARAJA_READ_TIMEOUT_SECONDS=${DARAJA_READ_TIMEOUT_SECONDS:-5}
+      - DARAJA_TOKEN_CACHE_TTL_SECONDS=${DARAJA_TOKEN_CACHE_TTL_SECONDS:-3300}
+      - DARAJA_ALLOWED_SANDBOX_IPS=${DARAJA_ALLOWED_SANDBOX_IPS:-}
+      - SAFARICOM_ALLOWED_CIDRS=${SAFARICOM_ALLOWED_CIDRS:-196.201.214.0/24,196.201.216.0/24,127.0.0.1/32,172.16.0.0/12}
+
+      # ------------------------------------------------------------------------
+      # Transactional email / receipt delivery
+      # Default remains fake. Real provider tests are opt-in only.
+      # ------------------------------------------------------------------------
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-fake}
+      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS:-AestheticOS <no-reply@example.test>}
+      - EMAIL_REPLY_TO_ADDRESS=${EMAIL_REPLY_TO_ADDRESS:-support@example.test}
+      - EMAIL_PROVIDER_API_KEY=${EMAIL_PROVIDER_API_KEY:-}
+      - EMAIL_PROVIDER_BASE_URL=${EMAIL_PROVIDER_BASE_URL:-}
+      - EMAIL_SEND_TIMEOUT_SECONDS=${EMAIL_SEND_TIMEOUT_SECONDS:-5}
+      - EMAIL_EXTERNAL_TEST_RECIPIENT=${EMAIL_EXTERNAL_TEST_RECIPIENT:-}
+      - RUN_EXTERNAL_EMAIL_TESTS=${RUN_EXTERNAL_EMAIL_TESTS:-false}
+      - RECEIPT_PDF_TIMEOUT_SECONDS=${RECEIPT_PDF_TIMEOUT_SECONDS:-5}
+      - RECEIPT_PDF_MAX_BYTES=${RECEIPT_PDF_MAX_BYTES:-250000}
+      - RECEIPT_PDF_ARTIFACT_DIR=${RECEIPT_PDF_ARTIFACT_DIR:-/app/var/receipt-artifacts}
+      - PYTEST_CACHE_DIR=${PYTEST_CACHE_DIR:-/app/var/pytest-cache}
+      - EMAIL_NOTIFICATION_MAX_ATTEMPTS=${EMAIL_NOTIFICATION_MAX_ATTEMPTS:-3}
+      - EMAIL_DAILY_SOFT_LIMIT=${EMAIL_DAILY_SOFT_LIMIT:-80}
+      - EMAIL_DAILY_HARD_LIMIT=${EMAIL_DAILY_HARD_LIMIT:-100}
+      - EMAIL_MONTHLY_SOFT_LIMIT=${EMAIL_MONTHLY_SOFT_LIMIT:-2500}
+      - EMAIL_MONTHLY_HARD_LIMIT=${EMAIL_MONTHLY_HARD_LIMIT:-3000}
+      - EMAIL_BACKUP_PROVIDER_ENABLED=${EMAIL_BACKUP_PROVIDER_ENABLED:-false}
+      - EMAIL_BACKUP_PROVIDER=${EMAIL_BACKUP_PROVIDER:-mailgun}
+      - EMAIL_QUOTA_MODE=${EMAIL_QUOTA_MODE:-queue_only}
+      - EMAIL_BACKLOG_HIGH_WATERMARK=${EMAIL_BACKLOG_HIGH_WATERMARK:-100}
+      - CUSTOMER_OTP_TTL_MINUTES=${CUSTOMER_OTP_TTL_MINUTES:-10}
+      - CUSTOMER_OTP_MAX_ATTEMPTS=${CUSTOMER_OTP_MAX_ATTEMPTS:-3}
+      - CUSTOMER_OTP_REQUEST_LIMIT=${CUSTOMER_OTP_REQUEST_LIMIT:-5}
+      - CUSTOMER_ACTION_SESSION_TTL_MINUTES=${CUSTOMER_ACTION_SESSION_TTL_MINUTES:-15}
+      - BOOKING_REMINDER_2H_ENABLED=${BOOKING_REMINDER_2H_ENABLED:-false}
+      - BOOKING_REMINDER_MAX_ATTEMPTS=${BOOKING_REMINDER_MAX_ATTEMPTS:-3}
+      - GALLERY_STORAGE_ROOT=${GALLERY_STORAGE_ROOT:-/app/var/gallery-storage}
+      - GALLERY_PUBLIC_BASE_URL=${GALLERY_PUBLIC_BASE_URL:-/media/}
+      - GALLERY_MAX_BATCH_IMAGES=${GALLERY_MAX_BATCH_IMAGES:-10}
+      - GALLERY_MAX_STANDARD_IMAGE_BYTES=${GALLERY_MAX_STANDARD_IMAGE_BYTES:-10485760}
+      - GALLERY_MAX_HIGH_RES_IMAGE_BYTES=${GALLERY_MAX_HIGH_RES_IMAGE_BYTES:-26214400}
+      - GALLERY_MAX_BATCH_BYTES=${GALLERY_MAX_BATCH_BYTES:-62914560}
+      - GALLERY_MAX_IMAGE_PIXELS=${GALLERY_MAX_IMAGE_PIXELS:-50000000}
+      - GALLERY_MAX_DAILY_UPLOADS=${GALLERY_MAX_DAILY_UPLOADS:-30}
+      - GALLERY_MAX_DRAFT_IMAGES=${GALLERY_MAX_DRAFT_IMAGES:-100}
+      - GALLERY_MAX_PUBLISHED_IMAGES=${GALLERY_MAX_PUBLISHED_IMAGES:-80}
+      - GALLERY_HOMEPAGE_FEATURED_LIMIT=${GALLERY_HOMEPAGE_FEATURED_LIMIT:-12}
+      - GALLERY_PUBLIC_CATEGORY_LIMIT=${GALLERY_PUBLIC_CATEGORY_LIMIT:-18}
+      - GALLERY_PUBLIC_SUBCATEGORY_LIMIT=${GALLERY_PUBLIC_SUBCATEGORY_LIMIT:-10}
+      - GALLERY_PUBLIC_SENSITIVE_LIMIT=${GALLERY_PUBLIC_SENSITIVE_LIMIT:-6}
+      - GALLERY_PROCESSING_TIMEOUT_SECONDS=${GALLERY_PROCESSING_TIMEOUT_SECONDS:-15}
+      - STAFF_GOOGLE_OAUTH_CLIENT_ID=${STAFF_GOOGLE_OAUTH_CLIENT_ID:-}
+      - STAFF_GOOGLE_OAUTH_CLIENT_SECRET=${STAFF_GOOGLE_OAUTH_CLIENT_SECRET:-}
+      - STAFF_GOOGLE_OAUTH_REDIRECT_URI=${STAFF_GOOGLE_OAUTH_REDIRECT_URI:-}
+      - STAFF_GOOGLE_OAUTH_SCOPE=${STAFF_GOOGLE_OAUTH_SCOPE:-openid email profile}
+      - STAFF_APPLE_OAUTH_CLIENT_ID=${STAFF_APPLE_OAUTH_CLIENT_ID:-}
+      - STAFF_APPLE_OAUTH_CLIENT_SECRET=${STAFF_APPLE_OAUTH_CLIENT_SECRET:-}
+      - STAFF_APPLE_OAUTH_REDIRECT_URI=${STAFF_APPLE_OAUTH_REDIRECT_URI:-}
+      - STAFF_APPLE_OAUTH_SCOPE=${STAFF_APPLE_OAUTH_SCOPE:-name email}
+      # Prefer 127.0.0.1 locally so CSRF SameSite=Strict matches the Nuxt desk host.
+      - STAFF_PORTAL_PUBLIC_ORIGIN=${STAFF_PORTAL_PUBLIC_ORIGIN:-http://127.0.0.1:3000}
+
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Fail unhealthy if CSRF bootstrap is dead (login stall signal).
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/csrf/', timeout=5).read()\"",
+        ]
+      interval: 15s
+      timeout: 8s
+      retries: 8
+      start_period: 45s
+    networks:
+      - aesthetic_os_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1G
+    restart: unless-stopped
+
+  # ============================================================================
+  # 4. NUXT 3 SSR FRONTEND SERVICE
+  # ============================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: aesthetic_os_nuxt_frontend:latest
+    container_name: aesthetic_os_nuxt_frontend
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - NITRO_HOST=0.0.0.0
+      - NITRO_PORT=3000
+
+      # Frontend gets only public API URL / public keys.
+      # Never expose Daraja secrets through NUXT_PUBLIC_*.
+      # Host must match the browser origin host (CSRF cookie SameSite=Strict):
+      # open the desk at http://127.0.0.1:3000 when API is 127.0.0.1:8000
+      # (localhost ≠ 127.0.0.1 for cookies; Cursor browser often needs 127.0.0.1).
+      - NUXT_PUBLIC_API_BASE_URL=${NUXT_PUBLIC_API_BASE_URL:-http://127.0.0.1:8000}
+      # Real Meru business WhatsApp (E.164 digits). Empty = hide wa.me / tel CTAs.
+      - NUXT_PUBLIC_WHATSAPP_E164=${NUXT_PUBLIC_WHATSAPP_E164:-}
+      - NUXT_PUBLIC_STAFF_GOOGLE_ENABLED=${NUXT_PUBLIC_STAFF_GOOGLE_ENABLED:-false}
+      - NUXT_PUBLIC_STAFF_APPLE_ENABLED=${NUXT_PUBLIC_STAFF_APPLE_ENABLED:-false}
+      - NUXT_PUBLIC_TURNSTILE_SITE_KEY=${NUXT_PUBLIC_TURNSTILE_SITE_KEY:-1x0000000000000000000000000000000AA}
+      - NUXT_TURNSTILE_SECRET_KEY=${NUXT_TURNSTILE_SECRET_KEY:-1x0000000000000000000000000000000AA}
+    depends_on:
+      web:
+        condition: service_healthy
+    networks:
+      - aesthetic_os_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "1.50"
+          memory: 1G
+    restart: unless-stopped
+
+  # Static /images sendfile + reverse proxy to Nuxt (port 3000 on host)
+  # Mount curated images-prod (run: node frontend/scripts/sync-prod-images.mjs)
+  frontend-edge:
+    image: nginx:1.27-alpine
+    container_name: aesthetic_os_nuxt_edge
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend/docker/nginx-edge.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend/docker/images-prod:/var/www/images:ro
+    depends_on:
+      - frontend
+    networks:
+      - aesthetic_os_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+    restart: unless-stopped
+
+  # ============================================================================
+  # 4B. FRONTEND TEST SERVICE
+  # ============================================================================
+  frontend-test:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: builder
+    image: aesthetic_os_nuxt_frontend_test:latest
+    container_name: aesthetic_os_nuxt_frontend_test
+    command: tail -f /dev/null
+    environment:
+      - NODE_ENV=test
+      - NUXT_PUBLIC_API_BASE_URL=${NUXT_PUBLIC_API_BASE_URL:-http://127.0.0.1:8000}
+      - NUXT_PUBLIC_STAFF_GOOGLE_ENABLED=${NUXT_PUBLIC_STAFF_GOOGLE_ENABLED:-false}
+      - NUXT_PUBLIC_STAFF_APPLE_ENABLED=${NUXT_PUBLIC_STAFF_APPLE_ENABLED:-false}
+    networks:
+      - aesthetic_os_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    profiles:
+      - test
+
+  # ============================================================================
+  # 5. CELERY WORKER SERVICE
+  # ============================================================================
+  worker:
+    image: aesthetic_os_web_app:latest
+    container_name: aesthetic_os_celery_worker
+    command: celery -A core worker --loglevel=info -Q celery,express_auth,billing,dlq_billing
+    volumes:
+      - receipt_artifacts:/app/var/receipt-artifacts:rw
+      - pytest_cache:/app/var/pytest-cache:rw
+    environment:
+      # ------------------------------------------------------------------------
+      # Runtime
+      # ------------------------------------------------------------------------
+      - DEBUG=${DEBUG:-False}
+      - POETRY_VIRTUALENVS_CREATE=false
+      - PATH=/app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+      - SECRET_KEY=${SECRET_KEY:-phase1-phase2-prod-verification-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f}
+      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-False}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,web,testserver}
+      - DISABLE_DJANGO_ADMIN=${DISABLE_DJANGO_ADMIN:-False}
+      - DRF_DISABLE_BROWSABLE_API=${DRF_DISABLE_BROWSABLE_API:-False}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PII_HASH_PEPPER=${PII_HASH_PEPPER:-local-test-pii-hash-pepper-change-me}
+      - PII_ENCRYPTION_KEY=${PII_ENCRYPTION_KEY:-local-test-pii-encryption-key-change-me}
+
+      # ------------------------------------------------------------------------
+      # Database
+      # ------------------------------------------------------------------------
+      - POSTGRES_DB=${POSTGRES_DB:-aesthetic_os_db}
+      - POSTGRES_USER=${POSTGRES_USER:-aesthetic_os_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-aesthetic_os_secure_password}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+
+      # ------------------------------------------------------------------------
+      # Redis / Celery
+      # ------------------------------------------------------------------------
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+
+      # ------------------------------------------------------------------------
+      # Browser / proxy safety
+      # ------------------------------------------------------------------------
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://frontend:3000,http://localhost:3000,http://127.0.0.1:3000}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://frontend:3000,http://localhost:3000,http://127.0.0.1:3000}
+
+      # ------------------------------------------------------------------------
+      # Default payment provider safety
+      # ------------------------------------------------------------------------
+      - CHECKOUT_MPESA_PROVIDER=fake
+      - PAYMENT_PROVIDER_MODE=fake
+
+      # ------------------------------------------------------------------------
+      # Daraja sandbox / external payment verification
+      # ------------------------------------------------------------------------
+      - DARAJA_ENV=${DARAJA_ENV:-}
+      - DARAJA_CONSUMER_KEY=${DARAJA_CONSUMER_KEY:-}
+      - DARAJA_CONSUMER_SECRET=${DARAJA_CONSUMER_SECRET:-}
+      - DARAJA_SHORTCODE=${DARAJA_SHORTCODE:-}
+      - DARAJA_PASSKEY=${DARAJA_PASSKEY:-}
+      - DARAJA_CALLBACK_URL=${DARAJA_CALLBACK_URL:-}
+      - DARAJA_ACCOUNT_REFERENCE=${DARAJA_ACCOUNT_REFERENCE:-}
+      - DARAJA_TRANSACTION_DESC=${DARAJA_TRANSACTION_DESC:-}
+      - DARAJA_TEST_MSISDN=${DARAJA_TEST_MSISDN:-}
+      - DARAJA_TEST_AMOUNT=${DARAJA_TEST_AMOUNT:-1}
+
+      # ------------------------------------------------------------------------
+      # Real callback verification controls
+      # These must also be available to worker if callback processing/retry uses Celery.
+      # ------------------------------------------------------------------------
+      - DARAJA_REQUIRE_CALLBACK=${DARAJA_REQUIRE_CALLBACK:-false}
+      - DARAJA_CALLBACK_WAIT_SECONDS=${DARAJA_CALLBACK_WAIT_SECONDS:-0}
+      - DARAJA_CALLBACK_POLL_INTERVAL_SECONDS=${DARAJA_CALLBACK_POLL_INTERVAL_SECONDS:-5}
+      - DARAJA_SANDBOX_ALLOW_TUNNEL_CALLBACKS=${DARAJA_SANDBOX_ALLOW_TUNNEL_CALLBACKS:-false}
+      - DARAJA_SANDBOX_CALLBACK_TUNNEL_DOMAINS=${DARAJA_SANDBOX_CALLBACK_TUNNEL_DOMAINS:-}
+
+      # ------------------------------------------------------------------------
+      # Daraja network/client config
+      # ------------------------------------------------------------------------
+      - DARAJA_BASE_URL=${DARAJA_BASE_URL:-https://sandbox.safaricom.co.ke}
+      - DARAJA_CONNECT_TIMEOUT_SECONDS=${DARAJA_CONNECT_TIMEOUT_SECONDS:-2}
+      - DARAJA_READ_TIMEOUT_SECONDS=${DARAJA_READ_TIMEOUT_SECONDS:-5}
+      - DARAJA_TOKEN_CACHE_TTL_SECONDS=${DARAJA_TOKEN_CACHE_TTL_SECONDS:-3300}
+      - DARAJA_ALLOWED_SANDBOX_IPS=${DARAJA_ALLOWED_SANDBOX_IPS:-}
+      - SAFARICOM_ALLOWED_CIDRS=${SAFARICOM_ALLOWED_CIDRS:-196.201.214.0/24,196.201.216.0/24,127.0.0.1/32,172.16.0.0/12}
+
+      # ------------------------------------------------------------------------
+      # Transactional email / receipt delivery
+      # ------------------------------------------------------------------------
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-fake}
+      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS:-AestheticOS <no-reply@example.test>}
+      - EMAIL_REPLY_TO_ADDRESS=${EMAIL_REPLY_TO_ADDRESS:-support@example.test}
+      - EMAIL_PROVIDER_API_KEY=${EMAIL_PROVIDER_API_KEY:-}
+      - EMAIL_PROVIDER_BASE_URL=${EMAIL_PROVIDER_BASE_URL:-}
+      - EMAIL_SEND_TIMEOUT_SECONDS=${EMAIL_SEND_TIMEOUT_SECONDS:-5}
+      - EMAIL_EXTERNAL_TEST_RECIPIENT=${EMAIL_EXTERNAL_TEST_RECIPIENT:-}
+      - RUN_EXTERNAL_EMAIL_TESTS=${RUN_EXTERNAL_EMAIL_TESTS:-false}
+      - RECEIPT_PDF_TIMEOUT_SECONDS=${RECEIPT_PDF_TIMEOUT_SECONDS:-5}
+      - RECEIPT_PDF_MAX_BYTES=${RECEIPT_PDF_MAX_BYTES:-250000}
+      - RECEIPT_PDF_ARTIFACT_DIR=${RECEIPT_PDF_ARTIFACT_DIR:-/app/var/receipt-artifacts}
+      - PYTEST_CACHE_DIR=${PYTEST_CACHE_DIR:-/app/var/pytest-cache}
+      - EMAIL_NOTIFICATION_MAX_ATTEMPTS=${EMAIL_NOTIFICATION_MAX_ATTEMPTS:-3}
+      - EMAIL_DAILY_SOFT_LIMIT=${EMAIL_DAILY_SOFT_LIMIT:-80}
+      - EMAIL_DAILY_HARD_LIMIT=${EMAIL_DAILY_HARD_LIMIT:-100}
+      - EMAIL_MONTHLY_SOFT_LIMIT=${EMAIL_MONTHLY_SOFT_LIMIT:-2500}
+      - EMAIL_MONTHLY_HARD_LIMIT=${EMAIL_MONTHLY_HARD_LIMIT:-3000}
+      - EMAIL_BACKUP_PROVIDER_ENABLED=${EMAIL_BACKUP_PROVIDER_ENABLED:-false}
+      - EMAIL_BACKUP_PROVIDER=${EMAIL_BACKUP_PROVIDER:-mailgun}
+      - EMAIL_QUOTA_MODE=${EMAIL_QUOTA_MODE:-queue_only}
+      - EMAIL_BACKLOG_HIGH_WATERMARK=${EMAIL_BACKLOG_HIGH_WATERMARK:-100}
+      - CUSTOMER_OTP_TTL_MINUTES=${CUSTOMER_OTP_TTL_MINUTES:-10}
+      - CUSTOMER_OTP_MAX_ATTEMPTS=${CUSTOMER_OTP_MAX_ATTEMPTS:-3}
+      - CUSTOMER_OTP_REQUEST_LIMIT=${CUSTOMER_OTP_REQUEST_LIMIT:-5}
+      - CUSTOMER_ACTION_SESSION_TTL_MINUTES=${CUSTOMER_ACTION_SESSION_TTL_MINUTES:-15}
+      - BOOKING_REMINDER_2H_ENABLED=${BOOKING_REMINDER_2H_ENABLED:-false}
+      - BOOKING_REMINDER_MAX_ATTEMPTS=${BOOKING_REMINDER_MAX_ATTEMPTS:-3}
+      - STAFF_GOOGLE_OAUTH_CLIENT_ID=${STAFF_GOOGLE_OAUTH_CLIENT_ID:-}
+      - STAFF_GOOGLE_OAUTH_CLIENT_SECRET=${STAFF_GOOGLE_OAUTH_CLIENT_SECRET:-}
+      - STAFF_GOOGLE_OAUTH_REDIRECT_URI=${STAFF_GOOGLE_OAUTH_REDIRECT_URI:-}
+      - STAFF_GOOGLE_OAUTH_SCOPE=${STAFF_GOOGLE_OAUTH_SCOPE:-openid email profile}
+      - STAFF_APPLE_OAUTH_CLIENT_ID=${STAFF_APPLE_OAUTH_CLIENT_ID:-}
+      - STAFF_APPLE_OAUTH_CLIENT_SECRET=${STAFF_APPLE_OAUTH_CLIENT_SECRET:-}
+      - STAFF_APPLE_OAUTH_REDIRECT_URI=${STAFF_APPLE_OAUTH_REDIRECT_URI:-}
+      - STAFF_APPLE_OAUTH_SCOPE=${STAFF_APPLE_OAUTH_SCOPE:-name email}
+      - STAFF_PORTAL_PUBLIC_ORIGIN=${STAFF_PORTAL_PUBLIC_ORIGIN:-http://127.0.0.1:3000}
+
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aesthetic_os_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A core inspect ping -d celery@$$HOSTNAME --timeout=5 | grep -q OK",
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M
+    restart: unless-stopped
+
+  # ============================================================================
+  # 5b. CELERY BEAT — hold/checkout expiry + notification sweeps
+  # ============================================================================
+  beat:
+    image: aesthetic_os_web_app:latest
+    container_name: aesthetic_os_celery_beat
+    command: celery -A core beat --loglevel=info
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - POETRY_VIRTUALENVS_CREATE=false
+      - PATH=/app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+      - SECRET_KEY=${SECRET_KEY:-phase1-phase2-prod-verification-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,web,testserver}
+      - PII_HASH_PEPPER=${PII_HASH_PEPPER:-local-test-pii-hash-pepper-change-me}
+      - PII_ENCRYPTION_KEY=${PII_ENCRYPTION_KEY:-local-test-pii-encryption-key-change-me}
+      - POSTGRES_DB=${POSTGRES_DB:-aesthetic_os_db}
+      - POSTGRES_USER=${POSTGRES_USER:-aesthetic_os_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-aesthetic_os_secure_password}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CHECKOUT_MPESA_PROVIDER=fake
+      - PAYMENT_PROVIDER_MODE=fake
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_started
+    networks:
+      - aesthetic_os_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+    restart: unless-stopped
+
+  notification-worker:
+    image: aesthetic_os_web_app:latest
+    container_name: aesthetic_os_receipt_notification_worker
+    command: celery -A core worker --loglevel=info -Q receipts --concurrency=${RECEIPT_WORKER_CONCURRENCY:-2}
+    volumes:
+      - receipt_artifacts:/app/var/receipt-artifacts:rw
+      - pytest_cache:/app/var/pytest-cache:rw
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - POETRY_VIRTUALENVS_CREATE=false
+      - PATH=/app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+      - SECRET_KEY=${SECRET_KEY:-phase1-phase2-prod-verification-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PII_HASH_PEPPER=${PII_HASH_PEPPER:-local-test-pii-hash-pepper-change-me}
+      - PII_ENCRYPTION_KEY=${PII_ENCRYPTION_KEY:-local-test-pii-encryption-key-change-me}
+      - POSTGRES_DB=${POSTGRES_DB:-aesthetic_os_db}
+      - POSTGRES_USER=${POSTGRES_USER:-aesthetic_os_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-aesthetic_os_secure_password}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER:-fake}
+      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS:-AestheticOS <no-reply@example.test>}
+      - EMAIL_REPLY_TO_ADDRESS=${EMAIL_REPLY_TO_ADDRESS:-support@example.test}
+      - EMAIL_PROVIDER_API_KEY=${EMAIL_PROVIDER_API_KEY:-}
+      - EMAIL_PROVIDER_BASE_URL=${EMAIL_PROVIDER_BASE_URL:-}
+      - EMAIL_SEND_TIMEOUT_SECONDS=${EMAIL_SEND_TIMEOUT_SECONDS:-5}
+      - EMAIL_EXTERNAL_TEST_RECIPIENT=${EMAIL_EXTERNAL_TEST_RECIPIENT:-}
+      - RUN_EXTERNAL_EMAIL_TESTS=${RUN_EXTERNAL_EMAIL_TESTS:-false}
+      - RECEIPT_PDF_TIMEOUT_SECONDS=${RECEIPT_PDF_TIMEOUT_SECONDS:-5}
+      - RECEIPT_PDF_MAX_BYTES=${RECEIPT_PDF_MAX_BYTES:-250000}
+      - RECEIPT_PDF_ARTIFACT_DIR=${RECEIPT_PDF_ARTIFACT_DIR:-/app/var/receipt-artifacts}
+      - PYTEST_CACHE_DIR=${PYTEST_CACHE_DIR:-/app/var/pytest-cache}
+      - EMAIL_NOTIFICATION_MAX_ATTEMPTS=${EMAIL_NOTIFICATION_MAX_ATTEMPTS:-3}
+      - EMAIL_DAILY_SOFT_LIMIT=${EMAIL_DAILY_SOFT_LIMIT:-80}
+      - EMAIL_DAILY_HARD_LIMIT=${EMAIL_DAILY_HARD_LIMIT:-100}
+      - EMAIL_MONTHLY_SOFT_LIMIT=${EMAIL_MONTHLY_SOFT_LIMIT:-2500}
+      - EMAIL_MONTHLY_HARD_LIMIT=${EMAIL_MONTHLY_HARD_LIMIT:-3000}
+      - EMAIL_BACKUP_PROVIDER_ENABLED=${EMAIL_BACKUP_PROVIDER_ENABLED:-false}
+      - EMAIL_BACKUP_PROVIDER=${EMAIL_BACKUP_PROVIDER:-mailgun}
+      - EMAIL_QUOTA_MODE=${EMAIL_QUOTA_MODE:-queue_only}
+      - EMAIL_BACKLOG_HIGH_WATERMARK=${EMAIL_BACKLOG_HIGH_WATERMARK:-100}
+      - CUSTOMER_OTP_TTL_MINUTES=${CUSTOMER_OTP_TTL_MINUTES:-10}
+      - CUSTOMER_OTP_MAX_ATTEMPTS=${CUSTOMER_OTP_MAX_ATTEMPTS:-3}
+      - CUSTOMER_OTP_REQUEST_LIMIT=${CUSTOMER_OTP_REQUEST_LIMIT:-5}
+      - CUSTOMER_ACTION_SESSION_TTL_MINUTES=${CUSTOMER_ACTION_SESSION_TTL_MINUTES:-15}
+      - BOOKING_REMINDER_2H_ENABLED=${BOOKING_REMINDER_2H_ENABLED:-false}
+      - BOOKING_REMINDER_MAX_ATTEMPTS=${BOOKING_REMINDER_MAX_ATTEMPTS:-3}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A core inspect ping -d celery@$$HOSTNAME --timeout=10 | grep -q OK",
+        ]
+      interval: 30s
+      timeout: 15s
+      start_period: 30s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aesthetic_os_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    profiles:
+      - receipts
+
+  gallery-worker:
+    image: aesthetic_os_web_app:latest
+    container_name: aesthetic_os_gallery_worker
+    command: celery -A core worker --loglevel=info -Q gallery --concurrency=${GALLERY_WORKER_CONCURRENCY:-1}
+    volumes:
+      - gallery_storage:/app/var/gallery-storage:rw
+      - pytest_cache:/app/var/pytest-cache:rw
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - POETRY_VIRTUALENVS_CREATE=false
+      - PATH=/app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+      - SECRET_KEY=${SECRET_KEY:-phase1-phase2-prod-verification-key-8f4a2c9e7b6d5a3c1f0e9d8b7a6c5e4f}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PII_HASH_PEPPER=${PII_HASH_PEPPER:-local-test-pii-hash-pepper-change-me}
+      - PII_ENCRYPTION_KEY=${PII_ENCRYPTION_KEY:-local-test-pii-encryption-key-change-me}
+      - POSTGRES_DB=${POSTGRES_DB:-aesthetic_os_db}
+      - POSTGRES_USER=${POSTGRES_USER:-aesthetic_os_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-aesthetic_os_secure_password}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@redis:6379/0
+      - PYTEST_CACHE_DIR=${PYTEST_CACHE_DIR:-/app/var/pytest-cache}
+      - GALLERY_STORAGE_ROOT=${GALLERY_STORAGE_ROOT:-/app/var/gallery-storage}
+      - GALLERY_PUBLIC_BASE_URL=${GALLERY_PUBLIC_BASE_URL:-/media/}
+      - GALLERY_MAX_BATCH_IMAGES=${GALLERY_MAX_BATCH_IMAGES:-10}
+      - GALLERY_MAX_STANDARD_IMAGE_BYTES=${GALLERY_MAX_STANDARD_IMAGE_BYTES:-10485760}
+      - GALLERY_MAX_HIGH_RES_IMAGE_BYTES=${GALLERY_MAX_HIGH_RES_IMAGE_BYTES:-26214400}
+      - GALLERY_MAX_BATCH_BYTES=${GALLERY_MAX_BATCH_BYTES:-62914560}
+      - GALLERY_MAX_IMAGE_PIXELS=${GALLERY_MAX_IMAGE_PIXELS:-50000000}
+      - GALLERY_MAX_DAILY_UPLOADS=${GALLERY_MAX_DAILY_UPLOADS:-30}
+      - GALLERY_MAX_DRAFT_IMAGES=${GALLERY_MAX_DRAFT_IMAGES:-100}
+      - GALLERY_MAX_PUBLISHED_IMAGES=${GALLERY_MAX_PUBLISHED_IMAGES:-80}
+      - GALLERY_HOMEPAGE_FEATURED_LIMIT=${GALLERY_HOMEPAGE_FEATURED_LIMIT:-12}
+      - GALLERY_PUBLIC_CATEGORY_LIMIT=${GALLERY_PUBLIC_CATEGORY_LIMIT:-18}
+      - GALLERY_PUBLIC_SUBCATEGORY_LIMIT=${GALLERY_PUBLIC_SUBCATEGORY_LIMIT:-10}
+      - GALLERY_PUBLIC_SENSITIVE_LIMIT=${GALLERY_PUBLIC_SENSITIVE_LIMIT:-6}
+      - GALLERY_PROCESSING_TIMEOUT_SECONDS=${GALLERY_PROCESSING_TIMEOUT_SECONDS:-15}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A core inspect ping -d celery@$$HOSTNAME --timeout=10 | grep -q OK",
+        ]
+      interval: 30s
+      timeout: 15s
+      start_period: 30s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aesthetic_os_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    profiles:
+      - gallery
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
+    restart: unless-stopped

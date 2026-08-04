@@ -1,0 +1,119 @@
+/* Mellis theme tokens — Shee Aesthetics public site + staff desk */
+
+@import '@fontsource/manrope/400.css';
+@import '@fontsource/manrope/500.css';
+@import '@fontsource/manrope/600.css';
+@import '@fontsource/manrope/700.css';
+
+@import '@fontsource/parisienne/400.css';
+
+@import '@fontsource/fraunces/400.css';
+@import '@fontsource/fraunces/500.css';
+@import '@fontsource/fraunces/600.css';
+@import '@fontsource/fraunces/700.css';
+
+@import '@fontsource/libre-baskerville/400.css';
+@import '@fontsource/libre-baskerville/700.css';
+
+:root {
+  /* Mellis soft-gray canvas — muted warm stone, easy on the eye */
+  --color-ink: #2c2c30;
+  --color-deep: #3f3e43;
+  --color-muted: #7a7876;
+  --color-cream: #d8d2cc;
+  --color-paper: #e5e1dc;
+  --color-stone: #cbc5bf;
+  --color-parchment: #ddd8d3;
+  --color-rose: #b07a71;
+  --color-rose-dark: #965f57;
+  --color-rose-soft: #e4ddd8;
+  --color-line: rgba(44, 44, 48, 0.09);
+  /* Mellis charcoal plate — aligns with card-dark family */
+  --color-footer: #1a1718;
+  --color-overlay: rgba(44, 44, 48, 0.5);
+  /* Quiet raised plate on soft gray */
+  --color-surface-raised: #ebe7e3;
+  /* Package / pricing near-black */
+  --color-card-dark: #171516;
+
+  --color-bg: var(--color-paper);
+  --color-surface: var(--color-paper);
+  --color-text: var(--color-ink);
+  --color-text-muted: var(--color-muted);
+  --color-accent: var(--color-rose);
+  --color-accent-strong: var(--color-rose-dark);
+  --color-sand: var(--color-cream);
+  --color-sage: var(--color-rose);
+  --color-sage-soft: var(--color-rose-soft);
+  --color-clay: var(--color-rose);
+
+  --font-script: 'Parisienne', cursive;
+  /* Soft optical serif for section questions & statements */
+  --font-display: 'Fraunces', 'Libre Baskerville', Georgia, serif;
+  --font-body: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2.5rem;
+  --space-xl: 4rem;
+  --space-2xl: 6rem;
+
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-pill: 0;
+
+  --shadow-card: 0 0 40px rgba(39, 37, 42, 0.05);
+  --ease-story: cubic-bezier(0.22, 1, 0.36, 1);
+  --container: min(1170px, 100% - 1.25rem);
+  --header-height: 4.25rem;
+  /* 0.65 + 2.85 + 0.65 padding/cta — safe-area added at use sites */
+  --mobile-book-bar-height: 4.15rem;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --container: min(1170px, 100% - 2.5rem);
+    --header-height: 5rem;
+  }
+}
+
+/* Staff desk dark mode — lights-off near-black (pink brand accents stay). */
+html[data-staff-theme='dark'] {
+  color-scheme: dark;
+  --color-ink: #f4f4f5;
+  --color-deep: #e4e4e7;
+  --color-muted: #a1a1aa;
+  --color-cream: #0b0b0d;
+  --color-paper: #141416;
+  --color-stone: #1c1c1f;
+  --color-parchment: #111113;
+  --color-rose: #c98980;
+  --color-rose-dark: #b07a71;
+  --color-rose-soft: rgba(201, 137, 128, 0.14);
+  --color-line: rgba(244, 244, 245, 0.12);
+  --color-footer: #09090b;
+  --color-overlay: rgba(0, 0, 0, 0.62);
+  --color-surface-raised: #1c1c1f;
+  --color-card-dark: #0b0b0d;
+  --shadow-card: 0 12px 36px rgba(0, 0, 0, 0.5);
+  --color-bg: var(--color-cream);
+  --color-surface: var(--color-paper);
+  --color-text: var(--color-ink);
+  --color-text-muted: var(--color-muted);
+  --color-accent: var(--color-rose);
+  --color-accent-strong: var(--color-rose-dark);
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+}
+
+html[data-staff-theme='dark'] body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+}
+
+html[data-staff-theme='light'] {
+  color-scheme: light;
+}

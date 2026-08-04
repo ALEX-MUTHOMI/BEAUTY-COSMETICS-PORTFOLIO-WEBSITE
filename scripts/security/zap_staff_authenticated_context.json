@@ -1,0 +1,38 @@
+{
+  "context": {
+    "name": "AestheticOS Staff Portal (authenticated passive)",
+    "description": "Inject Django sessionid + csrftoken for passive spidering of /api/staff/*. Replace SESSIONID_VALUE and CSRFTOKEN_VALUE per run. Local/staging scan profile only.",
+    "hosts": "localhost|127.0.0.1|host.docker.internal",
+    "sessionManagement": {
+      "method": "cookie",
+      "parameters": {
+        "sessionCookies": ["sessionid", "csrftoken"]
+      }
+    },
+    "authentication": {
+      "method": "manual",
+      "parameters": {
+        "sessionid": "SESSIONID_VALUE",
+        "csrftoken": "CSRFTOKEN_VALUE"
+      }
+    },
+    "users": [
+      {
+        "name": "staff",
+        "credentials": {
+          "sessionid": "SESSIONID_VALUE",
+          "csrftoken": "CSRFTOKEN_VALUE"
+        },
+        "enabled": true
+      }
+    ],
+    "urls": [
+      "http://localhost:8000/api/staff/auth/me/",
+      "http://localhost:8000/api/staff/bookings/schedule/",
+      "http://localhost:8000/api/staff/bookings/search/"
+    ]
+  },
+  "technology": {
+    "include": ["Django", "Python"]
+  }
+}

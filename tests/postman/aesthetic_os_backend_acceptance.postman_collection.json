@@ -1,0 +1,1313 @@
+{
+  "info": {
+    "_postman_id": "9cb79448-5447-4db1-9f9c-beautybackend",
+    "name": "AestheticOS Backend API Acceptance",
+    "description": "External-client API acceptance for AestheticOS backend. Uses fake/local providers only and asserts routing, CSRF, permissions, response shape, lifecycle, and security-negative behavior.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "function nextAllowedDate(offsetDays, allowedJsWeekdays) {",
+          "  const now = new Date();",
+          "  let candidate = new Date(now.getTime() + offsetDays * 24 * 60 * 60 * 1000);",
+          "  while (!allowedJsWeekdays.includes(candidate.getDay())) {",
+          "    candidate = new Date(candidate.getTime() + 24 * 60 * 60 * 1000);",
+          "  }",
+          "  return candidate.toISOString().slice(0, 10);",
+          "}",
+          "if (!pm.environment.get('run_id')) {",
+          "  const runId = String(Date.now());",
+          "  pm.environment.set('run_id', runId);",
+          "  const offsetSeed = parseInt(runId.slice(-8), 10) % 180;",
+          "  const normalDate = nextAllowedDate(45 + offsetSeed, [1, 4, 5, 6]);",
+          "  const packageDate = nextAllowedDate(60 + offsetSeed, [2, 3]);",
+          "  pm.environment.set('normal_date', normalDate);",
+          "  pm.environment.set('full_package_date', packageDate);",
+          "  pm.environment.set('normal_starts_at', normalDate + 'T09:00:00+03:00');",
+          "  pm.environment.set('hold_idempotency_key', 'newman-hold-' + runId);",
+          "  pm.environment.set('checkout_idempotency_key', 'newman-checkout-' + runId);",
+          "}",
+          "if (!pm.environment.get('staff_password')) {",
+          "  pm.environment.set('staff_password', ['LocalApiAcceptance', 'Passphrase!', '2026'].join(''));",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('response is never an unhandled 5xx', function () {",
+          "  pm.expect(pm.response.code, pm.info.requestName).to.be.below(500);",
+          "});",
+          "pm.test('response does not expose internal sensitive contract fields', function () {",
+          "  const body = pm.response.text().toLowerCase();",
+          "  ['ledger_id', 'checkout_session_id', 'provider_payload', 'raw_payload', 'token_hash', 'session_key', 'original_private_key', 'quarantine_key', 'storage_secret', 'traceback', '/app/'].forEach(function (needle) {",
+          "    pm.expect(body, needle + ' leaked in ' + pm.info.requestName).to.not.include(needle);",
+          "  });",
+          "});",
+          "pm.test('known local secrets are not echoed', function () {",
+          "  const body = pm.response.text();",
+          "  ['staff_password'].forEach(function (key) {",
+          "    const value = pm.environment.get(key);",
+          "    if (value) { pm.expect(body).to.not.include(value); }",
+          "  });",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "00 Health, CSRF, and Routing",
+      "item": [
+        {
+          "name": "CSRF Bootstrap",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('csrf bootstrap returns JSON and cookie', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.csrf_token).to.be.a('string').and.not.empty;",
+                  "  pm.environment.set('csrf_token', json.csrf_token);",
+                  "  const cookie = pm.cookies.get('csrftoken');",
+                  "  pm.expect(cookie || json.csrf_token).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/csrf/"
+          }
+        },
+        {
+          "name": "Health Root",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "pm.expect(pm.response.json()).to.eql({ status: 'ok' });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/health/"
+          }
+        },
+        {
+          "name": "API Health Alias",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const body = pm.response.json();",
+                  "pm.expect(body.status).to.eql('ok');",
+                  "pm.expect(body.checks.database).to.eql('ok');",
+                  "pm.expect(body.checks.redis).to.eql('ok');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/health-check/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 Legal and Public Catalog",
+      "item": [
+        {
+          "name": "Legal Documents List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.documents || json.results || json).to.exist;"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/legal/documents/"
+          }
+        },
+        {
+          "name": "Terms Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "pm.expect(pm.response.text().toLowerCase()).to.include('terms');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/legal/documents/terms_of_service/"
+          }
+        },
+        {
+          "name": "Services Catalog",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.services).to.be.an('array').and.not.empty;",
+                  "const service = json.services.find((candidate) => candidate.name === 'API Acceptance Braids') || json.services[0];",
+                  "pm.environment.set('service_public_id', service.id || service.public_id);",
+                  "pm.expect(JSON.stringify(json)).to.not.include('<');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/catalog/services/"
+          }
+        },
+        {
+          "name": "Packages Catalog",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.packages).to.be.an('array').and.not.empty;",
+                  "const pkg = json.packages.find((candidate) => candidate.name === 'API Acceptance Bridal Package') || json.packages[0];",
+                  "pm.environment.set('full_package_public_id', pkg.public_id || pkg.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/catalog/packages/"
+          }
+        },
+        {
+          "name": "Policy Acceptance Text",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.checkbox_text).to.be.a('string').and.not.empty;",
+                  "pm.environment.set('policy_checkbox_text', json.checkbox_text);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/policy-acceptance-text/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Booking Availability, Holds, and Checkout",
+      "item": [
+        {
+          "name": "Normal Service Availability",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const availability = pm.response.json().availability;",
+                  "pm.expect(availability).to.be.an('array').and.not.empty;",
+                  "const day = availability.find((candidate) => candidate.slots && candidate.slots.length) || availability[0];",
+                  "pm.expect(day.slots).to.be.an('array').and.not.empty;",
+                  "pm.environment.set('normal_starts_at', day.slots[0].starts_at);",
+                  "pm.environment.set('resource_public_id', day.slots[0].resource_public_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/availability/?selection_type=normal&service_public_id={{service_public_id}}&start_date={{normal_date}}&end_date={{normal_date}}"
+          }
+        },
+        {
+          "name": "Full Package Availability",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "pm.expect(pm.response.json().availability).to.be.an('array');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/availability/?selection_type=full_package&full_package_public_id={{full_package_public_id}}&resource_public_id={{resource_public_id}}&start_date={{full_package_date}}&end_date={{full_package_date}}"
+          }
+        },
+        {
+          "name": "Create Booking Hold",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(201);",
+                  "const booking = pm.response.json().booking;",
+                  "pm.expect(booking.booking_public_id).to.be.a('string');",
+                  "pm.expect(booking.status).to.eql('held');",
+                  "pm.environment.set('booking_public_id', booking.booking_public_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrf_token}}"
+              },
+              {
+                "key": "Cookie",
+                "value": "csrftoken={{csrf_token}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{csrf_referer}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"selection_type\": \"normal\",\n  \"service_public_id\": \"{{service_public_id}}\",\n  \"resource_public_id\": \"{{resource_public_id}}\",\n  \"starts_at\": \"{{normal_starts_at}}\",\n  \"idempotency_key\": \"{{hold_idempotency_key}}\",\n  \"customer\": {\n    \"full_name\": \"Newman Customer\",\n    \"email\": \"newman.customer@example.invalid\",\n    \"phone\": \"+254700000000\"\n  }\n}"
+            },
+            "url": "{{base_url}}/api/bookings/holds/"
+          }
+        },
+        {
+          "name": "Repeat Booking Hold Is Idempotent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(201);",
+                  "pm.expect(pm.response.json().booking.booking_public_id).to.eql(pm.environment.get('booking_public_id'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrf_token}}"
+              },
+              {
+                "key": "Cookie",
+                "value": "csrftoken={{csrf_token}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{csrf_referer}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"selection_type\": \"normal\",\n  \"service_public_id\": \"{{service_public_id}}\",\n  \"resource_public_id\": \"{{resource_public_id}}\",\n  \"starts_at\": \"{{normal_starts_at}}\",\n  \"idempotency_key\": \"{{hold_idempotency_key}}\",\n  \"customer\": {\n    \"full_name\": \"Newman Customer\",\n    \"email\": \"newman.customer@example.invalid\",\n    \"phone\": \"+254700000000\"\n  }\n}"
+            },
+            "url": "{{base_url}}/api/bookings/holds/"
+          }
+        },
+        {
+          "name": "Reject Client Price Tampering",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(400);",
+                  "pm.expect(pm.response.json().detail).to.be.a('string');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrf_token}}"
+              },
+              {
+                "key": "Cookie",
+                "value": "csrftoken={{csrf_token}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{csrf_referer}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"selection_type\": \"normal\",\n  \"service_public_id\": \"{{service_public_id}}\",\n  \"resource_public_id\": \"{{resource_public_id}}\",\n  \"starts_at\": \"{{normal_starts_at}}\",\n  \"idempotency_key\": \"tampered-{{run_id}}\",\n  \"amount\": \"1.00\",\n  \"customer\": {\n    \"full_name\": \"Newman Customer\",\n    \"email\": \"newman.customer@example.invalid\",\n    \"phone\": \"+254700000000\"\n  }\n}"
+            },
+            "url": "{{base_url}}/api/bookings/holds/"
+          }
+        },
+        {
+          "name": "Create Checkout For Held Booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(201);",
+                  "const checkout = pm.response.json().checkout;",
+                  "pm.expect(checkout.booking_public_id).to.eql(pm.environment.get('booking_public_id'));",
+                  "pm.expect(checkout.checkout_public_id).to.be.a('string');",
+                  "pm.environment.set('checkout_public_id', checkout.checkout_public_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrf_token}}"
+              },
+              {
+                "key": "Cookie",
+                "value": "csrftoken={{csrf_token}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{csrf_referer}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"booking_public_id\": \"{{booking_public_id}}\",\n  \"idempotency_key\": \"{{checkout_idempotency_key}}\",\n  \"policy_acceptance\": {\n    \"accepted\": true,\n    \"checkbox_text\": \"{{policy_checkbox_text}}\"\n  }\n}"
+            },
+            "url": "{{base_url}}/api/bookings/checkout/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Webhook, Billing Contract, and Customer Status",
+      "item": [
+        {
+          "name": "Seeded Fake Success Callback",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(202);",
+                  "pm.expect(pm.response.json().status).to.eql('accepted');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"CheckoutRequestID\": \"{{seeded_callback_request_id}}\",\n  \"MerchantRequestID\": \"{{seeded_merchant_request_id}}\",\n  \"ResultCode\": 0,\n  \"Amount\": \"2500.00\",\n  \"MpesaReceiptNumber\": \"QFAKEAPI001\"\n}"
+            },
+            "url": "{{base_url}}/api/checkout/mpesa/webhook/"
+          }
+        },
+        {
+          "name": "Duplicate Seeded Callback Is Idempotent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(202);",
+                  "pm.expect(pm.response.json().status).to.eql('accepted');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"CheckoutRequestID\": \"{{seeded_callback_request_id}}\",\n  \"MerchantRequestID\": \"{{seeded_merchant_request_id}}\",\n  \"ResultCode\": 0,\n  \"Amount\": \"2500.00\",\n  \"MpesaReceiptNumber\": \"QFAKEAPI001\"\n}"
+            },
+            "url": "{{base_url}}/api/checkout/mpesa/webhook/"
+          }
+        },
+        {
+          "name": "Unknown Callback Fails Closed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(202);",
+                  "pm.expect(pm.response.json().status).to.eql('accepted');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"CheckoutRequestID\": \"unknown-newman-{{run_id}}\",\n  \"MerchantRequestID\": \"unknown-merchant-newman\",\n  \"ResultCode\": 0,\n  \"Amount\": \"2500.00\",\n  \"MpesaReceiptNumber\": \"QFAKEUNKNOWN\"\n}"
+            },
+            "url": "{{base_url}}/api/checkout/mpesa/webhook/"
+          }
+        },
+        {
+          "name": "Confirmed Booking Status Is Safe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.booking_reference).to.eql(pm.environment.get('seeded_payment_booking_public_id'));",
+                  "pm.expect(['paid', 'payment_pending', 'confirming_payment']).to.include(json.payment_status);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/status/{{seeded_payment_booking_public_id}}/"
+          }
+        },
+        {
+          "name": "Held Booking Status Recovery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.booking_reference).to.eql(pm.environment.get('booking_public_id'));",
+                  "pm.expect(json.next_action).to.be.a('string');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/status/{{booking_public_id}}/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Staff Portal and Gallery",
+      "item": [
+        {
+          "name": "Staff Login Requires CSRF Cookie Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.display_name).to.be.a('string').and.not.empty;",
+                  "pm.expect(json.permissions).to.be.an('array');",
+                  "pm.expect(json.next).to.be.a('string');",
+                  "pm.expect(pm.response.text().toLowerCase()).to.not.include('password');",
+                  "const setCookieHeaders = pm.response.headers.all().filter((header) => header.key.toLowerCase() === 'set-cookie').map((header) => header.value).join('; ');",
+                  "const sessionMatch = setCookieHeaders.match(/sessionid=([^;]+)/);",
+                  "const cookieJarSession = pm.cookies.get('sessionid');",
+                  "pm.environment.set('sessionid', cookieJarSession || (sessionMatch ? sessionMatch[1] : ''));",
+                  "pm.expect(pm.environment.get('sessionid')).to.be.a('string').and.not.empty;"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrf_token}}"
+              },
+              {
+                "key": "Cookie",
+                "value": "csrftoken={{csrf_token}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{csrf_referer}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{staff_email}}\",\n  \"password\": \"{{staff_password}}\"\n}"
+            },
+            "url": "{{base_url}}/api/staff/auth/login/"
+          }
+        },
+        {
+          "name": "Staff Me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.display_name).to.be.a('string').and.not.empty;",
+                  "pm.expect(json.permissions).to.be.an('array');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "Cookie",
+                "value": "sessionid={{sessionid}}"
+              }
+            ],
+            "url": "{{base_url}}/api/staff/auth/me/"
+          }
+        },
+        {
+          "name": "Staff Daily Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "pm.expect(pm.response.json()).to.be.an('object');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "Cookie",
+                "value": "sessionid={{sessionid}}"
+              }
+            ],
+            "url": "{{base_url}}/api/staff/bookings/schedule/?date={{normal_date}}"
+          }
+        },
+        {
+          "name": "Staff Weekly Overview",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "pm.expect(pm.response.json()).to.be.an('object');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "Cookie",
+                "value": "sessionid={{sessionid}}"
+              }
+            ],
+            "url": "{{base_url}}/api/staff/bookings/week/?start_date={{normal_date}}"
+          }
+        },
+        {
+          "name": "Public Gallery Homepage",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "pm.expect(pm.response.json()).to.be.an('object');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "Cookie",
+                "value": "sessionid={{sessionid}}"
+              }
+            ],
+            "url": "{{base_url}}/api/gallery/public/homepage/"
+          }
+        },
+        {
+          "name": "Staff Gallery Categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "pm.expect(pm.response.json()).to.be.an('object');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "Cookie",
+                "value": "sessionid={{sessionid}}"
+              }
+            ],
+            "url": "{{base_url}}/api/staff/gallery/categories/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Security Negative and Abuse Checks",
+      "item": [
+        {
+          "name": "Missing CSRF Rejects Hold",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.environment.get('run_security_negative') === 'true') {",
+                  "  pm.response.to.have.status(403);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": "{{base_url}}/api/bookings/holds/"
+          }
+        },
+        {
+          "name": "Malformed Webhook Does Not 500",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.environment.get('run_security_negative') === 'true') {",
+                  "  pm.expect([400, 202]).to.include(pm.response.code);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Body\": {\n    \"stkCallback\": {\n      \"MerchantRequestID\": \"newman-redacted\",\n      \"CheckoutRequestID\": \"newman-redacted\",\n      \"ResultCode\": 1032,\n      \"ResultDesc\": \"Request cancelled by user\"\n    }\n  }\n}"
+            },
+            "url": "{{base_url}}/api/checkout/mpesa/webhook/"
+          }
+        },
+        {
+          "name": "OTP Request With Missing Turnstile Is Controlled",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.environment.get('run_security_negative') === 'true') {",
+                  "  pm.expect([400, 403, 429, 503]).to.include(pm.response.code);",
+                  "  pm.expect(pm.response.text().toLowerCase()).to.not.include('otp');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              },
+              {
+                "key": "X-CSRFToken",
+                "value": "{{csrf_token}}"
+              },
+              {
+                "key": "Cookie",
+                "value": "csrftoken={{csrf_token}}"
+              },
+              {
+                "key": "Referer",
+                "value": "{{csrf_referer}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone_number\": \"+254700000000\"\n}"
+            },
+            "url": "{{base_url}}/api/auth/request-otp/"
+          }
+        },
+        {
+          "name": "Unsafe Legal Route Is Generic 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.environment.get('run_security_negative') === 'true') {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.text().toLowerCase()).to.not.include('traceback');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/legal/documents/%3Cscript%3Ealert(1)%3C%2Fscript%3E/"
+          }
+        },
+        {
+          "name": "Controlled Status Polling Smoke",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.environment.get('run_controlled_concurrency') === 'true') {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/status/{{booking_public_id}}/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Calendar and Handoff",
+      "item": [
+        {
+          "name": "Marketing Package Handoff Resolve",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const selection = pm.response.json().selection;",
+                  "pm.expect(selection.slug).to.eql('classic-full-package');",
+                  "pm.expect(selection.selection_type).to.eql('full_package');",
+                  "pm.expect(selection.public_id).to.be.a('string').and.not.empty;",
+                  "pm.expect(JSON.stringify(pm.response.json())).to.not.include('policy_profile');",
+                  "pm.environment.set('marketing_package_public_id', selection.public_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/catalog/resolve-handoff/?type=package&plan=classic-full-package"
+          }
+        },
+        {
+          "name": "Marketing Package Calendar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const calendar = pm.response.json().calendar;",
+                  "pm.expect(calendar.layout).to.eql('package_pairs');",
+                  "pm.expect(calendar.days).to.be.an('array').with.lengthOf(8);",
+                  "calendar.days.forEach(function (day) {",
+                  "  pm.expect([1, 2]).to.include(day.weekday);",
+                  "});",
+                  "pm.expect(calendar.days.some(function (day) { return day.status !== 'closed'; })).to.be.true;",
+                  "pm.expect(JSON.stringify(calendar)).to.not.include('base_price');",
+                  "pm.environment.set('calendar_package_day', calendar.days[0].date);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/calendar/?selection_type=full_package&full_package_public_id={{marketing_package_public_id}}"
+          }
+        },
+        {
+          "name": "Marketing Package Day Availability",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const availability = pm.response.json().availability;",
+                  "pm.expect(availability).to.be.an('array');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/availability/?selection_type=full_package&full_package_public_id={{marketing_package_public_id}}&start_date={{calendar_package_day}}&end_date={{calendar_package_day}}"
+          }
+        },
+        {
+          "name": "Marketing Single Handoff Resolve",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const selection = pm.response.json().selection;",
+                  "pm.expect(selection.slug).to.eql('brow-shaping');",
+                  "pm.expect(selection.selection_type).to.eql('normal');",
+                  "pm.environment.set('marketing_service_public_id', selection.public_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/catalog/resolve-handoff/?type=single&category=waxing&treatment=brow-shaping"
+          }
+        },
+        {
+          "name": "Marketing Single Calendar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "const calendar = pm.response.json().calendar;",
+                  "pm.expect(calendar.layout).to.eql('singles');",
+                  "pm.expect(calendar.days).to.be.an('array').with.lengthOf(8);",
+                  "calendar.days.forEach(function (day) {",
+                  "  pm.expect([0, 3, 4, 5]).to.include(day.weekday);",
+                  "});",
+                  "pm.environment.set('calendar_single_day', calendar.days[0].date);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/calendar/?selection_type=normal&service_public_id={{marketing_service_public_id}}"
+          }
+        },
+        {
+          "name": "Marketing Single Day Availability",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(200);",
+                  "pm.expect(pm.response.json().availability).to.be.an('array');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/availability/?selection_type=normal&service_public_id={{marketing_service_public_id}}&start_date={{calendar_single_day}}&end_date={{calendar_single_day}}"
+          }
+        },
+        {
+          "name": "Handoff Rejects Path Traversal Plan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(400);",
+                  "pm.expect(pm.response.json().detail).to.eql('Selection unavailable.');",
+                  "pm.expect(pm.response.text().toLowerCase()).to.not.include('passwd');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/catalog/resolve-handoff/?type=package&plan=..%2F..%2Fetc%2Fpasswd"
+          }
+        },
+        {
+          "name": "Calendar Rejects Oversized Explicit Range",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.response.to.have.status(400);",
+                  "pm.expect(pm.response.json().detail).to.eql('Calendar unavailable.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Forwarded-Proto",
+                "value": "https"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/calendar/?selection_type=normal&service_public_id={{marketing_service_public_id}}&start_date=2030-01-01&end_date=2030-03-15"
+          }
+        }
+      ]
+    }
+  ]
+}

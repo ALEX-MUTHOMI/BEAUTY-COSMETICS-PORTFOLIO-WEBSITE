@@ -1,0 +1,36 @@
+# Windows host local-desk overrides.
+# - Live-mount the repo (`.:/app`) for hot reload.
+# - Mask host `.venv` (Scripts/) so it cannot shadow Linux Poetry.
+# CI must never load this file — runners use the image build context only.
+#
+# Local use (PowerShell):
+#   $env:COMPOSE_FILE = "docker-compose.yml;docker-compose.windows.yml"
+#   docker compose up -d --force-recreate web worker
+# Or add to local .env (not committed):
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.windows.yml
+
+volumes:
+  linux_venv_mask:
+    driver: local
+
+services:
+  web:
+    volumes:
+      - .:/app:rw
+      - linux_venv_mask:/app/.venv
+  worker:
+    volumes:
+      - .:/app:rw
+      - linux_venv_mask:/app/.venv
+  beat:
+    volumes:
+      - .:/app:rw
+      - linux_venv_mask:/app/.venv
+  notification-worker:
+    volumes:
+      - .:/app:rw
+      - linux_venv_mask:/app/.venv
+  gallery-worker:
+    volumes:
+      - .:/app:rw
+      - linux_venv_mask:/app/.venv

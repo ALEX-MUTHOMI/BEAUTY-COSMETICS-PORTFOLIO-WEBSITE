@@ -1,0 +1,17 @@
+{
+  "Body": {
+    "stkCallback": {
+      "MerchantRequestID": "merchant_SANITIZED_12345",
+      "CheckoutRequestID": "ws_CO_SANITIZED_12345",
+      "ResultCode": 0,
+      "ResultDesc": "The service request is processed successfully.",
+      "CallbackMetadata": {
+        "Item": [
+          {"Name": "Amount", "Value": 9999.0},
+          {"Name": "MpesaReceiptNumber", "Value": "QSANITIZED999"},
+          {"Name": "PhoneNumber", "Value": 254700000000}
+        ]
+      }
+    }
+  }
+}

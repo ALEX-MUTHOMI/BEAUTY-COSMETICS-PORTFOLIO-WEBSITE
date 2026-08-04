@@ -1,0 +1,193 @@
+networks:
+  aesthetic_os_staging_net:
+    driver: bridge
+
+volumes:
+  staging_postgres_data:
+    driver: local
+  staging_caddy_data:
+    driver: local
+  staging_caddy_config:
+    driver: local
+  staging_receipt_artifacts:
+    driver: local
+  staging_pytest_cache:
+    driver: local
+
+services:
+  reverse-proxy:
+    image: caddy:2-alpine
+    container_name: aesthetic_os_staging_reverse_proxy
+    restart: unless-stopped
+    env_file:
+      - path: .env.staging.example
+        required: true
+      - path: .env.staging
+        required: false
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile.staging:/etc/caddy/Caddyfile:ro
+      - staging_caddy_data:/data
+      - staging_caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+    networks:
+      - aesthetic_os_staging_net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/lib/caddy
+
+  db:
+    image: postgres:16-alpine
+    container_name: aesthetic_os_staging_postgres_db
+    command:
+      [
+        "postgres",
+        "-c",
+        "log_min_error_statement=fatal",
+        "-c",
+        "log_error_verbosity=terse",
+      ]
+    restart: unless-stopped
+    env_file:
+      - path: .env.staging.example
+        required: true
+      - path: .env.staging
+        required: false
+    volumes:
+      - staging_postgres_data:/var/lib/postgresql/data:rw
+    expose:
+      - "5432"
+    networks:
+      - aesthetic_os_staging_net
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  redis:
+    image: redis:7-alpine
+    container_name: aesthetic_os_staging_redis
+    command: sh -c 'redis-server --requirepass "$$REDIS_PASSWORD"'
+    restart: unless-stopped
+    env_file:
+      - path: .env.staging.example
+        required: true
+      - path: .env.staging
+        required: false
+    expose:
+      - "6379"
+    networks:
+      - aesthetic_os_staging_net
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $${REDIS_PASSWORD} ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: aesthetic_os_web_app_staging:latest
+    container_name: aesthetic_os_staging_web_app
+    command: >
+      sh -c 'export REDIS_URL="redis://:$$REDIS_PASSWORD@redis:6379/0";
+      export CELERY_BROKER_URL="$$REDIS_URL";
+      export CELERY_RESULT_BACKEND="$$REDIS_URL";
+      gunicorn --bind 0.0.0.0:8000 --workers 3 core.wsgi:application'
+    restart: unless-stopped
+    env_file:
+      - path: .env.staging.example
+        required: true
+      - path: .env.staging
+        required: false
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POETRY_VIRTUALENVS_CREATE: "false"
+      PII_HASH_PEPPER: ${PII_HASH_PEPPER}
+      PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY}
+      PATH: /app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+    volumes:
+      - staging_receipt_artifacts:/app/var/receipt-artifacts:rw
+      - staging_pytest_cache:/app/var/pytest-cache:rw
+    expose:
+      - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aesthetic_os_staging_net
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python - <<'PY'\nimport urllib.request\nurllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=5).read()\nPY",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  worker:
+    image: aesthetic_os_web_app_staging:latest
+    container_name: aesthetic_os_staging_celery_worker
+    command: >
+      sh -c 'export REDIS_URL="redis://:$$REDIS_PASSWORD@redis:6379/0";
+      export CELERY_BROKER_URL="$$REDIS_URL";
+      export CELERY_RESULT_BACKEND="$$REDIS_URL";
+      celery -A core worker --loglevel=info'
+    restart: unless-stopped
+    env_file:
+      - path: .env.staging.example
+        required: true
+      - path: .env.staging
+        required: false
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POETRY_VIRTUALENVS_CREATE: "false"
+      PII_HASH_PEPPER: ${PII_HASH_PEPPER}
+      PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY}
+      PATH: /app/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+    volumes:
+      - staging_receipt_artifacts:/app/var/receipt-artifacts:rw
+      - staging_pytest_cache:/app/var/pytest-cache:rw
+    depends_on:
+      web:
+        condition: service_healthy
+    networks:
+      - aesthetic_os_staging_net
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A core inspect ping -d celery@$$HOSTNAME --timeout=5 | grep -q OK",
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3

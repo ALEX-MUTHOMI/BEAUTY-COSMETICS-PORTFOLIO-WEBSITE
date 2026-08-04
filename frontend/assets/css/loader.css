@@ -1,0 +1,5 @@
+/* Boot skeleton gate — shell stays visible; overlay owns first paint */
+
+html.is-loading {
+  overflow: hidden;
+}

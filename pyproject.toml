@@ -1,0 +1,100 @@
+[project]
+name = "aesthetic-os"
+version = "0.1.0"
+description = "AestheticOS — spa & beauty booking operating system"
+authors = [
+    {name = "ALEX-MUTHOMI",email = "alexmuthomi64@outlook.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django (>=6.0.7,<7.0.0)",
+    "djangorestframework (>=3.17.1,<4.0.0)",
+    "psycopg2-binary (>=2.9.12,<3.0.0)",
+    "celery (>=5.4.0,<6.0.0)",
+    "redis (>=5.2.0,<6.0.0)",
+    "gunicorn (>=23.0.0,<24.0.0)",
+    "argon2-cffi (>=23.1.0,<24.0.0)",
+    "django-cors-headers (>=4.3.1,<5.0.0)",
+    "pillow (>=12.2.0,<13.0.0)",
+    "uritemplate (>=4.2.0,<5.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "toxiproxy-python (>=0.1.1,<0.2.0)",
+    "pytest (>=9.0.3,<10.0.0)",
+    "pytest-django (>=4.8.0,<5.0.0)",
+    "black (>=26.3.1,<27.0.0)",
+    "isort (>=6.0.0,<7.0.0)",
+    "ruff (>=0.14.0,<0.15.0)",
+    "flake8 (>=7.0.0,<8.0.0)",
+    "bandit (>=1.7.0,<2.0.0)",
+    "pre-commit (>=4.6.0,<5.0.0)"
+]
+
+[tool.poetry]
+package-mode = false
+
+[tool.ruff]
+line-length = 120
+extend-exclude = [
+    ".cache",
+    ".git",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".local",
+    ".venv",
+    "var",
+    "*/migrations/*",
+    "venv",
+    "venvvenv",
+    "frontend/.nuxt",
+    "frontend/.output",
+    "frontend/node_modules",
+]
+
+[tool.black]
+line-length = 120
+target-version = ["py313"]
+extend-exclude = '''
+(
+  ^/\.local/
+  | ^/\.cache/
+  | ^/\.git/
+  | ^/\.pytest_cache/
+  | ^/\.ruff_cache/
+  | ^/\.venv/
+  | ^/var/
+  | ^/venv/
+  | ^/venvvenv/
+  | /migrations/
+  | ^/frontend/\.nuxt/
+  | ^/frontend/\.output/
+  | ^/frontend/node_modules/
+)
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip_glob = [
+    ".cache/*",
+    ".git/*",
+    ".local/*",
+    ".pytest_cache/*",
+    ".ruff_cache/*",
+    ".venv/*",
+    "var/*",
+    "*/migrations/*",
+    "venv/*",
+    "venvvenv/*",
+    "frontend/.nuxt/*",
+    "frontend/.output/*",
+    "frontend/node_modules/*",
+]

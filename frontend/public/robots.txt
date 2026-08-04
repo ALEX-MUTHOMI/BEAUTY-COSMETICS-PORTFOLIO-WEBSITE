@@ -1,0 +1,10 @@
+# Shee Aesthetics — public crawlers
+User-agent: *
+Allow: /
+
+# Staff desk is unlisted (2A). Obscurity is not the gate — Django session + RBAC is.
+# Keep /staff out of search indexes; do not link it from public chrome.
+Disallow: /staff
+Disallow: /staff/
+
+Sitemap: https://sheeaesthetics.co.ke/sitemap.xml

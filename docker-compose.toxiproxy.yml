@@ -1,0 +1,49 @@
+services:
+  # ============================================================================
+  # CHAOS ENGINEERING PROXY (Shopify Toxiproxy)
+  # ============================================================================
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.9.0
+    container_name: aesthetic_os_toxiproxy
+    # Expose administrative control port and proxy entrypoints to the internal network
+    ports:
+      - "127.0.0.1:8474:8474"   # Admin Management API (HTTP)
+    networks:
+      - aesthetic_os_isolated_net
+    security_opt:
+      - no-new-privileges:true
+    # Ensure dependencies are healthy before running proxy
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+    restart: unless-stopped
+
+  # ============================================================================
+  # SERVICE OVERRIDES: Route Database & Redis traffic through the proxy
+  # ============================================================================
+  web:
+    environment:
+      # Redirect Django DB traffic to the Toxiproxy proxy entrypoint (port 54320)
+      - POSTGRES_HOST=toxiproxy
+      - POSTGRES_PORT=54320
+      # Redirect Django Redis cache/queue traffic to Toxiproxy proxy entrypoint (port 63790)
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@toxiproxy:63790/0
+    depends_on:
+      - toxiproxy
+
+  worker:
+    environment:
+      # Redirect Celery worker DB traffic to the Toxiproxy proxy entrypoint (port 54320)
+      - POSTGRES_HOST=toxiproxy
+      - POSTGRES_PORT=54320
+      # Redirect Celery worker Redis traffic to Toxiproxy proxy entrypoint (port 63790)
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-aesthetic_os_redis_secure_password}@toxiproxy:63790/0
+    depends_on:
+      - toxiproxy

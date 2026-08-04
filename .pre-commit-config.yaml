@@ -1,0 +1,70 @@
+# ==============================================================================
+# Gate 1 — Local shift-left hooks (stop burning CI on lint)
+# ==============================================================================
+# Install once:  .\scripts\ci\install_git_hooks.ps1
+# Manual mirror: .\scripts\ci\local_ci_mirror.ps1
+#
+# pre-commit  → format + ruff + secrets + oxlint (fast)
+# pre-push    → local_ci_mirror.ps1 (exact CI lint ladder + vue-tsc)
+# CI Actions  → Vitest, build, pytest partitions (heavy lifting only)
+#
+# Green CI / green mirror certifies the *tree*, not production readiness.
+# ==============================================================================
+
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ["--maxkb=5120"]
+
+  # Poetry-pinned tools — same versions as CI (avoid mirror-repo drift).
+  - repo: local
+    hooks:
+      - id: poetry-black
+        name: black (poetry)
+        entry: poetry run black
+        language: system
+        types: [python]
+
+      - id: poetry-isort
+        name: isort (poetry)
+        entry: poetry run isort
+        language: system
+        types: [python]
+
+      - id: poetry-ruff
+        name: ruff (poetry)
+        entry: poetry run ruff
+        language: system
+        types: [python]
+        args: [check, --fix]
+
+      - id: local-secret-hygiene-scan
+        name: Secret hygiene edge scanner
+        entry: poetry run python scripts/ci/secret_hygiene.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: frontend-oxlint
+        name: frontend oxlint (CI mirror)
+        entry: npm --prefix frontend run lint:oxlint
+        language: system
+        files: ^frontend/
+        pass_filenames: false
+
+      # Pre-push: full Gate 1 ladder matching Actions lint-security + FE type-check.
+      - id: local-ci-mirror-pre-push
+        name: local CI mirror (pre-push)
+        entry: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/local_ci_mirror.ps1
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

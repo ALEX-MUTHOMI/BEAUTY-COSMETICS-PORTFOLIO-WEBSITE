@@ -1,0 +1,665 @@
+name: Secure Enterprise CI Pipeline
+
+# CICD-SEC-5: fail-closed default. GITHUB_TOKEN is read-only unless a job
+# explicitly elevates it. No job in this pipeline currently needs write access.
+permissions:
+  contents: read
+
+# Cancel superseded pushes on the same ref — fail-fast cushion for money-path CI.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - development
+  pull_request:
+    branches:
+      - staging
+      - main
+  # Full fortress (load / ZAP / chaos / latency) — not on every PR (cost + runtime).
+  schedule:
+    - cron: "0 2 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      run_full_fortress:
+        description: "Run full fortress (load/ZAP/chaos/latency/cass-cert)"
+        required: false
+        default: "false"
+      run_daraja_sandbox:
+        description: "Run opt-in Daraja sandbox contract tests"
+        required: false
+        default: "false"
+
+env:
+  POSTGRES_DB: aesthetic_os_ci
+  POSTGRES_USER: aesthetic_os_ci
+  POSTGRES_PASSWORD: aesthetic_os_ci_password
+  REDIS_PASSWORD: aesthetic_os_ci_redis_password
+  SECRET_KEY: django-insecure-ci-placeholder-key-32-chars
+  DEBUG: "False"
+  SECURE_SSL_REDIRECT: "False"
+  CHECKOUT_MPESA_PROVIDER: fake
+  PAYMENT_PROVIDER_MODE: fake
+  EMAIL_PROVIDER: fake
+  RECEIPT_PDF_ARTIFACT_DIR: /app/var/receipt-artifacts
+  PYTEST_CACHE_DIR: /app/var/pytest-cache
+  RECEIPT_PDF_TIMEOUT_SECONDS: "5"
+  RECEIPT_PDF_MAX_BYTES: "250000"
+  EMAIL_NOTIFICATION_MAX_ATTEMPTS: "3"
+  EMAIL_DAILY_SOFT_LIMIT: "80"
+  EMAIL_DAILY_HARD_LIMIT: "100"
+  EMAIL_QUOTA_MODE: queue_only
+  EMAIL_BACKUP_PROVIDER_ENABLED: "false"
+  EMAIL_BACKLOG_HIGH_WATERMARK: "100"
+  DARAJA_ENV: sandbox
+  DARAJA_CONSUMER_KEY: ""
+  DARAJA_CONSUMER_SECRET: ""
+  DARAJA_SHORTCODE: ""
+  DARAJA_PASSKEY: ""
+  DARAJA_CALLBACK_URL: ""
+  DARAJA_ACCOUNT_REFERENCE: ""
+  DARAJA_TRANSACTION_DESC: ""
+  DARAJA_TEST_MSISDN: ""
+
+# GitHub-hosted Linux runners (ubuntu-latest).
+# Self-hosted fallback: docs/ops/SELF_HOSTED_RUNNER.md.
+defaults:
+  run:
+    shell: bash
+
+# =============================================================================
+# Two lanes (promotion gate vs full fortress):
+#
+# PROMOTION GATE (push / pull_request) — keep under ~60–90m serial:
+#   T0 validate → lint-security
+#   T1 django-smoke
+#   T2 domain units + frontend-test
+#   T3 payment-security
+#   T4 checkout-billing-integration → receipt-pipeline
+#   T5 newman-acceptance
+#   T8 docker-build
+#
+# FULL FORTRESS (schedule weeknights 02:00 UTC, or workflow_dispatch
+#   run_full_fortress=true) — adds:
+#   zap-passive-newman, payment-load, notification-backlog, latency,
+#   chaos, cass-certification
+#   Opt-in: daraja-sandbox-contract
+# =============================================================================
+
+jobs:
+  # --- T0 -------------------------------------------------------------------
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Validate Poetry files
+        run: |
+          poetry check --lock
+
+  lint-security:
+    name: lint-security
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: validate
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install project dev dependencies
+        run: poetry install --with dev --no-root
+
+      - name: Dependency vulnerability audit (CICD-SEC-3)
+        run: |
+          pip install pip-audit
+          poetry self add poetry-plugin-export
+          poetry export --without-hashes --with dev -o /tmp/requirements-audit.txt
+          pip-audit -r /tmp/requirements-audit.txt --desc
+
+      - name: Run Poetry lint and security gates
+        run: |
+          poetry run black --check .
+          poetry run isort --check-only .
+          poetry run ruff check .
+          poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          poetry run bandit -r . -x tests,.venv,.cache,frontend/node_modules -ll -ii
+          poetry run python scripts/ci/secret_hygiene.py
+
+  # --- T1 -------------------------------------------------------------------
+  django-smoke:
+    name: django-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: lint-security
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+
+      - name: Build Docker services with plain output
+        run: docker compose --progress plain build web frontend
+
+      - name: Start Docker services
+        run: docker compose up -d
+
+      - name: Wait for Docker health
+        run: |
+          for i in {1..30}; do
+            WEB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' aesthetic_os_web_app 2>/dev/null || echo starting)
+            DB_STATUS=$(docker inspect --format='{{.State.Health.Status}}' aesthetic_os_postgres_db 2>/dev/null || echo starting)
+            REDIS_STATUS=$(docker inspect --format='{{.State.Health.Status}}' aesthetic_os_redis 2>/dev/null || echo starting)
+            if [ "$WEB_STATUS" = healthy ] && [ "$DB_STATUS" = healthy ] && [ "$REDIS_STATUS" = healthy ]; then
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose ps
+          exit 1
+
+      - name: Django checks and migrate smoke
+        run: |
+          docker compose exec -T web poetry run python manage.py makemigrations --check --dry-run
+          docker compose exec -T web poetry run python manage.py check
+          bash scripts/ci/bootstrap_web_db.sh
+
+      - name: Docker logs on failure
+        if: failure()
+        run: docker compose logs --tail=300 web worker db redis frontend || true
+
+      - name: Stop Docker services
+        if: always()
+        run: bash scripts/ci/compose_reset.sh
+
+  # --- T2 parallel ----------------------------------------------------------
+  bookings-unit:
+    name: bookings-unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: django-smoke
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - run: docker compose up -d --build
+      - name: Wait for Docker health
+        run: bash scripts/ci/wait_for_compose_health.sh
+      - name: Run bookings domain partition
+        run: bash scripts/ci/run_pytest_partition.sh bookings.xml bookings/tests
+      - name: Upload bookings gate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bookings-unit-reports
+          path: reports/ci/
+          if-no-files-found: warn
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
+  billing-unit:
+    name: billing-unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: django-smoke
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - run: docker compose up -d --build
+      - run: docker compose exec -T web poetry run pytest billing/tests
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
+  checkout-unit:
+    name: checkout-unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: django-smoke
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - run: docker compose up -d --build
+      - run: docker compose exec -T web poetry run pytest checkout/tests
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
+  tests-api-unit:
+    name: tests-api-unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: django-smoke
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - run: docker compose up -d --build
+      - name: Wait for Docker health
+        run: bash scripts/ci/wait_for_compose_health.sh
+      - name: Run API and unit partitions
+        run: bash scripts/ci/run_pytest_partition.sh api-unit.xml tests/api tests/unit
+      - name: Upload API unit gate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-api-unit-reports
+          path: reports/ci/
+          if-no-files-found: warn
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
+  cass-calendar-service:
+    name: cass-calendar-service
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: django-smoke
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - run: docker compose up -d --build
+      - name: Wait for Docker health
+        run: bash scripts/ci/wait_for_compose_health.sh
+      - name: Run CASS calendar service gates
+        run: >
+          bash scripts/ci/run_pytest_partition.sh cass-calendar.xml
+          tests/api/test_marketing_catalog_contract.py
+          tests/security/test_cass_policy_option_a.py
+          tests/security/test_calendar_cache_red_team.py
+          tests/security/test_calendar_policy_red_team.py
+          tests/security/test_calendar_service_failure_red_team.py
+          tests/security/test_booking_calendar_red_team.py
+          bookings/tests/test_calendar_policy.py
+          bookings/tests/test_service_day_rules.py
+          bookings/tests/test_booking_calendar_api.py
+          tests/latency/test_calendar_service_latency.py
+      - name: Upload CASS calendar gate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cass-calendar-service-reports
+          path: reports/ci/
+          if-no-files-found: warn
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
+  frontend-test:
+    name: frontend-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: django-smoke
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: |
+          bash scripts/ci/compose_reset.sh
+          docker compose --profile test down --volumes --remove-orphans || true
+      - run: docker compose --profile test up -d --build frontend-test
+      - name: npm dependency vulnerability audit (CICD-SEC-3)
+        run: docker compose exec -T frontend-test npm audit --audit-level=high
+      - run: docker compose exec -T frontend-test npm run lint:oxlint
+      - run: docker compose exec -T frontend-test npm run test
+      - run: docker compose exec -T frontend-test npm run type-check
+      - run: docker compose exec -T frontend-test npm run build
+      - if: failure()
+        run: docker compose logs --tail=300 frontend-test || true
+      - if: always()
+        run: |
+          docker compose --profile test down --volumes --remove-orphans || true
+          bash scripts/ci/compose_reset.sh
+
+  # --- T3 money-path security (before heavy integration / load) -------------
+  payment-security:
+    name: payment-security
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs:
+      - bookings-unit
+      - billing-unit
+      - checkout-unit
+      - tests-api-unit
+      - cass-calendar-service
+      - frontend-test
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - run: docker compose up -d --build
+      - run: docker compose exec -T web poetry run pytest tests/security
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
+  # --- T4 business lifecycle ------------------------------------------------
+  checkout-billing-integration:
+    name: checkout-billing-integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs:
+      - billing-unit
+      - checkout-unit
+      - payment-security
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - run: docker compose up -d --build
+      - run: docker compose exec -T web poetry run pytest tests/integration
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
+  receipt-pipeline:
+    name: receipt-pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: checkout-billing-integration
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - run: docker compose up -d --build
+      - name: Run deterministic booking/billing/receipt pipeline
+        run: |
+          docker compose exec -T web poetry run pytest \
+            tests/integration/test_booking_receipt_email_contract.py \
+            tests/integration/test_booking_checkout_billing_receipt_pipeline.py \
+            bookings/tests/test_notification_delivery_ci_parity.py \
+            bookings/tests/test_receipt_artifact_ci_storage.py \
+            bookings/tests/test_fake_provider_pdf_attachment_contract.py \
+            bookings/tests/test_booking_status_endpoint.py \
+            bookings/tests/test_booking_status_endpoint_security.py \
+            bookings/tests/test_email_quota_fallback.py \
+            -vv
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
+  # --- T5 contract + OWASP ZAP passive --------------------------------------
+  newman-acceptance:
+    name: newman-acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs:
+      - cass-calendar-service
+      - bookings-unit
+      - payment-security
+      - frontend-test
+      - receipt-pipeline
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - run: docker compose up -d --build
+      - name: Wait for Docker health
+        run: bash scripts/ci/wait_for_compose_health.sh
+      - name: Migrate live web DB before Newman seeds
+        run: bash scripts/ci/bootstrap_web_db.sh
+      - name: Run Newman acceptance (folder 06 Calendar and Handoff)
+        run: bash scripts/ci/run_newman_docker.sh
+      - name: Upload Newman report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-acceptance-reports
+          path: reports/ci/newman/
+          if-no-files-found: warn
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
+  zap-passive-newman:
+    name: zap-passive-newman
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
+    needs: newman-acceptance
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - run: docker compose up -d --build
+      - name: Wait for Docker health
+        run: bash scripts/ci/wait_for_compose_health.sh
+      - name: Migrate and seed live web DB for Newman-through-ZAP
+        run: |
+          bash scripts/ci/bootstrap_web_db.sh
+          docker compose exec -T web poetry run python manage.py seed_api_acceptance_data
+          docker compose exec -T web poetry run python manage.py seed_marketing_catalog
+      - name: Run ZAP passive Newman gate
+        run: pwsh -NoProfile -File scripts/ci/run_security_passive_gate.ps1 -Mode newman
+      - name: Upload ZAP passive reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-passive-newman-reports
+          path: reports/security/zap/
+          if-no-files-found: warn
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
+  # --- T6 perf / load (after money-path security) ---------------------------
+  payment-load-resilience:
+    name: payment-load-resilience
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
+    needs:
+      - payment-security
+      - receipt-pipeline
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - run: docker compose up -d --build
+      - name: Run bounded fake-provider payment load tests
+        run: |
+          docker compose exec -T web poetry run pytest tests/load \
+            -m "payment_load" \
+            --ignore=tests/load/test_notification_backlog_pressure.py \
+            -vv --durations=25
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
+  notification-backlog-load:
+    name: notification-backlog-load
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
+    needs:
+      - payment-security
+      - receipt-pipeline
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - run: docker compose up -d --build
+      - name: Run isolated 1000-notification backlog proof
+        run: docker compose exec -T web poetry run pytest tests/load/test_notification_backlog_pressure.py -vv --durations=25
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
+  latency:
+    name: latency
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
+    needs:
+      - payment-security
+      - receipt-pipeline
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - run: docker compose up -d --build
+      - run: docker compose exec -T web poetry run pytest tests/latency -m "latency" -vv
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
+  # --- T7 chaos -------------------------------------------------------------
+  chaos:
+    name: chaos
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
+    needs:
+      - payment-load-resilience
+      - notification-backlog-load
+      - latency
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: |
+          bash scripts/ci/compose_reset.sh
+          docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml down --volumes --remove-orphans || true
+      - name: Run Toxiproxy chaos gate (fake provider only)
+        run: bash scripts/ci/run_chaos_toxiproxy.sh
+      - if: failure()
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml logs --tail=300 web worker db redis toxiproxy || true
+      - if: always()
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml down --volumes --remove-orphans || true
+          bash scripts/ci/compose_reset.sh
+
+  # --- T8 certify + image ---------------------------------------------------
+  cass-certification:
+    name: cass-certification
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
+    needs:
+      - bookings-unit
+      - cass-calendar-service
+      - newman-acceptance
+      - zap-passive-newman
+      - latency
+      - payment-security
+      - frontend-test
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Emit CASS certification report
+        run: |
+          mkdir -p reports/ci
+          python scripts/ci/generate_gate_report.py cass-certification passed \
+            "bookings-unit partition green" \
+            "cass-calendar-service gates green" \
+            "newman acceptance green" \
+            "latency partition includes calendar p95 gate" \
+            "payment-security partition includes calendar red-team" \
+            "frontend-backend-trust and privacy-redaction gates green" \
+            "frontend-test lint/type/build green"
+      - name: Upload CASS certification report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cass-certification-report
+          path: reports/ci/cass-certification.md
+
+  docker-build:
+    name: docker-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Promotion lane: do not wait on fortress-only jobs (skipped on PR/push).
+    needs:
+      - newman-acceptance
+      - frontend-test
+      - receipt-pipeline
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - run: docker build -t aesthetic-os-prod:latest .
+      - run: docker compose config -q
+
+  # Opt-in only — real Daraja HTTP callback; never on push.
+  daraja-sandbox-contract:
+    name: daraja-sandbox-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'workflow_dispatch' && inputs.run_daraja_sandbox == 'true'
+    needs: docker-build
+    # CICD-SEC-5: isolates real third-party (Daraja sandbox) secrets behind a
+    # dedicated GitHub Environment with required-reviewer human approval gate.
+    environment: daraja-sandbox
+    env:
+      DARAJA_ENV: sandbox
+      DARAJA_CONSUMER_KEY: ${{ secrets.DARAJA_CONSUMER_KEY }}
+      DARAJA_CONSUMER_SECRET: ${{ secrets.DARAJA_CONSUMER_SECRET }}
+      DARAJA_SHORTCODE: ${{ secrets.DARAJA_SHORTCODE }}
+      DARAJA_PASSKEY: ${{ secrets.DARAJA_PASSKEY }}
+      DARAJA_CALLBACK_URL: ${{ secrets.DARAJA_CALLBACK_URL }}
+      DARAJA_ACCOUNT_REFERENCE: ${{ secrets.DARAJA_ACCOUNT_REFERENCE }}
+      DARAJA_TRANSACTION_DESC: ${{ secrets.DARAJA_TRANSACTION_DESC }}
+      DARAJA_TEST_MSISDN: ${{ secrets.DARAJA_TEST_MSISDN }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - run: docker compose up -d --build web worker db redis
+      - name: Run opt-in Daraja sandbox contract
+        run: docker compose exec -T web poetry run pytest tests/external -m "daraja_sandbox" --run-external -vv
+      - if: failure()
+        run: docker compose logs --tail=300 web worker db redis || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh

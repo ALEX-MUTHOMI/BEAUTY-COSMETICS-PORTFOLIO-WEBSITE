@@ -1,0 +1,7 @@
+{
+  "Body": {
+    "unexpected": {
+      "CheckoutRequestID": "ws_CO_MALFORMED"
+    }
+  }
+}
