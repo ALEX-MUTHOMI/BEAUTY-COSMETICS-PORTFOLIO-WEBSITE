@@ -131,5 +131,7 @@ Promotion resume: runner Idle → green PR #19 → merge staging → main.
 | `frontend-test` | `npm audit --audit-level=high` (tar/postcss/undici/…) — fixed via `npm audit fix` |
 | `bookings-unit` | Hybrid package anchors ≠ test 09:00; dynamic day cap 16 ≠ legacy max=5; stale gallery copy |
 | `cass-calendar-service` | Resolve allowlist failed on public `turnaround_minutes` (policy_profile already scrubbed) |
-| Fix train | Scrub resolve payload; package helper `future_tuesday` → 07:00; dynamic day-cap test; gallery contract; lockfile |
-| PR | [#19](https://github.com/ALEX-MUTHOMI/aesthetic-os/pull/19) remains the single promotion vehicle |
+| `payment-security` | catalog_resolve contract expected 15/min vs runtime 60/min — aligned |
+| Fix train | Scrub resolve payload; package helper `future_tuesday` → 07:00; dynamic day-cap test; gallery contract; lockfile; throttle contract |
+| Green promotion gate | [run 30920864047](https://github.com/ALEX-MUTHOMI/aesthetic-os/actions/runs/30920864047) success |
+| PR #19 | **MERGED** to `staging` at `7e37990` |
