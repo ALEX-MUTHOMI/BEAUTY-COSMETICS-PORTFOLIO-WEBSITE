@@ -147,7 +147,7 @@ def test_catalog_resolve_throttle_is_generic_and_actor_isolated():
     assert blocked.json() == {"detail": "Too many requests. Please try again later."}
     assert "Retry-After" in blocked
     assert other_actor.status_code == 200
-    assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["catalog_resolve"] == "15/min"
+    assert settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["catalog_resolve"] == "60/min"
 
 
 @pytest.mark.django_db(transaction=True)

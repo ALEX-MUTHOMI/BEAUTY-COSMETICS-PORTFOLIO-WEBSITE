@@ -10,7 +10,7 @@ The Nuxt `/book` flow is a **thin client** over CASS. Booking policy (weekdays, 
 
 | Step | Endpoint | Backend throttle |
 |------|----------|------------------|
-| Resolve | `GET /api/bookings/catalog/resolve-handoff/` | `catalog_resolve` 15/min |
+| Resolve | `GET /api/bookings/catalog/resolve-handoff/` | `catalog_resolve` 60/min |
 | Calendar | `GET /api/bookings/calendar/` | `availability` 30/min |
 | Day slots | `GET /api/bookings/availability/` | `availability` 30/min (shared) |
 | Hold | `POST /api/bookings/holds/` | `booking_hold` 5/min + Turnstile under abuse |

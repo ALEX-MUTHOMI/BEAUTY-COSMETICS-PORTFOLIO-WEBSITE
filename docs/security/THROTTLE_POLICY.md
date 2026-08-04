@@ -33,7 +33,7 @@ operational decision; limits must not be increased merely to satisfy tests.
 
 | File | Change type | Scope/rate | Runtime or test-only | Route affected | Risk | Status |
 | --- | --- | --- | --- | --- | --- |
-| `core/settings.py` | default policy | `catalog_resolve=15/min` | Runtime | handoff/catalog resolve | slug enumeration | active |
+| `core/settings.py` | default policy | `catalog_resolve=60/min` | Runtime | handoff/catalog resolve | slug enumeration | active |
 | `core/settings.py` | default policy | `booking_status=30/min` | Runtime | public booking status | polling/enumeration | unchanged |
 | `core/settings.py` | default policy | `booking_hold=5/min`, `booking_checkout=8/min` | Runtime | public writes | capacity/checkout pressure | active |
 | `core/settings.py` | default policy | checkout create `10/min`, detail `60/min`, STK `3/min` | Runtime | customer checkout | payment pressure | active |
