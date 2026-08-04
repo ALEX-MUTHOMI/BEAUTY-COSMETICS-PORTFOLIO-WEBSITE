@@ -653,6 +653,7 @@ jobs:
             fi
             if [[ "${api_ok}" -eq 1 && "${fe_ok}" -eq 1 ]]; then
               echo "api + frontend edge ready"
+              docker compose exec -T web poetry run python manage.py migrate --noinput
               exit 0
             fi
             sleep 3
