@@ -148,3 +148,27 @@ def test_filter_anchors_drops_occupied_morning_block():
     kept = filter_candidates_to_free_intervals(anchors, free)
     starts = [row[0].strftime("%H:%M") for row in kept]
     assert starts == ["10:00", "13:00"]
+
+
+def test_stepped_anchors_never_exceed_max_clients_or_overlap():
+    """Invariant: greedy anchors ≤ max_clients and non-overlapping service cores."""
+    max_clients = 3
+    duration_minutes = 180
+    anchors = generate_duration_stepped_anchors(
+        _day_at(7),
+        _day_at(19),
+        duration_minutes=duration_minutes,
+        buffer_before_minutes=0,
+        buffer_after_minutes=0,
+        max_clients=max_clients,
+    )
+    assert len(anchors) <= max_clients
+    for earlier, later in zip(anchors, anchors[1:], strict=False):
+        assert earlier[1] <= later[0]
+
+
+def test_yield_cap_is_floor_division_closed_form():
+    """Concept 19 SKIP: capacity is closed-form, not DP."""
+    assert compute_dynamic_max_clients(720, 60, 0) == 12
+    assert compute_dynamic_max_clients(100, 60, 0) == 1
+    assert compute_dynamic_max_clients(59, 60, 0) == 0

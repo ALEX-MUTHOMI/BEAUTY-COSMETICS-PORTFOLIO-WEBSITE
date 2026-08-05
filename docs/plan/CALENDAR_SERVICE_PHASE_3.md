@@ -580,10 +580,11 @@ def test_calendar_default_range_under_budget():
 - [x] All 23 marketing slugs pass contract test (resolve + calendar)
 - [x] Newman folder green in Docker CI
 - [x] Calendar p95 < 2s under latency test
+- [x] Efficiency contract: [`BACKEND_DSA_EFFICIENCY.md`](./BACKEND_DSA_EFFICIENCY.md) (batched slots, query/latency gates, capacity invalidation)
 - [ ] Turbo Pass + ZAP passive green (re-run after venv repair; initial run failed on broken `.venv`)
 - [ ] `/book?type=package&plan=classic-full-package` loads Tue/Wed weeks < 2s on local Docker
 - [ ] No booking policy logic in `frontend/src/booking/` beyond response validation
-- [ ] This document updated with implementation status
+- [x] This document updated with implementation status (efficiency slice; FE/ZAP items remain)
 
 ---
 

@@ -41,6 +41,11 @@ gh workflow run "Deploy Staging" --ref development
 - [ ] Daraja sandbox STK + webhook (Environment `daraja-sandbox`,
       `run_daraja_sandbox=true`)
 - [ ] Celery Beat running; booking expiry + reminder workers healthy
+- [ ] **DSA admission control:** Beat jobs `sweep-stale-booking-holds` and
+      `sweep-expired-checkout-sessions` registered (`CELERY_BEAT_SCHEDULE`) and
+      the `beat` compose service is up — holds/checkouts must expire so calendar
+      capacity frees ([`BACKEND_DSA_EFFICIENCY.md`](../plan/BACKEND_DSA_EFFICIENCY.md))
+- [ ] Redis token-bucket / circuit breaker reachable (availability + hold storms)
 - [ ] Receipt email to a real inbox (or approved fake→sink with audited trail)
 - [ ] Staff desk: login, booking list, reauth → contact reveal, password reset
 - [ ] Deep `/api/health-check/` shows DB + Redis healthy under TLS

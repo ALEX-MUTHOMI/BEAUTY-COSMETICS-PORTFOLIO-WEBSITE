@@ -22,12 +22,32 @@ from bookings.domain.calendar_policy import CalendarPolicy
 from bookings.domain.day_policy import BUSINESS_TZ
 from bookings.domain.selection import BookableSelection
 from bookings.models import BOOKING_BLOCKING_STATUSES, Booking
-from bookings.services.availability import AvailabilityService, _as_local_date
+from bookings.services.availability import MAX_AVAILABILITY_RANGE_DAYS, AvailabilityService, _as_local_date
 from bookings.services.calendar_cache import CalendarCache
 from bookings.services.calendar_selection import GENERIC_CALENDAR_ERROR, resolve_calendar_selection
+from bookings.services.query_observability import count_db_queries
 from bookings.services.service_day_rules import offered_weekdays_for_selection
 
 logger = logging.getLogger("bookings.calendar")
+
+
+def _partition_dates_for_availability(
+    dates: list[date], *, max_span_days: int = MAX_AVAILABILITY_RANGE_DAYS
+) -> list[list[date]]:
+    """Batch dates so each availability call spans at most *max_span_days*."""
+    if not dates:
+        return []
+    ordered = sorted(dates)
+    batches: list[list[date]] = []
+    current = [ordered[0]]
+    for day in ordered[1:]:
+        if (day - current[0]).days + 1 <= max_span_days:
+            current.append(day)
+        else:
+            batches.append(current)
+            current = [day]
+    batches.append(current)
+    return batches
 
 
 def _count_blocking_clients_bulk(dates: list[date]) -> dict[date, int]:
@@ -118,6 +138,30 @@ def _slots_by_date(
     return {row["date"]: row["slots"] for row in availability}
 
 
+def _slots_for_dates(
+    *,
+    selection: BookableSelection,
+    dates: list[date],
+    resource_id,
+    request_context,
+) -> dict[str, list]:
+    """Fetch slots for many days with O(batches) availability calls, not O(days)."""
+    wanted = {day.isoformat() for day in dates}
+    slots_by_date: dict[str, list] = {}
+    for batch in _partition_dates_for_availability(dates):
+        fetched = _slots_by_date(
+            selection=selection,
+            slot_start=batch[0],
+            slot_end=batch[-1],
+            resource_id=resource_id,
+            request_context=request_context,
+        )
+        for key, slots in fetched.items():
+            if key in wanted:
+                slots_by_date[key] = slots
+    return slots_by_date
+
+
 def _selection_api_payload(selection: BookableSelection) -> dict:
     return {
         "type": selection.selection_type,
@@ -188,79 +232,80 @@ class BookingCalendarService:
                     "days_count": len(cached.get("days", [])),
                     "status_histogram": CalendarCache.status_histogram(cached.get("days", [])),
                     "duration_ms": duration_ms,
+                    "query_count": 0,
                     "cache_hit": True,
+                    "availability_batches": 0,
                 },
             )
             return cached
 
-        try:
-            booked_by_date = _count_blocking_clients_bulk(offered_dates)
-        except Exception:
-            raise ValidationError(GENERIC_CALENDAR_ERROR) from None
+        with count_db_queries() as queries:
+            try:
+                booked_by_date = _count_blocking_clients_bulk(offered_dates)
+            except Exception:
+                raise ValidationError(GENERIC_CALENDAR_ERROR) from None
 
-        dates_needing_slots: list[date] = []
-        policy_by_date: dict[date, dict] = {}
-        for current in offered_dates:
-            day_policy = CalendarPolicy.for_date(selection=selection, local_date=current)
-            if not day_policy.offered:
-                continue
-            policy_data = day_policy.classification_payload()
-            policy_by_date[current] = policy_data
-            booked = booked_by_date.get(current, 0)
-            if booked < policy_data["max_clients"] and policy_data["max_clients"] > 0:
-                dates_needing_slots.append(current)
+            dates_needing_slots: list[date] = []
+            policy_by_date: dict[date, dict] = {}
+            for current in offered_dates:
+                day_policy = CalendarPolicy.for_date(selection=selection, local_date=current)
+                if not day_policy.offered:
+                    continue
+                policy_data = day_policy.classification_payload()
+                policy_by_date[current] = policy_data
+                booked = booked_by_date.get(current, 0)
+                if booked < policy_data["max_clients"] and policy_data["max_clients"] > 0:
+                    dates_needing_slots.append(current)
 
-        slots_by_date: dict[str, list] = {}
-        for current in dates_needing_slots:
-            slots_by_date.update(
-                _slots_by_date(
-                    selection=selection,
-                    slot_start=current,
-                    slot_end=current,
-                    resource_id=resource_id,
-                    request_context=request_context,
+            availability_batches = len(_partition_dates_for_availability(dates_needing_slots))
+            slots_by_date = _slots_for_dates(
+                selection=selection,
+                dates=dates_needing_slots,
+                resource_id=resource_id,
+                request_context=request_context,
+            )
+
+            days = []
+            for current in offered_dates:
+                policy_data = policy_by_date.get(current)
+                if not policy_data:
+                    continue
+                booked = booked_by_date.get(current, 0)
+                slot_count = len(slots_by_date.get(current.isoformat(), []))
+                classified = classify_calendar_day(
+                    selection_type=selection.selection_type,
+                    day_type=policy_data["day_type"],
+                    normal_bookings_allowed=policy_data["normal_bookings_allowed"],
+                    full_package_allowed=policy_data["full_package_allowed"],
+                    max_clients=policy_data["max_clients"],
+                    booked_clients=booked,
+                    slot_count=slot_count,
                 )
-            )
+                days.append(
+                    {
+                        "date": current.isoformat(),
+                        "weekday": current.weekday(),
+                        "day_type": policy_data["day_type"],
+                        **classified,
+                    }
+                )
 
-        days = []
-        for current in offered_dates:
-            policy_data = policy_by_date.get(current)
-            if not policy_data:
-                continue
-            booked = booked_by_date.get(current, 0)
-            slot_count = len(slots_by_date.get(current.isoformat(), []))
-            classified = classify_calendar_day(
-                selection_type=selection.selection_type,
-                day_type=policy_data["day_type"],
-                normal_bookings_allowed=policy_data["normal_bookings_allowed"],
-                full_package_allowed=policy_data["full_package_allowed"],
-                max_clients=policy_data["max_clients"],
-                booked_clients=booked,
-                slot_count=slot_count,
-            )
-            days.append(
-                {
-                    "date": current.isoformat(),
-                    "weekday": current.weekday(),
-                    "day_type": policy_data["day_type"],
-                    **classified,
-                }
-            )
+            if not days:
+                raise ValidationError(GENERIC_CALENDAR_ERROR)
 
-        if not days:
-            raise ValidationError(GENERIC_CALENDAR_ERROR)
+            range_start = days[0]["date"]
+            range_end = days[-1]["date"]
+            payload = {
+                "timezone": CALENDAR_TIMEZONE,
+                "layout": CALENDAR_LAYOUT.get(selection.calendar_layout_key, "singles"),
+                "range": {"start": range_start, "end": range_end},
+                "selection": _selection_api_payload(selection),
+                "days": days,
+                "weeks": group_days_into_weeks(days),
+            }
+            CalendarCache.set_payload(cache_key, payload, redis_client=redis_client)
+            query_count = queries["n"]
 
-        range_start = days[0]["date"]
-        range_end = days[-1]["date"]
-        payload = {
-            "timezone": CALENDAR_TIMEZONE,
-            "layout": CALENDAR_LAYOUT.get(selection.calendar_layout_key, "singles"),
-            "range": {"start": range_start, "end": range_end},
-            "selection": _selection_api_payload(selection),
-            "days": days,
-            "weeks": group_days_into_weeks(days),
-        }
-        CalendarCache.set_payload(cache_key, payload, redis_client=redis_client)
         duration_ms = int((time.perf_counter() - started) * 1000)
         logger.info(
             "calendar.build",
@@ -269,7 +314,9 @@ class BookingCalendarService:
                 "days_count": len(days),
                 "status_histogram": CalendarCache.status_histogram(days),
                 "duration_ms": duration_ms,
+                "query_count": query_count,
                 "cache_hit": False,
+                "availability_batches": availability_batches,
             },
         )
         return payload

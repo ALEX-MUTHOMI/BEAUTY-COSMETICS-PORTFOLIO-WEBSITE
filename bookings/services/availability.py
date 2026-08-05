@@ -1,5 +1,6 @@
 import logging
 from datetime import date, datetime, time, timedelta
+from time import perf_counter
 from zoneinfo import ZoneInfo
 
 from django.core.exceptions import ValidationError
@@ -23,6 +24,7 @@ from bookings.models import (
 )
 from bookings.services.bundles import get_full_package_summary, validate_service_bundle
 from bookings.services.day_policy import default_policy_for_date
+from bookings.services.query_observability import count_db_queries
 
 BUSINESS_TZ = ZoneInfo("Africa/Nairobi")
 MAX_AVAILABILITY_RANGE_DAYS = 14
@@ -220,55 +222,58 @@ class AvailabilityService:
         range_days = (end_day - start_day).days + 1
         if range_days > MAX_AVAILABILITY_RANGE_DAYS:
             raise ValidationError("Date range is too large.")
+        started = perf_counter()
         circuit_mode = _safe_increment_counter(request_context)
-        resources = cls._get_resources(resource_id)
-        policy = BookingPolicy.objects.order_by("-created_at").first() or BookingPolicy()
-        query_start_local, _ = _local_day_bounds(start_day)
-        _, query_end_local = _local_day_bounds(end_day)
-        query_start_utc = query_start_local.astimezone(ZoneInfo("UTC"))
-        query_end_utc = query_end_local.astimezone(ZoneInfo("UTC"))
-        resource_ids = [resource.id for resource in resources]
-        business_hours = cls._business_hours_by_resource(resource_ids)
-        bookings = cls._blocking_bookings(resource_ids, query_start_utc, query_end_utc)
-        blackouts = cls._blackouts(resource_ids, query_start_utc, query_end_utc)
-        day_policies = {row.weekday: row for row in BookingDayPolicy.objects.filter(is_active=True)}
-        service_like = type(
-            "SelectionService",
-            (),
-            {
-                "id": summary.full_package.public_id if summary.full_package else summary.items[0].service.id,
-                "duration_minutes": summary.total_duration_minutes,
-                "buffer_before_minutes": summary.buffer_before_minutes,
-                "buffer_after_minutes": summary.buffer_after_minutes,
-            },
-        )()
-        results = []
-        for offset in range(range_days):
-            day = start_day + timedelta(days=offset)
-            day_policy = day_policies.get(day.weekday()) or built_in_policy_for_weekday(day.weekday())
-            allowed = (
-                summary.selection_type == "normal"
-                and day_policy.normal_bookings_allowed
-                or summary.selection_type == "full_package"
-                and day_policy.full_package_allowed
-            )
-            day_slots = []
-            if allowed:
-                for resource in resources:
-                    day_slots.extend(
-                        cls._slots_for_resource_day(
-                            service_like,
-                            resource,
-                            day,
-                            business_hours.get((resource.id, day.weekday())),
-                            bookings,
-                            blackouts,
-                            policy,
-                            selection_type=summary.selection_type,
-                            day_policy=day_policy,
+        with count_db_queries() as queries:
+            resources = cls._get_resources(resource_id)
+            policy = BookingPolicy.objects.order_by("-created_at").first() or BookingPolicy()
+            query_start_local, _ = _local_day_bounds(start_day)
+            _, query_end_local = _local_day_bounds(end_day)
+            query_start_utc = query_start_local.astimezone(ZoneInfo("UTC"))
+            query_end_utc = query_end_local.astimezone(ZoneInfo("UTC"))
+            resource_ids = [resource.id for resource in resources]
+            business_hours = cls._business_hours_by_resource(resource_ids)
+            bookings = cls._blocking_bookings(resource_ids, query_start_utc, query_end_utc)
+            blackouts = cls._blackouts(resource_ids, query_start_utc, query_end_utc)
+            day_policies = {row.weekday: row for row in BookingDayPolicy.objects.filter(is_active=True)}
+            service_like = type(
+                "SelectionService",
+                (),
+                {
+                    "id": summary.full_package.public_id if summary.full_package else summary.items[0].service.id,
+                    "duration_minutes": summary.total_duration_minutes,
+                    "buffer_before_minutes": summary.buffer_before_minutes,
+                    "buffer_after_minutes": summary.buffer_after_minutes,
+                },
+            )()
+            results = []
+            for offset in range(range_days):
+                day = start_day + timedelta(days=offset)
+                day_policy = day_policies.get(day.weekday()) or built_in_policy_for_weekday(day.weekday())
+                allowed = (
+                    summary.selection_type == "normal"
+                    and day_policy.normal_bookings_allowed
+                    or summary.selection_type == "full_package"
+                    and day_policy.full_package_allowed
+                )
+                day_slots = []
+                if allowed:
+                    for resource in resources:
+                        day_slots.extend(
+                            cls._slots_for_resource_day(
+                                service_like,
+                                resource,
+                                day,
+                                business_hours.get((resource.id, day.weekday())),
+                                bookings,
+                                blackouts,
+                                policy,
+                                selection_type=summary.selection_type,
+                                day_policy=day_policy,
+                            )
                         )
-                    )
-            results.append({"date": day.isoformat(), "timezone": "Africa/Nairobi", "slots": day_slots})
+                results.append({"date": day.isoformat(), "timezone": "Africa/Nairobi", "slots": day_slots})
+            query_count = queries["n"]
         logger.info(
             "booking.availability.selection_generated",
             extra={
@@ -276,6 +281,8 @@ class AvailabilityService:
                 "date_range_days": range_days,
                 "result_slot_count": sum(len(day["slots"]) for day in results),
                 "circuit_breaker_mode": circuit_mode,
+                "duration_ms": int((perf_counter() - started) * 1000),
+                "query_count": query_count,
             },
         )
         return results
@@ -302,43 +309,46 @@ class AvailabilityService:
         if range_days > MAX_AVAILABILITY_RANGE_DAYS:
             raise ValidationError("Date range is too large.")
 
+        started = perf_counter()
         circuit_mode = _safe_increment_counter(request_context)
-        service = cls._get_service(service_id)
-        resources = cls._get_resources(resource_id)
-        policy = BookingPolicy.objects.order_by("-created_at").first() or BookingPolicy()
+        with count_db_queries() as queries:
+            service = cls._get_service(service_id)
+            resources = cls._get_resources(resource_id)
+            policy = BookingPolicy.objects.order_by("-created_at").first() or BookingPolicy()
 
-        query_start_local, _ = _local_day_bounds(start_day)
-        _, query_end_local = _local_day_bounds(end_day)
-        query_start_utc = query_start_local.astimezone(ZoneInfo("UTC"))
-        query_end_utc = query_end_local.astimezone(ZoneInfo("UTC"))
+            query_start_local, _ = _local_day_bounds(start_day)
+            _, query_end_local = _local_day_bounds(end_day)
+            query_start_utc = query_start_local.astimezone(ZoneInfo("UTC"))
+            query_end_utc = query_end_local.astimezone(ZoneInfo("UTC"))
 
-        resource_ids = [resource.id for resource in resources]
-        business_hours = cls._business_hours_by_resource(resource_ids)
-        bookings = cls._blocking_bookings(resource_ids, query_start_utc, query_end_utc)
-        blackouts = cls._blackouts(resource_ids, query_start_utc, query_end_utc)
+            resource_ids = [resource.id for resource in resources]
+            business_hours = cls._business_hours_by_resource(resource_ids)
+            bookings = cls._blocking_bookings(resource_ids, query_start_utc, query_end_utc)
+            blackouts = cls._blackouts(resource_ids, query_start_utc, query_end_utc)
 
-        results = []
-        day_policies = {row.weekday: row for row in BookingDayPolicy.objects.filter(is_active=True)}
-        for offset in range(range_days):
-            day = start_day + timedelta(days=offset)
-            day_policy = day_policies.get(day.weekday()) or built_in_policy_for_weekday(day.weekday())
-            day_slots = []
-            if not (booking_type == "normal" and day.weekday() == BusinessHours.Weekday.SUNDAY):
-                for resource in resources:
-                    day_slots.extend(
-                        cls._slots_for_resource_day(
-                            service,
-                            resource,
-                            day,
-                            business_hours.get((resource.id, day.weekday())),
-                            bookings,
-                            blackouts,
-                            policy,
-                            selection_type="normal" if booking_type == "normal" else booking_type,
-                            day_policy=day_policy,
+            results = []
+            day_policies = {row.weekday: row for row in BookingDayPolicy.objects.filter(is_active=True)}
+            for offset in range(range_days):
+                day = start_day + timedelta(days=offset)
+                day_policy = day_policies.get(day.weekday()) or built_in_policy_for_weekday(day.weekday())
+                day_slots = []
+                if not (booking_type == "normal" and day.weekday() == BusinessHours.Weekday.SUNDAY):
+                    for resource in resources:
+                        day_slots.extend(
+                            cls._slots_for_resource_day(
+                                service,
+                                resource,
+                                day,
+                                business_hours.get((resource.id, day.weekday())),
+                                bookings,
+                                blackouts,
+                                policy,
+                                selection_type="normal" if booking_type == "normal" else booking_type,
+                                day_policy=day_policy,
+                            )
                         )
-                    )
-            results.append({"date": day.isoformat(), "timezone": "Africa/Nairobi", "slots": day_slots})
+                results.append({"date": day.isoformat(), "timezone": "Africa/Nairobi", "slots": day_slots})
+            query_count = queries["n"]
 
         logger.info(
             "booking.availability.generated",
@@ -348,6 +358,8 @@ class AvailabilityService:
                 "date_range_days": range_days,
                 "result_slot_count": sum(len(day["slots"]) for day in results),
                 "circuit_breaker_mode": circuit_mode,
+                "duration_ms": int((perf_counter() - started) * 1000),
+                "query_count": query_count,
             },
         )
         return results

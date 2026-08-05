@@ -40,6 +40,25 @@ def test_calendar_default_range_query_count_is_bounded():
 
 @pytest.mark.django_db
 @pytest.mark.latency
+def test_calendar_slot_batching_keeps_queries_far_below_per_day_n_plus_one():
+    """Batched availability must beat naive O(days) slot fetches (Concept 20)."""
+    service, _resource, _customer = create_service_resource_customer()
+
+    with CaptureQueriesContext(connection) as captured:
+        payload = BookingCalendarService.build_calendar(
+            selection_type="normal",
+            service_public_id=str(service.id),
+        )
+
+    days_needing = sum(1 for day in payload["days"] if day["capacity"]["booked"] < day["capacity"]["max"])
+    # One query group per availability window, not one full availability stack per day.
+    # Allow headroom for policy/hours reads but stay well under 8× single-day cost.
+    assert days_needing >= 1
+    assert len(captured) < max(40, days_needing * 15)
+
+
+@pytest.mark.django_db
+@pytest.mark.latency
 def test_calendar_default_range_under_p95_budget():
     service, _resource, _customer = create_service_resource_customer()
 

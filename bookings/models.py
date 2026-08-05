@@ -706,6 +706,8 @@ class Booking(AuditMixin):
             models.Index(fields=["resource", "starts_at"], name="bookings_resource_start_idx"),
             models.Index(fields=["resource", "starts_at", "ends_at"], name="bookings_resource_range_idx"),
             models.Index(fields=["status"], name="bookings_status_idx"),
+            # Bulk calendar capacity GROUP BY local_booking_date + status filter
+            # (see docs/plan/BACKEND_DSA_EFFICIENCY.md Concept 12).
             models.Index(fields=["local_booking_date", "status"], name="bookings_local_date_status_idx"),
             models.Index(
                 fields=["booking_type", "local_booking_date", "status"], name="bookings_type_local_status_idx"
