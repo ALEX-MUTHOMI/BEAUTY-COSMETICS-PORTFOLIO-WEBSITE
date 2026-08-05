@@ -223,7 +223,7 @@ jobs:
         run: bash scripts/ci/run_pytest_partition.sh bookings.xml bookings/tests
       - name: Upload bookings gate report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bookings-unit-reports
           path: reports/ci/
@@ -283,7 +283,7 @@ jobs:
         run: bash scripts/ci/run_pytest_partition.sh api-unit.xml tests/api tests/unit
       - name: Upload API unit gate report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tests-api-unit-reports
           path: reports/ci/
@@ -322,7 +322,7 @@ jobs:
           tests/latency/test_calendar_service_latency.py
       - name: Upload CASS calendar gate report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cass-calendar-service-reports
           path: reports/ci/
@@ -454,7 +454,7 @@ jobs:
         run: bash scripts/ci/run_newman_docker.sh
       - name: Upload Newman report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: newman-acceptance-reports
           path: reports/ci/newman/
@@ -506,7 +506,7 @@ jobs:
         run: pwsh -NoProfile -File scripts/ci/run_security_passive_gate.ps1 -Mode all-passive
       - name: Upload ZAP passive reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: zap-passive-surface-reports
           path: reports/security/zap/
@@ -648,7 +648,7 @@ jobs:
             "frontend-backend-trust and privacy-redaction gates green" \
             "frontend-test lint/type/build green"
       - name: Upload CASS certification report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cass-certification-report
           path: reports/ci/cass-certification.md
@@ -710,7 +710,7 @@ jobs:
         run: npx playwright test --project=chromium
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-e2e-playwright
           path: frontend/playwright-report/
@@ -775,7 +775,7 @@ jobs:
           } > reports/ci/image-digest.txt
           echo "Published ${DIGEST}"
       - name: Upload image digest artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: image-digest
           path: reports/ci/image-digest.txt
@@ -878,7 +878,7 @@ jobs:
           print("wrote reports/ci/coverage-map.md")
           PY
       - name: Upload coverage map
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ci-coverage-map
           path: reports/ci/coverage-map.md
