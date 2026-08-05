@@ -3,13 +3,13 @@
 # than MAX_AGE_DAYS (default 7). Used before staging/production promote.
 #
 # A green push/PR (or workflow_dispatch without fortress) must NOT satisfy this
-# gate — we require schedule, or a dispatch whose jobs include cass-certification.
+# gate — we require schedule, or a dispatch whose jobs include fortress-gate.
 set -euo pipefail
 
 REPO="${GITHUB_REPOSITORY:-${1:-}}"
 MAX_AGE_DAYS="${FORTRESS_MAX_AGE_DAYS:-7}"
 WORKFLOW_NAME="${FORTRESS_WORKFLOW_NAME:-Secure Enterprise CI Pipeline}"
-FORTRESS_JOB_MARKER="${FORTRESS_JOB_MARKER:-cass-certification}"
+FORTRESS_JOB_MARKER="${FORTRESS_JOB_MARKER:-fortress-gate}"
 
 if [[ -z "${REPO}" ]]; then
   echo "GITHUB_REPOSITORY or repo arg required (owner/name)"
@@ -52,9 +52,13 @@ from datetime import datetime, timezone, timedelta
 path = sys.argv[1]
 data = json.load(open(path, encoding="utf-8"))
 max_age = timedelta(days=int(os.environ.get("FORTRESS_MAX_AGE_DAYS", "7")))
-marker = os.environ.get("FORTRESS_JOB_MARKER", "cass-certification")
+marker = os.environ.get("FORTRESS_JOB_MARKER", "fortress-gate")
 repo = os.environ["REPO"]
 now = datetime.now(timezone.utc)
+# Accept legacy cass-certification until schedules emit fortress-gate.
+markers = [marker]
+if marker == "fortress-gate" and "cass-certification" not in markers:
+    markers.append("cass-certification")
 
 def has_fortress_job(run_id: int) -> bool:
     raw = subprocess.check_output(
@@ -73,8 +77,11 @@ def has_fortress_job(run_id: int) -> bool:
     jobs = json.loads(raw).get("jobs") or []
     for job in jobs:
         name = (job.get("name") or "").lower()
-        if marker.lower() in name and job.get("conclusion") == "success":
-            return True
+        if job.get("conclusion") != "success":
+            continue
+        for m in markers:
+            if m.lower() in name:
+                return True
     return False
 
 candidates = []
@@ -98,12 +105,12 @@ for created, run in candidates:
     if event == "schedule" or (event == "workflow_dispatch" and has_fortress_job(run_id)):
         chosen = (created, run)
         break
-    print(f"skip run {run_id} ({event}): no successful {marker} job")
+    print(f"skip run {run_id} ({event}): no successful {'/'.join(markers)} job")
 
 if chosen is None:
     print(
         "No successful fortress run found (schedule or dispatch with "
-        f"{marker}). Re-run Secure Enterprise with run_full_fortress=true.",
+        f"{'/'.join(markers)}). Re-run Secure Enterprise with run_full_fortress=true.",
         file=sys.stderr,
     )
     sys.exit(1)

@@ -11,9 +11,12 @@ It succeeds only when every promotion-lane job succeeded:
 `frontend-test`, `payment-security`, `checkout-billing-integration`,
 `receipt-pipeline`, `newman-acceptance`, `frontend-e2e`, `docker-build`.
 
-Fortress-only jobs (`zap-passive-newman`, load, latency, chaos,
-`cass-certification`) and `daraja-sandbox-contract` are **not** required for
-everyday merges.
+Fortress-only jobs (`zap-passive-surface` / `platform-latency` / load / chaos /
+`cass-certification` / `fortress-gate`) and `daraja-sandbox-contract` are
+**not** required for everyday merges. Prod promote requires a fresh
+**`fortress-gate`** (see [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)).
+
+On green **schedule**, expected skip set = `{daraja-sandbox-contract}` only.
 
 ## GitHub settings (enabled 2026-08-04)
 

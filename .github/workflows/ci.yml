@@ -76,24 +76,32 @@ defaults:
     shell: bash
 
 # =============================================================================
-# Two lanes (promotion gate vs full fortress):
+# Two lanes (promotion vs fortress) + Daraja opt-in:
 #
-# PROMOTION GATE (push / pull_request) — keep under ~60–90m serial:
-#   T0 validate → lint-security
-#   T1 django-smoke
-#   T2 domain units + frontend-test
-#   T3 payment-security
-#   T4 checkout-billing-integration → receipt-pipeline
-#   T5 newman-acceptance
-#   T5b frontend-e2e (Playwright chromium)
-#   T8 docker-build (+ GHCR digest)
+# PROMOTION (push / PR / also on schedule) — merge confidence:
+#   P0 validate → lint-security
+#   P1 django-smoke
+#   P2 domain units + frontend-test (FE lint/unit/type/build)
+#   P3 payment-security (BE abuse/authz — does NOT need frontend-test)
+#   P4 checkout-billing-integration → receipt-pipeline
+#   P5 newman-acceptance + frontend-e2e
+#   P6 docker-build (+ GHCR digest)
 #   promotion-gate aggregator (required branch-protection check)
 #
-# FULL FORTRESS (schedule weeknights 02:00 UTC, or workflow_dispatch
-#   run_full_fortress=true) — adds:
-#   zap-passive-newman, payment-load, notification-backlog, latency,
-#   chaos, cass-certification
-#   Opt-in: daraja-sandbox-contract
+# FORTRESS (schedule weeknights 02:00 UTC, or run_full_fortress=true):
+#   Surfaces (coverage ≠ DAG wire position):
+#     platform-latency  → gallery/staff/calendar/booking/receipt/Kenya p95
+#     payment-load      → fake-provider payment storms
+#     notification-backlog → email backlog pressure
+#     zap-passive-surface → OpenAPI + Newman + FE edge public paths
+#     chaos             → Toxiproxy DB/Redis (fake provider only)
+#     cass-certification → CASS sign-off bundle
+#     fortress-gate     → aggregator; release freshness marker
+#   On a green schedule the ONLY intentional skip is daraja-sandbox-contract.
+#   Grey fortress after a red promo job is a GitHub needs-cascade, not a
+#   disabled schedule.
+#
+# DARAJA (opt-in only): workflow_dispatch + run_daraja_sandbox=true
 # =============================================================================
 
 jobs:
@@ -349,18 +357,19 @@ jobs:
           docker compose --profile test down --volumes --remove-orphans || true
           bash scripts/ci/compose_reset.sh
 
-  # --- T3 money-path security (before heavy integration / load) -------------
+  # --- P3 money-path security (before heavy integration / load) -------------
+  # Backend-only needs: a red frontend-test must not cascade-skip fortress soak.
   payment-security:
     name: payment-security
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs:
+      - django-smoke
       - bookings-unit
       - billing-unit
       - checkout-unit
       - tests-api-unit
       - cass-calendar-service
-      - frontend-test
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
@@ -455,10 +464,11 @@ jobs:
       - if: always()
         run: bash scripts/ci/compose_reset.sh
 
+  # Job key kept for needs: stability; display name shows app-wide surface.
   zap-passive-newman:
-    name: zap-passive-newman
+    name: zap-passive-surface
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     if: >-
       github.event_name == 'schedule' ||
       (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
@@ -469,25 +479,40 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build
-      - name: Wait for Docker health
-        run: bash scripts/ci/wait_for_compose_health.sh
+      - name: Build API + frontend edge for passive surface scan
+        run: docker compose up -d --build db redis web worker frontend frontend-edge
+      - name: Wait for API + frontend edge
+        run: |
+          for i in $(seq 1 90); do
+            api_ok=0
+            fe_ok=0
+            if curl -fsS "http://127.0.0.1:8000/api/health-check/" >/dev/null; then api_ok=1; fi
+            if curl -fsS "http://127.0.0.1:3000/" >/dev/null; then fe_ok=1; fi
+            if [[ "${api_ok}" -eq 1 && "${fe_ok}" -eq 1 ]]; then
+              echo "api + frontend edge ready for ZAP"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "ZAP stack not ready"
+          docker compose logs --tail=200 db redis web frontend frontend-edge || true
+          exit 1
       - name: Migrate and seed live web DB for Newman-through-ZAP
         run: |
           bash scripts/ci/bootstrap_web_db.sh
           docker compose exec -T web poetry run python manage.py seed_api_acceptance_data
           docker compose exec -T web poetry run python manage.py seed_marketing_catalog
-      - name: Run ZAP passive Newman gate
-        run: pwsh -NoProfile -File scripts/ci/run_security_passive_gate.ps1 -Mode newman
+      - name: Run ZAP passive surface gate (API + Newman + FE public paths)
+        run: pwsh -NoProfile -File scripts/ci/run_security_passive_gate.ps1 -Mode all-passive
       - name: Upload ZAP passive reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zap-passive-newman-reports
+          name: zap-passive-surface-reports
           path: reports/security/zap/
           if-no-files-found: warn
       - if: failure()
-        run: docker compose logs --tail=300 web worker db redis || true
+        run: docker compose logs --tail=300 db redis web worker frontend frontend-edge || true
       - if: always()
         run: bash scripts/ci/compose_reset.sh
 
@@ -540,8 +565,9 @@ jobs:
       - if: always()
         run: bash scripts/ci/compose_reset.sh
 
+  # Job key `latency` kept for needs: stability; covers gallery/staff/calendar/etc.
   latency:
-    name: latency
+    name: platform-latency
     runs-on: ubuntu-latest
     timeout-minutes: 30
     if: >-
@@ -555,13 +581,14 @@ jobs:
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
       - run: docker compose up -d --build
-      - run: docker compose exec -T web poetry run pytest tests/latency -m "latency" -vv
+      - name: Run platform latency budgets (gallery/staff/calendar/booking/receipt)
+        run: docker compose exec -T web poetry run pytest tests/latency -m "latency" -vv
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
         run: bash scripts/ci/compose_reset.sh
 
-  # --- T7 chaos -------------------------------------------------------------
+  # --- T7 chaos (not blocked by notification-backlog sibling) -----------------
   chaos:
     name: chaos
     runs-on: ubuntu-latest
@@ -571,7 +598,6 @@ jobs:
       (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
     needs:
       - payment-load-resilience
-      - notification-backlog-load
       - latency
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -616,7 +642,8 @@ jobs:
             "bookings-unit partition green" \
             "cass-calendar-service gates green" \
             "newman acceptance green" \
-            "latency partition includes calendar p95 gate" \
+            "platform-latency partition includes calendar/gallery/staff p95 gates" \
+            "zap-passive-surface (API+Newman+FE) green" \
             "payment-security partition includes calendar red-team" \
             "frontend-backend-trust and privacy-redaction gates green" \
             "frontend-test lint/type/build green"
@@ -811,7 +838,96 @@ jobs:
           fi
           echo "promotion-gate green"
 
-  # Opt-in only — real Daraja HTTP callback; never on push.
+  coverage-map:
+    name: coverage-map
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Emit FE/BE/money-path coverage map
+        run: |
+          mkdir -p reports/ci
+          python3 - <<'PY'
+          from pathlib import Path
+          Path("reports/ci/coverage-map.md").write_text(
+          """# Secure Enterprise CI — coverage map
+
+          Chart wires show *when* jobs run. This map shows *what* they exercise.
+
+          | Job | Frontend | Backend | Money-path |
+          |-----|----------|---------|------------|
+          | frontend-test / frontend-e2e | lint/unit/type/build + Playwright | via edge→API | book handoff UI |
+          | bookings/billing/checkout/api/cass units | — | domain partitions | calendar/checkout units |
+          | payment-security | — | abuse/authz | STK/webhook/throttle/RBAC |
+          | newman-acceptance | — | Calendar/Handoff API | booking contracts |
+          | platform-latency | — | gallery/staff/legal/calendar | Kenya booking/receipt p95 |
+          | payment-load / notification-backlog | — | Celery/email pressure | fake-provider storms |
+          | zap-passive-surface | `/` `/services` `/book` passive | OpenAPI + Newman | — |
+          | chaos | — | Toxiproxy DB/Redis | fake M-Pesa callback chaos |
+          | promotion-gate | merge check | merge check | merge check |
+          | fortress-gate | release soak | release soak | release soak |
+          | daraja-sandbox-contract | — | — | real Daraja (opt-in only) |
+
+          On green **schedule**, expected skip set = `{daraja-sandbox-contract}` only.
+          """.replace("          ", ""),
+              encoding="utf-8",
+          )
+          print("wrote reports/ci/coverage-map.md")
+          PY
+      - name: Upload coverage map
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-coverage-map
+          path: reports/ci/coverage-map.md
+          if-no-files-found: error
+
+  fortress-gate:
+    name: fortress-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >-
+      always() &&
+      (github.event_name == 'schedule' ||
+       (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true'))
+    needs:
+      - latency
+      - payment-load-resilience
+      - notification-backlog-load
+      - zap-passive-newman
+      - chaos
+      - cass-certification
+    steps:
+      - name: Assert fortress jobs succeeded (Daraja may stay skipped)
+        env:
+          RESULTS: >-
+            platform-latency=${{ needs.latency.result }}
+            payment-load-resilience=${{ needs.payment-load-resilience.result }}
+            notification-backlog-load=${{ needs.notification-backlog-load.result }}
+            zap-passive-surface=${{ needs.zap-passive-newman.result }}
+            chaos=${{ needs.chaos.result }}
+            cass-certification=${{ needs.cass-certification.result }}
+        run: |
+          set -euo pipefail
+          echo "Expected intentional skip on schedule: daraja-sandbox-contract only"
+          failed=0
+          for pair in ${RESULTS}; do
+            name="${pair%%=*}"
+            result="${pair#*=}"
+            echo "${name}: ${result}"
+            if [[ "${result}" != "success" ]]; then
+              failed=1
+            fi
+          done
+          if [[ "${failed}" -ne 0 ]]; then
+            echo "::error::fortress-gate red — one or more fortress jobs did not succeed"
+            exit 1
+          fi
+          echo "fortress-gate green (daraja remains opt-in)"
+
+  # Opt-in only — real Daraja HTTP callback; never on push/schedule.
   daraja-sandbox-contract:
     name: daraja-sandbox-contract
     runs-on: ubuntu-latest

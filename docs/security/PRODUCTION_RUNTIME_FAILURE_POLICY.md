@@ -15,7 +15,8 @@ protection / required check:
    GitHub **`promotion-gate`** (includes Playwright e2e + GHCR image publish).
 2. **Money-path** — staging Daraja STK + webhook (Environment `daraja-sandbox`),
    Beat running, receipt email to a real inbox, deep `/api/health-check/`,
-   fortress freshness ≤7d (`scripts/ci/check_fortress_freshness.sh`).
+   fortress freshness ≤7d (`scripts/ci/check_fortress_freshness.sh` →
+   `fortress-gate`).
 3. **Staff / ops** — provisioned staff login, live bookings, reauth → contact
    reveal, password reset, synthetic desk path. Local HTTP desks require
    `SECURE_SSL_REDIRECT=False` (see `docs/ops/STAFF_PORTAL_PROVISIONING.md`);

@@ -12,10 +12,12 @@ requires the gates below. Do not claim production readiness from CI alone
 
 ## 2. Fortress freshness (automated + human)
 
-- [ ] Successful Secure Enterprise **fortress** run (`schedule` or
+- [ ] Successful Secure Enterprise **`fortress-gate`** (`schedule` or
       `workflow_dispatch` + `run_full_fortress=true`) within **7 days**
 - [ ] Local/CI: `bash scripts/ci/check_fortress_freshness.sh ALEX-MUTHOMI/aesthetic-os`
+      (marker: `fortress-gate`, falls back to `cass-certification` during transition)
 - [ ] Deploy Staging workflow runs the same gate unless emergency override
+- [ ] Schedule green implies only intentional skip is `daraja-sandbox-contract`
 
 ```powershell
 gh workflow run "Secure Enterprise CI Pipeline" --ref development -f run_full_fortress=true
