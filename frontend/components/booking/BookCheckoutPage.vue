@@ -270,7 +270,9 @@ async function handleSubmit() {
   } catch {
     /* ignore quota / private mode */
   }
-  await router.push(result.statusUrl || `/booking/status/${result.bookingPublicId}/`)
+  const confirmationHref =
+    result.bookingPublicId ? `/booking/confirmation/${result.bookingPublicId}/` : result.statusUrl
+  await router.push(confirmationHref || `/booking/status/${result.bookingPublicId}/`)
 }
 
 const selectionName = computed(
