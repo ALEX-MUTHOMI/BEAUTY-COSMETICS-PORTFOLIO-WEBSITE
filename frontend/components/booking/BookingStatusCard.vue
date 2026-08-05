@@ -1,5 +1,25 @@
 <template>
   <main class="book-status">
+    <img
+      :src="flowerSrc"
+      alt=""
+      class="book-status__bloom book-status__bloom--tl"
+      data-testid="mellis-flower"
+      aria-hidden="true"
+      width="120"
+      height="120"
+      decoding="async"
+    />
+    <img
+      :src="flowerSrc"
+      alt=""
+      class="book-status__bloom book-status__bloom--br"
+      data-testid="mellis-flower"
+      aria-hidden="true"
+      width="140"
+      height="140"
+      decoding="async"
+    />
     <section class="book-status__card" aria-live="polite">
       <p class="book-status__eyebrow">{{ modeLabel }}</p>
       <h1>{{ headline }}</h1>
@@ -20,13 +40,13 @@
         </div>
       </dl>
 
-      <p v-if="polling" class="book-status__polling">Checking for payment updates…</p>
+      <p v-if="polling" class="book-status__polling">{{ BOOKING_STATUS_COPY.polling }}</p>
       <p v-if="error" class="book-status__error" role="alert">{{ error }}</p>
       <p v-if="stkMessage" class="book-status__polling" role="status">{{ stkMessage }}</p>
 
       <form v-if="canRetryStk" class="book-status__retry" @submit.prevent="retryStk">
         <label>
-          M-Pesa phone (same number as at booking)
+          {{ BOOKING_STATUS_COPY.retryLabel }}
           <input
             v-model="retryPhone"
             autocomplete="tel"
@@ -37,7 +57,7 @@
           />
         </label>
         <button type="submit" class="book-status__retry-btn" :disabled="retrying">
-          {{ retrying ? 'Sending…' : 'Resend M-Pesa prompt' }}
+          {{ retrying ? BOOKING_STATUS_COPY.retryingButton : BOOKING_STATUS_COPY.retryButton }}
         </button>
       </form>
 
@@ -52,7 +72,7 @@
           :disabled="!rememberOptIn || rememberBusy || rememberDone"
           @click="saveRememberDevice"
         >
-          {{ rememberDone ? 'Saved on this device' : rememberBusy ? 'Saving…' : 'Save for next visit' }}
+          {{ rememberDone ? 'Saved on this device' : rememberBusy ? 'Saving' : 'Save for next visit' }}
         </button>
         <p v-if="rememberMessage" class="book-status__polling" role="status">{{ rememberMessage }}</p>
       </div>
@@ -84,7 +104,10 @@ import {
 } from '@/booking/bookingWriteApi'
 import { optInRememberDevice, REMEMBER_DEVICE_CUSTOMER_COPY } from '@/booking/rememberDevice'
 import { lastBookHref, SERVICES_BOOK_ENTRY } from '@/landing/bookingHandoff'
+import { BOOKING_STATUS_COPY, MELLIS_FLOWER_SRC } from '@/landing/clientPagesContent'
 import { trackFunnelEvent } from '@/landing/funnelEvents'
+
+const flowerSrc = MELLIS_FLOWER_SRC
 
 type BookingStatusMode = 'status' | 'confirmation'
 
@@ -96,7 +119,11 @@ const props = withDefaults(
   { mode: 'status' },
 )
 
-const modeLabel = computed(() => (props.mode === 'confirmation' ? 'Booking confirmation' : 'Booking status'))
+const modeLabel = computed(() =>
+  props.mode === 'confirmation'
+    ? BOOKING_STATUS_COPY.confirmationEyebrow
+    : BOOKING_STATUS_COPY.statusEyebrow,
+)
 
 const config = useRuntimeConfig()
 const apiBaseUrl = (config.public.apiBaseUrl as string) || 'http://localhost:8000'
@@ -125,7 +152,7 @@ const rememberCopy = REMEMBER_DEVICE_CUSTOMER_COPY
 
 const shortReference = computed(() => {
   const id = snapshot.value?.bookingReference ?? publicId.value
-  return id ? id.slice(0, 8).toUpperCase() : '—'
+  return id ? id.slice(0, 8).toUpperCase() : BOOKING_STATUS_COPY.emptyReference
 })
 
 const isConfirmed = computed(
@@ -145,28 +172,34 @@ const canRetryStk = computed(() => {
 })
 
 const headline = computed(() => {
-  if (!snapshot.value) return props.mode === 'confirmation' ? 'Confirming your booking…' : 'Loading your booking'
-  if (snapshot.value.bookingStatus === 'confirmed' || snapshot.value.paymentStatus === 'paid') {
-    return props.mode === 'confirmation' ? 'Appointment confirmed' : 'Booking confirmed'
+  if (!snapshot.value) {
+    return props.mode === 'confirmation'
+      ? BOOKING_STATUS_COPY.confirmingHeadline
+      : BOOKING_STATUS_COPY.loadingHeadline
   }
-  if (snapshot.value.paymentStatus === 'payment_failed') return 'Payment not completed'
-  if (snapshot.value.paymentStatus === 'payment_pending') return 'Complete M-Pesa payment'
-  if (snapshot.value.bookingStatus === 'held') return 'Finish payment to confirm'
-  return 'Booking update'
+  if (snapshot.value.bookingStatus === 'confirmed' || snapshot.value.paymentStatus === 'paid') {
+    return props.mode === 'confirmation'
+      ? BOOKING_STATUS_COPY.confirmedConfirmationHeadline
+      : BOOKING_STATUS_COPY.confirmedStatusHeadline
+  }
+  if (snapshot.value.paymentStatus === 'payment_failed') return BOOKING_STATUS_COPY.paymentFailedHeadline
+  if (snapshot.value.paymentStatus === 'payment_pending') return BOOKING_STATUS_COPY.paymentPendingHeadline
+  if (snapshot.value.bookingStatus === 'held') return BOOKING_STATUS_COPY.heldHeadline
+  return BOOKING_STATUS_COPY.updateHeadline
 })
 
 const lead = computed(() => {
-  if (!snapshot.value) return props.mode === 'confirmation' ? 'Please wait while we check your payment.' : 'Please wait while we load your booking.'
+  if (!snapshot.value) {
+    return props.mode === 'confirmation'
+      ? BOOKING_STATUS_COPY.confirmingLead
+      : BOOKING_STATUS_COPY.loadingLead
+  }
   if (snapshot.value.bookingStatus === 'confirmed' || snapshot.value.paymentStatus === 'paid') {
-    return 'Thank you — we have received your booking. A receipt email will follow shortly.'
+    return BOOKING_STATUS_COPY.confirmedLead
   }
-  if (snapshot.value.paymentStatus === 'payment_failed') {
-    return 'No charge was completed. You can resend the M-Pesa prompt with the same phone used at booking.'
-  }
-  if (snapshot.value.paymentStatus === 'payment_pending') {
-    return 'Approve the M-Pesa prompt on your phone. This page updates automatically. If nothing arrives, resend below.'
-  }
-  return 'We are tracking your booking. You can safely close this page and return later.'
+  if (snapshot.value.paymentStatus === 'payment_failed') return BOOKING_STATUS_COPY.paymentFailedLead
+  if (snapshot.value.paymentStatus === 'payment_pending') return BOOKING_STATUS_COPY.paymentPendingLead
+  return BOOKING_STATUS_COPY.updateLead
 })
 
 function readCheckoutIdFromSession(): string {
@@ -205,7 +238,7 @@ async function retryStk() {
 
   const checkoutId = checkoutPublicId.value || readCheckoutIdFromSession()
   if (!checkoutId) {
-    stkMessage.value = 'Payment retry isn’t available here. Book again or contact the studio.'
+    stkMessage.value = 'Payment retry is not available here. Book again or contact the studio.'
     return
   }
 
@@ -285,134 +318,192 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .book-status {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   min-height: 70vh;
-  padding: 2rem 1rem;
-  background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
+  padding: clamp(2.5rem, 7vh, 4rem) 1rem 3.5rem;
+  background:
+    radial-gradient(ellipse 80% 45% at 50% -8%, rgba(176, 122, 113, 0.09), transparent 55%),
+    linear-gradient(180deg, var(--color-paper) 0%, var(--color-parchment) 100%);
+}
+
+.book-status__bloom {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.2;
+  filter: saturate(1.3) brightness(1.02);
+}
+
+.book-status__bloom--tl {
+  top: 0.75rem;
+  left: max(0.35rem, env(safe-area-inset-left));
+  width: min(110px, 22vw);
+  transform: rotate(-18deg);
+}
+
+.book-status__bloom--br {
+  right: max(0.35rem, env(safe-area-inset-right));
+  bottom: 1.5rem;
+  width: min(130px, 26vw);
+  transform: rotate(145deg);
 }
 
 .book-status__card {
+  position: relative;
+  z-index: 1;
   width: var(--container);
   max-width: 36rem;
   margin: 0 auto;
   display: grid;
-  gap: 1.25rem;
-  padding: 1.75rem;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 1.25rem;
-  background: #fff;
+  gap: 1.15rem;
+  padding: 2rem 1.5rem 1.75rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-card);
 }
 
 .book-status__eyebrow {
   margin: 0;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #6b4a3a;
+  letter-spacing: 0.22em;
+  font: 600 0.72rem/1 var(--font-body);
+  color: var(--color-rose);
 }
 
 .book-status__card h1 {
   margin: 0;
-  font-size: 1.75rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.65rem, 4vw, 2.15rem);
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
 }
 
 .book-status__lead,
 .book-status__polling,
 .book-status__error {
   margin: 0;
+  font: 400 0.98rem/1.65 var(--font-body);
+  color: var(--color-muted);
 }
 
 .book-status__error {
-  color: #8b1e1e;
+  color: #8b3a3a;
 }
 
 .book-status__meta {
   display: grid;
-  gap: 0.75rem;
-  margin: 0;
+  gap: 0.85rem;
+  margin: 0.35rem 0 0;
+  padding: 1.1rem 0 0;
+  border-top: 1px solid var(--color-line);
 }
 
 .book-status__meta div {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.25rem;
 }
 
 .book-status__meta dt {
-  font-size: 0.75rem;
+  font: 600 0.68rem/1 var(--font-body);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #6b6b6b;
+  letter-spacing: 0.14em;
+  color: var(--color-muted);
 }
 
 .book-status__meta dd {
   margin: 0;
-  font-weight: 600;
+  font: 600 0.98rem/1.35 var(--font-body);
+  color: var(--color-ink);
 }
 
 .book-status__retry {
   display: grid;
   gap: 0.75rem;
+  padding-top: 0.35rem;
 }
 
 .book-status__retry label {
   display: grid;
-  gap: 0.4rem;
-  font-weight: 600;
+  gap: 0.45rem;
+  font: 600 0.82rem/1.3 var(--font-body);
+  color: var(--color-ink);
 }
 
 .book-status__retry input {
   min-height: 2.75rem;
-  padding: 0 0.75rem;
-  border: 1px solid rgba(0, 0, 0, 0.14);
-  border-radius: 0.75rem;
+  padding: 0 0.85rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper);
+  font: 400 1rem/1 var(--font-body);
+  color: var(--color-ink);
+}
+
+.book-status__retry input:focus {
+  outline: 2px solid rgba(176, 122, 113, 0.35);
+  outline-offset: 1px;
 }
 
 .book-status__retry-btn {
   min-height: 2.75rem;
-  padding: 0 1.25rem;
+  padding: 0 1.5rem;
   border: 0;
-  border-radius: 0.75rem;
-  font-weight: 700;
+  border-radius: var(--radius-sm);
+  font: 600 0.78rem/1 var(--font-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: #fff;
-  background: #241611;
+  background: var(--color-rose);
   cursor: pointer;
+  transition: background-color 0.3s var(--ease-story);
+}
+
+.book-status__retry-btn:hover:not(:disabled) {
+  background: var(--color-rose-dark);
 }
 
 .book-status__retry-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
 .book-status__remember {
   display: grid;
-  gap: 0.75rem;
-  padding: 0.85rem 0.9rem;
-  border-radius: 0.85rem;
-  background: #faf6f5;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  gap: 0.85rem;
+  padding: 1rem 0 0;
+  border-top: 1px solid var(--color-line);
+  background: transparent;
 }
 
 .book-status__remember-label {
   display: flex;
   gap: 0.65rem;
   align-items: flex-start;
-  font-size: 0.88rem;
-  line-height: 1.45;
-  color: #3a2a24;
+  font: 400 0.9rem/1.5 var(--font-body);
+  color: var(--color-ink);
 }
 
 .book-status__remember-btn {
   min-height: 2.5rem;
-  padding: 0 1rem;
+  padding: 0 1.25rem;
   border: 0;
-  border-radius: 999px;
-  font: 600 0.72rem var(--font-body);
-  letter-spacing: 0.08em;
+  border-radius: var(--radius-sm);
+  font: 600 0.72rem/1 var(--font-body);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #fff;
-  background: var(--color-rose, #de968d);
+  background: var(--color-rose);
   cursor: pointer;
   justify-self: start;
+  transition: background-color 0.3s var(--ease-story);
+}
+
+.book-status__remember-btn:hover:not(:disabled) {
+  background: var(--color-rose-dark);
 }
 
 .book-status__remember-btn:disabled {
@@ -423,6 +514,7 @@ onBeforeUnmount(() => {
 .book-status__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.65rem;
+  padding-top: 0.35rem;
 }
 </style>

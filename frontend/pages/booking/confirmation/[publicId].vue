@@ -5,8 +5,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import BookingStatusCard from '@/components/booking/BookingStatusCard.vue'
-
 const route = useRoute()
 
 definePageMeta({ layout: 'landing' })

@@ -1,98 +1,240 @@
 <template>
   <main class="faq">
-    <SectionHeading
-      eyebrow="Help"
-      title="Frequently Asked Questions"
-      description="Quick answers about booking, payment, and what to do next."
+    <img
+      :src="flowerSrc"
+      alt=""
+      class="faq__bloom faq__bloom--tl"
+      data-testid="mellis-flower"
+      aria-hidden="true"
+      width="120"
+      height="120"
+      decoding="async"
+    />
+    <img
+      :src="flowerSrc"
+      alt=""
+      class="faq__bloom faq__bloom--br"
+      data-testid="mellis-flower"
+      aria-hidden="true"
+      width="140"
+      height="140"
+      decoding="async"
     />
 
-    <div class="faq__content">
-      <section class="faq__section" aria-labelledby="faq-booking">
-        <h3 id="faq-booking">How does booking work?</h3>
-        <p>
-          Choose your service, pick an available day and time, then submit your details to reserve a spot.
-          After that, complete the M-Pesa payment prompt to confirm.
-        </p>
-      </section>
+    <header class="faq__hero">
+      <div class="faq__hero-inner">
+        <p class="faq__eyebrow">{{ FAQ_PAGE.eyebrow }}</p>
+        <div class="faq__title-lockup">
+          <img
+            :src="flowerSrc"
+            alt=""
+            class="faq__title-flower"
+            aria-hidden="true"
+            width="40"
+            height="40"
+            decoding="async"
+          />
+          <h1 class="faq__title">{{ FAQ_PAGE.title }}</h1>
+          <img
+            :src="flowerSrc"
+            alt=""
+            class="faq__title-flower"
+            aria-hidden="true"
+            width="40"
+            height="40"
+            decoding="async"
+          />
+        </div>
+        <p class="faq__lead">{{ FAQ_PAGE.lead }}</p>
+      </div>
+    </header>
 
-      <section class="faq__section" aria-labelledby="faq-confirmation">
-        <h3 id="faq-confirmation">Where do I see confirmation?</h3>
-        <p>
-          After you submit payment, you’ll be taken to a confirmation page that automatically checks your
-          booking status. If payment isn’t completed yet, the page will keep polling until it’s done.
-        </p>
-      </section>
+    <div class="faq__body">
+      <div class="faq__list" role="list">
+        <article
+          v-for="item in FAQ_ITEMS"
+          :key="item.id"
+          class="faq__item"
+          role="listitem"
+        >
+          <h2 class="faq__question" :id="item.id">{{ item.q }}</h2>
+          <p class="faq__answer">{{ item.a }}</p>
+        </article>
+      </div>
 
-      <section class="faq__section" aria-labelledby="faq-mpesa">
-        <h3 id="faq-mpesa">What if I miss the M-Pesa prompt?</h3>
-        <p>
-          Use the “Resend M-Pesa prompt” option on your confirmation page. Enter the same phone number you
-          used when booking.
-        </p>
-      </section>
-
-      <section class="faq__section" aria-labelledby="faq-limited">
-        <h3 id="faq-limited">Why are there “limited spots”?</h3>
-        <p>
-          Booking availability depends on service duration and shared scheduling capacity for the studio.
-          We only show times that can still fit within capacity for the selected day.
-        </p>
-      </section>
-
-      <section class="faq__section" aria-labelledby="faq-change">
-        <h3 id="faq-change">Can I reschedule my appointment?</h3>
-        <p>
-          Rescheduling is handled by the studio team. If you need to change your appointment, contact us via
-          WhatsApp or call using the buttons in the site header/footer.
-        </p>
-      </section>
-
-      <section class="faq__section" aria-labelledby="faq-contact">
-        <h3 id="faq-contact">How do I contact Shee Aesthetics?</h3>
-        <p>
-          Use WhatsApp (when available) or call/email from the site header/footer. We’ll help you with booking
-          questions and any changes you need.
-        </p>
-      </section>
+      <aside class="faq__aside" aria-label="Still need help">
+        <p class="faq__aside-eyebrow">{{ FAQ_PAGE.asideEyebrow }}</p>
+        <p class="faq__aside-copy">{{ FAQ_PAGE.asideCopy }}</p>
+        <div class="faq__aside-actions">
+          <SiteButton to="/services" variant="outline">View services</SiteButton>
+          <SiteButton to="/book" variant="primary">Book now</SiteButton>
+        </div>
+      </aside>
     </div>
   </main>
 </template>
 
 <script setup lang="ts">
-// Static marketing content — no API dependencies.
+import { FAQ_ITEMS, FAQ_PAGE, MELLIS_FLOWER_SRC } from '@/landing/clientPagesContent'
+
+definePageMeta({ layout: 'landing' })
+
+useHead({ title: 'FAQ | Shee Aesthetics' })
+
+const flowerSrc = MELLIS_FLOWER_SRC
 </script>
 
 <style scoped>
 .faq {
-  padding: 3rem 1rem;
-  max-width: 68rem;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(176, 122, 113, 0.08), transparent 55%),
+    linear-gradient(180deg, var(--color-paper) 0%, var(--color-parchment) 100%);
+  min-height: 60vh;
+}
+
+.faq__bloom {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.2;
+  filter: saturate(1.3) brightness(1.02);
+}
+
+.faq__bloom--tl {
+  top: 0.75rem;
+  left: max(0.35rem, env(safe-area-inset-left));
+  width: min(110px, 22vw);
+  transform: rotate(-18deg);
+}
+
+.faq__bloom--br {
+  right: max(0.35rem, env(safe-area-inset-right));
+  bottom: 2rem;
+  width: min(130px, 26vw);
+  transform: rotate(145deg);
+}
+
+.faq__hero {
+  position: relative;
+  z-index: 1;
+  padding: clamp(2.5rem, 7vh, 4.5rem) 1rem 2rem;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.faq__hero-inner {
+  width: var(--container);
+  max-width: 40rem;
   margin: 0 auto;
+  text-align: center;
 }
 
-.faq__content {
-  margin-top: 2.25rem;
+.faq__eyebrow {
+  margin: 0 0 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font: 600 0.72rem/1 var(--font-body);
+  color: var(--color-rose);
+}
+
+.faq__title-lockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin: 0 0 1rem;
+}
+
+.faq__title-flower {
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.faq__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2rem, 5vw, 2.85rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+}
+
+.faq__lead {
+  margin: 0;
+  font: 400 1.05rem/1.7 var(--font-body);
+  color: var(--color-muted);
+}
+
+.faq__body {
+  position: relative;
+  z-index: 1;
+  width: var(--container);
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2.5rem 1rem 4.5rem;
+}
+
+.faq__list {
   display: grid;
-  gap: 1.25rem;
+  gap: 0;
 }
 
-.faq__section {
-  padding: 1.25rem 1.25rem;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 1rem;
-  background: #fff;
+.faq__item {
+  padding: 1.65rem 0;
+  border-bottom: 1px solid var(--color-line);
 }
 
-.faq__section h3 {
-  margin: 0 0 0.75rem;
+.faq__item:first-child {
+  padding-top: 0.25rem;
+}
+
+.faq__question {
+  margin: 0 0 0.65rem;
   font-family: var(--font-display);
   font-weight: 500;
-  letter-spacing: -0.02em;
-  font-size: 1.25rem;
+  font-size: clamp(1.15rem, 2.5vw, 1.35rem);
+  letter-spacing: -0.015em;
+  color: var(--color-ink);
 }
 
-.faq__section p {
+.faq__answer {
   margin: 0;
-  color: var(--color-text-muted);
-  line-height: 1.75;
+  font: 400 0.98rem/1.75 var(--font-body);
+  color: var(--color-muted);
+}
+
+.faq__aside {
+  margin-top: 2.75rem;
+  padding: 1.75rem 0 0;
+  border-top: 1px solid var(--color-line);
+  text-align: center;
+}
+
+.faq__aside-eyebrow {
+  margin: 0 0 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font: 600 0.7rem/1 var(--font-body);
+  color: var(--color-rose);
+}
+
+.faq__aside-copy {
+  margin: 0 auto 1.35rem;
+  max-width: 32ch;
+  font: 400 0.95rem/1.65 var(--font-body);
+  color: var(--color-muted);
+}
+
+.faq__aside-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
 }
 </style>
