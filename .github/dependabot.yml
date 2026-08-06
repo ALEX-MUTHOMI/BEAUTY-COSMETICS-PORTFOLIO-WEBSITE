@@ -57,6 +57,11 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      - dependency-name: "actions/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "docker/*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "docker"
     directory: "/"
