@@ -64,3 +64,23 @@ GitHub will not let a PR author satisfy their own required Code Owner review.
 Until a second collaborator exists, merges that touch CODEOWNERS paths need an
 admin bypass or a second GitHub account. Non-CODEOWNERS paths still require one
 approving review + green `promotion-gate`.
+
+## Branch hygiene (enterprise)
+
+Long-lived refs only:
+
+| Branch | Role |
+|--------|------|
+| `main` | Production |
+| `staging` | Pre-prod |
+| `development` | Integration trunk |
+
+Do **not** keep long-lived `audit/*`, `wip/*`, or ungrouped Dependabot farms.
+
+Dependabot ([`.github/dependabot.yml`](../../.github/dependabot.yml)):
+
+- Weekly (Monday), **one open PR per ecosystem**, minor/patch **grouped**
+- Runtime majors (Nuxt, Node image, Python image) are **ignored** until a planned upgrade PR
+- Close stale dependency PRs within **14 days** (merge or close — do not let them rot)
+
+Feature work: short-lived branches off `development`, merge via PR, delete the branch on merge.
