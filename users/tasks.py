@@ -8,15 +8,9 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 
 from bookings.privacy import decrypt_value, encrypt_value
+from users.redaction import redact_email
 
 logger = logging.getLogger(__name__)
-
-
-def _redact_email(email):
-    local, _, domain = str(email).partition("@")
-    if not domain:
-        return "redacted-email"
-    return f"{local[:2]}***@{domain}"
 
 
 def build_express_otp_delivery_payload(email: str, otp: str) -> str:
@@ -59,7 +53,7 @@ def send_express_otp_email(encrypted_payload: str, correlation_id: str | None = 
         logger.error("[-] Rejected invalid encrypted OTP delivery payload")
         return False
 
-    redacted_email = _redact_email(email)
+    redacted_email = redact_email(email)
     if getattr(settings, "EMAIL_PROVIDER", "fake").strip().lower() == "fake":
         # Local/CI fake mode must be fast and non-networked. The task boundary
         # remains exercised without turning an OTP test into SMTP retries.
@@ -93,6 +87,6 @@ def send_express_otp_email(encrypted_payload: str, correlation_id: str | None = 
         logger.info("[+] OTP email dispatched successfully to: %s", redacted_email)
         return True
     except Exception as exc:
-        logger.error("[-] Failed to dispatch OTP email to %s", _redact_email(email))
+        logger.error("[-] Failed to dispatch OTP email to %s", redact_email(email))
         # Automatically retry the task in the background
         raise send_express_otp_email.retry(exc=exc) from exc

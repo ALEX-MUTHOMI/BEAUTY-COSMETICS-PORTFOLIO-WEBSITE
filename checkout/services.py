@@ -135,6 +135,7 @@ def _checkout_request_id(payload):
 
 
 def record_mpesa_webhook_event(payload, correlation_id=None):
+    """Idempotent inbox insert. FAILED rows may be retried; PROCESSED/REJECTED stay duplicates."""
     checkout_request_id = _checkout_request_id(payload)
     event_hash = _event_hash(payload)
     event, created = MpesaWebhookInbox.objects.get_or_create(
@@ -147,7 +148,11 @@ def record_mpesa_webhook_event(payload, correlation_id=None):
     )
     if created:
         return event
+    # Safaricom retries after a transient FAILED must be allowed to reprocess.
+    if event.processing_status == MpesaWebhookInbox.Status.FAILED:
+        return event
     event.processing_status = MpesaWebhookInbox.Status.DUPLICATE
+    event.save(update_fields=["processing_status", "updated_at"])
     return event
 
 
@@ -159,9 +164,25 @@ def mark_webhook_event_status(inbox_id, status, processed=True):
 
 
 def expire_checkout_session(session_id):
+    """Expire a checkout and free linked payment_pending booking capacity."""
     with transaction.atomic():
         session = CheckoutSession.objects.select_for_update().get(pk=session_id)
-        return transition_checkout(session, CheckoutSession.Status.EXPIRED)
+        session = transition_checkout(session, CheckoutSession.Status.EXPIRED)
+        if session.purchasable_type == "booking":
+            from django.core.exceptions import ValidationError
+
+            from bookings.services.checkout_contract import BookingCheckoutContractService
+
+            try:
+                BookingCheckoutContractService.fail_booking_after_payment_failure(
+                    checkout_session=session,
+                    failure_reason="checkout_expired",
+                    request_context={},
+                )
+            except ValidationError:
+                # No payment_pending booking linked (e.g. CREATED before STK) — session still expired.
+                pass
+        return session
 
 
 def cancel_checkout_session(session_id):

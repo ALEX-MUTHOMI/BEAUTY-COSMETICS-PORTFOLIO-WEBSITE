@@ -117,7 +117,7 @@ def staff_booking_week(request):
     if denied:
         return denied
     try:
-        payload = get_weekly_overview(request.GET.get("start_date"))
+        payload = get_weekly_overview(request.GET.get("start_date"), staff_user=request.user)
     except StaffPortalValidationError:
         return _validation_error()
     return _json(payload)

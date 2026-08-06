@@ -132,9 +132,19 @@ def _slots_by_date(
                 request_context=request_context,
             )
     except ValidationError:
+        # Policy/validation: treat as no slots for this window.
         return {}
     except Exception:
-        return {}
+        logger.exception(
+            "booking.calendar.slots_fetch_failed",
+            extra={
+                "selection_id": str(selection.public_id),
+                "slot_start": slot_start.isoformat(),
+                "slot_end": slot_end.isoformat(),
+            },
+        )
+        # Fail closed: do not classify days as empty/full when infra failed.
+        raise
     return {row["date"]: row["slots"] for row in availability}
 
 
@@ -239,12 +249,14 @@ class BookingCalendarService:
             )
             return cached
 
+        # DB work: bulk capacity, then batched slot fetches (never O(days) RTT).
         with count_db_queries() as queries:
             try:
                 booked_by_date = _count_blocking_clients_bulk(offered_dates)
             except Exception:
                 raise ValidationError(GENERIC_CALENDAR_ERROR) from None
 
+            # Only non-full offered days need slot detail for classification.
             dates_needing_slots: list[date] = []
             policy_by_date: dict[date, dict] = {}
             for current in offered_dates:

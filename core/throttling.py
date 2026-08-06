@@ -160,7 +160,8 @@ class RedisTokenBucketThrottle(BaseThrottle):
     def allow_request(self, request, view):
         rate = self.get_rate()
         if rate is None:
-            return True
+            # Unknown / missing scope must fail closed (never admit unlimited traffic).
+            return False
 
         capacity, period = self.parse_rate(rate)
         # Redis keys are operational data too: never place raw IP addresses,

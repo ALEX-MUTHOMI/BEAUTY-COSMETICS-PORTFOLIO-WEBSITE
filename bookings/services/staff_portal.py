@@ -273,12 +273,13 @@ def get_daily_schedule(date_value, filters=None, *, staff_user=None):
     }
 
 
-def get_weekly_overview(start_date_value):
+def get_weekly_overview(start_date_value, *, staff_user=None):
     start_date = _parse_date(start_date_value, field_name="start_date")
     end_date = start_date + timedelta(days=MAX_STAFF_RANGE_DAYS)
-    bookings = list(
-        _base_booking_queryset().filter(local_booking_date__gte=start_date, local_booking_date__lt=end_date)
-    )
+    bookings_qs = _base_booking_queryset().filter(local_booking_date__gte=start_date, local_booking_date__lt=end_date)
+    # Beauticians must only see assigned bookings (same rule as daily schedule).
+    bookings_qs = scope_bookings_queryset(bookings_qs, staff_user) if staff_user is not None else bookings_qs
+    bookings = list(bookings_qs)
     bookings_by_date = {}
     for booking in bookings:
         bookings_by_date.setdefault(booking.local_booking_date, []).append(booking)
