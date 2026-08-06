@@ -10,9 +10,9 @@
 ## Beat
 
 `docker compose` service `beat` must be running in staging/production so holds and
-checkout sessions expire and free calendar capacity. See
+unpaid checkout sessions expire and free calendar capacity. See
 [STAFF_PORTAL_PROVISIONING.md](./STAFF_PORTAL_PROVISIONING.md#celery-beat-slot-expiry--ops-check)
-and [BACKEND_DSA_EFFICIENCY.md](../plan/BACKEND_DSA_EFFICIENCY.md) (Concepts 05 / 20).
+and [BACKEND_DSA_EFFICIENCY.md](../plan/BACKEND_DSA_EFFICIENCY.md).
 
 Required schedule entries (`core/settings.py` `CELERY_BEAT_SCHEDULE`):
 
@@ -21,5 +21,9 @@ Required schedule entries (`core/settings.py` `CELERY_BEAT_SCHEDULE`):
 | `sweep-stale-booking-holds` | `bookings.tasks.sweep_stale_holds` | 60s |
 | `sweep-expired-checkout-sessions` | `bookings.tasks.sweep_expired_checkouts` | 60s |
 
-Hold expiry must bump calendar capacity generation so Redis calendar cache cannot
-serve stale “full” days after a hold times out.
+Hold expiry bumps calendar capacity generation so Redis cannot serve stale “full”
+days after a hold times out.
+
+Checkout expiry marks the checkout session expired and, for linked booking
+purchases still in `payment_pending`, transitions the booking to `payment_failed`
+(which also bumps capacity). It does not leave unpaid bookings blocking the day.

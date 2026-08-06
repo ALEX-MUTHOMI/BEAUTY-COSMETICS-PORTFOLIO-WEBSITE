@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from bookings.models import FullPackage, Service
 from bookings.services.handoff_resolve import resolve_booking_handoff
@@ -43,5 +44,5 @@ def test_handoff_resolve_single_treatment_slug():
 
 @pytest.mark.django_db
 def test_handoff_resolve_rejects_injection():
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         resolve_booking_handoff(handoff_type="single", category_slug="<script>", treatment_slug="x")

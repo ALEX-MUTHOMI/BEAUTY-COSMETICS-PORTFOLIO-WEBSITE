@@ -3,13 +3,8 @@ from core.throttling import RedisTokenBucketThrottle
 
 class OTPAnonRateThrottle(RedisTokenBucketThrottle):
     """
-    Advanced Enterprise Rate Throttle to mitigate email toll fraud.
-    - Rate is limited to 5 requests per hour.
-    - Multi-Factor Cache Key: Binds both the client's source IP address and
-      the targeted destination email address.
-    - Prevents:
-      1. Distributed Spamming: Attacker using IP proxies to flood a single email address.
-      2. Domain Spraying: Attacker using a single IP address to spray spam to multiple emails.
+    Rate throttle for OTP request (5/min via DEFAULT_THROTTLE_RATES["otp_request"]).
+    Cache identity binds source IP and destination email (hashed later in allow_request).
     """
 
     scope = "otp_request"

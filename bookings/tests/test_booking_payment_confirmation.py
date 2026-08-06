@@ -6,6 +6,7 @@ from django.utils import timezone
 from billing.models import LedgerTransaction
 from bookings.models import Booking, BookingAuditEvent, BookingFinancialHistory
 from bookings.tests.test_booking_checkout_contract import _contract_service, _held_booking
+from checkout.exceptions import CheckoutValidationError
 from checkout.models import CheckoutSession
 from checkout.services import initiate_mpesa_stk, process_mpesa_callback
 
@@ -56,7 +57,7 @@ def test_amount_mismatch_does_not_confirm_booking():
     session = CheckoutSession.objects.get(id=checkout_result["checkout_public_id"])
     attempt = initiate_mpesa_stk(session.id, "+254712345678", "confirm-mismatch-stk")
 
-    with pytest.raises(Exception):
+    with pytest.raises(CheckoutValidationError):
         process_mpesa_callback(
             {
                 "CheckoutRequestID": attempt.provider_request_id,

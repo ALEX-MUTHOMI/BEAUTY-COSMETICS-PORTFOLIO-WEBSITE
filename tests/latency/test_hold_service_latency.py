@@ -1,10 +1,8 @@
 """Latency gates for hold create (Backend DSA Efficiency Phase A)."""
 
 import statistics
-import time
-from datetime import datetime
-from datetime import time as dt_time
-from datetime import timedelta
+import time as wall_time
+from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -32,7 +30,7 @@ def _next_weekday_morning(weekday: int = 0) -> datetime:
     day = timezone.localdate() + timedelta(days=1)
     while day.weekday() != weekday:
         day += timedelta(days=1)
-    return datetime.combine(day, dt_time(9, 0), tzinfo=NAIROBI)
+    return datetime.combine(day, time(9, 0), tzinfo=NAIROBI)
 
 
 @pytest.mark.django_db
@@ -75,7 +73,7 @@ def test_hold_create_under_p95_budget():
     durations = []
     for i in range(MEASURE):
         starts_at = base + timedelta(hours=WARMUP + i)
-        started = time.perf_counter()
+        started = wall_time.perf_counter()
         BookingHoldService.create_hold(
             service_public_id=service.id,
             resource_public_id=resource.id,
@@ -87,7 +85,7 @@ def test_hold_create_under_p95_budget():
             },
             idempotency_key=f"hold-latency-meas-{i}",
         )
-        durations.append(time.perf_counter() - started)
+        durations.append(wall_time.perf_counter() - started)
 
     assert _p95(durations) < HOLD_P95_BUDGET_SECONDS
     assert statistics.median(durations) < HOLD_P95_BUDGET_SECONDS

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -34,7 +34,7 @@ def main() -> int:
     notes = sys.argv[3:] if len(sys.argv) > 3 else []
 
     newman_line = _read_newman_summary(reports_dir / "newman" / "newman-local.json")
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     lines = [
         f"# {gate_name}",
