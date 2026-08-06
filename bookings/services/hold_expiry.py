@@ -41,8 +41,8 @@ class BookingHoldExpiryService:
         # One capacity bump per local day (not per expired row).
         for local_date in sorted({d for d in expired_dates if d is not None}):
             invalidate_calendar_capacity_for_transition(
-                old_status=Booking.Status.HELD,
-                new_status=Booking.Status.EXPIRED,
+                old_status=str(Booking.Status.HELD),
+                new_status=str(Booking.Status.EXPIRED),
                 local_date=local_date,
                 redis_client=redis_client,
             )

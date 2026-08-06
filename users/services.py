@@ -58,7 +58,7 @@ class OTPService:
         """Return a versioned OTP namespace without embedding recipient PII."""
         digest = hmac.new(
             settings.SECRET_KEY.encode("utf-8"),
-            f"express-otp-key:v1:{cls._normalized_email(email)}".encode("utf-8"),
+            f"express-otp-key:v1:{cls._normalized_email(email)}".encode(),
             hashlib.sha256,
         ).hexdigest()
         return f"otp:express:v1:{digest}"
@@ -67,7 +67,7 @@ class OTPService:
     def _attempts_key(cls, email: str) -> str:
         digest = hmac.new(
             settings.SECRET_KEY.encode("utf-8"),
-            f"express-otp-attempts:v1:{cls._normalized_email(email)}".encode("utf-8"),
+            f"express-otp-attempts:v1:{cls._normalized_email(email)}".encode(),
             hashlib.sha256,
         ).hexdigest()
         return f"otp:express:v1:attempts:{digest}"
@@ -77,7 +77,7 @@ class OTPService:
         """Store a verifier rather than a recoverable OTP value in Redis."""
         return hmac.new(
             settings.SECRET_KEY.encode("utf-8"),
-            f"express-otp-code:v1:{cls._normalized_email(email)}:{code}".encode("utf-8"),
+            f"express-otp-code:v1:{cls._normalized_email(email)}:{code}".encode(),
             hashlib.sha256,
         ).hexdigest()
 

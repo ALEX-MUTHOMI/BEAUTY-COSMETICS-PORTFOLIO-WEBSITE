@@ -1,8 +1,7 @@
 import hashlib
 import secrets
 import uuid
-from datetime import timedelta
-from datetime import timezone as dt_timezone
+from datetime import UTC, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
@@ -435,7 +434,7 @@ class LegalDocument(AuditMixin):
         ):
             value = getattr(self, field)
             if value and timezone.is_aware(value):
-                setattr(self, field, value.astimezone(dt_timezone.utc))
+                setattr(self, field, value.astimezone(UTC))
         if not self.slug:
             self.slug = self.document_type.replace("_", "-")
         if self.status == self.Status.ACTIVE:
@@ -757,7 +756,7 @@ class Booking(AuditMixin):
         ):
             value = getattr(self, field)
             if value is not None and timezone.is_aware(value):
-                setattr(self, field, value.astimezone(dt_timezone.utc))
+                setattr(self, field, value.astimezone(UTC))
         if self.starts_at:
             self.local_booking_date = self.starts_at.astimezone(ZoneInfo("Africa/Nairobi")).date()
         if not self.total_duration_minutes and self.starts_at and self.ends_at:
@@ -839,7 +838,7 @@ class BookingPolicyAcceptance(AuditMixin):
 
     def save(self, *args, **kwargs):
         if self.accepted_at and timezone.is_aware(self.accepted_at):
-            self.accepted_at = self.accepted_at.astimezone(dt_timezone.utc)
+            self.accepted_at = self.accepted_at.astimezone(UTC)
         self.full_clean(validate_constraints=False)
         super().save(*args, **kwargs)
 

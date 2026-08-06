@@ -207,7 +207,7 @@ def assert_login_not_throttled(email, request):
                 "login_failed": True,
             },
         )
-        raise StaffAuthRateLimited
+        raise StaffAuthRateLimited from None
 
 
 def record_login_failure(email, request, *, staff_user=None, reason=LOGIN_FAILURE_REASON_INVALID_CREDENTIALS):

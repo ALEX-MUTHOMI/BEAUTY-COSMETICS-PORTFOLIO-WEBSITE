@@ -279,9 +279,10 @@ class BookingCalendarService:
 
             days = []
             for current in offered_dates:
-                policy_data = policy_by_date.get(current)
-                if not policy_data:
+                maybe_policy = policy_by_date.get(current)
+                if maybe_policy is None:
                     continue
+                policy_data = maybe_policy
                 booked = booked_by_date.get(current, 0)
                 slot_count = len(slots_by_date.get(current.isoformat(), []))
                 classified = classify_calendar_day(

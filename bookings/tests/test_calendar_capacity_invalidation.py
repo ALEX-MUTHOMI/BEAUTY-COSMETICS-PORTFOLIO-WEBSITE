@@ -1,7 +1,6 @@
 """Contract: capacity-gen invalidation across hold / expire / confirm / cancel."""
 
-from datetime import date, datetime, time, timedelta
-from datetime import timezone as dt_timezone
+from datetime import UTC, date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -45,7 +44,7 @@ def _cache_key_for(service, local_date: date, redis: FakeRedis) -> str:
 
 
 def _as_utc(local_dt: datetime) -> datetime:
-    return local_dt.astimezone(dt_timezone.utc)
+    return local_dt.astimezone(UTC)
 
 
 @pytest.mark.django_db

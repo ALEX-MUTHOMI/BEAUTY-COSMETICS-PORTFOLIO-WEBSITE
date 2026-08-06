@@ -159,7 +159,8 @@ class RedisTokenBucketThrottle(BaseThrottle):
 
     def allow_request(self, request, view):
         rate = self.get_rate()
-        if rate is None:
+        scope = self.scope
+        if rate is None or not scope:
             # Unknown / missing scope must fail closed (never admit unlimited traffic).
             return False
 
@@ -169,8 +170,8 @@ class RedisTokenBucketThrottle(BaseThrottle):
         from hashlib import sha256
 
         ident = sha256(str(self.get_cache_ident(request, view)).encode("utf-8")).hexdigest()
-        key = f"throttle:{self.scope}:{ident}"
-        score_key, action_key = abuse_keys(self.scope, actor_for_request(request))
+        key = f"throttle:{scope}:{ident}"
+        score_key, action_key = abuse_keys(scope, actor_for_request(request))
         now = time.time()
         refill_rate = capacity / period
         ttl = math.ceil(period * 2)
@@ -209,12 +210,12 @@ class RedisTokenBucketThrottle(BaseThrottle):
             # Fail closed (no silent admit). Log redis_error_class for stall/NOAUTH diagnosis.
             logger.warning(
                 "Redis throttle unavailable for scope=%s; failing closed. redis_error_class=%s",
-                self.scope,
+                scope,
                 type(exc).__name__,
             )
             throttle_event(
                 request,
-                scope=self.scope,
+                scope=scope,
                 rate=rate,
                 allowed=False,
                 tokens_remaining="",
@@ -237,12 +238,12 @@ class RedisTokenBucketThrottle(BaseThrottle):
             emit_abuse_event(
                 request,
                 event_type=action_event_type(self.abuse_decision),
-                scope=self.scope,
+                scope=scope,
                 decision=self.abuse_decision,
             )
         throttle_event(
             request,
-            scope=self.scope,
+            scope=scope,
             rate=rate,
             allowed=allowed,
             tokens_remaining=result[1],
@@ -282,7 +283,7 @@ class RouteRateThrottle(RedisTokenBucketThrottle):
 
 def staff_or_ip_identity(request):
     user = getattr(request, "user", None)
-    if getattr(user, "is_authenticated", False):
+    if user is not None and getattr(user, "is_authenticated", False):
         return f"staff:{user.pk}"
     return f"ip:{request.META.get('REMOTE_ADDR', '')}"
 
