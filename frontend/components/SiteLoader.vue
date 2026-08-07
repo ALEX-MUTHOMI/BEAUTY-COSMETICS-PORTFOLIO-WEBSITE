@@ -161,11 +161,11 @@ const alreadyDone = readLoaderDone()
 
 const visible = ref(!alreadyDone)
 
-useHead({
+useHead(() => ({
   htmlAttrs: {
-    class: computed(() => (visible.value ? 'is-loading' : undefined)),
+    class: visible.value ? 'is-loading' : undefined,
   },
-})
+}))
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
