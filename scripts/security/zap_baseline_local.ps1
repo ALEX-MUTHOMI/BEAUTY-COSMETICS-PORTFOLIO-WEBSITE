@@ -44,6 +44,10 @@ function New-ReportDir {
     if (!(Test-Path $keep)) {
         New-Item -ItemType File -Force -Path $keep | Out-Null
     }
+    # ZAP stable image writes as uid 1000; Linux runners otherwise get AccessDeniedException.
+    if (Get-Command chmod -ErrorAction SilentlyContinue) {
+        & chmod -R a+rwX $dir
+    }
     return $dir
 }
 
@@ -384,7 +388,8 @@ if ($Mode -eq "health" -or $Mode -eq "all-passive") {
     $exitCodes += Invoke-ZapBaseline -Name "health" -Url $url -Spider $SpiderMinutes -Max $MaxMinutes -Prefix "zap-health-baseline"
 }
 if ($Mode -eq "root" -or $Mode -eq "all-passive") {
-    $url = if ($Target -and $Mode -eq "root") { $Target } else { "http://host.docker.internal:8000/" }
+    # Django has no site root (/) — that lives on Nuxt :3000. Keep API root scan on /health/.
+    $url = if ($Target -and $Mode -eq "root") { $Target } else { "http://host.docker.internal:8000/health/" }
     $exitCodes += Invoke-ZapBaseline -Name "root" -Url $url -Spider $SpiderMinutes -Max $MaxMinutes -Prefix "zap-root-baseline"
 }
 if ($Mode -eq "api" -or $Mode -eq "all-passive") {
