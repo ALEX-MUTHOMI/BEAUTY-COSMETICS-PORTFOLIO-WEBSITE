@@ -74,12 +74,13 @@ export async function fetchRememberedDevice(
   options?: { signal?: AbortSignal },
 ): Promise<{ data: RememberedDeviceState } | { error: string }> {
   const base = bookingApiBase(apiBaseUrl)
+  // Device cookie is HttpOnly on the API origin — must include credentials cross-origin.
   const result = await publicBookingGet(
     base,
     '/api/customers/remembered-device/',
     {},
     parseRememberedGet,
-    options,
+    { ...options, credentials: 'include' },
   )
   if ('error' in result) return { error: result.error }
   return { data: result.data }

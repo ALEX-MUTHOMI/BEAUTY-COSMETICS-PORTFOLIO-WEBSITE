@@ -59,3 +59,10 @@ The Nuxt `/book` flow is a **thin client** over CASS. Booking policy (weekdays, 
 ## Phase 3e Option A (locked)
 
 All 23 marketing slugs use **type-level** weekdays only. No per-treatment overrides in production.
+
+## Thin client invariant
+
+- Nuxt must not add `server/api` proxies for auth or PII.
+- Guest money writes stay on `/api/bookings/holds/`, `/api/bookings/checkout/`, `/api/bookings/checkout/mpesa/stk/`.
+- Proof: `frontend/src/booking/thinClientContracts.spec.ts` + `bookingGuestStkBoundary.spec.ts`.
+- Living audit: [FRONTEND_QUALITY_AUDIT.md](./FRONTEND_QUALITY_AUDIT.md).
