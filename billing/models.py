@@ -51,16 +51,19 @@ class LedgerTransaction(AuditMixin):
                 fields=["checkout_request_id"],
                 name="uniq_ledger_checkout_request_id",
             ),
+            # Postgres allows multiple NULLs; non-null correlation must be unique
+            # so concurrent checkout success cannot double-create ledgers.
+            models.UniqueConstraint(
+                fields=["external_correlation_id"],
+                condition=models.Q(external_correlation_id__isnull=False),
+                name="uniq_ledger_external_correlation_id",
+            ),
         ]
         indexes = [
             models.Index(fields=["checkout_request_id"], name="billing_led_checkou_fa4706_idx"),
             models.Index(
                 fields=["provider_reference_hash"],
                 name="billing_led_provide_884b14_idx",
-            ),
-            models.Index(
-                fields=["external_correlation_id"],
-                name="billing_led_externa_6c94fc_idx",
             ),
             models.Index(fields=["status"], name="billing_led_status_2ca63f_idx"),
         ]

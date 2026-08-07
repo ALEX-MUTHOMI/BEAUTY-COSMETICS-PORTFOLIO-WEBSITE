@@ -91,11 +91,19 @@ class FakeEmailProvider:
                 "provider": self.provider,
                 "recipient": to_redacted,
                 "subject": subject,
+                "text": str(text or ""),
                 "attachments": safe_attachments,
                 "metadata": {
                     key: str(value)
                     for key, value in (metadata or {}).items()
-                    if key in {"booking_reference", "notification_type"}
+                    if key
+                    in {
+                        "booking_reference",
+                        "notification_type",
+                        "challenge",
+                        # Test-only harvest for staff password reset (never logged).
+                        "test_reset_token",
+                    }
                 },
                 "message_hash": message_id,
             }

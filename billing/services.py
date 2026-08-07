@@ -2,7 +2,7 @@ import logging
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from billing.exceptions import BillingStateError
@@ -122,23 +122,31 @@ def record_successful_checkout_payment(
     raw_payload=None,
     correlation_id=None,
 ):
+    correlation = str(checkout_session_id)
     with transaction.atomic():
-        ledger = (
-            LedgerTransaction.objects.select_for_update()
-            .filter(external_correlation_id=str(checkout_session_id))
-            .first()
-        )
+        ledger = LedgerTransaction.objects.select_for_update().filter(external_correlation_id=correlation).first()
         if ledger and ledger.status == LedgerTransaction.Status.SUCCESS:
             return ledger, False
         if ledger is None:
-            ledger = create_pending_ledger_transaction(
-                customer=customer,
-                amount=amount,
-                currency=currency,
-                direction=LedgerTransaction.Direction.CREDIT,
-                provider=LedgerTransaction.Provider.MPESA,
-                provider_reference=provider_reference,
-                external_correlation_id=str(checkout_session_id),
-            )
+            try:
+                with transaction.atomic():
+                    ledger = create_pending_ledger_transaction(
+                        customer=customer,
+                        amount=amount,
+                        currency=currency,
+                        direction=LedgerTransaction.Direction.CREDIT,
+                        provider=LedgerTransaction.Provider.MPESA,
+                        provider_reference=provider_reference,
+                        external_correlation_id=correlation,
+                    )
+            except IntegrityError:
+                # Concurrent insert won the unique correlation race — re-read winner.
+                ledger = (
+                    LedgerTransaction.objects.select_for_update().filter(external_correlation_id=correlation).first()
+                )
+                if ledger is None:
+                    raise
+                if ledger.status == LedgerTransaction.Status.SUCCESS:
+                    return ledger, False
         ledger = mark_ledger_success(ledger.id, provider_receipt, raw_payload, correlation_id)
         return ledger, True

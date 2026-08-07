@@ -78,8 +78,12 @@ def get_mpesa_provider():
 
 
 def initiate_mpesa_stk(session_id, phone_number, idempotency_key, provider=None):
+    """Claim attempt under row lock, then call Daraja outside the lock."""
     normalized_phone = normalize_mpesa_phone(phone_number)
     provider = provider or get_mpesa_provider()
+    placeholder_co = f"pending-co:{idempotency_key}"
+    placeholder_mr = f"pending-mr:{idempotency_key}"
+
     with transaction.atomic():
         session = CheckoutSession.objects.select_for_update().get(pk=session_id)
         if session.status in {
@@ -96,30 +100,64 @@ def initiate_mpesa_stk(session_id, phone_number, idempotency_key, provider=None)
             return existing
         if session.status == CheckoutSession.Status.CREATED:
             transition_checkout(session, CheckoutSession.Status.PAYMENT_PENDING)
-        provider_response = provider.initiate_stk_push(
-            phone_number=normalized_phone,
-            amount=session.amount_snapshot,
-            account_reference=str(session.id),
-            description=session.description_snapshot,
-            callback_url=settings.DARAJA_CALLBACK_URL,
-            idempotency_key=idempotency_key,
-        )
+        amount_snapshot = session.amount_snapshot
+        description_snapshot = session.description_snapshot
+        locked_session_id = session.id
         attempt = CheckoutAttempt.objects.create(
             checkout_session=session,
             phone_number_hash=hash_sensitive_value(normalized_phone),
             redacted_phone=redact_phone(normalized_phone),
-            provider_request_id=provider_response.checkout_request_id,
-            merchant_request_id=provider_response.merchant_request_id,
+            provider_request_id=placeholder_co,
+            merchant_request_id=placeholder_mr,
             idempotency_key=idempotency_key,
-            status=CheckoutAttempt.Status.SENT,
-            raw_request_hash=hash_sensitive_value(provider_response),
-            redacted_request_payload=redact_checkout_payload(
-                {
-                    "CheckoutRequestID": provider_response.checkout_request_id,
-                    "MerchantRequestID": provider_response.merchant_request_id,
-                    "PhoneNumber": normalized_phone,
-                }
-            ),
+            status=CheckoutAttempt.Status.INITIATED,
+            raw_request_hash="",
+            redacted_request_payload={},
+        )
+        attempt_id = attempt.id
+
+    try:
+        provider_response = provider.initiate_stk_push(
+            phone_number=normalized_phone,
+            amount=amount_snapshot,
+            account_reference=str(locked_session_id),
+            description=description_snapshot,
+            callback_url=settings.DARAJA_CALLBACK_URL,
+            idempotency_key=idempotency_key,
+        )
+    except Exception:
+        with transaction.atomic():
+            failed = CheckoutAttempt.objects.select_for_update().filter(pk=attempt_id).first()
+            if failed and failed.status == CheckoutAttempt.Status.INITIATED:
+                failed.status = CheckoutAttempt.Status.FAILED
+                failed.save(update_fields=["status", "updated_at"])
+        raise
+
+    with transaction.atomic():
+        session = CheckoutSession.objects.select_for_update().get(pk=locked_session_id)
+        attempt = CheckoutAttempt.objects.select_for_update().get(pk=attempt_id)
+        if attempt.status == CheckoutAttempt.Status.SENT:
+            return attempt
+        attempt.provider_request_id = provider_response.checkout_request_id
+        attempt.merchant_request_id = provider_response.merchant_request_id
+        attempt.status = CheckoutAttempt.Status.SENT
+        attempt.raw_request_hash = hash_sensitive_value(provider_response)
+        attempt.redacted_request_payload = redact_checkout_payload(
+            {
+                "CheckoutRequestID": provider_response.checkout_request_id,
+                "MerchantRequestID": provider_response.merchant_request_id,
+                "PhoneNumber": normalized_phone,
+            }
+        )
+        attempt.save(
+            update_fields=[
+                "provider_request_id",
+                "merchant_request_id",
+                "status",
+                "raw_request_hash",
+                "redacted_request_payload",
+                "updated_at",
+            ]
         )
         if session.status != CheckoutSession.Status.STK_SENT:
             transition_checkout(session, CheckoutSession.Status.STK_SENT)
@@ -227,6 +265,46 @@ def process_mpesa_callback(payload, remote_addr=None, correlation_id=None):
         raise
 
 
+def _reconcile_late_success_on_terminal(session, attempt, payload, correlation_id=None):
+    """Record money for EXPIRED/CANCELLED checkout without flipping session to PAID."""
+    raw_amount = payload.get("Amount", payload.get("amount"))
+    amount = Decimal(str(raw_amount or "0.00")).quantize(Decimal("0.01"))
+    if amount != session.amount_snapshot:
+        raise CheckoutValidationError("Provider callback amount mismatch.")
+
+    attempt.status = CheckoutAttempt.Status.SUCCESS
+    attempt.save(update_fields=["status", "updated_at"])
+    record_successful_checkout_payment(
+        customer=session.customer,
+        checkout_session_id=session.id,
+        amount=session.amount_snapshot,
+        currency=session.currency,
+        provider_reference=attempt.provider_request_id,
+        provider_receipt=str(payload.get("MpesaReceiptNumber", "")),
+        raw_payload=payload,
+        correlation_id=correlation_id,
+    )
+    if session.purchasable_type == "booking":
+        from bookings.services.checkout_contract import BookingCheckoutContractService
+
+        ledger = LedgerTransaction.objects.get(external_correlation_id=str(session.id))
+        # Capacity may already be released; never auto-confirm — manual review only.
+        BookingCheckoutContractService.confirm_booking_after_billing_success(
+            checkout_session=session,
+            billing_ledger=ledger,
+            request_context={"request_id": correlation_id, "late_payment": True},
+        )
+    logger.info(
+        "checkout.late_payment_reconciled",
+        extra={
+            "checkout_session_id": str(session.id),
+            "checkout_status": session.status,
+            "correlation_id": correlation_id,
+        },
+    )
+    return session
+
+
 def _process_locked_callback(payload, checkout_request_id, inbox, correlation_id=None):
     attempt = (
         CheckoutAttempt.objects.select_for_update()
@@ -248,7 +326,15 @@ def _process_locked_callback(payload, checkout_request_id, inbox, correlation_id
         CheckoutSession.Status.EXPIRED,
         CheckoutSession.Status.CANCELLED,
     }:
-        raise CheckoutStateError("Terminal checkout cannot be paid.")
+        if result_code != 0:
+            raise CheckoutStateError("Terminal checkout cannot accept a failed callback.")
+        attempt.status = CheckoutAttempt.Status.CALLBACK_RECEIVED
+        attempt.save(update_fields=["status", "updated_at"])
+        _reconcile_late_success_on_terminal(session, attempt, payload, correlation_id)
+        inbox.processing_status = MpesaWebhookInbox.Status.PROCESSED
+        inbox.processed_at = timezone.now()
+        inbox.save(update_fields=["processing_status", "processed_at", "updated_at"])
+        return CallbackResult(session=session, inbox=inbox)
 
     raw_amount = payload.get("Amount", payload.get("amount"))
     if result_code == 0:

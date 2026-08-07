@@ -18,9 +18,10 @@ def test_old_staff_session_fails_after_password_reset():
         == 200
     )
 
-    from bookings.services.staff_auth import STAFF_PASSWORD_RESET_OUTBOX
+    from bookings.infrastructure.email_provider import reset_fake_email_outbox
+    from bookings.services.staff_auth import harvest_staff_password_reset_token_for_tests
 
-    STAFF_PASSWORD_RESET_OUTBOX.clear()
+    reset_fake_email_outbox()
     Client().post(
         "/api/staff/auth/password-reset/request/",
         {"email": staff.email},
@@ -29,7 +30,10 @@ def test_old_staff_session_fails_after_password_reset():
     )
     Client().post(
         "/api/staff/auth/password-reset/confirm/",
-        {"token": STAFF_PASSWORD_RESET_OUTBOX[0]["token"], "new_password": "Reset invalidates session phrase 2026"},
+        {
+            "token": harvest_staff_password_reset_token_for_tests(),
+            "new_password": "Reset invalidates session phrase 2026",
+        },
         content_type="application/json",
         secure=True,
     )

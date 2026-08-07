@@ -4,7 +4,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from checkout.exceptions import CheckoutStateError
+from billing.models import LedgerTransaction
 from checkout.models import CheckoutSession
 from checkout.services import (
     create_checkout_session,
@@ -35,7 +35,8 @@ def test_checkout_expiry_is_timezone_aware_utc():
 
 
 @pytest.mark.django_db(transaction=True)
-def test_callback_provider_timestamp_cannot_revive_expired_checkout():
+def test_callback_provider_timestamp_cannot_revive_expired_checkout_to_paid():
+    """Late money is ledgered; checkout stays EXPIRED (no silent revive to PAID)."""
     customer = User.objects.create_user(email="tz-expired@aesthetic-os.test", phone_number="+254712700002")
     session = create_checkout_session(
         customer,
@@ -52,18 +53,27 @@ def test_callback_provider_timestamp_cannot_revive_expired_checkout():
         expires_at=timezone.now() - timezone.timedelta(minutes=1),
     )
 
-    with pytest.raises(CheckoutStateError):
-        process_mpesa_callback(
-            {
-                "CheckoutRequestID": attempt.provider_request_id,
-                "MerchantRequestID": attempt.merchant_request_id,
-                "ResultCode": 0,
-                "Amount": "50.00",
-                "MpesaReceiptNumber": "QTZ001",
-                "ProviderTimestamp": "20991231235959",
-            },
-            remote_addr="127.0.0.1",
-        )
+    process_mpesa_callback(
+        {
+            "CheckoutRequestID": attempt.provider_request_id,
+            "MerchantRequestID": attempt.merchant_request_id,
+            "ResultCode": 0,
+            "Amount": "50.00",
+            "MpesaReceiptNumber": "QTZ001",
+            "ProviderTimestamp": "20991231235959",
+        },
+        remote_addr="127.0.0.1",
+    )
+
+    session.refresh_from_db()
+    assert session.status == CheckoutSession.Status.EXPIRED
+    assert (
+        LedgerTransaction.objects.filter(
+            external_correlation_id=str(session.id),
+            status=LedgerTransaction.Status.SUCCESS,
+        ).count()
+        == 1
+    )
 
 
 @pytest.mark.django_db(transaction=True)

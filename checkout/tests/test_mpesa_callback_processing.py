@@ -4,7 +4,7 @@ import pytest
 from django.contrib.auth import get_user_model
 
 from billing.models import LedgerTransaction
-from checkout.exceptions import CheckoutStateError, CheckoutValidationError
+from checkout.exceptions import CheckoutValidationError
 from checkout.models import CheckoutSession, MpesaWebhookInbox
 from checkout.services import (
     create_checkout_session,
@@ -100,18 +100,28 @@ def test_mismatched_or_unknown_checkout_request_rejected(stk_session):
 
 
 @pytest.mark.django_db(transaction=True)
-def test_expired_or_cancelled_checkout_rejects_success_callback(stk_session):
+def test_expired_checkout_success_callback_records_ledger_keeps_expired(stk_session):
     stk_session.status = CheckoutSession.Status.EXPIRED
     stk_session.save(update_fields=["status", "updated_at"])
 
-    with pytest.raises(CheckoutStateError):
-        process_mpesa_callback(
-            {
-                "CheckoutRequestID": stk_session.attempts.first().provider_request_id,
-                "MerchantRequestID": "merchant-callback-005",
-                "ResultCode": 0,
-                "Amount": "2100.00",
-                "MpesaReceiptNumber": "QEXPIRED001",
-            },
-            remote_addr="127.0.0.1",
-        )
+    result = process_mpesa_callback(
+        {
+            "CheckoutRequestID": stk_session.attempts.first().provider_request_id,
+            "MerchantRequestID": "merchant-callback-005",
+            "ResultCode": 0,
+            "Amount": "2100.00",
+            "MpesaReceiptNumber": "QEXPIRED001",
+        },
+        remote_addr="127.0.0.1",
+    )
+
+    stk_session.refresh_from_db()
+    assert result.session is not None
+    assert stk_session.status == CheckoutSession.Status.EXPIRED
+    assert (
+        LedgerTransaction.objects.filter(
+            external_correlation_id=str(stk_session.id),
+            status=LedgerTransaction.Status.SUCCESS,
+        ).count()
+        == 1
+    )

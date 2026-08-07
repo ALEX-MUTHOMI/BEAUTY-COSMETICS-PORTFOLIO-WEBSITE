@@ -102,9 +102,12 @@ Compare: [f629fe2...ab666da](https://github.com/ALEX-MUTHOMI/aesthetic-os/compar
 | A3 | Human DSA + money-path docs | Fixed this PR |
 | B1 | Checkout expiry → fail booking + free capacity | Fixed this PR |
 | B2 | FAILED webhook allows retry | Fixed this PR |
-| C1 | Unique `external_correlation_id` (migration) | Deferred — follow-up PR |
+| B3 | Late success on EXPIRED/CANCELLED → ledger + manual review (session stays terminal) | Fixed (deferred closeout) |
+| C1 | Unique `external_correlation_id` (migration) | Fixed (deferred closeout) |
 | D1 | Week overview RBAC scope | Fixed this PR |
+| D-outbox | Staff password-reset raw token memory list | Fixed (email provider outbox) |
 | E1 | Missing throttle scope fail closed | Fixed this PR |
 | E2 | Unify email redaction | Fixed this PR |
+| STK-lock | Daraja I/O inside `select_for_update` | Fixed (claim then provider I/O) |
 
-Deferred to follow-up PRs when scope is large or migration-sensitive: B3 late-success reconciliation ledger, C1 unique constraint migration, D1 staff reset outbox delivery redesign, STK lock refactor.
+All prior deferred items closed on branch `audit/backend-deferred-closeout`.
