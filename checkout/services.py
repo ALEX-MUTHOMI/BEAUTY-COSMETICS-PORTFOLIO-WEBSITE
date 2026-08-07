@@ -97,7 +97,16 @@ def initiate_mpesa_stk(session_id, phone_number, idempotency_key, provider=None)
         if existing:
             if existing.checkout_session_id != session.id:
                 raise CheckoutValidationError("Idempotency key already in use.")
-            return existing
+            # Successful STK already sent — return as-is (idempotent).
+            if existing.status == CheckoutAttempt.Status.SENT:
+                return existing
+            # Provider timed out / failed before real CheckoutRequestID — allow one retry.
+            if existing.status == CheckoutAttempt.Status.FAILED and str(existing.provider_request_id).startswith(
+                "pending-"
+            ):
+                existing.delete()
+            else:
+                return existing
         if session.status == CheckoutSession.Status.CREATED:
             transition_checkout(session, CheckoutSession.Status.PAYMENT_PENDING)
         amount_snapshot = session.amount_snapshot

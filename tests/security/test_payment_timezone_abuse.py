@@ -5,7 +5,6 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from billing.models import LedgerTransaction
-from checkout.exceptions import CheckoutStateError
 from checkout.models import CheckoutSession
 from checkout.services import (
     create_checkout_session,
@@ -18,6 +17,7 @@ User = get_user_model()
 
 @pytest.mark.django_db(transaction=True)
 def test_future_provider_timestamp_cannot_bypass_cancelled_checkout_state():
+    """Late money is ledgered for ops reconciliation; checkout stays CANCELLED (not PAID)."""
     customer = User.objects.create_user(email="tz-abuse@aesthetic-os.test", phone_number="+254712720001")
     session = create_checkout_session(
         customer,
@@ -34,17 +34,24 @@ def test_future_provider_timestamp_cannot_bypass_cancelled_checkout_state():
         expires_at=timezone.now() + timezone.timedelta(days=1),
     )
 
-    with pytest.raises(CheckoutStateError):
-        process_mpesa_callback(
-            {
-                "CheckoutRequestID": attempt.provider_request_id,
-                "MerchantRequestID": attempt.merchant_request_id,
-                "ResultCode": 0,
-                "Amount": "80.00",
-                "MpesaReceiptNumber": "QTZABUSE001",
-                "ProviderTimestamp": "20991231235959",
-            },
-            remote_addr="127.0.0.1",
-        )
+    process_mpesa_callback(
+        {
+            "CheckoutRequestID": attempt.provider_request_id,
+            "MerchantRequestID": attempt.merchant_request_id,
+            "ResultCode": 0,
+            "Amount": "80.00",
+            "MpesaReceiptNumber": "QTZABUSE001",
+            "ProviderTimestamp": "20991231235959",
+        },
+        remote_addr="127.0.0.1",
+    )
 
-    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 0
+    session.refresh_from_db()
+    assert session.status == CheckoutSession.Status.CANCELLED
+    assert (
+        LedgerTransaction.objects.filter(
+            external_correlation_id=str(session.id),
+            status=LedgerTransaction.Status.SUCCESS,
+        ).count()
+        == 1
+    )

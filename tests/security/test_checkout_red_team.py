@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from checkout.exceptions import CheckoutStateError, CheckoutValidationError
+from checkout.exceptions import CheckoutValidationError
 from checkout.services import (
     cancel_checkout_session,
     create_checkout_session,
@@ -44,17 +44,20 @@ def test_red_team_checkout_attack_vectors_are_blocked(settings):
         )
 
     cancel_checkout_session(session.id)
-    with pytest.raises(CheckoutStateError):
-        process_mpesa_callback(
-            {
-                "CheckoutRequestID": attempt.provider_request_id,
-                "MerchantRequestID": attempt.merchant_request_id,
-                "ResultCode": 0,
-                "Amount": "1900.00",
-                "MpesaReceiptNumber": "QCANCELLED001",
-            },
-            remote_addr="127.0.0.1",
-        )
+    # Late success still records a ledger; session stays CANCELLED (no silent revive to PAID).
+    late = process_mpesa_callback(
+        {
+            "CheckoutRequestID": attempt.provider_request_id,
+            "MerchantRequestID": attempt.merchant_request_id,
+            "ResultCode": 0,
+            "Amount": "1900.00",
+            "MpesaReceiptNumber": "QCANCELLED001",
+        },
+        remote_addr="127.0.0.1",
+    )
+    session.refresh_from_db()
+    assert late.session is not None
+    assert session.status == "cancelled"
 
     settings.SAFARICOM_ALLOWED_CIDRS = ["196.201.214.0/24"]
     settings.TRUSTED_PROXY_CIDRS = []
