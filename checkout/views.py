@@ -96,6 +96,11 @@ class CheckoutMpesaSTKView(APIView):
                 {"detail": "Payment provider temporarily unavailable."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
+        except CheckoutStateError:
+            return Response(
+                {"detail": "Checkout is no longer payable."},
+                status=status.HTTP_409_CONFLICT,
+            )
         except CheckoutValidationError:
             return Response(
                 {"detail": "Idempotency key already in use."},

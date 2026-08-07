@@ -33,7 +33,6 @@ LOGIN_FAILURE_REASON_TRANSPORT = "transport"
 LOGIN_FAILURE_REASON_INVALID_CREDENTIALS = "invalid_credentials"
 LOGIN_FAILURE_REASON_LOCKOUT = "lockout"
 
-STAFF_PASSWORD_RESET_OUTBOX = []
 STAFF_PORTAL_PERMISSION_CODES = {
     "manage_staff_booking_notes",
     "view_staff_booking",
@@ -326,6 +325,49 @@ def _display_name(user):
     return local[:48] or "Staff"
 
 
+def _enqueue_staff_password_reset_email(*, to_address, token, challenge_public_id, email_redacted):
+    """Deliver reset token via email provider. DB stores hash only; never keep raw token in memory."""
+    from bookings.infrastructure.email_provider import get_email_provider
+
+    site = str(getattr(settings, "PUBLIC_SITE_URL", "") or getattr(settings, "FRONTEND_ORIGIN", "") or "").rstrip("/")
+    reset_path = f"/staff/reset-password?token={token}"
+    reset_url = f"{site}{reset_path}" if site else reset_path
+    text = (
+        "Staff password reset for AestheticOS.\n\n"
+        f"Use this one-time link within the expiry window:\n{reset_url}\n\n"
+        "If you did not request this, ignore this message."
+    )
+    html = f'<p>Staff password reset for AestheticOS.</p><p><a href="{reset_url}">Reset password</a></p>'
+    provider = get_email_provider()
+    metadata = {
+        "notification_type": "staff_password_reset",
+        "challenge": str(challenge_public_id),
+    }
+    if getattr(provider, "provider", "") in {"fake", "console"}:
+        # Harvestable only from FakeEmailProvider outbox in tests — not logged.
+        metadata["test_reset_token"] = token
+    provider.send_email(
+        to_hash=hash_sensitive_value(to_address),
+        to_redacted=email_redacted,
+        subject="Staff password reset",
+        html=html,
+        text=text,
+        metadata=metadata,
+        to_address=to_address,
+    )
+
+
+def harvest_staff_password_reset_token_for_tests():
+    """Test helper: read last fake outbox reset token. Returns None outside fake provider."""
+    from bookings.infrastructure.email_provider import FAKE_EMAIL_OUTBOX
+
+    for entry in reversed(FAKE_EMAIL_OUTBOX):
+        meta = entry.get("metadata") or {}
+        if meta.get("notification_type") == "staff_password_reset" and meta.get("test_reset_token"):
+            return meta["test_reset_token"]
+    return None
+
+
 def request_staff_password_reset(email, request):
     from django.contrib.auth import get_user_model
 
@@ -353,13 +395,18 @@ def request_staff_password_reset(email, request):
         metadata={"email_redacted": _redact_email_safe(normalized), "challenge": str(challenge.public_id)},
     )
     if staff:
-        STAFF_PASSWORD_RESET_OUTBOX.append(
-            {
-                "email_redacted": _redact_email_safe(normalized),
-                "token": token,
-                "challenge": str(challenge.public_id),
-            }
-        )
+        try:
+            _enqueue_staff_password_reset_email(
+                to_address=normalized,
+                token=token,
+                challenge_public_id=challenge.public_id,
+                email_redacted=_redact_email_safe(normalized),
+            )
+        except Exception:
+            logger.exception(
+                "staff.password_reset.email_failed",
+                extra={"challenge": str(challenge.public_id)},
+            )
     return GENERIC_RESET_RESPONSE
 
 
