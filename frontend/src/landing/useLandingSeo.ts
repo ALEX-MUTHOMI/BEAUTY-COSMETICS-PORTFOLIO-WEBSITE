@@ -1,9 +1,6 @@
 import { useHead, useRoute, useRuntimeConfig, useSeoMeta } from 'nuxt/app'
-import {
-  LANDING_ADDRESS_LINES,
-  LANDING_INSTAGRAM_URL,
-  LANDING_LOCATION_LABEL,
-} from './landingContent'
+import { localBusinessNap } from './agentSeo'
+import { LANDING_LOCATION_LABEL } from './landingContent'
 import { getHeroLcpHref, getHeroLcpSrcset } from './heroMedia'
 
 export const LANDING_OG_IMAGE = '/images/hero-makeup.jpg'
@@ -56,21 +53,10 @@ export function useLandingSeo() {
         type: 'application/ld+json',
         innerHTML: JSON.stringify({
           '@context': 'https://schema.org',
-          '@type': 'BeautySalon',
-          name: 'Shee Aesthetics',
+          ...localBusinessNap(siteUrl),
           description: LANDING_DESCRIPTION,
-          url: siteUrl,
           image: ogImage,
-          address: {
-            '@type': 'PostalAddress',
-            addressLocality: LANDING_ADDRESS_LINES[0],
-            addressRegion: 'Meru County',
-            addressCountry: 'KE',
-          },
           areaServed: LANDING_LOCATION_LABEL,
-          sameAs: [LANDING_INSTAGRAM_URL],
-          email: 'bookings@sheeaesthetics.co.ke',
-          priceRange: 'KES',
         }),
       },
     ],

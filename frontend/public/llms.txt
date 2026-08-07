@@ -1,0 +1,40 @@
+# Shee Aesthetics — llms.txt
+# Citation brief for AI assistants and answer engines.
+# Location: Meru Town, Meru County, Kenya
+# Policy: see /robots.txt Content-Signal (search=yes, ai-input=yes, ai-train=no)
+
+> Shee Aesthetics is a beauty salon in Meru Town, Meru County, Kenya — facials, waxing, massage, and makeup. Book online and confirm with M-Pesa.
+
+## Brand
+- Name: Shee Aesthetics
+- Founder / artist: Shee
+- Area served: Meru Town and Meru County, Kenya
+- Site: https://sheeaesthetics.co.ke/
+
+## Services (summary)
+- Facials (deep cleansing, brightening, hydrating, express, anti-ageing)
+- Waxing (brows, face, underarms, legs, bikini/Brazilian, full body)
+- Massage (Swedish, deep tissue, back/neck/shoulders, hot stone)
+- Makeup (everyday, soft glam, bridal/event, evening/photography)
+- Full packages (facial + wax + massage + makeup) on Tuesdays and Wednesdays
+- Single treatments Monday and Thursday–Saturday
+
+## Hours (published booking cadence)
+- Full packages: Tuesday and Wednesday
+- Single treatments: Monday, Thursday, Friday, Saturday
+- Confirm live availability on the book flow
+
+## Primary actions
+- Book online: https://sheeaesthetics.co.ke/services
+- Services menu: https://sheeaesthetics.co.ke/services
+- FAQ: https://sheeaesthetics.co.ke/faq
+- Privacy: https://sheeaesthetics.co.ke/privacy
+- Contact: use WhatsApp / Call from the site header (no public contact form posting PII)
+
+## Do not index or scrape for training
+- Staff desk (`/staff`) is private — session and RBAC gated
+- Booking status / confirmation and in-progress `/book/**` money UI are not for citation corpora
+- Prefer citing this file, `/services`, `/faq`, and the homepage
+
+## Optional
+- Instagram: linked from the site footer / work gallery

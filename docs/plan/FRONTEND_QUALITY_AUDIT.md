@@ -12,13 +12,13 @@
 | [85fbf82...9eb8246](https://github.com/ALEX-MUTHOMI/aesthetic-os/compare/85fbf82...9eb8246) | Fortress Nuxt patches + SiteLoader types |
 | Backend money path | See [BACKEND_QUALITY_AUDIT.md](./BACKEND_QUALITY_AUDIT.md) |
 
-Related: [CASS_FRONTEND_SECURITY.md](./CASS_FRONTEND_SECURITY.md), [GDPR_DPA_2019_BOOKING_DATA_MAP.md](../security/GDPR_DPA_2019_BOOKING_DATA_MAP.md), [CLOUDFLARE_KENYA_EDGE.md](../ops/CLOUDFLARE_KENYA_EDGE.md)
+Related: [CASS_FRONTEND_SECURITY.md](./CASS_FRONTEND_SECURITY.md), [GDPR_DPA_2019_BOOKING_DATA_MAP.md](../security/GDPR_DPA_2019_BOOKING_DATA_MAP.md), [CLOUDFLARE_KENYA_EDGE.md](../ops/CLOUDFLARE_KENYA_EDGE.md), [AGENTIC_AEO_CLOUDFLARE.md](../ops/AGENTIC_AEO_CLOUDFLARE.md)
 
 ---
 
 ## Checklist (every ring)
 
-Correctness · Privacy (no PII leak) · Thin Django client · TDD · Comments · CSP/cookies
+Correctness · Privacy (no PII leak) · Thin Django client · TDD · Comments · CSP/cookies · Agent Readiness / AEO
 
 ---
 
@@ -72,19 +72,32 @@ Correctness · Privacy (no PII leak) · Thin Django client · TDD · Comments ·
 
 ---
 
+## Ring F6 — Agentic AEO
+
+| Severity | Finding | Evidence |
+|----------|---------|----------|
+| OK | Origin sitemap + `llms.txt` + Content Signals robots | `frontend/public/` |
+| OK | FAQPage / OfferCatalog JSON-LD + Meru citation copy | `agentSeo.ts`, FAQ/services pages |
+| Ops | CF Agent Readiness / Markdown / Labyrinth | [AGENTIC_AEO_CLOUDFLARE.md](../ops/AGENTIC_AEO_CLOUDFLARE.md) (zone must be orange-clouded) |
+
+---
+
 ## Remediation tracking
 
 | ID | Finding | Status |
 |----|---------|--------|
-| F1-cred | Remember-device GET `credentials: include` | Fixed this PR |
-| F1-e2e | Playwright money-path smoke (fake provider) | Fixed this PR |
-| F3-split | Extract landing hero (+ visit path) SFCs | Fixed this PR (hero + visit); remainder tracked |
-| F4-csp | Tighten CSP object/base/connect-src + cookie contract | Fixed this PR |
-| F5-privacy | Align privacy page + rights-request form | Fixed this PR |
-| F5-thin | Vitest thin-client / no Nuxt PII proxy contract | Fixed this PR |
+| F1-cred | Remember-device GET `credentials: include` | Fixed (prior PR) |
+| F1-e2e | Playwright money-path hold→STK→status with fixtures | Fixed this arc |
+| F3-split | Extract landing SFCs (hero/glow/work/offer/steps/packages/reviews/visit) | Fixed this arc |
+| F4-csp | Tighten CSP object/base/connect-src + cookie contract | Fixed (prior PR) |
+| F4-tt | Permissions-Policy + CSP report-only / Trusted Types prep (env-gated) | Fixed this arc |
+| F5-privacy | Align privacy page + rights-request form | Fixed (prior PR) |
+| F5-thin | Vitest thin-client / no Nuxt PII proxy contract | Fixed (prior PR) |
+| F5-agent-pii | Agent/DOM PII storage + staff reveal red-team Vitest | Fixed this arc |
+| F6-aeo | Origin AEO assets + CF Agent Readiness runbook | Fixed this arc |
 
 ---
 
 ## Can a client safely book?
 
-Gate: Django owns holds/checkout/STK; Nuxt is credentialed thin client; Turnstile+CSRF; no plaintext PII in browser storage; privacy rights intake available; origin CSP + CF Client-Side Security runbook when orange-clouded.
+Gate: Django owns holds/checkout/STK; Nuxt is credentialed thin client; Turnstile+CSRF; no plaintext PII in browser storage; privacy rights intake available; origin CSP + Permissions-Policy; CF Client-Side Security + Agent Readiness when orange-clouded; good agents can cite Meru salon via sitemap/`llms.txt`/JSON-LD without indexing money-path or staff.

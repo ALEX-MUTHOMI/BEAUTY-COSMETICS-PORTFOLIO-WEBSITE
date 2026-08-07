@@ -25,9 +25,19 @@ this document is the deploy checklist + rollback for `sheeaesthetics.co.ke`.
 | `/api/bookings/*` | **Bypass** cache |
 | `/api/customers/*` | **Bypass** cache (remember-device cookies) |
 | `/api/csrf/` | Bypass |
+| `/staff/*` | **Bypass** cache (session desk; never edge-cache HTML) |
 | HTML `/`, `/book/*`, `/booking/*` | Bypass or short TTL only if SSR is fully public |
 
 Respect origin `Cache-Control`. Do not “Cache Everything” on `/media/public/` without matching the 5-minute revoke policy in app code.
+
+## Phase 0 — Zone prerequisite (Agent Readiness)
+
+Orange-cloud alone is required before Cloudflare **Agent Readiness**, **Markdown for Agents**, **AI Labyrinth**, and edge Client-Side Security can apply to production traffic.
+
+1. Orange-cloud `sheeaesthetics.co.ke` / `www` with **Full (strict)** SSL (DNS section above).
+2. Confirm cache bypass for `/api/bookings/**`, `/api/customers/**`, `/api/csrf/`, `/staff/**`.
+3. Confirm `TRUSTED_PROXY_CIDRS`, CSRF/CORS origins for the HTTPS site + API (env section below).
+4. Follow the promote/defend checklist in [AGENTIC_AEO_CLOUDFLARE.md](./AGENTIC_AEO_CLOUDFLARE.md) (Content Signals `search=yes, ai-input=yes, ai-train=no`; never challenge STK after Turnstile).
 
 ## Booking API requirement
 
@@ -116,3 +126,7 @@ curl -s "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/page_shield/scripts
 ```
 
 Do not treat CF Client-Side Security as a substitute for origin CSP hygiene.
+
+## Agent Readiness / AEO (pointer)
+
+Full promote vs defend matrix, Markdown for Agents, AI Labyrinth, managed-vs-origin robots, and STK never-challenge rules live in **[AGENTIC_AEO_CLOUDFLARE.md](./AGENTIC_AEO_CLOUDFLARE.md)**. Re-scan Agent Readiness Diagnostics after origin sitemap / `llms.txt` / robots Content Signals deploys.

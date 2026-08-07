@@ -34,6 +34,7 @@
         <div class="services-hero__inner">
           <p class="label">{{ pageIntro.eyebrow }}</p>
           <h1>{{ pageIntro.title }}</h1>
+          <p class="services-hero__cite">{{ SERVICES_CITATION_LINE }}</p>
         </div>
       </header>
 
@@ -389,9 +390,11 @@ import {
   SINGLE_DAYS_LABEL,
 } from '@/landing/landingContent'
 import {
+  SERVICES_CITATION_LINE,
   SERVICES_PAGE_INTRO,
   serviceCategories,
 } from '@/landing/servicesContent'
+import { buildServicesOfferCatalogJsonLd } from '@/landing/agentSeo'
 import {
   isServiceCategoryId,
   parseServicesHash,
@@ -487,10 +490,17 @@ useSeoMeta({
   ogUrl: `${siteUrl}/services`,
   ogType: 'website',
   twitterCard: 'summary_large_image',
+  robots: 'index, follow',
 })
 
 useHead({
   link: [{ rel: 'canonical', href: `${siteUrl}/services` }],
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify(buildServicesOfferCatalogJsonLd(siteUrl)),
+    },
+  ],
 })
 </script>
 
@@ -551,6 +561,13 @@ useHead({
   width: var(--container);
   margin: 0 auto;
   max-width: 40rem;
+}
+
+.services-hero__cite {
+  margin: 1rem auto 0;
+  max-width: 42rem;
+  font: 400 0.98rem/1.65 var(--font-body);
+  color: var(--color-muted);
 }
 
 .services-hero h1 {

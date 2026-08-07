@@ -3,6 +3,27 @@
 // ==============================================================================
 import { fileURLToPath } from 'node:url'
 
+/** Additive report-only CSP (keeps enforcing CSP). Operator collector URL via env. */
+function buildCspReportOnlyHeader(): string | undefined {
+  if (process.env.NUXT_PUBLIC_CSP_REPORT_ONLY !== 'true') return undefined
+  const reportUri =
+    process.env.NUXT_PUBLIC_CSP_REPORT_URI?.trim() || 'https://sheeaesthetics.co.ke/csp-report'
+  const directives = [
+    "default-src 'self'",
+    "script-src 'self' 'strict-dynamic' https://challenges.cloudflare.com/turnstile/ https://static.cloudflareinsights.com",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "connect-src 'self' https://challenges.cloudflare.com",
+    `report-uri ${reportUri}`,
+  ]
+  if (process.env.NUXT_PUBLIC_TRUSTED_TYPES_PREP === 'true') {
+    directives.push("require-trusted-types-for 'script'")
+  }
+  return directives.join('; ')
+}
+
+const cspReportOnlyHeader = buildCspReportOnlyHeader()
+
 export default defineNuxtConfig({
   // Enforce Server-Side Rendering (SSR) for optimal SEO crawlability and index ranking
   ssr: true,
@@ -16,6 +37,15 @@ export default defineNuxtConfig({
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     },
+    ...(cspReportOnlyHeader
+      ? {
+          '/**': {
+            headers: {
+              'Content-Security-Policy-Report-Only': cspReportOnlyHeader,
+            },
+          },
+        }
+      : {}),
   },
 
   // Mellis theme design tokens shared across the public site
@@ -71,6 +101,10 @@ export default defineNuxtConfig({
   },
 
   // 3. Strict Security Headers auditing (mitigating XSS, Clickjacking, and injection vectors)
+  // CSP report-only soak + Trusted Types prep are env-gated and additive — enforcing CSP stays on.
+  // NUXT_PUBLIC_CSP_REPORT_ONLY=true → also emit Content-Security-Policy-Report-Only (see routeRules).
+  // NUXT_PUBLIC_TRUSTED_TYPES_PREP=true → include require-trusted-types-for 'script' in that report-only policy.
+  // Reporting endpoint is operator-owned (Cloudflare / collector); origin does not accept CSP reports in-app.
   security: {
     nonce: true,
     headers: {
@@ -100,6 +134,15 @@ export default defineNuxtConfig({
             : ['http://127.0.0.1:8000', 'http://localhost:8000']),
           ...(process.env.NUXT_PUBLIC_SENTRY_DSN ? ['https://*.ingest.sentry.io'] : []),
         ],
+        // Enforcing Trusted Types only when explicitly enabled (can break Vue sinks — prefer report-only soak first).
+        ...(process.env.NUXT_PUBLIC_TRUSTED_TYPES_ENFORCE === 'true'
+          ? { 'require-trusted-types-for': ["'script'"] }
+          : {}),
+      },
+      permissionsPolicy: {
+        camera: [],
+        microphone: [],
+        geolocation: [],
       },
       crossOriginEmbedderPolicy: 'unsafe-none',
       crossOriginOpenerPolicy: 'same-origin',

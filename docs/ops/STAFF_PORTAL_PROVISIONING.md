@@ -145,6 +145,22 @@ docker compose ps beat worker
 docker compose logs beat --tail=50
 ```
 
+## Privacy rights tickets (staff / ops)
+
+Customer privacy rights requests land via the public privacy form → Django
+`POST /api/bookings/privacy/rights-request/` (ticket id returned to the client).
+
+**Desk fulfilment (light ops):**
+
+1. Locate the ticket by id in Django admin / ops tooling (API ticket id from the
+   customer’s confirmation screen or email — counsel channel may also quote it).
+2. Fulfil export / erase / rectify per [PRIVACY_POLICY.md](../legal/PRIVACY_POLICY.md)
+   and [GDPR_DPA_2019_BOOKING_DATA_MAP.md](../security/GDPR_DPA_2019_BOOKING_DATA_MAP.md).
+3. Record completion against the ticket id; do not paste raw customer PII into
+   chat logs or public tickets.
+4. Legal counsel placeholders in the privacy policy remain until counsel signs off —
+   do not invent retention periods or ODPC wording beyond approved docs.
+
 ## Docker security gate (auth fortress)
 
 ```bash

@@ -31,6 +31,11 @@ export const SERVICES_PAGE_INTRO = {
   title: 'How would you like to visit?',
 }
 
+/** SSR citation line for agents — keep short; shown under the services hero question. */
+export const SERVICES_CITATION_LINE =
+  'Shee Aesthetics beauty salon in Meru Town: facials, waxing, massage and makeup. Book online, confirm with M-Pesa.'
+
+
 /** Short lines for the treatments category board. */
 export const SERVICE_CATEGORY_BOARD_LINES: Record<string, string> = {
   facials: 'Skin-first care',
