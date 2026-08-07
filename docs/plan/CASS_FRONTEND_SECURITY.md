@@ -66,3 +66,15 @@ All 23 marketing slugs use **type-level** weekdays only. No per-treatment overri
 - Guest money writes stay on `/api/bookings/holds/`, `/api/bookings/checkout/`, `/api/bookings/checkout/mpesa/stk/`.
 - Proof: `frontend/src/booking/thinClientContracts.spec.ts` + `bookingGuestStkBoundary.spec.ts`.
 - Living audit: [FRONTEND_QUALITY_AUDIT.md](./FRONTEND_QUALITY_AUDIT.md).
+
+## CSP report-only / Trusted Types / Permissions-Policy
+
+| Control | Default | Enable |
+|---------|---------|--------|
+| Enforcing CSP (nonce + strict-dynamic) | On | `nuxt.config.ts` `security.headers.contentSecurityPolicy` |
+| `Content-Security-Policy-Report-Only` (soak) | Off | `NUXT_PUBLIC_CSP_REPORT_ONLY=true` (+ optional `NUXT_PUBLIC_CSP_REPORT_URI`) |
+| Trusted Types in report-only | Off | Also set `NUXT_PUBLIC_TRUSTED_TYPES_PREP=true` |
+| Trusted Types enforce | Off | `NUXT_PUBLIC_TRUSTED_TYPES_ENFORCE=true` (after soak; may break Vue sinks) |
+| Permissions-Policy | `camera=()`, `microphone=()`, `geolocation=()` | Always on |
+
+Reporting endpoint is **operator-owned** (Cloudflare / collector). Origin does not ship an in-app CSP report API that would accept unauthenticated POST bodies. Align edge Client-Side Security with [CLOUDFLARE_KENYA_EDGE.md](../ops/CLOUDFLARE_KENYA_EDGE.md) and agentic promote/defend with [AGENTIC_AEO_CLOUDFLARE.md](../ops/AGENTIC_AEO_CLOUDFLARE.md).

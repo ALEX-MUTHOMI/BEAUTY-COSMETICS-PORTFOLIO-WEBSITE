@@ -75,11 +75,36 @@
 </template>
 
 <script setup lang="ts">
+import { buildFaqPageJsonLd } from '@/landing/agentSeo'
 import { FAQ_ITEMS, FAQ_PAGE, MELLIS_FLOWER_SRC } from '@/landing/clientPagesContent'
 
 definePageMeta({ layout: 'landing' })
 
-useHead({ title: 'FAQ | Shee Aesthetics' })
+const config = useRuntimeConfig()
+const siteUrl = (config.public.siteUrl as string) || 'https://sheeaesthetics.co.ke'
+const title = 'FAQ | Shee Aesthetics Meru — Booking, M-Pesa & Visits'
+const description =
+  'Answers for booking Shee Aesthetics beauty salon in Meru Town: facials, waxing, massage, makeup, M-Pesa confirmation, and how to change a visit.'
+
+useSeoMeta({
+  title,
+  description,
+  ogTitle: title,
+  ogDescription: description,
+  ogUrl: `${siteUrl}/faq`,
+  robots: 'index, follow',
+})
+
+useHead({
+  title,
+  link: [{ rel: 'canonical', href: `${siteUrl}/faq` }],
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify(buildFaqPageJsonLd(siteUrl)),
+    },
+  ],
+})
 
 const flowerSrc = MELLIS_FLOWER_SRC
 </script>

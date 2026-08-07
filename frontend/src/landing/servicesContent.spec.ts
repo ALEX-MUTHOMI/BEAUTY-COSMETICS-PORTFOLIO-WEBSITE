@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   getSingleTreatmentHighlights,
+  SERVICES_CITATION_LINE,
   SERVICES_PAGE_INTRO,
   serviceCategories,
   validateServiceCategories,
@@ -28,6 +29,8 @@ describe('servicesContent', () => {
     expect(SERVICES_PAGE_INTRO.title).toMatch(/how would you like to visit/i)
     expect(SERVICES_PAGE_INTRO).not.toHaveProperty('lead')
     expect(SERVICES_PAGE_INTRO).not.toHaveProperty('note')
+    expect(SERVICES_CITATION_LINE).toMatch(/Shee Aesthetics/)
+    expect(SERVICES_CITATION_LINE).toMatch(/Meru/)
   })
 
   it('surfaces one directly-bookable specific treatment per category', () => {

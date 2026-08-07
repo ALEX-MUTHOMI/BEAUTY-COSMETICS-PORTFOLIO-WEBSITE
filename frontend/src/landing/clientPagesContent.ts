@@ -16,7 +16,7 @@ export function assertPlainClientCopy(value: string): boolean {
 export const FAQ_PAGE = {
   eyebrow: 'Help',
   title: 'Questions',
-  lead: 'Booking and payment, answered simply.',
+  lead: 'Booking Shee Aesthetics in Meru Town, answered simply.',
   asideEyebrow: 'Still need help?',
   asideCopy: 'Message or call us from the header.',
 } as const
@@ -24,8 +24,8 @@ export const FAQ_PAGE = {
 export const FAQ_ITEMS = [
   {
     id: 'faq-booking',
-    q: 'How do I book?',
-    a: 'Pick a package or treatment, choose a time, then pay with M-Pesa to confirm.',
+    q: 'How do I book a beauty salon visit in Meru?',
+    a: 'At Shee Aesthetics pick a package or treatment, choose a time, then pay with M-Pesa to confirm.',
   },
   {
     id: 'faq-confirmation',
@@ -38,9 +38,9 @@ export const FAQ_ITEMS = [
     a: 'Tap Resend on your confirmation page, then approve on your phone.',
   },
   {
-    id: 'faq-limited',
-    q: 'Why limited spots?',
-    a: 'Each day has limited space. When it fills, that day closes online.',
+    id: 'faq-facial-waxing',
+    q: 'Do you offer facial and waxing in Meru?',
+    a: 'Yes. Shee Aesthetics in Meru Town offers facials, waxing, massage and makeup. Book online from Services.',
   },
   {
     id: 'faq-change',

@@ -41,4 +41,10 @@ describe('origin cookie and CSP inventory', () => {
     expect(nuxtConfig).toContain('https://challenges.cloudflare.com/turnstile/')
     expect(nuxtConfig).toContain('https://static.cloudflareinsights.com')
   })
+
+  it('ships Permissions-Policy and env-gated CSP report-only hooks', () => {
+    expect(nuxtConfig).toMatch(/permissionsPolicy:\s*\{/)
+    expect(nuxtConfig).toContain('NUXT_PUBLIC_CSP_REPORT_ONLY')
+    expect(nuxtConfig).toContain('NUXT_PUBLIC_TRUSTED_TYPES_PREP')
+  })
 })

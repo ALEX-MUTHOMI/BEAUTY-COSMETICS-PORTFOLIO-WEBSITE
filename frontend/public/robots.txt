@@ -1,9 +1,34 @@
 # Shee Aesthetics — public crawlers
+# Content Signals Policy (https://contentsignals.org/): allow search + AI answer input;
+# prefer not donating full site text to opaque training corpora.
+# Enforce training-scraper blocks at Cloudflare (Bot Fight / AI Labyrinth / WAF), not robots alone.
+# See docs/ops/AGENTIC_AEO_CLOUDFLARE.md
+
 User-agent: *
 Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=no
 
 # Staff desk is unlisted (2A). Obscurity is not the gate — Django session + RBAC is.
 # Keep /staff out of search indexes; do not link it from public chrome.
+Disallow: /staff
+Disallow: /staff/
+
+# Optional named search / answer crawlers (cite Meru salon; still respect Disallow above)
+User-agent: OAI-SearchBot
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=no
+Disallow: /staff
+Disallow: /staff/
+
+User-agent: ChatGPT-User
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=no
+Disallow: /staff
+Disallow: /staff/
+
+User-agent: Google-Extended
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=no
 Disallow: /staff
 Disallow: /staff/
 
