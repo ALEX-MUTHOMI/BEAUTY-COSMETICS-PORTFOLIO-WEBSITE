@@ -300,7 +300,7 @@ test.describe('Book money-path fixtures (hold → STK → status)', () => {
     await expect(continueBtn).toBeEnabled({ timeout: 10000 })
     await continueBtn.click()
 
-    await expect(page.getByRole('heading', { name: /Your details/i })).toBeVisible({
+    await expect(page.locator('#book-customer-title')).toBeVisible({
       timeout: 15000,
     })
 
