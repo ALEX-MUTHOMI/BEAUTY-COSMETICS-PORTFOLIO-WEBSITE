@@ -43,20 +43,25 @@ def test_slots_for_dates_uses_one_availability_call_per_batch_not_per_day():
     assert (calls[0][1] - calls[0][0]).days + 1 <= MAX_AVAILABILITY_RANGE_DAYS
 
 
-def test_slots_by_date_does_not_swallow_unexpected_errors_as_empty():
+def test_slots_by_date_logs_unexpected_errors_and_degrades_to_empty():
     selection = _selection("2")
     with patch(
         "bookings.services.booking_calendar.AvailabilityService.get_available_slots",
         side_effect=RuntimeError("redis down"),
     ):
-        with pytest.raises(RuntimeError, match="redis down"):
-            _slots_by_date(
-                selection=selection,
-                slot_start=date(2030, 6, 2),
-                slot_end=date(2030, 6, 2),
-                resource_id=None,
-                request_context={},
+        with patch("bookings.services.booking_calendar.logger.exception") as logged:
+            assert (
+                _slots_by_date(
+                    selection=selection,
+                    slot_start=date(2030, 6, 2),
+                    slot_end=date(2030, 6, 2),
+                    resource_id=None,
+                    request_context={},
+                )
+                == {}
             )
+        logged.assert_called_once()
+        assert logged.call_args.args[0] == "booking.calendar.slots_fetch_failed"
 
 
 def test_slots_by_date_still_maps_validation_error_to_empty():

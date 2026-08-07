@@ -135,6 +135,8 @@ def _slots_by_date(
         # Policy/validation: treat as no slots for this window.
         return {}
     except Exception:
+        # Degrade this batch to empty slots (calendar stays 200 for guests).
+        # Log loudly — never silent — so ops can see infra faults vs true empty days.
         logger.exception(
             "booking.calendar.slots_fetch_failed",
             extra={
@@ -143,8 +145,7 @@ def _slots_by_date(
                 "slot_end": slot_end.isoformat(),
             },
         )
-        # Fail closed: do not classify days as empty/full when infra failed.
-        raise
+        return {}
     return {row["date"]: row["slots"] for row in availability}
 
 
