@@ -30,4 +30,12 @@ describe('landing security headers contract', () => {
     expect(objectSrc).toBe("'none'")
     expect(baseUri).toBe("'none'")
   })
+
+  it('matches live nuxt.config object-src and base-uri none', async () => {
+    const { readFileSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const config = readFileSync(join(__dirname, '../../nuxt.config.ts'), 'utf8')
+    expect(config).toMatch(/'object-src':\s*\["'none'"\]/)
+    expect(config).toMatch(/'base-uri':\s*\["'none'"\]/)
+  })
 })

@@ -1,118 +1,7 @@
 <template>
   <SiteLoader />
   <main class="home">
-    <!-- Hero — Mellis-style fade gallery (Parisienne title + Manrope eyebrow + rose CTA) -->
-    <section
-      class="hero"
-      data-home-hero
-      role="region"
-      aria-label="Shee studio gallery"
-      :data-hero-service="currentHero.service"
-      :style="{
-        '--hero-crossfade-ms': `${HERO_CROSSFADE_MS}ms`,
-        '--hero-copy-fade-ms': `${HERO_COPY_FADE_MS}ms`,
-      }"
-    >
-      <div class="hero__track" aria-hidden="true">
-        <article
-          v-for="(slide, index) in heroSlides"
-          :key="slide.service"
-          class="hero__slide"
-          :class="{ 'hero__slide--active': activeSlide === index }"
-          :data-service="slide.service"
-        >
-          <picture v-if="mountedHeroSlides.has(index)">
-            <img
-              :src="slide.image"
-              :srcset="slide.srcset"
-              :sizes="slide.sizes"
-              :alt="slide.alt"
-              class="hero__bg"
-              :style="{ objectPosition: slide.objectPosition }"
-              :loading="index === 0 ? 'eager' : 'lazy'"
-              :fetchpriority="index === 0 ? 'high' : 'auto'"
-              decoding="async"
-              :width="slide.width"
-              :height="slide.height"
-            />
-          </picture>
-        </article>
-      </div>
-      <div class="hero__overlay" aria-hidden="true" />
-      <div class="hero__content" aria-live="polite">
-        <!-- Single copy node — no Transition leave/enter stack (prevents ghosted titles) -->
-        <div :key="currentHero.service" class="hero__copy">
-          <p class="hero__eyebrow">{{ currentHero.eyebrow }}</p>
-          <HeroHandwriteTitle :text="currentHero.headline" class="hero__title" />
-          <SiteButton
-            v-if="heroCtaIsExternal"
-            :href="heroCta.to"
-            variant="primary"
-            class="hero__cta"
-            @click="onHeroBook"
-          >
-            {{ heroCta.label }}
-          </SiteButton>
-          <SiteButton
-            v-else
-            :to="heroCta.to"
-            variant="primary"
-            class="hero__cta"
-            @click="onHeroBook"
-          >
-            {{ heroCta.label }}
-          </SiteButton>
-        </div>
-      </div>
-      <div class="hero__controls" aria-label="Gallery controls">
-        <button
-          type="button"
-          class="hero__nav hero__nav--prev"
-          aria-label="Previous slide"
-          @click="prevHeroSlide"
-        >
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-            <path
-              fill="currentColor"
-              d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"
-            />
-          </svg>
-        </button>
-        <div class="hero__dots" role="tablist" aria-label="Gallery slides">
-          <button
-            v-for="(slide, index) in heroSlides"
-            :key="`dot-${slide.service}`"
-            type="button"
-            class="hero__dot"
-            :class="{ 'hero__dot--active': activeSlide === index }"
-            role="tab"
-            :aria-selected="activeSlide === index"
-            :aria-label="slide.headline"
-            @click="goToHeroSlide(index)"
-          />
-        </div>
-        <button
-          type="button"
-          class="hero__nav hero__nav--next"
-          aria-label="Next slide"
-          @click="nextHeroSlide"
-        >
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-            <path
-              fill="currentColor"
-              d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
-            />
-          </svg>
-        </button>
-      </div>
-      <!-- Soft wave seam into Get to know us (paper) -->
-      <svg class="hero__wave" viewBox="0 0 1440 72" preserveAspectRatio="none" aria-hidden="true">
-        <path
-          fill="var(--color-paper)"
-          d="M0,32 C240,72 480,0 720,28 C960,56 1200,8 1440,36 L1440,72 L0,72 Z"
-        />
-      </svg>
-    </section>
+    <LandingHero />
 
     <!-- Get to know us — content first on mobile; Mellis oval left on desktop -->
     <section id="behind-the-glow" class="glow home-section" aria-labelledby="glow-heading">
@@ -630,165 +519,7 @@
       </div>
     </section>
 
-    <!-- Visit — hours + Google Maps (client path: book / get directions) -->
-    <section id="visit" class="visit-map home-section home-floral" aria-labelledby="visit-heading">
-      <img
-        src="/images/flower-edge.png"
-        alt=""
-        class="home-floral__edge home-floral__edge--tl"
-        width="200"
-        height="160"
-        loading="lazy"
-        decoding="async"
-        aria-hidden="true"
-      />
-      <img
-        src="/images/flower-edge.png"
-        alt=""
-        class="home-floral__edge home-floral__edge--br"
-        width="200"
-        height="160"
-        loading="lazy"
-        decoding="async"
-        aria-hidden="true"
-      />
-
-      <div class="visit-map__shell">
-        <header class="visit-map__intro">
-          <div class="title-lockup">
-            <img
-              src="/images/flower.png"
-              alt=""
-              class="title-lockup__flower title-lockup__flower--left"
-              width="72"
-              height="72"
-              aria-hidden="true"
-              loading="lazy"
-              decoding="async"
-            />
-            <h2 id="visit-heading">Visit us</h2>
-            <img
-              src="/images/flower.png"
-              alt=""
-              class="title-lockup__flower title-lockup__flower--right"
-              width="72"
-              height="72"
-              aria-hidden="true"
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-        </header>
-
-        <div class="visit-map__inner">
-          <ScrollReveal variant="up" :delay="40">
-            <div class="visit-map__card">
-              <div class="visit-map__card-head">
-                <h3 class="visit-map__card-title">Opening Hours</h3>
-                <img
-                  src="/images/icon-clock.png"
-                  alt=""
-                  width="40"
-                  height="40"
-                  class="visit-map__clock"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <dl class="visit-map__hours">
-                <div>
-                  <dt>Monday</dt>
-                  <dd>7:00 am – 7:00 pm · treatments</dd>
-                </div>
-                <div>
-                  <dt>Tue &amp; Wed</dt>
-                  <dd>7:00 am – 7:00 pm · packages</dd>
-                </div>
-                <div>
-                  <dt>Thu – Sat</dt>
-                  <dd>7:00 am – 7:00 pm · treatments</dd>
-                </div>
-                <div>
-                  <dt>Sunday</dt>
-                  <dd class="visit-map__closed">Closed</dd>
-                </div>
-              </dl>
-              <p class="visit-map__place">
-                <svg class="visit-map__pin" viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
-                  <path
-                    fill="currentColor"
-                    d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"
-                  />
-                </svg>
-                <span>{{ LANDING_LOCATION_LABEL }}</span>
-              </p>
-              <div class="visit-map__actions">
-                <SiteButton
-                  v-if="primaryCtaIsExternal"
-                  :href="primaryCtaHref"
-                  variant="primary"
-                  class="visit-map__book"
-                >
-                  {{ LANDING_PRIMARY_CTA }}
-                </SiteButton>
-                <SiteButton
-                  v-else
-                  :to="primaryCtaHref"
-                  variant="primary"
-                  class="visit-map__book"
-                >
-                  {{ LANDING_PRIMARY_CTA }}
-                </SiteButton>
-                <a
-                  :href="LANDING_MAPS_DIRECTIONS_URL"
-                  class="visit-map__maps visit-map__maps--primary"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  @click="trackFunnelEvent('cta_book_click', { surface: 'visit_directions', href: LANDING_MAPS_DIRECTIONS_URL })"
-                >
-                  Get directions
-                </a>
-                <a
-                  v-if="contactIsLive"
-                  :href="whatsappUrl"
-                  class="visit-map__maps"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  @click="trackFunnelEvent('wa_click', { surface: 'visit_map' })"
-                >
-                  {{ whatsappLabel }}
-                </a>
-              </div>
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal variant="up" :delay="100">
-            <div class="visit-map__map-panel">
-              <div class="visit-map__frame-wrap">
-                <iframe
-                  class="visit-map__frame"
-                  title="Shee Aesthetics on Google Maps — Meru Town"
-                  :src="LANDING_MAPS_EMBED_URL"
-                  loading="lazy"
-                  referrerpolicy="no-referrer-when-downgrade"
-                  allowfullscreen
-                />
-              </div>
-              <a
-                :href="LANDING_MAPS_URL"
-                class="visit-map__map-caption"
-                target="_blank"
-                rel="noopener noreferrer"
-                @click="trackFunnelEvent('cta_book_click', { surface: 'visit_open_maps', href: LANDING_MAPS_URL })"
-              >
-                <span>Open in Google Maps</span>
-                <span class="visit-map__map-caption-arrow" aria-hidden="true">→</span>
-              </a>
-            </div>
-          </ScrollReveal>
-        </div>
-      </div>
-    </section>
+    <LandingVisit />
 
     <Teleport to="body">
       <div
@@ -840,18 +571,13 @@
  * Section order: hero → Get to know us → Clients by Shee → offer → packages → reviews → visit.
  * Data helpers live under `src/landing/` — keep Django as the API, not Nuxt server routes.
  */
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import {
   flowSteps,
   getFeaturedPackages,
   LANDING_FEATURED_PACKAGE_CLARIFIER,
-  LANDING_LOCATION_LABEL,
-  LANDING_MAPS_DIRECTIONS_URL,
-  LANDING_MAPS_EMBED_URL,
-  LANDING_MAPS_URL,
   LANDING_PACKAGE_FLOOR,
   LANDING_PACKAGE_FLOOR_SHORT,
-  LANDING_PRIMARY_CTA,
   LANDING_TREATMENT_FLOOR,
   landingClientReviews,
   packageDayUrgency,
@@ -865,13 +591,6 @@ import {
 } from '@/landing/landingContent'
 import { fetchHomeWorkGallery, STATIC_HOME_WORK, type HomeWorkImage } from '@/landing/homeWorkGallery'
 import {
-  HERO_COPY_FADE_MS,
-  HERO_CROSSFADE_MS,
-  HERO_FADE_MS,
-  heroSlides,
-  shouldMountHeroImage,
-} from '@/landing/heroMedia'
-import {
   defaultTreatmentBookHref,
   featuredPackageBookHref,
 } from '@/landing/bookCtaTargets'
@@ -879,7 +598,6 @@ import { useLandingSeo } from '@/landing/useLandingSeo'
 import { useLandingContact } from '@/landing/useLandingContact'
 import { bookHrefForPackageName } from '@/landing/bookingHandoff'
 import {
-  heroCtaForSlide,
   primaryBookHref,
   primaryBookHrefKind,
   primaryBookIsExternal,
@@ -891,7 +609,6 @@ const config = useRuntimeConfig()
 const contact = useLandingContact()
 const contactIsLive = contact.isLive
 const whatsappUrl = contact.whatsappUrl
-const whatsappLabel = contact.whatsappLabel
 
 definePageMeta({ layout: 'landing' })
 useLandingSeo()
@@ -902,32 +619,6 @@ const { data: workGallery } = await useAsyncData(
   { default: () => STATIC_HOME_WORK },
 )
 const workImages = computed(() => (workGallery.value ?? STATIC_HOME_WORK).slice(0, 8))
-
-const activeSlide = ref(0)
-/** Retain frames once mounted so crossfades never remount mid-fade. */
-const retainedHeroSlides = ref(new Set<number>())
-const mountedHeroSlides = computed(() => retainedHeroSlides.value)
-
-watch(
-  activeSlide,
-  (active) => {
-    const next = new Set(retainedHeroSlides.value)
-    heroSlides.forEach((_, index) => {
-      if (shouldMountHeroImage(active, index, heroSlides.length)) next.add(index)
-    })
-    retainedHeroSlides.value = next
-  },
-  { immediate: true },
-)
-
-const currentHero = computed(() => heroSlides[activeSlide.value] ?? heroSlides[0]!)
-const heroCta = computed(() =>
-  heroCtaForSlide(currentHero.value, new Date(), {
-    contactIsLive: contactIsLive.value,
-    whatsappUrl: whatsappUrl.value,
-  }),
-)
-const heroCtaIsExternal = computed(() => primaryBookIsExternal(heroCta.value.to))
 
 const packagesVisitHref = featuredPackageBookHref()
 const treatmentsVisitHref = defaultTreatmentBookHref()
@@ -961,62 +652,6 @@ function scrollToGlowWork(event: Event) {
     window.history.replaceState(null, '', '#our-work')
   }
 }
-
-function onHeroBook() {
-  trackFunnelEvent('cta_book_click', { surface: 'hero', href: heroCta.value.to })
-}
-
-let heroTimer: ReturnType<typeof setInterval> | null = null
-
-function advanceHero() {
-  if (typeof document !== 'undefined' && document.hidden) return
-  activeSlide.value = (activeSlide.value + 1) % heroSlides.length
-}
-
-function goToHeroSlide(index: number) {
-  activeSlide.value = index
-  startHeroAutoplay()
-}
-
-function nextHeroSlide() {
-  activeSlide.value = (activeSlide.value + 1) % heroSlides.length
-  startHeroAutoplay()
-}
-
-function prevHeroSlide() {
-  activeSlide.value = (activeSlide.value - 1 + heroSlides.length) % heroSlides.length
-  startHeroAutoplay()
-}
-
-function startHeroAutoplay() {
-  stopHeroAutoplay()
-  if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    return
-  }
-  heroTimer = setInterval(advanceHero, HERO_FADE_MS)
-}
-
-function stopHeroAutoplay() {
-  if (heroTimer) {
-    clearInterval(heroTimer)
-    heroTimer = null
-  }
-}
-
-function onHeroVisibility() {
-  if (document.hidden) stopHeroAutoplay()
-  else startHeroAutoplay()
-}
-
-onMounted(() => {
-  startHeroAutoplay()
-  document.addEventListener('visibilitychange', onHeroVisibility)
-})
-
-onUnmounted(() => {
-  stopHeroAutoplay()
-  document.removeEventListener('visibilitychange', onHeroVisibility)
-})
 
 const featuredPackages = getFeaturedPackages()
 
@@ -1209,276 +844,6 @@ const reviews = landingClientReviews
 .section-head--light .label,
 .section-head--light h2 {
   color: #fff;
-}
-
-/* Hero — full photo + wave seam into paper (no ash fog) */
-.hero {
-  position: relative;
-  width: 100%;
-  /* Locked: mobile 92dvh — soft floor so short phones stay inside the viewport */
-  height: 92svh;
-  height: 92dvh;
-  min-height: 28rem;
-  overflow: hidden;
-  background: var(--color-ink);
-  --hero-crossfade-ms: 2800ms;
-  --hero-copy-fade-ms: 1400ms;
-}
-
-@media (max-width: 767px) {
-  .hero {
-    height: calc(100svh - var(--home-hero-chrome, 0px));
-    height: calc(100dvh - var(--home-hero-chrome, 0px));
-    min-height: 22rem;
-  }
-}
-
-.hero__track {
-  position: absolute;
-  inset: 0;
-}
-
-.hero__slide {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  overflow: hidden;
-  transition: opacity var(--hero-crossfade-ms) cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: opacity;
-  pointer-events: none;
-}
-
-.hero__slide--active {
-  opacity: 1;
-  z-index: 1;
-}
-
-.hero__slide picture {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.hero__bg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center center;
-  /* Subtle settle — avoid heavy blur from oversized Ken Burns */
-  transform: scale(1.03);
-  transition: transform var(--hero-crossfade-ms) cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: transform;
-}
-
-.hero__slide--active .hero__bg {
-  transform: scale(1);
-}
-
-.hero__overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  /* Lighter veil — keep photos sharp; copy still readable */
-  background:
-    linear-gradient(
-      180deg,
-      rgba(20, 16, 18, 0.22) 0%,
-      rgba(20, 16, 18, 0.12) 42%,
-      rgba(20, 16, 18, 0.34) 100%
-    );
-}
-
-.hero__wave {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  z-index: 5;
-  width: 100%;
-  height: clamp(2.5rem, 6vw, 4.5rem);
-  display: block;
-  pointer-events: none;
-}
-
-.hero__content {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  display: grid;
-  place-items: center;
-  text-align: center;
-  /* Center in the band below the Home 3 header, not under the logo stack */
-  padding:
-    max(var(--site-header-height, 3.75rem), env(safe-area-inset-top, 0px))
-    1.15rem
-    calc(var(--mobile-book-bar-height, 4.15rem) + env(safe-area-inset-bottom, 0px) + 1.1rem);
-  color: #fff;
-  pointer-events: none;
-}
-
-.hero__copy {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(1rem, 2.6vh, 2.35rem);
-  text-align: center;
-  max-width: min(94vw, 56rem);
-  margin: 0;
-  transform: none;
-  position: relative;
-  animation: hero-copy-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.hero__content :deep(.site-btn) {
-  pointer-events: auto;
-}
-
-@keyframes hero-copy-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.hero__eyebrow {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: clamp(0.72rem, 1.15vw, 1.05rem);
-  font-weight: 600;
-  line-height: 1.35;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.hero__title {
-  /* Handwriting title owns type scale; keep as flex child */
-  margin: 0;
-}
-
-.hero__cta {
-  display: inline-flex;
-  min-height: 3.1rem;
-  margin-top: 0.15rem;
-  padding: 1rem 2.15rem !important;
-  border-radius: 0 !important;
-  font-size: 0.76rem !important;
-  letter-spacing: 0.16em !important;
-}
-
-.hero__controls {
-  position: absolute;
-  left: 50%;
-  bottom: calc(
-    var(--mobile-book-bar-height, 4.15rem) + env(safe-area-inset-bottom, 0px) + 0.75rem
-  );
-  z-index: 4;
-  display: flex;
-  align-items: center;
-  gap: 0.2rem;
-  transform: translateX(-50%);
-  padding: 0;
-  background: transparent;
-  border: 0;
-}
-
-.hero__nav {
-  display: grid;
-  place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  color: rgba(255, 255, 255, 0.78);
-  background: rgba(20, 16, 18, 0.28);
-  cursor: pointer;
-  box-shadow: none;
-  transition: color 0.2s ease, background 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.hero__nav svg {
-  width: 16px;
-  height: 16px;
-}
-
-.hero__nav:hover,
-.hero__nav:focus-visible {
-  color: #fff;
-  background: rgba(20, 16, 18, 0.48);
-  outline: none;
-}
-
-.hero__nav:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.7);
-  outline-offset: 2px;
-}
-
-.hero__nav:active {
-  transform: scale(0.96);
-}
-
-.hero__dots {
-  display: flex;
-  align-items: center;
-  gap: 0.05rem;
-}
-
-.hero__dot {
-  position: relative;
-  width: 1.65rem;
-  height: 1.65rem;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.hero__dot::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0.32rem;
-  height: 0.32rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.42);
-  transform: translate(-50%, -50%);
-  transition:
-    background-color 0.25s ease,
-    width 0.25s ease;
-}
-
-.hero__dot--active::after {
-  background: #fff;
-  width: 0.85rem;
-}
-
-.hero__dot:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 /* Get to know us — content-first mobile; Mellis oval frame; desktop image-left */
@@ -2045,14 +1410,6 @@ const reviews = landingClientReviews
     transform: none;
   }
 
-  .hero__eyebrow {
-    letter-spacing: 0.16em;
-  }
-
-  /* Sticky mobile book bar owns the primary Book CTA */
-  .hero__cta {
-    display: none !important;
-  }
 }
 
 /* Narrow phones — stack offer board for readable copy */
@@ -2566,10 +1923,6 @@ const reviews = landingClientReviews
     font-size: 0.64rem;
   }
 
-  .hero__content {
-    padding-inline: 1rem;
-    gap: 0;
-  }
 }
 
 .mellis-cta__note {
@@ -2886,348 +2239,6 @@ const reviews = landingClientReviews
   cursor: pointer;
 }
 
-/* Visit — floral atmosphere + hours card + Google Maps panel */
-.visit-map {
-  position: relative;
-  padding: var(--home-section-y-lg) 1rem;
-  background:
-    radial-gradient(
-      ellipse 70% 55% at 12% 18%,
-      rgba(240, 184, 172, 0.14) 0%,
-      transparent 58%
-    ),
-    radial-gradient(
-      ellipse 55% 50% at 88% 82%,
-      rgba(176, 122, 113, 0.1) 0%,
-      transparent 55%
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-paper) 88%, var(--color-rose-soft)) 0%,
-      var(--color-paper) 42%,
-      color-mix(in srgb, var(--color-paper) 92%, var(--color-cream)) 100%
-    );
-  border-block: var(--home-seam);
-  overflow: hidden;
-}
-
-.visit-map__shell {
-  width: var(--container);
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(1.15rem, 2.8vw, 1.65rem);
-}
-
-.visit-map__intro {
-  text-align: center;
-  margin: 0 auto;
-}
-
-.visit-map__intro .title-lockup {
-  justify-content: center;
-  margin-bottom: 0;
-}
-
-.visit-map__intro .title-lockup h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 5.5vw, 2.85rem);
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  color: var(--color-ink);
-}
-
-.visit-map__inner {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.15rem;
-  align-items: stretch;
-}
-
-.visit-map__card {
-  position: relative;
-  height: 100%;
-  padding: clamp(1.55rem, 4vw, 2.05rem) clamp(1.25rem, 3.5vw, 1.75rem) clamp(1.45rem, 3.5vw, 1.75rem);
-  background:
-    linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--color-surface-raised) 92%, #fff) 0%,
-      var(--color-surface-raised) 100%
-    );
-  border: 1px solid rgba(176, 122, 113, 0.14);
-  box-shadow: 0 14px 34px rgba(44, 44, 48, 0.07);
-  overflow: hidden;
-}
-
-.visit-map__card::before {
-  content: '';
-  position: absolute;
-  right: -1.25rem;
-  bottom: -1.5rem;
-  width: 7.5rem;
-  height: 7.5rem;
-  background-image: url('/images/flower.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  opacity: 0.12;
-  filter: saturate(1.15);
-  pointer-events: none;
-}
-
-.visit-map__card-head {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.35rem;
-}
-
-.visit-map__card-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.45rem, 3.2vw, 1.85rem);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  color: var(--color-ink);
-}
-
-.visit-map__clock {
-  width: 2.25rem;
-  height: 2.25rem;
-  object-fit: contain;
-  flex-shrink: 0;
-  opacity: 0.88;
-}
-
-.visit-map__hours {
-  position: relative;
-  z-index: 1;
-  margin: 0 0 1.25rem;
-}
-
-.visit-map__hours > div {
-  margin-bottom: 0.95rem;
-}
-
-.visit-map__hours > div:last-child {
-  margin-bottom: 0;
-}
-
-.visit-map__hours dt {
-  margin: 0 0 0.22rem;
-  font: 600 0.68rem var(--font-body);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--color-muted);
-}
-
-.visit-map__hours dd {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.02rem, 2.4vw, 1.18rem);
-  font-weight: 400;
-  color: var(--color-rose);
-  line-height: 1.35;
-}
-
-.visit-map__closed {
-  color: var(--color-rose-dark);
-  font-weight: 500;
-}
-
-.visit-map__place {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: flex-start;
-  gap: 0.45rem;
-  margin: 0 0 1.2rem;
-  font: 500 0.9rem/1.4 var(--font-body);
-  color: var(--color-deep);
-}
-
-.visit-map__pin {
-  flex-shrink: 0;
-  margin-top: 0.12rem;
-  color: var(--color-rose);
-}
-
-.visit-map__actions {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.45rem;
-}
-
-.visit-map__book {
-  width: 100%;
-}
-
-.visit-map__maps {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.75rem;
-  padding: 0.45rem 0.85rem;
-  font: 700 0.68rem var(--font-body);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-rose-dark);
-  text-decoration: none;
-  border: 1px solid rgba(176, 122, 113, 0.28);
-  background: rgba(176, 122, 113, 0.06);
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    color 0.18s ease,
-    background 0.18s ease,
-    border-color 0.18s ease;
-}
-
-.visit-map__maps--primary {
-  color: #fff;
-  background: var(--color-rose);
-  border-color: var(--color-rose);
-}
-
-.visit-map__maps--primary:hover,
-.visit-map__maps--primary:focus-visible {
-  background: var(--color-rose-dark);
-  border-color: var(--color-rose-dark);
-  color: #fff;
-}
-
-.visit-map__maps:hover,
-.visit-map__maps:focus-visible {
-  color: var(--color-rose-dark);
-  background: rgba(176, 122, 113, 0.12);
-  border-color: rgba(176, 122, 113, 0.4);
-}
-
-.visit-map__map-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-width: 0;
-  background: var(--color-surface-raised);
-  border: 1px solid rgba(176, 122, 113, 0.14);
-  box-shadow: 0 14px 34px rgba(44, 44, 48, 0.07);
-  overflow: hidden;
-}
-
-.visit-map__frame-wrap {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 15.5rem;
-  overflow: hidden;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-stone) 70%, var(--color-rose-soft)) 0%,
-      var(--color-stone) 100%
-    );
-}
-
-.visit-map__frame {
-  position: absolute;
-  /* Crop Google Maps chrome / “No reviews” strip */
-  top: -4.75rem;
-  left: -1.35rem;
-  width: calc(100% + 2.7rem);
-  height: calc(100% + 7.25rem);
-  border: 0;
-  filter: grayscale(0.1) contrast(0.98) saturate(0.9) brightness(1.02);
-  pointer-events: auto;
-}
-
-.visit-map__map-caption {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin: 0;
-  padding: 0.95rem 1.15rem;
-  border-top: 1px solid rgba(176, 122, 113, 0.12);
-  font: 700 0.7rem/1.3 var(--font-body);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-ink);
-  text-decoration: none;
-  background: color-mix(in srgb, var(--color-surface-raised) 88%, var(--color-rose-soft));
-  transition: background 0.18s ease, color 0.18s ease;
-  -webkit-tap-highlight-color: transparent;
-  min-height: 2.85rem;
-}
-
-.visit-map__map-caption:hover,
-.visit-map__map-caption:focus-visible {
-  background: rgba(176, 122, 113, 0.14);
-  color: var(--color-rose-dark);
-}
-
-.visit-map__map-caption-arrow {
-  color: var(--color-rose);
-  font-size: 1.05rem;
-}
-
-@media (min-width: 768px) {
-  .visit-map__inner {
-    grid-template-columns: minmax(17rem, 22.5rem) minmax(0, 1fr);
-    gap: 1.35rem;
-    align-items: stretch;
-  }
-
-  .visit-map__card {
-    padding: 2rem 1.85rem 1.85rem;
-  }
-
-  .visit-map__actions {
-    align-items: flex-start;
-  }
-
-  .visit-map__book {
-    width: auto;
-    min-width: 11rem;
-  }
-
-  .visit-map__maps {
-    justify-content: flex-start;
-    padding-inline: 0.15rem;
-    border: 0;
-    background: transparent;
-  }
-
-  .visit-map__maps--primary {
-    justify-content: center;
-    padding-inline: 1.15rem;
-    border: 1px solid var(--color-rose);
-    background: var(--color-rose);
-  }
-
-  .visit-map__frame-wrap {
-    min-height: 100%;
-  }
-
-  .visit-map__map-panel {
-    min-height: 100%;
-  }
-}
-
-@media (min-width: 1024px) {
-  .visit-map__inner {
-    grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
-    gap: 1.65rem;
-  }
-
-  .visit-map__frame-wrap {
-    min-height: 28rem;
-  }
-}
-
 /* Tablet and up — progressive enhancement */
 @media (min-width: 768px) {
   .home {
@@ -3236,51 +2247,8 @@ const reviews = landingClientReviews
     --home-head-gap: 0.95rem;
   }
 
-  .hero {
-    /* Locked: tablet/iPad 92vh — Mellis-tall */
-    height: 92vh;
-    min-height: 38rem;
-  }
-
-  .hero__content {
-    padding:
-      max(var(--site-header-height, 8.5rem), env(safe-area-inset-top, 0px))
-      1.5rem
-      2.5rem;
-  }
-
-  .hero__copy {
-    transform: none;
-  }
-
-  @keyframes hero-copy-in {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .hero__controls {
-    bottom: 2.35rem;
-  }
-
-  .hero__nav {
-    width: 2.15rem;
-    height: 2.15rem;
-  }
-
-  .hero__eyebrow {
-    font-size: clamp(0.9rem, 1.15vw, 1.1rem);
-    letter-spacing: 0.3em;
-  }
-
   .work,
-  .reviews,
-  .visit-map {
+  .reviews {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
@@ -3306,12 +2274,6 @@ const reviews = landingClientReviews
     --home-head-gap: 1rem;
   }
 
-  .hero {
-    /* Locked: desktop 100vh — Mellis full viewport */
-    height: 100vh;
-    min-height: 44rem;
-  }
-
   .reviews__grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 1.15rem;
@@ -3319,10 +2281,6 @@ const reviews = landingClientReviews
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero__slide,
-  .hero__bg,
-  .hero__content,
-  .hero__copy,
   .package-card,
   .review-card,
   .book-visit__door,
@@ -3331,10 +2289,6 @@ const reviews = landingClientReviews
   .visit-card__media {
     animation: none !important;
     transition: none !important;
-  }
-
-  .hero__bg {
-    transform: none !important;
   }
 }
 </style>

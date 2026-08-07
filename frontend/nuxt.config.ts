@@ -88,6 +88,18 @@ export default defineNuxtConfig({
           'https://www.google.com/',
           'https://maps.google.com/',
         ],
+        // Close plugin / base-tag injection vectors (CSP Level 2+).
+        'object-src': ["'none'"],
+        'base-uri': ["'none'"],
+        // Browser fetches: same origin + Django API + Turnstile + optional Sentry.
+        'connect-src': [
+          "'self'",
+          'https://challenges.cloudflare.com',
+          ...(process.env.NUXT_PUBLIC_API_BASE_URL
+            ? [process.env.NUXT_PUBLIC_API_BASE_URL.replace(/\/$/, '')]
+            : ['http://127.0.0.1:8000', 'http://localhost:8000']),
+          ...(process.env.NUXT_PUBLIC_SENTRY_DSN ? ['https://*.ingest.sentry.io'] : []),
+        ],
       },
       crossOriginEmbedderPolicy: 'unsafe-none',
       crossOriginOpenerPolicy: 'same-origin',

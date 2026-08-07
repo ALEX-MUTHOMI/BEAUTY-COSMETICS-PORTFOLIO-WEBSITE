@@ -79,3 +79,40 @@ Recorded during implementation:
 - 100 visits × homepage + first-paint heroes → 0 failures, image p95 ≪ 2s
 
 Cloudflare PoP warm is expected to improve **first** Kenya cold loads further once DNS is orange-clouded.
+
+## Client-Side Security (formerly Page Shield)
+
+Origin already ships a nonce + `strict-dynamic` CSP via Nuxt (`object-src 'none'`, `base-uri 'none'`, tight `connect-src`). When the zone is **orange-clouded**, enable Cloudflare [Client-side security](https://developers.cloudflare.com/client-side-security/) so scripts/cookies are monitored at the edge.
+
+### Enable (dashboard)
+
+1. **Security → Client-side security** (or Page Shield): turn on **resource monitoring** (script inventory on Free).
+2. Review detected scripts — expect only:
+   - First-party `/_nuxt/*` bundles
+   - `challenges.cloudflare.com` (Turnstile)
+   - `static.cloudflareinsights.com` (if Web Analytics enabled)
+3. **Business+:** enable **cookie monitoring**. Expected first-party cookies:
+   | Cookie | Origin | Notes |
+   |--------|--------|-------|
+   | `csrftoken` | API | Django CSRF; not HttpOnly (readable for `X-CSRFToken`) |
+   | `sessionid` | API | Staff session; HttpOnly |
+   | remembered-device | API | Opaque token; HttpOnly, Secure, SameSite |
+   | Nuxt csurf | Frontend | Separate from Django booking CSRF; `SameSite=strict` |
+4. Configure alerts: **new script** / **new domain** (plan-dependent).
+5. **Content security rules:** create a rule in **Log** mode mirroring origin CSP allowlists; soak staging traffic; only then switch to **Allow** (positive blocking requires Advanced entitlements).
+6. Do **not** WAF-challenge STK/checkout POSTs after Turnstile success (see WAF section above).
+
+### Origin inventory (code)
+
+- CSP contract tests: `frontend/src/security/cookieCspInventory.spec.ts`, `frontend/src/landing/securityHeaders.spec.ts`
+- Third-party allowlist must stay in sync with CF script monitor — update both when adding analytics.
+
+### API (optional automation)
+
+```bash
+# List detected scripts (requires zone id + API token with Client Side Security read)
+curl -s "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/page_shield/scripts" \
+  -H "Authorization: Bearer $CF_API_TOKEN"
+```
+
+Do not treat CF Client-Side Security as a substitute for origin CSP hygiene.
