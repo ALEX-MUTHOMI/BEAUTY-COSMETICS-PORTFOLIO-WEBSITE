@@ -34,175 +34,173 @@ function json(route: Route, body: unknown, status = 200) {
   })
 }
 
+/**
+ * Single catch-all router for every `/api/**` request (relative or absolute origin),
+ * so the stub is robust to same-origin vs cross-origin base URL resolution in CI.
+ */
 async function installMoneyPathFixtures(page: Page) {
-  const apiHost = new URL(API_URL).origin
+  await page.route('**/api/**', async (route) => {
+    const url = new URL(route.request().url())
+    const path = url.pathname
+    const method = route.request().method()
 
-  await page.route(`${apiHost}/api/csrf/**`, (route) =>
-    json(route, { csrf_token: 'e2e-csrf-token-fixture' }),
-  )
+    if (path.includes('/api/csrf')) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: {
+          'Set-Cookie': 'csrftoken=e2e-csrf-token-fixture; Path=/; SameSite=Lax',
+        },
+        body: JSON.stringify({ csrf_token: 'e2e-csrf-token-fixture' }),
+      })
+    }
 
-  await page.route(`${apiHost}/api/bookings/catalog/resolve-handoff/**`, (route) =>
-    json(route, {
-      selection: {
-        selection_type: 'full_package',
-        public_id: SERVICE_ID,
-        slug: 'classic-full-package',
-        name: 'Classic Full Package',
-        duration_minutes: 180,
-      },
-    }),
-  )
-
-  await page.route(`${apiHost}/api/bookings/calendar/**`, (route) =>
-    json(route, {
-      calendar: {
-        timezone: 'Africa/Nairobi',
-        layout: 'package_pairs',
-        range: { start: SLOT_DAY, end: SLOT_DAY },
+    if (path.includes('/api/bookings/catalog/resolve-handoff')) {
+      return json(route, {
         selection: {
-          type: 'full_package',
+          selection_type: 'full_package',
           public_id: SERVICE_ID,
           slug: 'classic-full-package',
           name: 'Classic Full Package',
+          duration_minutes: 180,
         },
-        days: [
+      })
+    }
+
+    if (path.includes('/api/bookings/calendar')) {
+      const day = {
+        date: SLOT_DAY,
+        weekday: 3,
+        day_type: 'full_package',
+        status: 'available',
+        reason_code: null,
+        slot_count: 2,
+        capacity: { max: 3, booked: 0, remaining: 3 },
+      }
+      return json(route, {
+        calendar: {
+          timezone: 'Africa/Nairobi',
+          layout: 'package_pairs',
+          range: { start: SLOT_DAY, end: SLOT_DAY },
+          selection: {
+            type: 'full_package',
+            public_id: SERVICE_ID,
+            slug: 'classic-full-package',
+            name: 'Classic Full Package',
+          },
+          days: [day],
+          weeks: [{ week_start: SLOT_DAY, days: [day] }],
+        },
+      })
+    }
+
+    if (path.includes('/api/bookings/availability')) {
+      return json(route, {
+        availability: [
           {
             date: SLOT_DAY,
-            weekday: 3,
-            day_type: 'full_package',
-            status: 'available',
-            reason_code: null,
-            slot_count: 2,
-            capacity: { max: 3, booked: 0, remaining: 3 },
-          },
-        ],
-        weeks: [
-          {
-            week_start: SLOT_DAY,
-            days: [
+            slots: [
               {
-                date: SLOT_DAY,
-                weekday: 3,
-                day_type: 'full_package',
-                status: 'available',
-                reason_code: null,
-                slot_count: 2,
-                capacity: { max: 3, booked: 0, remaining: 3 },
+                starts_at: SLOT_START,
+                ends_at: SLOT_END,
+                duration_minutes: 60,
+                buffer_minutes: 0,
+                resource_public_id: RESOURCE_ID,
+                service_public_id: SERVICE_ID,
               },
             ],
           },
         ],
-      },
-    }),
-  )
+      })
+    }
 
-  await page.route(`${apiHost}/api/bookings/availability/**`, (route) =>
-    json(route, {
-      availability: [
-        {
-          date: SLOT_DAY,
-          slots: [
-            {
-              starts_at: SLOT_START,
-              ends_at: SLOT_END,
-              duration_minutes: 60,
-              buffer_minutes: 0,
-              resource_public_id: RESOURCE_ID,
-              service_public_id: SERVICE_ID,
-            },
-          ],
+    if (path.includes('/api/bookings/policy-acceptance-text')) {
+      return json(route, {
+        checkbox_text: 'I agree to the Shee Aesthetics booking policy for this visit.',
+      })
+    }
+
+    if (path.includes('/api/customers/remembered-device')) {
+      return json(route, { remembered: false })
+    }
+
+    if (method === 'POST' && path.includes('/api/bookings/holds')) {
+      return json(route, {
+        booking: {
+          booking_public_id: BOOKING_ID,
+          status: 'held',
+          hold_expires_at: '2026-08-12T05:30:00+00:00',
+          hold_ttl_minutes: 15,
+          next_action: 'checkout_required',
         },
-      ],
-    }),
-  )
+      })
+    }
 
-  await page.route(`${apiHost}/api/bookings/policy-acceptance-text/**`, (route) =>
-    json(route, {
-      checkbox_text: 'I agree to the Shee Aesthetics booking policy for this visit.',
-    }),
-  )
+    if (method === 'POST' && path.includes('/api/bookings/checkout/mpesa/stk')) {
+      return json(route, {
+        stk: {
+          booking_public_id: BOOKING_ID,
+          checkout_public_id: CHECKOUT_ID,
+          attempt_id: ATTEMPT_ID,
+          payment_status: 'stk_sent',
+          next_action: 'await_stk_confirmation',
+        },
+      })
+    }
 
-  await page.route(`${apiHost}/api/customers/remembered-device/**`, (route) =>
-    json(route, { remembered: false }),
-  )
+    if (method === 'POST' && path.includes('/api/bookings/checkout')) {
+      return json(route, {
+        checkout: {
+          booking_public_id: BOOKING_ID,
+          checkout_public_id: CHECKOUT_ID,
+          status_url: `/booking/status/${BOOKING_ID}/`,
+          amount: '8500',
+          currency: 'KES',
+          next_action: 'initiate_payment',
+        },
+      })
+    }
 
-  await page.route(`${apiHost}/api/bookings/holds/**`, async (route) => {
-    if (route.request().method() !== 'POST') return route.fallback()
-    return json(route, {
-      booking: {
-        booking_public_id: BOOKING_ID,
-        status: 'held',
-        hold_expires_at: '2026-08-12T05:30:00+00:00',
-        hold_ttl_minutes: 15,
-        next_action: 'checkout_required',
-      },
+    if (path.includes(`/api/bookings/status/${BOOKING_ID}`)) {
+      return json(route, {
+        booking_reference: BOOKING_ID,
+        booking_status: 'confirmed',
+        payment_status: 'paid',
+        next_action: 'none',
+        service: { name: 'Classic Full Package' },
+        schedule: { date: SLOT_DAY, start_time_eat: '07:00' },
+      })
+    }
+
+    return route.fulfill({
+      status: 404,
+      contentType: 'application/json',
+      body: JSON.stringify({ detail: `unmocked ${method} ${path}` }),
     })
   })
-
-  await page.route(`${apiHost}/api/bookings/checkout/mpesa/stk/**`, async (route) => {
-    if (route.request().method() !== 'POST') return route.fallback()
-    return json(route, {
-      stk: {
-        booking_public_id: BOOKING_ID,
-        checkout_public_id: CHECKOUT_ID,
-        attempt_id: ATTEMPT_ID,
-        payment_status: 'stk_sent',
-        next_action: 'await_stk_confirmation',
-      },
-    })
-  })
-
-  await page.route(`${apiHost}/api/bookings/checkout/**`, async (route) => {
-    if (route.request().method() !== 'POST') return route.fallback()
-    const path = new URL(route.request().url()).pathname
-    if (path.includes('/mpesa/stk')) return route.fallback()
-    return json(route, {
-      checkout: {
-        booking_public_id: BOOKING_ID,
-        checkout_public_id: CHECKOUT_ID,
-        status_url: `/booking/status/${BOOKING_ID}/`,
-        amount: '8500',
-        currency: 'KES',
-        next_action: 'initiate_payment',
-      },
-    })
-  })
-
-  await page.route(`${apiHost}/api/bookings/status/${BOOKING_ID}/**`, (route) =>
-    json(route, {
-      booking_reference: BOOKING_ID,
-      booking_status: 'confirmed',
-      payment_status: 'paid',
-      next_action: 'none',
-      service: { name: 'Classic Full Package' },
-      schedule: { date: SLOT_DAY, start_time_eat: '07:00' },
-    }),
-  )
 
   // Fake Turnstile so guest STK can submit without Cloudflare widget flakiness.
   await page.addInitScript(() => {
-    const install = () => {
-      const api = {
-        render(_el: unknown, opts?: { callback?: (token: string) => void }) {
-          queueMicrotask(() => opts?.callback?.('XXXX.DUMMY.TOKEN.XXXX'))
-          return 'e2e-widget'
-        },
-        ready(cb: () => void) {
-          queueMicrotask(cb)
-        },
-        reset() {},
-        remove() {},
-        getResponse() {
-          return 'XXXX.DUMMY.TOKEN.XXXX'
-        },
-      }
-      Object.defineProperty(window, 'turnstile', {
-        configurable: true,
-        writable: true,
-        value: api,
-      })
+    const api = {
+      render(_el: unknown, opts?: { callback?: (token: string) => void }) {
+        queueMicrotask(() => opts?.callback?.('XXXX.DUMMY.TOKEN.XXXX'))
+        return 'e2e-widget'
+      },
+      ready(cb: () => void) {
+        queueMicrotask(cb)
+      },
+      reset() {},
+      remove() {},
+      getResponse() {
+        return 'XXXX.DUMMY.TOKEN.XXXX'
+      },
     }
-    install()
+    Object.defineProperty(window, 'turnstile', {
+      configurable: true,
+      writable: true,
+      value: api,
+    })
+    document.cookie = 'csrftoken=e2e-csrf-token-fixture; path=/'
   })
 
   await page.route('https://challenges.cloudflare.com/**', async (route) => {
@@ -241,9 +239,6 @@ async function seedTurnstileToken(page: Page) {
       const setup = anyEl.__vueParentComponent?.setupState
       if (setup?.turnstileToken && typeof setup.turnstileToken === 'object') {
         setup.turnstileToken.value = 'XXXX.DUMMY.TOKEN.XXXX'
-      }
-      if (setup?.turnstileRequired && typeof setup.turnstileRequired === 'object') {
-        // Keep required true but token set — prefer token over disabling the gate.
       }
       for (const child of Array.from(root.children)) walk(child)
     }
@@ -288,7 +283,9 @@ test.describe('Book money-path fixtures (hold → STK → status)', () => {
     })
     await expect(page.getByRole('heading', { name: /Date & time/i })).toBeVisible()
 
-    const dayChip = page.locator('button.flo-chip').filter({ hasNot: page.locator('[disabled]') }).first()
+    const dayChip = page
+      .locator('button.flo-chip:not([disabled])')
+      .first()
     await expect(dayChip).toBeVisible({ timeout: 15000 })
     await dayChip.click()
 
@@ -300,9 +297,7 @@ test.describe('Book money-path fixtures (hold → STK → status)', () => {
     await expect(continueBtn).toBeEnabled({ timeout: 10000 })
     await continueBtn.click()
 
-    await expect(page.locator('#book-customer-title')).toBeVisible({
-      timeout: 15000,
-    })
+    await expect(page.locator('#book-customer-title')).toBeVisible({ timeout: 15000 })
 
     await page.locator('input[name="full_name"]').fill('Grace Meru')
     await page.locator('input[name="email"]').fill('grace.e2e@example.com')

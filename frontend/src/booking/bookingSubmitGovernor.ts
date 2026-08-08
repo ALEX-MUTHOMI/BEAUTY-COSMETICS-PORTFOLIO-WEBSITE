@@ -51,7 +51,8 @@ export class BookingSubmitGovernor {
   }
 
   canAttemptHold(now = Date.now()): boolean {
-    if (this.inFlight) return false
+    // Concurrency is guarded by beginSubmit(); this method runs inside an active
+    // submit (inFlight === true), so it must only enforce rate/volume limits.
     this.holdTimestamps = this.holdTimestamps.filter((stamp) => now - stamp < 60_000)
     if (this.holdTimestamps.length >= BOOKING_SUBMIT_LIMITS.maxHoldAttemptsPerMinute) return false
     if (this.lastHoldAt !== 0 && now - this.lastHoldAt < BOOKING_SUBMIT_LIMITS.minMsBetweenHoldAttempts) {
@@ -66,7 +67,8 @@ export class BookingSubmitGovernor {
   }
 
   canAttemptCheckout(now = Date.now()): boolean {
-    if (this.inFlight) return false
+    // Runs inside an active submit (inFlight === true) after a successful hold;
+    // beginSubmit() owns concurrency, so only enforce rate/volume limits here.
     this.checkoutTimestamps = this.checkoutTimestamps.filter((stamp) => now - stamp < 60_000)
     if (this.checkoutTimestamps.length >= BOOKING_SUBMIT_LIMITS.maxCheckoutAttemptsPerMinute) return false
     if (
