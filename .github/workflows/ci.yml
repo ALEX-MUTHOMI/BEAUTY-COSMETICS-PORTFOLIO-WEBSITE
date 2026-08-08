@@ -23,7 +23,11 @@ on:
     branches:
       - development
   pull_request:
+    # development is the integration trunk: PRs into it run the promotion lane so
+    # promotion-gate can be a required check (with admin bypass) — see
+    # docs/ops/BRANCH_PROTECTION.md. staging/main gate promotion up the ladder.
     branches:
+      - development
       - staging
       - main
   # Full fortress (load / ZAP / chaos / latency) — not on every PR (cost + runtime).

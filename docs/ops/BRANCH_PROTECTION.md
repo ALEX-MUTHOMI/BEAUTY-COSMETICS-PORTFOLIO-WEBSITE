@@ -31,11 +31,24 @@ Repo is **public**, so classic branch protection is available. Live state:
 
 ### On `staging` and `main` (enabled)
 
-1. **Require status checks to pass before merging** — required check: `promotion-gate`
+1. **Require status checks to pass before merging** — required check: `promotion-gate` (`strict: true`, i.e. branch must be up to date)
 2. **Require a pull request before merging**
 3. **Require review from Code Owners** (enforces [`.github/CODEOWNERS`](../../.github/CODEOWNERS))
 4. **`enforce_admins`: false** — owner emergency bypass while single-maintainer
 5. **Force pushes / deletions** restricted; conversation resolution required
+
+### On `development` (integration trunk, CI-gated with admin bypass)
+
+1. **Require status checks to pass before merging** — required check: `promotion-gate` (`strict: false`, low-friction trunk)
+2. **No** required PR/reviews — the maintainer may fast-forward/push directly
+3. **`enforce_admins`: false** — admin bypass preserves direct pushes; bots and
+   non-admin PRs (e.g. Dependabot) must pass `promotion-gate` before merge/auto-merge
+
+For this to work, [`ci.yml`](../../.github/workflows/ci.yml) runs the promotion
+lane on `pull_request` into `development` (not only `staging`/`main`), so PRs
+into the trunk produce a `promotion-gate` result. Repo settings enable
+**auto-merge** and **delete-branch-on-merge**, so a green Dependabot PR into
+`development` merges itself and cleans up its branch.
 
 Re-apply / verify:
 
