@@ -247,5 +247,36 @@ Record before/after run wall-time below.
 
 ### Wall-time ledger
 
-- Baseline (build-per-job): _to be recorded from a pre-change run._
-- After build-once + caching: _to be recorded from the certification run._
+Certified 2026-08-08. Both gates green; the only skip was
+`daraja-sandbox-contract` (exactly per policy).
+
+**Baseline** — promotion push run
+[`31166668486`](https://github.com/ALEX-MUTHOMI/aesthetic-os/actions/runs/31166668486)
+(event: `push`, fortress skipped): promotion critical path **16m18s**. Every
+domain job cold-built its images via `docker compose up -d --build`, e.g.:
+
+| Job | Baseline (with cold build) | After (pull prebuilt) |
+|-----|-----|-----|
+| `django-smoke` | 1m34s (explicit `build web frontend`) | **1m01s** |
+| `bookings-unit` | 3m24s | **2m31s** |
+| `checkout-unit` | 2m41s | **1m19s** |
+| `billing-unit` | 2m07s | **1m25s** |
+| `tests-api-unit` | 1m42s | **1m03s** |
+| `cass-calendar-service` | 1m49s | **1m04s** |
+| `frontend-test` | 2m08s | **1m40s** |
+| `payment-security` | 2m23s | **1m39s** |
+
+**After** — full-fortress certification dispatch run
+[`31260739380`](https://github.com/ALEX-MUTHOMI/aesthetic-os/actions/runs/31260739380)
+(`run_full_fortress=true`): a single `build-images` job (**2m11s**) replaced the
+~13 per-job cold rebuilds; downstream jobs pull + retag (seconds) and run
+`docker compose up -d` with no `--build`. Promotion critical path **~14m27s**
+*despite* adding the serial build step, and the entire promotion **+ fortress +
+cleanup** finished in **19m39s**.
+
+**Takeaways.** (1) The headline win is aggregate runner-minutes and cost:
+redundant image builds dropped from **~13 → 1**. (2) Single-job re-runs are now
+cheap (a pull, not a cold rebuild). (3) The critical path still improved (~11%)
+even though `build-images` is a new serial step, because every downstream stage
+shed its rebuild. (4) Poetry/npm caches + durable retries removed the remaining
+cold-install/network flake surface on `validate`/`lint-security`/`frontend-e2e`.
