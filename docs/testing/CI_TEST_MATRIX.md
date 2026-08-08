@@ -39,6 +39,7 @@ gallery, staff, calendar, booking, and receipt p95 — not payments only.
 
 | Job | Partition | Reports artifact |
 | --- | --- | --- |
+| `build-images` | Build web/frontend/frontend-test images once → GHCR `:ci-<sha>` | (registry tags) |
 | `bookings-unit` | `bookings/tests` (~290 domain tests) | `reports/ci/junit/bookings.xml` |
 | `cass-calendar-service` | Marketing contract, Option A policy, calendar API/policy/latency/security | `reports/ci/junit/cass-calendar.xml` |
 | `tests-api-unit` | `tests/api` + `tests/unit` | `reports/ci/junit/api-unit.xml` |

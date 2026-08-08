@@ -6,15 +6,22 @@ Secure Enterprise CI now emits a single branch-protection-friendly check:
 
 It succeeds only when every promotion-lane job succeeded:
 
-`validate`, `lint-security`, `django-smoke`, domain units (`bookings-unit`,
-`billing-unit`, `checkout-unit`, `tests-api-unit`, `cass-calendar-service`),
-`frontend-test`, `payment-security`, `checkout-billing-integration`,
-`receipt-pipeline`, `newman-acceptance`, `frontend-e2e`, `docker-build`.
+`validate`, `lint-security`, `build-images`, `django-smoke`, domain units
+(`bookings-unit`, `billing-unit`, `checkout-unit`, `tests-api-unit`,
+`cass-calendar-service`), `frontend-test`, `payment-security`,
+`checkout-billing-integration`, `receipt-pipeline`, `newman-acceptance`,
+`frontend-e2e`, `docker-build`.
+
+`build-images` builds the three CI images once per commit and pushes run-scoped
+GHCR tags; downstream jobs pull instead of rebuilding (see
+[`CI_WORKFLOW_DESIGN.md`](CI_WORKFLOW_DESIGN.md)).
 
 Fortress-only jobs (`zap-passive-surface` / `platform-latency` / load / chaos /
 `cass-certification` / `fortress-gate`) and `daraja-sandbox-contract` are
-**not** required for everyday merges. Prod promote requires a fresh
-**`fortress-gate`** (see [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)).
+**not** required for everyday merges. The `ci-images-cleanup` job (run-scoped
+tag GC) and the separate `ci-heal.yml` self-heal workflow are advisory and
+**never** required checks. Prod promote requires a fresh **`fortress-gate`**
+(see [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)).
 
 On green **schedule**, expected skip set = `{daraja-sandbox-contract}` only.
 
