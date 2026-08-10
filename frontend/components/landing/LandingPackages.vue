@@ -390,7 +390,7 @@ const visitFocus = computed(() => primaryBookHrefKind())
 }
 
 .visit-card__media--mono {
-  filter: grayscale(0.92) contrast(1.1) brightness(0.68);
+  filter: grayscale(1) contrast(1.15) brightness(0.65);
   object-position: center 22%;
 }
 
@@ -564,8 +564,8 @@ const visitFocus = computed(() => primaryBookHrefKind())
   object-fit: cover;
   object-position: center 22%;
   transform: scale(1.04);
-  opacity: 0.55;
-  filter: grayscale(0.35) contrast(1.05) brightness(0.72) saturate(0.85);
+  opacity: 0.48;
+  filter: grayscale(1) contrast(1.18) brightness(0.62);
 }
 
 .mellis-cta__veil {
@@ -574,16 +574,16 @@ const visitFocus = computed(() => primaryBookHrefKind())
   z-index: 1;
   background:
     radial-gradient(
-      ellipse 48% 52% at 50% 45%,
-      rgba(34, 28, 30, 0.35) 0%,
-      rgba(26, 23, 24, 0.72) 55%,
-      rgba(26, 23, 24, 0.92) 100%
+      ellipse 50% 55% at 50% 45%,
+      rgba(18, 14, 15, 0.42) 0%,
+      rgba(18, 14, 15, 0.82) 60%,
+      rgba(18, 14, 15, 0.96) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(42, 35, 36, 0.55) 0%,
-      rgba(26, 23, 24, 0.35) 40%,
-      rgba(26, 23, 24, 0.85) 100%
+      rgba(34, 28, 29, 0.7) 0%,
+      rgba(18, 14, 15, 0.45) 40%,
+      rgba(18, 14, 15, 0.9) 100%
     );
 }
 
