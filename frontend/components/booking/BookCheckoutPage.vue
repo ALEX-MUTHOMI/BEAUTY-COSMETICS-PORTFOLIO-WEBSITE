@@ -302,7 +302,9 @@ const pageLead = computed(() => {
 
 <style scoped>
 .book-page {
-  background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 0%, rgba(222, 150, 141, 0.12), transparent 68%),
+    var(--color-paper, #e5e1dc);
   min-height: 70vh;
   /* Room for docked sticky actions once a slot is chosen. */
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
@@ -359,7 +361,7 @@ const pageLead = computed(() => {
   padding: 1.1rem 1.15rem 1.25rem;
   border: 1px solid var(--color-line);
   border-radius: 12px;
-  background: #fafafa;
+  background: var(--color-surface-raised, #ebe7e3);
 }
 
 .book-steps {
@@ -392,7 +394,7 @@ const pageLead = computed(() => {
   z-index: 2;
   margin: 0 -0.35rem 1rem;
   padding: 0.65rem 0.35rem 0.85rem;
-  background: #fafafa;
+  background: var(--color-surface-raised, #ebe7e3);
   border-bottom: 1px solid var(--color-line);
 }
 
@@ -568,7 +570,7 @@ const pageLead = computed(() => {
     margin-left: -0.35rem;
     margin-right: -0.35rem;
     padding: 0.65rem 0.35rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(180deg, rgba(250, 250, 250, 0.72) 0%, #fafafa 38%);
+    background: linear-gradient(180deg, rgba(235, 231, 227, 0.72) 0%, var(--color-surface-raised, #ebe7e3) 38%);
     border-top: 1px solid var(--color-line);
   }
 }
