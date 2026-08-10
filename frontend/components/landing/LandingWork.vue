@@ -47,6 +47,7 @@
           :width="img.width"
           :height="img.height"
           :fetchpriority="index < 2 ? 'low' : 'auto'"
+          @error="(e) => handleImageError(e, index)"
         />
       </button>
     </div>
@@ -136,6 +137,15 @@ function openWorkLightbox(img: HomeWorkImage) {
 
 function closeWorkLightbox() {
   lightboxImage.value = null
+}
+
+function handleImageError(event: Event, index: number) {
+  const target = event.target as HTMLImageElement | null
+  if (!target) return
+  const fallback = STATIC_HOME_WORK[index % STATIC_HOME_WORK.length]
+  if (fallback && target.src !== fallback.src) {
+    target.src = fallback.src
+  }
 }
 </script>
 
