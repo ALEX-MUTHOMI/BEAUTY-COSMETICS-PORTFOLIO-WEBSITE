@@ -281,8 +281,17 @@ const turnstileToken = defineModel<string>('turnstileToken', { required: true })
   min-height: 2.75rem;
   border: 1px solid var(--color-line);
   border-radius: 8px;
-  padding: 0 0.75rem;
+  padding: 0 0.85rem;
   font: inherit;
+  background: var(--color-parchment, #ddd8d3);
+  color: var(--color-ink);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.book-customer__field input:focus {
+  outline: none;
+  border-color: var(--color-rose);
+  box-shadow: 0 0 0 3px rgba(176, 122, 113, 0.2);
 }
 
 .book-customer__trap {
@@ -324,7 +333,7 @@ const turnstileToken = defineModel<string>('turnstileToken', { required: true })
 
 .book-customer__back {
   border: 1px solid var(--color-line);
-  background: #fff;
+  background: var(--color-parchment, #ddd8d3);
   color: var(--color-ink);
 }
 
