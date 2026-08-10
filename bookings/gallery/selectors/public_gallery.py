@@ -41,9 +41,15 @@ def image_public_payload(image):
 
 def _published_queryset():
     return (
-        GalleryImage.objects.filter(status=GalleryImage.Status.PUBLISHED)
+        GalleryImage.objects.filter(
+            status=GalleryImage.Status.PUBLISHED,
+            category__is_active=True,
+            variants__is_public=True,
+        )
+        .exclude(category__slug__startswith="api-acceptance")
         .select_related("category", "subcategory")
         .prefetch_related("variants")
+        .distinct()
         .order_by("-is_featured", "sort_order", "-published_at", "-created_at")
     )
 
