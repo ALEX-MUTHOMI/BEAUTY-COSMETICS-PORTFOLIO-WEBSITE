@@ -122,7 +122,13 @@ export function mapPublicGalleryToHomeWork(
 
   const mapped: HomeWorkImage[] = []
   for (let i = 0; i < images.length; i++) {
-    const item = images[i] as ApiImage
+    const item = images[i] as ApiImage & { category?: { slug?: string; name?: string } }
+    const categorySlug = String(item.category?.slug || '').toLowerCase()
+    const rawTitle = String(item.title || '')
+    if (categorySlug.startsWith('api-acceptance') || rawTitle.toLowerCase().includes('acceptance')) {
+      continue
+    }
+
     const variant = pickVariant(item.variants)
     const rawUrl = String(variant?.url || '')
     const src = resolvePublicGalleryMediaUrl(rawUrl, apiBaseUrl)
