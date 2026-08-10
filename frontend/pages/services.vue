@@ -531,7 +531,7 @@ useHead({
   padding: clamp(1.75rem, 5vh, 3rem) 1rem 0.85rem;
   background:
     radial-gradient(ellipse 70% 55% at 50% 0%, rgba(222, 150, 141, 0.12), transparent 68%),
-    #fff;
+    var(--color-paper, #e5e1dc);
   text-align: center;
 }
 

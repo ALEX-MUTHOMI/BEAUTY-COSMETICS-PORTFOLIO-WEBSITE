@@ -207,7 +207,8 @@ async function onSubmit() {
   padding: 0.55rem 0.65rem;
   border: 1px solid color-mix(in srgb, var(--color-rose) 35%, transparent);
   border-radius: 0.35rem;
-  background: #fff;
+  background: var(--color-parchment, #ddd8d3);
+  color: var(--color-ink);
 }
 
 .privacy-form__error {
