@@ -164,18 +164,16 @@ class Command(BaseCommand):
             defaults={
                 "uploaded_by": staff,
                 "status": GalleryImage.Status.PUBLISHED,
-                "show_on_homepage": True,
-                "is_featured": True,
+                "show_on_homepage": False,
+                "is_featured": False,
                 "published_at": timezone.now(),
                 "raw_original_sha256": "a" * 64,
             },
         )
-        if image.status != GalleryImage.Status.PUBLISHED:
-            image.status = GalleryImage.Status.PUBLISHED
-            image.show_on_homepage = True
-            image.is_featured = True
-            image.published_at = timezone.now()
-            image.save(update_fields=["status", "show_on_homepage", "is_featured", "published_at", "updated_at"])
+        if image.show_on_homepage:
+            image.show_on_homepage = False
+            image.is_featured = False
+            image.save(update_fields=["show_on_homepage", "is_featured", "updated_at"])
         GalleryImageVariant.objects.get_or_create(
             gallery_image=image,
             variant_type=GalleryImageVariant.VariantType.HERO,
