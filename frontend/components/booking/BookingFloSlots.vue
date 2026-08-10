@@ -290,8 +290,8 @@ const selectionSummary = computed(() => {
 .flo-slots__band {
   padding: 0.7rem 0.75rem 0.8rem;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(39, 37, 42, 0.06);
+  background: var(--color-paper, #e5e1dc);
+  border: 1px solid var(--color-line);
 }
 
 .flo-slots__band-head {
@@ -334,7 +334,7 @@ const selectionSummary = computed(() => {
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--color-line);
   border-radius: 10px;
-  background: #fff;
+  background: var(--color-parchment, #ddd8d3);
   color: var(--color-ink);
   cursor: pointer;
   text-align: left;

@@ -201,7 +201,8 @@ function ariaForDay(day: CalendarDay): string {
   padding: 0.4rem 0.45rem;
   border: 1px solid var(--color-line);
   border-radius: 10px;
-  background: #fff;
+  background: var(--color-parchment, #ddd8d3);
+  color: var(--color-ink);
   cursor: pointer;
   touch-action: manipulation;
   scroll-snap-align: start;
