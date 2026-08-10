@@ -157,57 +157,57 @@ const visibleIncludes = computed(() =>
   box-shadow: 0 20px 44px rgba(23, 21, 22, 0.2);
 }
 
-/* Most booked — white stage, stands out in the middle */
+/* Featured card — luxury black flower obsidian design */
 .mellis-card--featured {
   background:
-    radial-gradient(ellipse 70% 55% at 50% 0%, rgba(222, 150, 141, 0.18), transparent 65%),
-    #fff;
-  border: 1px solid rgba(222, 150, 141, 0.45);
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(222, 150, 141, 0.15), transparent 60%),
+    linear-gradient(165deg, #241d1f 0%, #1a1516 50%, #120e0f 100%);
+  border: 1px solid rgba(222, 150, 141, 0.35);
   border-top: 4px solid var(--color-rose);
   box-shadow:
-    0 18px 48px rgba(222, 150, 141, 0.22),
-    0 8px 24px rgba(23, 21, 22, 0.08);
+    0 24px 54px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(222, 150, 141, 0.22);
   margin-top: 0;
-  padding: 1.95rem 1.5rem 1.6rem;
-  color: var(--color-ink);
+  padding: clamp(1.4rem, 4vw, 1.85rem) clamp(1.15rem, 3.5vw, 1.5rem);
+  color: #fcf8f5;
   z-index: 2;
 }
 
 .mellis-card--featured::before {
-  opacity: 0.12;
-  filter: saturate(1.3) brightness(1.05);
-  mix-blend-mode: multiply;
+  opacity: 0.22;
+  filter: brightness(1.2) contrast(1.1);
+  mix-blend-mode: soft-light;
 }
 
 .mellis-card--featured .mellis-card__bloom {
-  opacity: 0.38;
-  filter: saturate(1.15) brightness(1);
+  opacity: 0.28;
+  filter: saturate(1.2) brightness(1.1);
 }
 
 .mellis-card--featured .mellis-card__days {
-  color: var(--color-rose-dark, #b56b62);
+  color: #f0b8ac;
 }
 
 .mellis-card--featured .mellis-card__title {
-  font-size: clamp(1.4rem, 3vw, 1.7rem);
-  color: var(--color-ink);
+  font-size: clamp(1.35rem, 3.5vw, 1.65rem);
+  color: #fcf8f5;
 }
 
 .mellis-card--featured .mellis-card__price {
-  font-size: clamp(1.55rem, 3vw, 1.85rem);
-  margin-bottom: 0.75rem;
-  color: var(--color-rose-dark, #b56b62);
+  font-size: clamp(1.45rem, 3.8vw, 1.8rem);
+  margin-bottom: 0.65rem;
+  color: #f0b8ac;
 }
 
 .mellis-card--featured .mellis-card__text {
   max-width: 32ch;
-  font-size: 0.95rem;
-  color: var(--color-muted);
+  font-size: 0.92rem;
+  color: rgba(255, 248, 244, 0.82);
 }
 
 .mellis-card--featured .mellis-card__includes li {
-  color: var(--color-ink);
-  border-bottom: 1px solid rgba(39, 37, 42, 0.06);
+  color: #fcf8f5;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .mellis-card--featured .mellis-card__includes li:last-child {
@@ -215,12 +215,16 @@ const visibleIncludes = computed(() =>
 }
 
 .mellis-card--featured .mellis-card__details {
-  color: var(--color-rose-dark, #b56b62);
+  color: #f0b8ac;
+}
+
+.mellis-card--featured .mellis-card__details:hover {
+  color: #f5d8d0;
 }
 
 .mellis-card--featured :deep(.site-btn) {
   max-width: 16rem;
-  min-height: 2.9rem;
+  min-height: 2.85rem;
 }
 
 .mellis-card--no-price .mellis-card__text {
