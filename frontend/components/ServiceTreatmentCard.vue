@@ -1,5 +1,8 @@
 <template>
-  <article class="service-treatment">
+  <article
+    class="service-treatment"
+    :class="{ 'service-treatment--light': index % 2 === 1 }"
+  >
     <span class="service-treatment__badge" aria-hidden="true">{{ indexLabel }}</span>
 
     <div class="service-treatment__body">
@@ -68,6 +71,28 @@ const highlightLine = computed(() =>
 .service-treatment:focus-within {
   background: rgba(222, 150, 141, 0.08);
   outline: none;
+}
+
+.service-treatment--light {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding-inline: 0.85rem;
+}
+
+.service-treatment--light:hover {
+  background: rgba(222, 150, 141, 0.12);
+}
+
+.service-treatment--light .service-treatment__name {
+  color: #fff;
+}
+
+.service-treatment--light .service-treatment__duration {
+  color: var(--color-rose-soft, #f0d5d0);
+}
+
+.service-treatment--light .service-treatment__price {
+  color: #f0b8ac;
 }
 
 .service-treatment__badge {

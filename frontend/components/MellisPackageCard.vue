@@ -5,6 +5,7 @@
       'mellis-card--featured': featured,
       'mellis-card--single': variant === 'single',
       'mellis-card--no-price': hidePrice,
+      'mellis-card--light': cardTheme === 'light',
     }"
   >
     <img
@@ -69,6 +70,8 @@ const props = withDefaults(
     hidePrice?: boolean
     /** package = full visit card; single = lean treatment tile for carousel */
     variant?: 'package' | 'single'
+    /** dark = obsidian/black card; light = warm spa paper white card */
+    cardTheme?: 'dark' | 'light'
   }>(),
   {
     daysLabel: 'Tue & Wed only',
@@ -77,6 +80,7 @@ const props = withDefaults(
     detailsLabel: 'See all options',
     hidePrice: false,
     variant: 'package',
+    cardTheme: 'dark',
   },
 )
 
@@ -220,6 +224,60 @@ const visibleIncludes = computed(() =>
 
 .mellis-card--featured .mellis-card__details:hover {
   color: #f5d8d0;
+}
+
+/* Ivory Spa Porcelain Card Theme — blends 100% harmoniously with Black Obsidian cards */
+.mellis-card--light {
+  background:
+    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(176, 122, 113, 0.16), transparent 58%),
+    linear-gradient(160deg, #f7f1eb 0%, #ebe3db 52%, #dfd6cd 100%);
+  border: 1px solid rgba(176, 122, 113, 0.38);
+  border-top: 4px solid var(--color-rose);
+  box-shadow:
+    0 12px 30px rgba(23, 21, 22, 0.09),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  color: #1f1a1b;
+}
+
+.mellis-card--light::before {
+  opacity: 0.14;
+  mix-blend-mode: multiply;
+}
+
+.mellis-card--light .mellis-card__days {
+  color: #b56b62;
+  font-weight: 600;
+}
+
+.mellis-card--light .mellis-card__title {
+  color: #1f1a1b;
+}
+
+.mellis-card--light .mellis-card__price {
+  color: #b56b62;
+}
+
+.mellis-card--light .mellis-card__text {
+  color: #594f4b;
+}
+
+.mellis-card--light .mellis-card__includes li {
+  color: #1f1a1b;
+  border-bottom: 1px solid rgba(176, 122, 113, 0.2);
+}
+
+.mellis-card--light .mellis-card__details {
+  color: #b56b62;
+}
+
+.mellis-card--light :deep(.site-btn) {
+  background: #1f1a1b;
+  color: #fff;
+  border-color: #1f1a1b;
+}
+
+.mellis-card--light :deep(.site-btn:hover) {
+  background: #342d2e;
 }
 
 .mellis-card--featured :deep(.site-btn) {
