@@ -4,7 +4,7 @@
  * luxury black flower paper card aesthetic across device viewports.
  */
 
-export const BW_MAKEUP_FILTER_STAGE = 'grayscale(1) contrast(1.18) brightness(0.62)'
+export const BW_MAKEUP_FILTER_STAGE = 'grayscale(1) contrast(1.22) brightness(0.78)'
 export const BW_MAKEUP_FILTER_VISIT = 'grayscale(1) contrast(1.15) brightness(0.65)'
 
 export const BLACK_FLOWER_PATTERN_URL = '/images/flower.png'

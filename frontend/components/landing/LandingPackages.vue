@@ -183,7 +183,8 @@
               :text="pkg.text"
               :price="pkg.price"
               :includes="pkg.includes"
-              featured
+              :featured="pkg.featured"
+              :card-theme="index % 2 === 1 ? 'light' : 'dark'"
               :badge="pkg.badge"
               :days-label="pkg.daysLabel"
               :cta-label="pkg.ctaLabel || 'Book this package'"
@@ -554,7 +555,7 @@ const visitFocus = computed(() => primaryBookHrefKind())
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.28;
+  opacity: 1;
   overflow: hidden;
 }
 
@@ -562,10 +563,10 @@ const visitFocus = computed(() => primaryBookHrefKind())
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 22%;
+  object-position: center 25%;
   transform: scale(1.04);
-  opacity: 0.48;
-  filter: grayscale(1) contrast(1.18) brightness(0.62);
+  opacity: 0.72;
+  filter: grayscale(1) contrast(1.22) brightness(0.78);
 }
 
 .mellis-cta__veil {
@@ -574,16 +575,16 @@ const visitFocus = computed(() => primaryBookHrefKind())
   z-index: 1;
   background:
     radial-gradient(
-      ellipse 50% 55% at 50% 45%,
-      rgba(18, 14, 15, 0.42) 0%,
-      rgba(18, 14, 15, 0.82) 60%,
-      rgba(18, 14, 15, 0.96) 100%
+      ellipse 65% 65% at 50% 45%,
+      rgba(18, 14, 15, 0.15) 0%,
+      rgba(18, 14, 15, 0.55) 60%,
+      rgba(18, 14, 15, 0.88) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(34, 28, 29, 0.7) 0%,
-      rgba(18, 14, 15, 0.45) 40%,
-      rgba(18, 14, 15, 0.9) 100%
+      rgba(26, 21, 23, 0.5) 0%,
+      rgba(18, 14, 15, 0.25) 40%,
+      rgba(18, 14, 15, 0.8) 100%
     );
 }
 
