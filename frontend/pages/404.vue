@@ -21,10 +21,25 @@
       decoding="async"
     />
     <div class="not-found__inner">
-      <p class="not-found__script" aria-hidden="true">{{ NOT_FOUND_PAGE.script }}</p>
-      <p class="not-found__eyebrow">{{ NOT_FOUND_PAGE.eyebrow }}</p>
-      <h1 class="not-found__title">{{ NOT_FOUND_PAGE.title }}</h1>
-      <p class="not-found__lead">{{ NOT_FOUND_PAGE.lead }}</p>
+      <div class="title-lockup">
+        <img
+          :src="flowerSrc"
+          alt=""
+          class="title-lockup__flower title-lockup__flower--left"
+          width="36"
+          height="36"
+          aria-hidden="true"
+        />
+        <h1 class="not-found__title">Page not found</h1>
+        <img
+          :src="flowerSrc"
+          alt=""
+          class="title-lockup__flower title-lockup__flower--right"
+          width="36"
+          height="36"
+          aria-hidden="true"
+        />
+      </div>
       <div class="not-found__actions">
         <SiteButton to="/" variant="outline">Home</SiteButton>
         <SiteButton to="/services" variant="outline">Services</SiteButton>
@@ -86,6 +101,31 @@ const flowerSrc = MELLIS_FLOWER_SRC
   z-index: 1;
   width: min(32rem, 100%);
   text-align: center;
+}
+
+.title-lockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-bottom: 1.5rem;
+}
+
+.title-lockup__flower {
+  width: 2rem;
+  height: auto;
+  flex-shrink: 0;
+  opacity: 0.8;
+  pointer-events: none;
+  user-select: none;
+}
+
+.title-lockup__flower--left {
+  transform: scaleX(-1) rotate(-8deg);
+}
+
+.title-lockup__flower--right {
+  transform: rotate(8deg);
 }
 
 .not-found__script {

@@ -1,8 +1,25 @@
 <template>
   <main class="legal-page">
     <div class="legal-page__inner">
-      <p class="label">Legal</p>
-      <h1>Terms of Use</h1>
+      <div class="title-lockup">
+        <img
+          src="/images/flower.png"
+          alt=""
+          class="title-lockup__flower title-lockup__flower--left"
+          width="36"
+          height="36"
+          aria-hidden="true"
+        />
+        <h1>Terms of Use</h1>
+        <img
+          src="/images/flower.png"
+          alt=""
+          class="title-lockup__flower title-lockup__flower--right"
+          width="36"
+          height="36"
+          aria-hidden="true"
+        />
+      </div>
       <p>
         By booking with Shee Aesthetics you agree to arrive on time for your appointment, provide accurate
         contact details, and complete online payment to confirm your slot.

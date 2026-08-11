@@ -2,9 +2,25 @@
   <main class="book-page">
     <header class="book-hero" :class="{ 'book-hero--compact': checkoutStep === 'pick' }">
       <div class="book-hero__inner">
-        <p class="label">Book online</p>
-        <h1>{{ pageTitle }}</h1>
-        <p v-if="pageLead" class="book-hero__lead">{{ pageLead }}</p>
+        <div class="title-lockup">
+          <img
+            src="/images/flower.png"
+            alt=""
+            class="title-lockup__flower title-lockup__flower--left"
+            width="40"
+            height="40"
+            aria-hidden="true"
+          />
+          <h1>{{ pageTitle }}</h1>
+          <img
+            src="/images/flower.png"
+            alt=""
+            class="title-lockup__flower title-lockup__flower--right"
+            width="40"
+            height="40"
+            aria-hidden="true"
+          />
+        </div>
       </div>
     </header>
 
@@ -334,8 +350,32 @@ const pageLead = computed(() => {
   text-align: center;
 }
 
+.title-lockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 1.8vw, 0.85rem);
+}
+
+.title-lockup__flower {
+  width: clamp(1.6rem, 3.5vw, 2.2rem);
+  height: auto;
+  flex-shrink: 0;
+  opacity: 0.75;
+  pointer-events: none;
+  user-select: none;
+}
+
+.title-lockup__flower--left {
+  transform: scaleX(-1) rotate(-8deg);
+}
+
+.title-lockup__flower--right {
+  transform: rotate(8deg);
+}
+
 .book-hero h1 {
-  margin: 0 0 0.5rem;
+  margin: 0;
   font-family: var(--font-display);
   font-size: clamp(1.85rem, 4.5vw, 2.45rem);
 }
