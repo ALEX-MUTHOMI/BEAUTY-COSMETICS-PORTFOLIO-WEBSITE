@@ -226,43 +226,45 @@ const visibleIncludes = computed(() =>
   color: #f5d8d0;
 }
 
-/* Ivory Spa Porcelain Card Theme — blends 100% harmoniously with Black Obsidian cards */
+/* Warm Ivory Spa Porcelain Card Theme — 100% harmonized with Black Obsidian cards */
 .mellis-card--light {
   background:
-    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(176, 122, 113, 0.16), transparent 58%),
-    linear-gradient(160deg, #f7f1eb 0%, #ebe3db 52%, #dfd6cd 100%);
+    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(176, 122, 113, 0.14), transparent 58%),
+    linear-gradient(165deg, #fcf8f5 0%, #f6efe9 50%, #ece4dc 100%);
   border: 1px solid rgba(176, 122, 113, 0.38);
   border-top: 4px solid var(--color-rose);
   box-shadow:
-    0 12px 30px rgba(23, 21, 22, 0.09),
-    0 1px 0 rgba(255, 255, 255, 0.9) inset;
-  color: #1f1a1b;
+    0 12px 32px rgba(23, 21, 22, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.95) inset;
+  color: #1e191b;
 }
 
 .mellis-card--light::before {
-  opacity: 0.14;
+  opacity: 0.12;
   mix-blend-mode: multiply;
 }
 
 .mellis-card--light .mellis-card__days {
   color: #b56b62;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .mellis-card--light .mellis-card__title {
-  color: #1f1a1b;
+  font-family: var(--font-display);
+  color: #1e191b;
 }
 
 .mellis-card--light .mellis-card__price {
+  font-family: var(--font-display);
   color: #b56b62;
 }
 
 .mellis-card--light .mellis-card__text {
-  color: #594f4b;
+  color: #59504c;
 }
 
 .mellis-card--light .mellis-card__includes li {
-  color: #1f1a1b;
+  color: #1e191b;
   border-bottom: 1px solid rgba(176, 122, 113, 0.2);
 }
 
@@ -271,9 +273,9 @@ const visibleIncludes = computed(() =>
 }
 
 .mellis-card--light :deep(.site-btn) {
-  background: #1f1a1b;
+  background: #1e191b;
   color: #fff;
-  border-color: #1f1a1b;
+  border-color: #1e191b;
 }
 
 .mellis-card--light :deep(.site-btn:hover) {

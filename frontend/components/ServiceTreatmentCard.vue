@@ -74,25 +74,30 @@ const highlightLine = computed(() =>
 }
 
 .service-treatment--light {
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  padding-inline: 0.85rem;
+  background: rgba(252, 248, 245, 0.72);
+  border: 1px solid rgba(176, 122, 113, 0.28);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
 }
 
 .service-treatment--light:hover {
-  background: rgba(222, 150, 141, 0.12);
+  background: rgba(252, 248, 245, 0.92);
 }
 
 .service-treatment--light .service-treatment__name {
-  color: #fff;
+  color: #1e191b;
 }
 
 .service-treatment--light .service-treatment__duration {
-  color: var(--color-rose-soft, #f0d5d0);
+  color: #6e6764;
 }
 
 .service-treatment--light .service-treatment__price {
-  color: #f0b8ac;
+  color: #b56b62;
+}
+
+.service-treatment--light .service-treatment__highlights {
+  color: #59504c;
 }
 
 .service-treatment__badge {
