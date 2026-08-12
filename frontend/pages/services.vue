@@ -909,69 +909,37 @@ useHead({
 .services-packages__scroll {
   position: relative;
   z-index: 1;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  padding: 1.35rem 0 0.5rem;
-}
-
-.services-packages__scroll::-webkit-scrollbar {
-  display: none;
+  padding: 1.15rem 0 0.5rem;
 }
 
 .services-packages__grid {
-  display: flex;
-  gap: 1rem;
-  width: max-content;
-  min-width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 100%;
   padding: 0 max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));
-  align-items: stretch;
 }
 
 .services-packages__grid > * {
-  flex: 0 0 min(85vw, 20rem);
-  scroll-snap-align: start;
-  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  flex: none;
 }
 
-/* Most booked (middle) peeks larger on mobile scroll */
-.services-packages__grid > *:nth-child(2) {
-  flex-basis: min(88vw, 21.5rem);
-}
-
-@media (min-width: 640px) {
+@media (min-width: 768px) {
   .services-packages {
     padding-left: max(1rem, env(safe-area-inset-left));
     padding-right: max(1rem, env(safe-area-inset-right));
   }
 
-  .services-packages__scroll {
-    overflow: visible;
-    scroll-snap-type: none;
-    padding-top: 1.15rem;
-  }
-
   .services-packages__grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.15rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.35rem;
     width: var(--container);
     margin: 0 auto;
     padding: 0;
-    min-width: 0;
-  }
-
-  .services-packages__grid > * {
-    flex: none;
-  }
-}
-
-@media (min-width: 1024px) {
-  .services-packages__grid {
-    grid-template-columns: repeat(3, 1fr);
   }
 }
 
