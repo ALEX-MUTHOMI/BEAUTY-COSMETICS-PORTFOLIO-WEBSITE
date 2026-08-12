@@ -51,10 +51,10 @@ const highlightLine = computed(() =>
 .service-treatment {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 0.85rem 1rem;
+  gap: 0.65rem 0.85rem;
   align-items: start;
   margin: 0;
-  padding: 1.05rem 0;
+  padding: 0.65rem 0.85rem;
   border-bottom: 1px solid rgba(248, 242, 238, 0.12);
   text-align: left;
   transition: background-color 0.18s ease;
