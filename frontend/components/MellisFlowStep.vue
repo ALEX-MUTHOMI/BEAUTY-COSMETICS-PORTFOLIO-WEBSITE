@@ -10,6 +10,10 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * MellisFlowStep Component
+ * @accessibility Ensures steps are logically ordered and keyboard navigable.
+ */
 defineProps<{
   num: string
   title: string
