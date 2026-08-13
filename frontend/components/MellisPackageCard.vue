@@ -50,6 +50,10 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * MellisPackageCard Component
+ * @accessibility Includes ARIA roles for proper screen reader announcement of package details.
+ */
 import { computed } from 'vue'
 import { LANDING_PRIMARY_CTA } from '@/landing/landingContent'
 
