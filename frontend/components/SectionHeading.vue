@@ -7,6 +7,10 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * SectionHeading Component
+ * Standardized typography component for section titles across the application.
+ */
 withDefaults(
   defineProps<{
     eyebrow?: string
