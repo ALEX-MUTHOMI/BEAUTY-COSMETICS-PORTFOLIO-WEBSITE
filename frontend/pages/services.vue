@@ -915,9 +915,10 @@ useHead({
 .services-packages__grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.25rem;
+  gap: 0.95rem;
   width: 100%;
-  max-width: 100%;
+  max-width: 26rem;
+  margin: 0 auto;
   padding: 0 max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));
 }
@@ -936,10 +937,11 @@ useHead({
 
   .services-packages__grid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.35rem;
-    width: var(--container);
+    gap: 1.25rem;
+    max-width: 60rem;
+    width: 100%;
     margin: 0 auto;
-    padding: 0;
+    padding: 0 1.25rem;
   }
 }
 
@@ -993,51 +995,30 @@ useHead({
 }
 
 .services-board {
-  display: flex;
-  gap: 0.75rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-padding-inline: 1rem;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  margin-bottom: 1.15rem;
-  padding: 0.1rem 1rem 0.35rem;
-  padding-left: max(1rem, env(safe-area-inset-left));
-  padding-right: max(1rem, env(safe-area-inset-right));
-}
-
-.services-board {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.55rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding: 0.15rem 1rem 0.65rem;
-  padding-left: max(1rem, env(safe-area-inset-left));
+  width: 100%;
+  max-width: 52rem;
+  margin: 0 auto 1.25rem;
+  padding: 0 max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));
-}
-
-.services-board::-webkit-scrollbar {
-  display: none;
 }
 
 .services-board__cell {
   position: relative;
-  flex: 0 0 auto;
-  scroll-snap-align: start;
+  width: 100%;
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
+  justify-content: flex-start;
+  gap: 0.5rem;
   min-height: 3.25rem;
-  padding: 0.45rem 0.95rem;
+  padding: 0.45rem 0.75rem;
   border: 1px solid rgba(176, 122, 113, 0.28);
   border-radius: 8px;
   background: var(--color-surface-raised, #ebe7e3);
   color: var(--color-ink, #252223);
   cursor: pointer;
-  white-space: nowrap;
   box-shadow: 0 4px 12px rgba(23, 21, 22, 0.04);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -1062,8 +1043,9 @@ useHead({
 .services-board__icon-wrap {
   display: grid;
   place-items: center;
-  width: 1.85rem;
-  height: 1.85rem;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 50%;
   background: rgba(176, 122, 113, 0.12);
 }
@@ -1073,21 +1055,23 @@ useHead({
 }
 
 .services-board__icon {
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1.1rem;
+  height: 1.1rem;
   object-fit: contain;
 }
 
 .services-board__copy {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
 .services-board__num {
   font: 700 0.65rem/1 var(--font-body);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   color: #b56b62;
+  flex-shrink: 0;
 }
 
 .services-board__cell--active .services-board__num {
@@ -1095,35 +1079,41 @@ useHead({
 }
 
 .services-board__title {
-  font: 700 0.8rem/1.2 var(--font-body);
-  letter-spacing: 0.04em;
+  margin: 0;
+  font: 700 0.78rem/1.2 var(--font-body);
+  letter-spacing: 0.03em;
   text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (min-width: 640px) {
   .services-board {
-    display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 0.75rem;
-    padding: 0;
+    padding: 0 1.25rem;
   }
 
   .services-board__cell {
     justify-content: center;
     min-height: 3.5rem;
+    padding: 0.45rem 0.95rem;
   }
 }
 
 .services-panel-wrap {
   position: relative;
   min-height: 10rem;
+  max-width: 52rem;
+  margin: 0 auto;
   padding: 0 max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));
 }
 
 @media (min-width: 640px) {
   .services-panel-wrap {
-    padding: 0;
+    padding: 0 1.25rem;
   }
 }
 

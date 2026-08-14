@@ -99,19 +99,19 @@ const visibleIncludes = computed(() =>
   height: 100%;
   width: 100%;
   min-width: 0;
-  padding: 1.55rem 1.3rem 1.4rem;
-  /* Calm warm charcoal — palette without choking text */
+  padding: 1.15rem 1rem 1rem;
   background:
     radial-gradient(ellipse 80% 60% at 100% 0%, rgba(222, 150, 141, 0.18), transparent 58%),
     linear-gradient(165deg, #322a2b 0%, #262122 50%, #1e1a1b 100%);
   border: 1px solid rgba(222, 150, 141, 0.22);
   border-top: 3px solid var(--color-rose);
-  box-shadow: 0 10px 28px rgba(23, 21, 22, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(23, 21, 22, 0.1);
   overflow: hidden;
   color: #f7f0eb;
   transition:
-    transform 0.35s var(--ease-story),
-    box-shadow 0.35s var(--ease-story);
+    transform 0.25s var(--ease-story),
+    box-shadow 0.25s var(--ease-story);
 }
 
 .mellis-card::before {
@@ -120,7 +120,7 @@ const visibleIncludes = computed(() =>
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.1;
+  opacity: 0.08;
   background-image: url('/images/flower.png');
   background-size: 5.5rem;
   background-repeat: repeat;
@@ -132,23 +132,23 @@ const visibleIncludes = computed(() =>
   position: absolute;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.26;
+  opacity: 0.2;
   filter: saturate(1.2) brightness(1.02);
 }
 
 .mellis-card__bloom--tr {
-  top: -0.85rem;
-  right: -0.65rem;
-  width: min(6.5rem, 42%);
+  top: -0.65rem;
+  right: -0.55rem;
+  width: min(5rem, 36%);
   transform: rotate(18deg);
 }
 
 .mellis-card__bloom--bl {
-  left: -0.85rem;
-  bottom: -0.55rem;
-  width: min(5rem, 34%);
+  left: -0.65rem;
+  bottom: -0.45rem;
+  width: min(4rem, 28%);
   transform: rotate(-28deg);
-  opacity: 0.2;
+  opacity: 0.15;
 }
 
 .mellis-card > *:not(.mellis-card__bloom) {
@@ -157,8 +157,8 @@ const visibleIncludes = computed(() =>
 }
 
 .mellis-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 44px rgba(23, 21, 22, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(23, 21, 22, 0.16);
 }
 
 /* Featured card — luxury black flower obsidian design */
@@ -167,25 +167,22 @@ const visibleIncludes = computed(() =>
     radial-gradient(ellipse 80% 60% at 50% 0%, rgba(222, 150, 141, 0.15), transparent 60%),
     linear-gradient(165deg, #241d1f 0%, #1a1516 50%, #120e0f 100%);
   border: 1px solid rgba(222, 150, 141, 0.35);
-  border-top: 4px solid var(--color-rose);
+  border-top: 3px solid var(--color-rose);
   box-shadow:
-    0 24px 54px rgba(0, 0, 0, 0.45),
+    0 16px 36px rgba(0, 0, 0, 0.35),
     0 0 0 1px rgba(222, 150, 141, 0.22);
-  margin-top: 0;
-  padding: clamp(1.4rem, 4vw, 1.85rem) clamp(1.15rem, 3.5vw, 1.5rem);
   color: #fcf8f5;
   z-index: 2;
 }
 
 .mellis-card--featured::before {
-  opacity: 0.22;
+  opacity: 0.18;
   filter: brightness(1.2) contrast(1.1);
   mix-blend-mode: soft-light;
 }
 
 .mellis-card--featured .mellis-card__bloom {
-  opacity: 0.28;
-  filter: saturate(1.2) brightness(1.1);
+  opacity: 0.22;
 }
 
 .mellis-card--featured .mellis-card__days {
@@ -193,54 +190,40 @@ const visibleIncludes = computed(() =>
 }
 
 .mellis-card--featured .mellis-card__title {
-  font-size: clamp(1.35rem, 3.5vw, 1.65rem);
   color: #fcf8f5;
 }
 
 .mellis-card--featured .mellis-card__price {
-  font-size: clamp(1.45rem, 3.8vw, 1.8rem);
-  margin-bottom: 0.65rem;
   color: #f0b8ac;
 }
 
 .mellis-card--featured .mellis-card__text {
-  max-width: 32ch;
-  font-size: 0.92rem;
   color: rgba(255, 248, 244, 0.82);
 }
 
 .mellis-card--featured .mellis-card__includes li {
   color: #fcf8f5;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.mellis-card--featured .mellis-card__includes li:last-child {
-  border-bottom: none;
 }
 
 .mellis-card--featured .mellis-card__details {
   color: #f0b8ac;
 }
 
-.mellis-card--featured .mellis-card__details:hover {
-  color: #f5d8d0;
-}
-
-/* Warm Ivory Spa Porcelain Card Theme — 100% harmonized with Black Obsidian cards */
+/* Warm Ivory Spa Porcelain Card Theme */
 .mellis-card--light {
   background:
     radial-gradient(ellipse 80% 60% at 100% 0%, rgba(176, 122, 113, 0.14), transparent 58%),
     linear-gradient(165deg, #fcf8f5 0%, #f6efe9 50%, #ece4dc 100%);
   border: 1px solid rgba(176, 122, 113, 0.38);
-  border-top: 4px solid var(--color-rose);
+  border-top: 3px solid var(--color-rose);
   box-shadow:
-    0 12px 32px rgba(23, 21, 22, 0.08),
+    0 8px 24px rgba(23, 21, 22, 0.06),
     0 1px 0 rgba(255, 255, 255, 0.95) inset;
   color: #1e191b;
 }
 
 .mellis-card--light::before {
-  opacity: 0.12;
+  opacity: 0.1;
   mix-blend-mode: multiply;
 }
 
@@ -265,7 +248,6 @@ const visibleIncludes = computed(() =>
 
 .mellis-card--light .mellis-card__includes li {
   color: #1e191b;
-  border-bottom: 1px solid rgba(176, 122, 113, 0.2);
 }
 
 .mellis-card--light .mellis-card__details {
@@ -282,72 +264,15 @@ const visibleIncludes = computed(() =>
   background: #342d2e;
 }
 
-.mellis-card--featured :deep(.site-btn) {
-  max-width: 16rem;
-  min-height: 2.85rem;
-}
-
-.mellis-card--no-price .mellis-card__text {
-  margin-top: 0.15rem;
-}
-
-/* Lean singles tile */
-.mellis-card--single {
-  align-items: flex-start;
-  text-align: left;
-  padding: 1rem 0.95rem 0.95rem;
-  border-radius: 0;
-}
-
-.mellis-card--single .mellis-card__bloom {
-  display: none;
-}
-
-.mellis-card--single:hover {
-  transform: translateY(-2px);
-}
-
-.mellis-card--single .mellis-card__title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  line-height: 1.25;
-  margin-bottom: 0.2rem;
-}
-
-.mellis-card--single .mellis-card__price {
-  font-size: 1.05rem;
-  margin-bottom: 0.55rem;
-}
-
-.mellis-card--single .mellis-card__includes {
-  margin-bottom: 0.75rem;
-}
-
-.mellis-card--single .mellis-card__includes li {
-  padding-top: 0.18rem;
-  padding-bottom: 0.18rem;
-  font-size: 0.78rem;
-  border-bottom: 0;
-}
-
-.mellis-card--single :deep(.site-btn) {
-  width: 100%;
-  max-width: none;
-  margin-top: auto;
-  min-height: 2.5rem;
-}
-
-.mellis-card--single .mellis-card__details {
-  width: 100%;
-  justify-content: flex-start;
-  margin-top: 0.25rem;
-  min-height: 2rem;
-}
-
 .mellis-card :deep(.site-btn) {
   width: 100%;
   max-width: 14rem;
+  min-height: 2.35rem;
+  padding-inline: 0.95rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
   margin-top: auto;
+  border-radius: 6px;
 }
 
 .mellis-card :deep(.site-btn--outline) {
@@ -367,11 +292,11 @@ const visibleIncludes = computed(() =>
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.75rem;
-  margin-top: 0.55rem;
-  padding: 0.45rem 0.55rem;
-  font: 600 0.72rem var(--font-body);
-  letter-spacing: 0.12em;
+  min-height: 2rem;
+  margin-top: 0.35rem;
+  padding: 0.25rem 0.45rem;
+  font: 600 0.68rem var(--font-body);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   text-decoration: none;
   color: #f0b8ac;
@@ -384,142 +309,64 @@ const visibleIncludes = computed(() =>
   text-decoration: underline;
 }
 
-.mellis-card__details:focus-visible {
-  outline: 2px solid var(--color-rose);
-  outline-offset: 2px;
-}
-
-@media (max-width: 767px) {
-  .mellis-card:not(.mellis-card--single) {
-    padding: 1.35rem 1.05rem 1.15rem;
-  }
-
-  .mellis-card--featured {
-    padding-top: 1.65rem;
-    transform: scale(1.01);
-  }
-
-  .mellis-card:not(.mellis-card--single) .mellis-card__title {
-    font-size: 1.18rem;
-    line-height: 1.25;
-  }
-
-  .mellis-card:not(.mellis-card--single) .mellis-card__price {
-    font-size: 1.28rem;
-  }
-
-  .mellis-card:not(.mellis-card--single) .mellis-card__text {
-    max-width: none;
-    font-size: 0.88rem;
-    line-height: 1.5;
-  }
-
-  .mellis-card:not(.mellis-card--single) .mellis-card__includes li {
-    font-size: 0.84rem;
-    padding-left: 1.2rem;
-    padding-top: 0.32rem;
-    padding-bottom: 0.32rem;
-  }
-
-  .mellis-card:not(.mellis-card--single) :deep(.site-btn) {
-    max-width: none;
-    width: 100%;
-    margin-top: auto;
-    min-height: 2.85rem;
-  }
-
-  .mellis-card__details {
-    min-height: 2.75rem;
-    width: 100%;
-  }
-}
-
-@media (min-width: 768px) {
-  .mellis-card:not(.mellis-card--single) {
-    padding: 1.5rem 1.3rem 1.35rem;
-  }
-
-  .mellis-card--featured {
-    transform: scale(1.03);
-  }
-
-  .mellis-card--single {
-    padding: 1.25rem 1.2rem 1.15rem;
-  }
-
-  .mellis-card--single .mellis-card__title {
-    font-size: 1.25rem;
-  }
-
-  .mellis-card:not(.mellis-card--single) :deep(.site-btn) {
-    max-width: 14rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .mellis-card:not(.mellis-card--single) {
-    padding: 1.65rem 1.4rem 1.45rem;
-  }
-
-  .mellis-card--featured {
-    transform: scale(1.045);
-  }
-}
-
 .mellis-card__badge {
   position: absolute;
   top: 0;
   left: 50%;
   transform: translate(-50%, -50%);
   margin: 0;
-  padding: 0.4rem 1.1rem;
+  padding: 0.3rem 0.85rem;
   background: var(--color-rose);
   color: #fff;
-  font: 700 0.68rem var(--font-body);
-  letter-spacing: 0.14em;
+  font: 700 0.62rem var(--font-body);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   white-space: nowrap;
   z-index: 2;
-  box-shadow: 0 6px 16px rgba(222, 150, 141, 0.35);
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(222, 150, 141, 0.35);
 }
 
 .mellis-card__days {
-  margin: 0.35rem 0 0.45rem;
-  font: 700 0.68rem var(--font-body);
-  letter-spacing: 0.16em;
+  margin: 0.15rem 0 0.25rem;
+  font: 700 0.62rem var(--font-body);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #f0b8ac;
 }
 
 .mellis-card__title {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.2rem;
   font-family: var(--font-display);
-  font-size: clamp(1.28rem, 2.4vw, 1.5rem);
+  font-size: clamp(1.15rem, 2.2vw, 1.35rem);
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   color: #f8f2ee;
 }
 
 .mellis-card__price {
-  margin: 0 0 0.65rem;
+  margin: 0 0 0.45rem;
   font-family: var(--font-display);
-  font-size: clamp(1.35rem, 2.6vw, 1.55rem);
+  font-size: clamp(1.2rem, 2.4vw, 1.4rem);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   color: #f0b8ac;
   line-height: 1.2;
 }
 
 .mellis-card__text {
-  margin: 0 0 0.85rem;
-  max-width: 30ch;
-  font: 500 0.9rem/1.55 var(--font-body);
-  color: rgba(255, 248, 244, 0.82);
+  margin: 0 0 0.65rem;
+  max-width: 32ch;
+  font: 400 0.8rem/1.45 var(--font-body);
+  color: rgba(255, 248, 244, 0.8);
 }
 
 .mellis-card__includes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.25rem 0.65rem;
   list-style: none;
-  margin: 0 0 1.15rem;
+  margin: 0 0 0.85rem;
   padding: 0;
   width: 100%;
   text-align: left;
@@ -527,18 +374,24 @@ const visibleIncludes = computed(() =>
 
 .mellis-card__includes li {
   position: relative;
-  padding: 0.35rem 0 0.35rem 1.35rem;
-  font: 600 0.88rem/1.35 var(--font-body);
-  color: rgba(255, 252, 249, 0.95);
+  padding: 0.12rem 0 0.12rem 1.05rem;
+  font: 500 0.76rem/1.3 var(--font-body);
+  color: rgba(255, 252, 249, 0.92);
 }
 
 .mellis-card__includes li::before {
   content: '✓';
   position: absolute;
   left: 0;
-  top: 0.35rem;
-  font-size: 0.75rem;
+  top: 0.12rem;
+  font-size: 0.65rem;
   font-weight: 700;
   color: var(--color-rose);
+}
+
+@media (min-width: 768px) {
+  .mellis-card {
+    padding: 1.35rem 1.2rem 1.15rem;
+  }
 }
 </style>
