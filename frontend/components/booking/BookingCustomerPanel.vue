@@ -197,6 +197,8 @@ const turnstileToken = defineModel<string>('turnstileToken', { required: true })
   font-family: var(--font-display);
   font-size: 1.35rem;
   font-weight: 400;
+}
+
 .title-lockup {
   display: flex;
   align-items: center;
