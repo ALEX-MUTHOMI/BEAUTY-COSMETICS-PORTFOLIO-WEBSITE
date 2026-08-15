@@ -99,19 +99,21 @@ const visibleIncludes = computed(() =>
   height: 100%;
   width: 100%;
   min-width: 0;
-  padding: 1.15rem 1rem 1rem;
+  min-height: 28rem;
+  padding: clamp(1.75rem, 3.5vw, 2.35rem) clamp(1.25rem, 2.5vw, 1.75rem) clamp(1.5rem, 3vw, 2rem);
   background:
     radial-gradient(ellipse 80% 60% at 100% 0%, rgba(222, 150, 141, 0.18), transparent 58%),
     linear-gradient(165deg, #322a2b 0%, #262122 50%, #1e1a1b 100%);
-  border: 1px solid rgba(222, 150, 141, 0.22);
+  border: 1px solid rgba(222, 150, 141, 0.25);
   border-top: 3px solid var(--color-rose);
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(23, 21, 22, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(23, 21, 22, 0.14);
   overflow: hidden;
   color: #f7f0eb;
   transition:
-    transform 0.25s var(--ease-story),
-    box-shadow 0.25s var(--ease-story);
+    transform 0.3s var(--ease-story),
+    box-shadow 0.3s var(--ease-story),
+    border-color 0.3s var(--ease-story);
 }
 
 .mellis-card::before {
@@ -120,9 +122,9 @@ const visibleIncludes = computed(() =>
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.08;
+  opacity: 0.1;
   background-image: url('/images/flower.png');
-  background-size: 5.5rem;
+  background-size: 6rem;
   background-repeat: repeat;
   filter: saturate(1.2) brightness(1.08);
   mix-blend-mode: soft-light;
@@ -132,23 +134,23 @@ const visibleIncludes = computed(() =>
   position: absolute;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.2;
+  opacity: 0.22;
   filter: saturate(1.2) brightness(1.02);
 }
 
 .mellis-card__bloom--tr {
-  top: -0.65rem;
-  right: -0.55rem;
-  width: min(5rem, 36%);
+  top: -0.75rem;
+  right: -0.65rem;
+  width: min(6rem, 38%);
   transform: rotate(18deg);
 }
 
 .mellis-card__bloom--bl {
-  left: -0.65rem;
-  bottom: -0.45rem;
-  width: min(4rem, 28%);
+  left: -0.75rem;
+  bottom: -0.55rem;
+  width: min(5rem, 30%);
   transform: rotate(-28deg);
-  opacity: 0.15;
+  opacity: 0.18;
 }
 
 .mellis-card > *:not(.mellis-card__bloom) {
@@ -157,32 +159,33 @@ const visibleIncludes = computed(() =>
 }
 
 .mellis-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgba(23, 21, 22, 0.16);
+  transform: translateY(-4px);
+  border-color: rgba(222, 150, 141, 0.45);
+  box-shadow: 0 20px 44px rgba(23, 21, 22, 0.24);
 }
 
 /* Featured card — luxury black flower obsidian design */
 .mellis-card--featured {
   background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(222, 150, 141, 0.15), transparent 60%),
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(222, 150, 141, 0.2), transparent 60%),
     linear-gradient(165deg, #241d1f 0%, #1a1516 50%, #120e0f 100%);
-  border: 1px solid rgba(222, 150, 141, 0.35);
-  border-top: 3px solid var(--color-rose);
+  border: 1px solid rgba(222, 150, 141, 0.45);
+  border-top: 4px solid var(--color-rose);
   box-shadow:
-    0 16px 36px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(222, 150, 141, 0.22);
+    0 22px 50px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(222, 150, 141, 0.25);
   color: #fcf8f5;
   z-index: 2;
 }
 
 .mellis-card--featured::before {
-  opacity: 0.18;
+  opacity: 0.2;
   filter: brightness(1.2) contrast(1.1);
   mix-blend-mode: soft-light;
 }
 
 .mellis-card--featured .mellis-card__bloom {
-  opacity: 0.22;
+  opacity: 0.26;
 }
 
 .mellis-card--featured .mellis-card__days {
@@ -198,11 +201,12 @@ const visibleIncludes = computed(() =>
 }
 
 .mellis-card--featured .mellis-card__text {
-  color: rgba(255, 248, 244, 0.82);
+  color: rgba(255, 248, 244, 0.85);
 }
 
 .mellis-card--featured .mellis-card__includes li {
   color: #fcf8f5;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
 .mellis-card--featured .mellis-card__details {
@@ -212,18 +216,18 @@ const visibleIncludes = computed(() =>
 /* Warm Ivory Spa Porcelain Card Theme */
 .mellis-card--light {
   background:
-    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(176, 122, 113, 0.14), transparent 58%),
+    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(176, 122, 113, 0.16), transparent 58%),
     linear-gradient(165deg, #fcf8f5 0%, #f6efe9 50%, #ece4dc 100%);
-  border: 1px solid rgba(176, 122, 113, 0.38);
-  border-top: 3px solid var(--color-rose);
+  border: 1px solid rgba(176, 122, 113, 0.4);
+  border-top: 4px solid var(--color-rose);
   box-shadow:
-    0 8px 24px rgba(23, 21, 22, 0.06),
+    0 12px 32px rgba(23, 21, 22, 0.08),
     0 1px 0 rgba(255, 255, 255, 0.95) inset;
   color: #1e191b;
 }
 
 .mellis-card--light::before {
-  opacity: 0.1;
+  opacity: 0.12;
   mix-blend-mode: multiply;
 }
 
@@ -248,6 +252,7 @@ const visibleIncludes = computed(() =>
 
 .mellis-card--light .mellis-card__includes li {
   color: #1e191b;
+  border-bottom-color: rgba(176, 122, 113, 0.18);
 }
 
 .mellis-card--light .mellis-card__details {
@@ -266,13 +271,14 @@ const visibleIncludes = computed(() =>
 
 .mellis-card :deep(.site-btn) {
   width: 100%;
-  max-width: 14rem;
-  min-height: 2.35rem;
-  padding-inline: 0.95rem;
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  max-width: 100%;
+  min-height: 2.85rem;
+  padding-inline: 1.15rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   margin-top: auto;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 .mellis-card :deep(.site-btn--outline) {
@@ -283,8 +289,8 @@ const visibleIncludes = computed(() =>
 
 .mellis-card :deep(.site-btn--outline:hover),
 .mellis-card :deep(.site-btn--outline:focus-visible) {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(245, 216, 208, 0.85);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(245, 216, 208, 0.9);
   color: #fff;
 }
 
@@ -292,11 +298,11 @@ const visibleIncludes = computed(() =>
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2rem;
-  margin-top: 0.35rem;
-  padding: 0.25rem 0.45rem;
-  font: 600 0.68rem var(--font-body);
-  letter-spacing: 0.1em;
+  min-height: 2.25rem;
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.55rem;
+  font: 600 0.72rem var(--font-body);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   text-decoration: none;
   color: #f0b8ac;
@@ -315,39 +321,40 @@ const visibleIncludes = computed(() =>
   left: 50%;
   transform: translate(-50%, -50%);
   margin: 0;
-  padding: 0.3rem 0.85rem;
+  padding: 0.35rem 1rem;
   background: var(--color-rose);
   color: #fff;
-  font: 700 0.62rem var(--font-body);
-  letter-spacing: 0.12em;
+  font: 700 0.65rem var(--font-body);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   white-space: nowrap;
   z-index: 2;
   border-radius: 999px;
-  box-shadow: 0 4px 12px rgba(222, 150, 141, 0.35);
+  box-shadow: 0 6px 18px rgba(222, 150, 141, 0.4);
 }
 
 .mellis-card__days {
-  margin: 0.15rem 0 0.25rem;
-  font: 700 0.62rem var(--font-body);
-  letter-spacing: 0.14em;
+  margin: 0.2rem 0 0.35rem;
+  font: 700 0.65rem var(--font-body);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #f0b8ac;
 }
 
 .mellis-card__title {
-  margin: 0 0 0.2rem;
+  margin: 0 0 0.35rem;
   font-family: var(--font-display);
-  font-size: clamp(1.15rem, 2.2vw, 1.35rem);
+  font-size: clamp(1.35rem, 2.6vw, 1.65rem);
   font-weight: 600;
   letter-spacing: -0.01em;
   color: #f8f2ee;
+  line-height: 1.25;
 }
 
 .mellis-card__price {
-  margin: 0 0 0.45rem;
+  margin: 0 0 0.65rem;
   font-family: var(--font-display);
-  font-size: clamp(1.2rem, 2.4vw, 1.4rem);
+  font-size: clamp(1.4rem, 2.8vw, 1.7rem);
   font-weight: 700;
   letter-spacing: -0.01em;
   color: #f0b8ac;
@@ -355,18 +362,18 @@ const visibleIncludes = computed(() =>
 }
 
 .mellis-card__text {
-  margin: 0 0 0.65rem;
+  margin: 0 0 1rem;
   max-width: 32ch;
-  font: 400 0.8rem/1.45 var(--font-body);
-  color: rgba(255, 248, 244, 0.8);
+  font: 400 0.88rem/1.55 var(--font-body);
+  color: rgba(255, 248, 244, 0.82);
 }
 
 .mellis-card__includes {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.25rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
   list-style: none;
-  margin: 0 0 0.85rem;
+  margin: 0 0 1.5rem;
   padding: 0;
   width: 100%;
   text-align: left;
@@ -374,24 +381,34 @@ const visibleIncludes = computed(() =>
 
 .mellis-card__includes li {
   position: relative;
-  padding: 0.12rem 0 0.12rem 1.05rem;
-  font: 500 0.76rem/1.3 var(--font-body);
-  color: rgba(255, 252, 249, 0.92);
+  padding: 0.15rem 0 0.45rem 1.45rem;
+  font: 500 0.86rem/1.45 var(--font-body);
+  color: rgba(255, 252, 249, 0.94);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mellis-card__includes li:last-child {
+  border-bottom: none;
+  padding-bottom: 0.15rem;
 }
 
 .mellis-card__includes li::before {
   content: '✓';
   position: absolute;
   left: 0;
-  top: 0.12rem;
-  font-size: 0.65rem;
+  top: 0.15rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--color-rose);
 }
 
-@media (min-width: 768px) {
-  .mellis-card {
-    padding: 1.35rem 1.2rem 1.15rem;
+@media (min-width: 1024px) {
+  .mellis-card--featured {
+    transform: scale(1.025);
+  }
+
+  .mellis-card--featured:hover {
+    transform: scale(1.025) translateY(-4px);
   }
 }
 </style>

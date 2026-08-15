@@ -915,9 +915,9 @@ useHead({
 .services-packages__grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.95rem;
+  gap: 1.5rem;
   width: 100%;
-  max-width: 26rem;
+  max-width: 24rem;
   margin: 0 auto;
   padding: 0 max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));
@@ -927,6 +927,7 @@ useHead({
   width: 100%;
   max-width: 100%;
   flex: none;
+  display: flex;
 }
 
 @media (min-width: 768px) {
@@ -937,11 +938,12 @@ useHead({
 
   .services-packages__grid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
-    max-width: 60rem;
+    align-items: stretch;
+    gap: clamp(1.25rem, 2.2vw, 2rem);
+    max-width: var(--container, 76rem);
     width: 100%;
     margin: 0 auto;
-    padding: 0 1.25rem;
+    padding: 0 clamp(1rem, 2.5vw, 2rem);
   }
 }
 
@@ -971,7 +973,9 @@ useHead({
   }
 
   .services-picker {
-    width: var(--container);
+    width: 100%;
+    max-width: var(--container, 76rem);
+    margin: 1rem auto 0;
   }
 }
 
@@ -997,9 +1001,9 @@ useHead({
 .services-board {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.55rem;
+  gap: 0.65rem;
   width: 100%;
-  max-width: 52rem;
+  max-width: 100%;
   margin: 0 auto 1.25rem;
   padding: 0 max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));
@@ -1091,21 +1095,24 @@ useHead({
 @media (min-width: 640px) {
   .services-board {
     grid-template-columns: repeat(4, 1fr);
-    gap: 0.75rem;
-    padding: 0 1.25rem;
+    gap: clamp(0.75rem, 1.5vw, 1.25rem);
+    max-width: var(--container, 76rem);
+    padding: 0 clamp(1rem, 2.5vw, 2rem);
+    margin-bottom: 1.5rem;
   }
 
   .services-board__cell {
     justify-content: center;
     min-height: 3.5rem;
-    padding: 0.45rem 0.95rem;
+    padding: 0.55rem 1rem;
   }
 }
 
 .services-panel-wrap {
   position: relative;
   min-height: 10rem;
-  max-width: 52rem;
+  width: 100%;
+  max-width: var(--container, 76rem);
   margin: 0 auto;
   padding: 0 max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));
@@ -1113,7 +1120,7 @@ useHead({
 
 @media (min-width: 640px) {
   .services-panel-wrap {
-    padding: 0 1.25rem;
+    padding: 0 clamp(1rem, 2.5vw, 2rem);
   }
 }
 
