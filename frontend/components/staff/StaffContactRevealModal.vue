@@ -21,8 +21,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { ensureBookingCsrfToken } from '../booking/bookingCsrf'
-import { postStaffReauth } from './staffPortalApi'
+import { ensureBookingCsrfToken } from '~/src/booking/bookingCsrf'
+import { postStaffReauth } from '~/src/staff/staffPortalApi'
 
 const props = withDefaults(
   defineProps<{

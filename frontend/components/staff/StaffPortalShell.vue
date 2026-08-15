@@ -54,11 +54,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { ensureBookingCsrfToken } from '../booking/bookingCsrf'
+import { ensureBookingCsrfToken } from '~/src/booking/bookingCsrf'
 import StaffSheeBrand from './StaffSheeBrand.vue'
 import StaffThemeToggle from './StaffThemeToggle.vue'
-import { canSeePaymentsDesk, getStaffMe, postStaffLogout } from './staffPortalApi'
-import { applyStaffTheme, resolveStaffTheme } from './theme'
+import { canSeePaymentsDesk, getStaffMe, postStaffLogout } from '~/src/staff/staffPortalApi'
+import { applyStaffTheme, resolveStaffTheme } from '~/src/staff/theme'
 
 const props = withDefaults(
   defineProps<{

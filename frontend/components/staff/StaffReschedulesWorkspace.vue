@@ -33,8 +33,8 @@ import { onMounted, ref } from 'vue'
 
 import StaffPortalShell from './StaffPortalShell.vue'
 import StaffStatusChip from './StaffStatusChip.vue'
-import { getStaffRescheduleQueue, type StaffAppointment } from './staffPortalApi'
-import { friendlyStatus } from './statusCopy'
+import { getStaffRescheduleQueue, type StaffAppointment } from '~/src/staff/staffPortalApi'
+import { friendlyStatus } from '~/src/staff/staffUxHelpers'
 
 const props = withDefaults(
   defineProps<{

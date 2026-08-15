@@ -171,7 +171,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import { createClickGate } from './botGuard'
+import { createClickGate } from '~/src/staff/botGuard'
 import {
   DESK_UNAVAILABLE_ERROR,
   DESK_UNREACHABLE_ERROR,
@@ -181,10 +181,10 @@ import {
   fetchStaffOAuthProviders,
   staffApiHostMismatch,
   staffPasswordLogin,
-} from './staffAuth'
-import { readStoredGreetName, welcomeHeadline, writeStoredGreetName } from './staffGreeting'
+} from '~/src/staff/staffAuth'
+import { readStoredGreetName, welcomeHeadline, writeStoredGreetName } from '~/src/staff/staffUxHelpers'
 import StaffThemeToggle from './StaffThemeToggle.vue'
-import { applyStaffTheme, resolveStaffTheme } from './theme'
+import { applyStaffTheme, resolveStaffTheme } from '~/src/staff/theme'
 
 const props = withDefaults(
   defineProps<{

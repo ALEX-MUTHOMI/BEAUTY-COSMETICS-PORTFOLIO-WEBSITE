@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { friendlyStatus } from './statusCopy'
+import { friendlyStatus } from '~/src/staff/staffUxHelpers'
 
 const props = defineProps<{
   status: string

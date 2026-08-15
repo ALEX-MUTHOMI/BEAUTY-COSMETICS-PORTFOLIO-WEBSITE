@@ -1,4 +1,4 @@
-import { friendlyStatus, safeDisplayText } from './statusCopy'
+import { friendlyStatus, safeDisplayText } from './staffUxHelpers'
 
 export interface StaffSessionProfile {
   displayName: string

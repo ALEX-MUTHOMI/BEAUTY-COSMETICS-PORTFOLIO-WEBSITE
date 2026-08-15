@@ -1,12 +1,12 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import StaffBookingDetail from './StaffBookingDetail.vue'
-import StaffBookingsWorkspace from './StaffBookingsWorkspace.vue'
-import StaffDashboard from './StaffDashboard.vue'
-import StaffGalleryWorkspace from './StaffGalleryWorkspace.vue'
-import StaffPaymentsWorkspace from './StaffPaymentsWorkspace.vue'
-import StaffSettingsSecurity from './StaffSettingsSecurity.vue'
+import StaffBookingDetail from '../../components/staff/StaffBookingDetail.vue'
+import StaffBookingsWorkspace from '../../components/staff/StaffBookingsWorkspace.vue'
+import StaffDashboard from '../../components/staff/StaffDashboard.vue'
+import StaffGalleryWorkspace from '../../components/staff/StaffGalleryWorkspace.vue'
+import StaffPaymentsWorkspace from '../../components/staff/StaffPaymentsWorkspace.vue'
+import StaffSettingsSecurity from '../../components/staff/StaffSettingsSecurity.vue'
 import {
   canDownloadReceipt,
   canSeePaymentsDesk,
@@ -15,7 +15,7 @@ import {
   getStaffBookingPayment,
   getStaffMe,
 } from './staffPortalApi'
-import { containsInternalJargon, friendlyStatus, isReceiptIssued, safeDisplayText } from './statusCopy'
+import { containsInternalJargon, friendlyStatus, isReceiptIssued, safeDisplayText } from './staffUxHelpers'
 
 const globalStubs = {
   NuxtLink: {

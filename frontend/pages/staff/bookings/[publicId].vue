@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import StaffBookingDetail from '../../../src/staff/StaffBookingDetail.vue'
+import StaffBookingDetail from '~/components/staff/StaffBookingDetail.vue'
 
 definePageMeta({ middleware: ['staff-auth'], layout: false })
 

@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import StaffReschedulesWorkspace from '../../src/staff/StaffReschedulesWorkspace.vue'
+import StaffReschedulesWorkspace from '~/components/staff/StaffReschedulesWorkspace.vue'
 
 definePageMeta({ middleware: ['staff-auth'], layout: false })
 

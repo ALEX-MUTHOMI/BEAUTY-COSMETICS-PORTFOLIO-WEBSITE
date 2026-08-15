@@ -33,10 +33,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { ensureBookingCsrfToken } from '../booking/bookingCsrf'
+import { ensureBookingCsrfToken } from '~/src/booking/bookingCsrf'
 import StaffPortalShell from './StaffPortalShell.vue'
 import StaffThemeToggle from './StaffThemeToggle.vue'
-import { postStaffLogout } from './staffPortalApi'
+import { postStaffLogout } from '~/src/staff/staffPortalApi'
 
 const props = withDefaults(
   defineProps<{

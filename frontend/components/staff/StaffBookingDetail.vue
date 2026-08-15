@@ -119,7 +119,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import { ensureBookingCsrfToken } from '../booking/bookingCsrf'
+import { ensureBookingCsrfToken } from '~/src/booking/bookingCsrf'
 import StaffContactRevealModal from './StaffContactRevealModal.vue'
 import StaffPortalShell from './StaffPortalShell.vue'
 import StaffStatusChip from './StaffStatusChip.vue'
@@ -138,8 +138,8 @@ import {
   postStaffReschedule,
   type StaffBookingDetailData,
   type StaffPaymentSummary,
-} from './staffPortalApi'
-import { isReceiptIssued, receiptChipStatus } from './statusCopy'
+} from '~/src/staff/staffPortalApi'
+import { isReceiptIssued, receiptChipStatus } from '~/src/staff/staffUxHelpers'
 
 const props = withDefaults(
   defineProps<{

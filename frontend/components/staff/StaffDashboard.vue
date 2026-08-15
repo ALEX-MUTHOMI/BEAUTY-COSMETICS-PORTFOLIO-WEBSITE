@@ -53,8 +53,8 @@ import { computed, onMounted, ref } from 'vue'
 
 import StaffPortalShell from './StaffPortalShell.vue'
 import StaffStatusChip from './StaffStatusChip.vue'
-import { staffLocalDateIso } from './staffLocalDate'
-import { getDailySchedule, type StaffAppointment } from './staffPortalApi'
+import { staffLocalDateIso } from '~/src/staff/staffUxHelpers'
+import { getDailySchedule, type StaffAppointment } from '~/src/staff/staffPortalApi'
 
 const props = withDefaults(
   defineProps<{

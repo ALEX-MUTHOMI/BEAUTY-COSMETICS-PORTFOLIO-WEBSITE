@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 
-import StaffLoginPanel from './StaffLoginPanel.vue'
+import StaffLoginPanel from '../../components/staff/StaffLoginPanel.vue'
 import {
   buildStaffAppleLoginUrl,
   buildStaffGoogleLoginUrl,

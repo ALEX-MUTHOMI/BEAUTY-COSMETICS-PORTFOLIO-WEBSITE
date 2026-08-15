@@ -64,8 +64,8 @@
 import { computed, ref } from 'vue'
 
 import StaffPortalShell from './StaffPortalShell.vue'
-import type { StaffGalleryCategory } from './staffPortalApi'
-import { getStaffGalleryCategories, postStaffGalleryImage } from './staffPortalApi'
+import type { StaffGalleryCategory } from '~/src/staff/staffPortalApi'
+import { getStaffGalleryCategories, postStaffGalleryImage } from '~/src/staff/staffPortalApi'
 
 const props = withDefaults(
   defineProps<{

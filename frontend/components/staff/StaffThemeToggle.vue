@@ -40,7 +40,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { applyStaffTheme, nextStaffTheme, persistStaffTheme, resolveStaffTheme, type StaffTheme } from './theme'
+import { applyStaffTheme, nextStaffTheme, persistStaffTheme, resolveStaffTheme, type StaffTheme } from '~/src/staff/theme'
 
 withDefaults(
   defineProps<{
