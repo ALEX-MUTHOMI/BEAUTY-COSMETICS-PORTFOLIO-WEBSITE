@@ -169,7 +169,7 @@ import {
   LANDING_MAPS_URL,
   LANDING_PRIMARY_CTA,
 } from '@/landing/landingContent'
-import { useLandingContact } from '@/landing/useLandingContact'
+import { useLandingContact } from '~/composables/useLandingContact'
 import { primaryBookHref, primaryBookIsExternal } from '@/landing/primaryBookHref'
 import { trackFunnelEvent } from '@/landing/funnelEvents'
 

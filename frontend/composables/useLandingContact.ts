@@ -9,7 +9,7 @@ import {
   LANDING_CALL_LABEL,
   LANDING_WHATSAPP_LABEL,
   landingContactFromE164,
-} from './landingContent'
+} from '~/src/landing/landingContent'
 
 export function useLandingContact() {
   const config = useRuntimeConfig()

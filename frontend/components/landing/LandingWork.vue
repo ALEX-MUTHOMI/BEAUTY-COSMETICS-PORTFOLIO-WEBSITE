@@ -104,7 +104,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { fetchHomeWorkGallery, STATIC_HOME_WORK, type HomeWorkImage } from '@/landing/homeWorkGallery'
-import { useLandingContact } from '@/landing/useLandingContact'
+import { useLandingContact } from '~/composables/useLandingContact'
 import { primaryBookHref, primaryBookIsExternal } from '@/landing/primaryBookHref'
 import { trackFunnelEvent } from '@/landing/funnelEvents'
 

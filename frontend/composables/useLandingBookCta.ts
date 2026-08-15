@@ -5,8 +5,8 @@
  * day-aware primary href (Nairobi schedule + optional live WhatsApp on Sunday).
  */
 import { computed } from 'vue'
-import { lastBookHref, SERVICES_BOOK_ENTRY } from './bookingHandoff'
-import { primaryBookHref, primaryBookIsExternal } from './primaryBookHref'
+import { lastBookHref, SERVICES_BOOK_ENTRY } from '~/src/landing/bookingHandoff'
+import { primaryBookHref, primaryBookIsExternal } from '~/src/landing/primaryBookHref'
 import { useLandingContact } from './useLandingContact'
 
 export function useLandingBookCta() {

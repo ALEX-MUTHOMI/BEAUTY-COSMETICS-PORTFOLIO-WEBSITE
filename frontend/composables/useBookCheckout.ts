@@ -1,34 +1,34 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
-import { createClickGate } from '@/staff/botGuard'
-import { ensureBookingCsrfToken } from './bookingCsrf'
-import type { BookingCustomerValidation } from './bookingCustomer'
-import { validateBookingCustomer } from './bookingCustomer'
+import { createClickGate } from '~/src/staff/botGuard'
+import { ensureBookingCsrfToken } from '~/src/booking/bookingCsrf'
+import type { BookingCustomerValidation } from '~/src/booking/bookingCustomer'
+import { validateBookingCustomer } from '~/src/booking/bookingCustomer'
 import {
   buildCheckoutIdempotencyKey,
   buildHoldIdempotencyKey,
   buildStkIdempotencyKey,
   createBookingAttemptNonce,
-} from './bookingIdempotency'
-import { GENERIC_BOOKING_THROTTLE_ERROR } from './bookingRequestGovernor'
+} from '~/src/booking/bookingIdempotency'
+import { GENERIC_BOOKING_THROTTLE_ERROR } from '~/src/booking/bookingRequestGovernor'
 import {
   createBookingCheckout,
   createBookingHold,
   fetchPolicyAcceptanceText,
   initiateBookingGuestStk,
   type BookingCheckoutResult,
-} from './bookingWriteApi'
-import type { BookingSlot, ResolvedSelection } from './bookingPublicApi'
+} from '~/src/booking/bookingWriteApi'
+import type { BookingSlot, ResolvedSelection } from '~/src/booking/bookingPublicApi'
 import {
   BookingSubmitGovernor,
   GENERIC_BOOKING_SUBMIT_ERROR,
-} from './bookingSubmitGovernor'
-import { trackFunnelEvent } from '@/landing/funnelEvents'
+} from '~/src/booking/bookingSubmitGovernor'
+import { trackFunnelEvent } from '~/src/landing/funnelEvents'
 import {
   createHoldFromRememberedDevice,
   fetchRememberedDevice,
   forgetRememberedDevice,
   type RememberedDeviceState,
-} from './rememberDevice'
+} from '~/src/booking/rememberDevice'
 
 export type BookCheckoutStep = 'pick' | 'details' | 'submitting'
 

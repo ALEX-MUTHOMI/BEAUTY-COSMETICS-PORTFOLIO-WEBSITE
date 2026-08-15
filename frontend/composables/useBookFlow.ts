@@ -1,6 +1,6 @@
 import { computed, ref, watch, type Ref } from 'vue'
-import type { ResolvedBookHandoff } from '@/landing/bookingHandoff'
-import { BookingRequestGovernor, GENERIC_BOOKING_THROTTLE_ERROR } from './bookingRequestGovernor'
+import type { ResolvedBookHandoff } from '~/src/landing/bookingHandoff'
+import { BookingRequestGovernor, GENERIC_BOOKING_THROTTLE_ERROR } from '~/src/booking/bookingRequestGovernor'
 import {
   fetchCalendar,
   fetchDaySlots,
@@ -10,7 +10,7 @@ import {
   type BookingSlot,
   type CalendarDay,
   type ResolvedSelection,
-} from './bookingPublicApi'
+} from '~/src/booking/bookingPublicApi'
 
 export function useBookFlow(handoff: Ref<ResolvedBookHandoff | null>, apiBaseUrl: string) {
   const governor = new BookingRequestGovernor()

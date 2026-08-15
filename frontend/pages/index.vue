@@ -19,7 +19,7 @@
  * visit-path+packages → reviews → visit map.
  * Section SFCs live under `components/landing/`; data helpers under `src/landing/`.
  */
-import { useLandingSeo } from '@/landing/useLandingSeo'
+import { useLandingSeo } from '~/composables/useLandingSeo'
 
 definePageMeta({ layout: 'landing' })
 useLandingSeo()

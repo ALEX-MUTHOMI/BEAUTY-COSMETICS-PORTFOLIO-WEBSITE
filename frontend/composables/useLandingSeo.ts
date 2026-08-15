@@ -1,7 +1,7 @@
 import { useHead, useRoute, useRuntimeConfig, useSeoMeta } from 'nuxt/app'
-import { localBusinessNap } from './agentSeo'
-import { LANDING_LOCATION_LABEL } from './landingContent'
-import { getHeroLcpHref, getHeroLcpSrcset } from './heroMedia'
+import { localBusinessNap } from '~/src/landing/agentSeo'
+import { LANDING_LOCATION_LABEL } from '~/src/landing/landingContent'
+import { getHeroLcpHref, getHeroLcpSrcset } from '~/src/landing/heroMedia'
 
 export const LANDING_OG_IMAGE = '/images/hero-makeup.jpg'
 

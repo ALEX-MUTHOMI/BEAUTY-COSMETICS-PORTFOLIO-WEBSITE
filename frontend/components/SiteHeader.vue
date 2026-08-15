@@ -195,7 +195,7 @@ import {
 } from '@/landing/landingContent'
 import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
 import { trackFunnelEvent } from '@/landing/funnelEvents'
-import { useLandingBookCta } from '@/landing/useLandingBookCta'
+import { useLandingBookCta } from '~/composables/useLandingBookCta'
 
 const route = useRoute()
 const menuOpen = ref(false)

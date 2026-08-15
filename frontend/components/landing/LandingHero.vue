@@ -122,7 +122,7 @@ import {
   heroSlides,
   shouldMountHeroImage,
 } from '@/landing/heroMedia'
-import { useLandingContact } from '@/landing/useLandingContact'
+import { useLandingContact } from '~/composables/useLandingContact'
 import { heroCtaForSlide, primaryBookIsExternal } from '@/landing/primaryBookHref'
 import { trackFunnelEvent } from '@/landing/funnelEvents'
 

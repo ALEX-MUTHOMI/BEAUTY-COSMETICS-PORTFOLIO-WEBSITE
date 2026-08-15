@@ -163,11 +163,11 @@ import { computed, nextTick, ref, toRef, watch, type Ref } from 'vue'
 import BookingCustomerPanel from './BookingCustomerPanel.vue'
 import BookingFloCalendar from './BookingFloCalendar.vue'
 import BookingFloSlots from './BookingFloSlots.vue'
-import { useBookCheckout } from '@/booking/useBookCheckout'
-import { useBookFlow } from '@/booking/useBookFlow'
-import { GENERIC_BOOKING_THROTTLE_ERROR } from '@/booking/bookingRequestGovernor'
-import { SINGLE_DAYS_LABEL } from '@/landing/landingContent'
-import { useLandingContact } from '@/landing/useLandingContact'
+import { useBookCheckout } from '~/composables/useBookCheckout'
+import { useBookFlow } from '~/composables/useBookFlow'
+import { GENERIC_BOOKING_THROTTLE_ERROR } from '~/src/booking/bookingRequestGovernor'
+import { SINGLE_DAYS_LABEL } from '~/src/landing/landingContent'
+import { useLandingContact } from '~/composables/useLandingContact'
 import {
   persistBookHandoff,
   persistLastBookHandoff,

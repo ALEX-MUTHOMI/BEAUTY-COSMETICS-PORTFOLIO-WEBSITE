@@ -93,7 +93,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { LANDING_PRIMARY_CTA } from '@/landing/landingContent'
 import { lastBookHref, SERVICES_BOOK_ENTRY } from '@/landing/bookingHandoff'
 import { trackFunnelEvent } from '@/landing/funnelEvents'
-import { useLandingBookCta } from '@/landing/useLandingBookCta'
+import { useLandingBookCta } from '~/composables/useLandingBookCta'
 
 const WELCOME_BACK_DISMISS_KEY = 'shee:welcome-back-dismissed'
 
