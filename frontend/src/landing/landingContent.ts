@@ -297,3 +297,96 @@ export function validateLandingPackages(list: LandingPackage[]): boolean {
     validateTreatmentCards(list)
   )
 }
+
+/* ------------------------------------------------------------------ */
+/* Design System Tokens, B&W Aesthetics & Loader Timing Contracts     */
+/* ------------------------------------------------------------------ */
+
+export function loaderSafetyTimeoutMs(minDuration: number): number {
+  return minDuration + 1200
+}
+
+export interface MellisTypographyTokens {
+  display: string
+  script: string
+  body: string
+}
+
+export interface MellisColorPalette {
+  canvasPaper: string
+  surfaceRaised: string
+  cardDarkObsidian: string
+  cardLightPorcelain: string
+  ink: string
+  muted: string
+  roseGold: string
+  roseGoldDark: string
+}
+
+export const MELLIS_TYPOGRAPHY: MellisTypographyTokens = {
+  display: "var(--font-display, 'Fraunces', 'Libre Baskerville', serif)",
+  script: "var(--font-script, 'Parisienne', cursive)",
+  body: "var(--font-body, 'Manrope', sans-serif)",
+}
+
+export const MELLIS_PALETTE: MellisColorPalette = {
+  canvasPaper: '#e5e1dc',
+  surfaceRaised: '#ebe7e3',
+  cardDarkObsidian: '#1e191b',
+  cardLightPorcelain: '#fcf8f5',
+  ink: '#2c2c30',
+  muted: '#6e6764',
+  roseGold: '#b07a71',
+  roseGoldDark: '#965f57',
+}
+
+export function validateMellisDesignSystem(
+  typography: MellisTypographyTokens = MELLIS_TYPOGRAPHY,
+  palette: MellisColorPalette = MELLIS_PALETTE,
+): boolean {
+  return (
+    typography.display.includes('font-display') &&
+    typography.body.includes('font-body') &&
+    palette.canvasPaper === '#e5e1dc' &&
+    palette.cardDarkObsidian === '#1e191b' &&
+    palette.cardLightPorcelain === '#fcf8f5'
+  )
+}
+
+export const BW_MAKEUP_FILTER_STAGE = 'grayscale(1) contrast(1.22) brightness(0.78)'
+export const BW_MAKEUP_FILTER_VISIT = 'grayscale(1) contrast(1.15) brightness(0.65)'
+export const BLACK_FLOWER_PATTERN_URL = '/images/flower.png'
+
+export interface FeaturedDarkCardCanvas {
+  background: string
+  patternUrl: string
+  borderColor: string
+  topBorder: string
+  titleColor: string
+  priceColor: string
+}
+
+export const FEATURED_CARD_DARK_CANVAS: FeaturedDarkCardCanvas = {
+  background:
+    'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(222, 150, 141, 0.15), transparent 60%), linear-gradient(165deg, #241d1f 0%, #1a1516 50%, #120e0f 100%)',
+  patternUrl: BLACK_FLOWER_PATTERN_URL,
+  borderColor: 'rgba(222, 150, 141, 0.35)',
+  topBorder: '4px solid var(--color-rose)',
+  titleColor: '#fcf8f5',
+  priceColor: '#f0b8ac',
+}
+
+export function validateBwMakeupFilter(filter: string): boolean {
+  return typeof filter === 'string' && filter.includes('grayscale(1)')
+}
+
+export function validateFeaturedDarkCardCanvas(
+  canvas: FeaturedDarkCardCanvas = FEATURED_CARD_DARK_CANVAS,
+): boolean {
+  return (
+    typeof canvas === 'object' &&
+    canvas.background.includes('#120e0f') &&
+    canvas.patternUrl === BLACK_FLOWER_PATTERN_URL &&
+    canvas.titleColor === '#fcf8f5'
+  )
+}

@@ -1,21 +1,29 @@
 import { describe, expect, it } from 'vitest'
 import {
+  BW_MAKEUP_FILTER_STAGE,
+  FEATURED_CARD_DARK_CANVAS,
+  LANDING_CONTACT_PLACEHOLDER_E164,
+  MELLIS_PALETTE,
+  MELLIS_TYPOGRAPHY,
   PACKAGE_DAYS,
   SINGLE_DAYS_LABEL,
   assertSafeDisplayText,
   flowSteps,
+  getFeaturedPackages,
   heroSlides,
   isPackageDay,
   landingContactFromE164,
+  loaderSafetyTimeoutMs,
   packageDayHeadline,
   packageDayUrgency,
   packages,
-  getFeaturedPackages,
   resolveWhatsappE164,
   singleTreatments,
+  validateBwMakeupFilter,
+  validateFeaturedDarkCardCanvas,
   validateLandingPackages,
+  validateMellisDesignSystem,
   validateTreatmentCards,
-  LANDING_CONTACT_PLACEHOLDER_E164,
 } from './landingContent'
 
 describe('landingContent', () => {
@@ -96,5 +104,12 @@ describe('landingContent', () => {
     expect(resolveWhatsappE164('+254 712 345 678')).toBe('254712345678')
     expect(landingContactFromE164('254712345678').isLive).toBe(true)
     expect(landingContactFromE164('').whatsappUrl).toBe('')
+  })
+
+  it('enforces Mellis design system tokens and B&W aesthetic contracts', () => {
+    expect(validateMellisDesignSystem(MELLIS_TYPOGRAPHY, MELLIS_PALETTE)).toBe(true)
+    expect(validateBwMakeupFilter(BW_MAKEUP_FILTER_STAGE)).toBe(true)
+    expect(validateFeaturedDarkCardCanvas(FEATURED_CARD_DARK_CANVAS)).toBe(true)
+    expect(loaderSafetyTimeoutMs(1500)).toBe(2700)
   })
 })
