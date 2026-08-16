@@ -143,6 +143,8 @@
             <NuxtLink to="/services" @click="closeMenu">Services</NuxtLink>
             <NuxtLink :to="SERVICES_ROUTES.fullPackages" @click="closeMenu">Packages</NuxtLink>
             <NuxtLink :to="SERVICES_ROUTES.singleSessions" @click="closeMenu">Treatments</NuxtLink>
+            <NuxtLink to="/faq" @click="closeMenu">FAQ</NuxtLink>
+            <NuxtLink to="/support" @click="closeMenu">Support</NuxtLink>
             <a href="/#contact" @click="closeMenu">Visit</a>
             <a
               v-if="contactIsLive"

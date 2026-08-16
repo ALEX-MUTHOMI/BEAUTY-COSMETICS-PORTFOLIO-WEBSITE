@@ -48,6 +48,7 @@
           <NuxtLink to="/">Home</NuxtLink>
           <NuxtLink to="/services">Services</NuxtLink>
           <NuxtLink to="/faq">FAQ</NuxtLink>
+          <NuxtLink to="/support">Support</NuxtLink>
           <NuxtLink :to="SERVICES_ROUTES.fullPackages">Packages</NuxtLink>
           <NuxtLink :to="SERVICES_ROUTES.singleSessions">Treatments</NuxtLink>
         </div>
