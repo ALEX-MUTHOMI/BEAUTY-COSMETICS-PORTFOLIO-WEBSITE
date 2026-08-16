@@ -1,123 +1,169 @@
 <template>
   <main class="faq">
-    <img
-      :src="flowerSrc"
-      alt=""
-      class="faq__bloom faq__bloom--tl"
-      data-testid="mellis-flower"
-      aria-hidden="true"
-      width="120"
-      height="120"
-      decoding="async"
-    />
-    <img
-      :src="flowerSrc"
-      alt=""
-      class="faq__bloom faq__bloom--br"
-      data-testid="mellis-flower"
-      aria-hidden="true"
-      width="140"
-      height="140"
-      decoding="async"
-    />
-
-    <header class="faq__hero">
-      <div class="faq__hero-inner">
-        <div class="faq__title-lockup">
+    <div class="faq__inner">
+      <!-- Hero Header -->
+      <header class="faq__hero">
+        <p class="faq__script" aria-hidden="true">Shee</p>
+        <span class="faq__eyebrow">Help &amp; Questions</span>
+        <div class="title-lockup">
           <img
             :src="flowerSrc"
             alt=""
-            class="faq__title-flower faq__title-flower--left"
+            class="title-lockup__flower title-lockup__flower--left"
             aria-hidden="true"
-            width="44"
-            height="44"
+            width="36"
+            height="36"
             decoding="async"
           />
-          <h1 class="faq__title">Frequently Asked Questions</h1>
+          <h1 class="faq__title">Frequently asked questions</h1>
           <img
             :src="flowerSrc"
             alt=""
-            class="faq__title-flower faq__title-flower--right"
+            class="title-lockup__flower title-lockup__flower--right"
             aria-hidden="true"
-            width="44"
-            height="44"
+            width="36"
+            height="36"
             decoding="async"
           />
         </div>
-      </div>
-    </header>
+        <p class="faq__lead">Answers to common questions about booking, payments, and appointments in Meru.</p>
 
-    <div class="faq__body">
-      <div class="faq__grid" role="region" aria-label="Questions list">
-        <article
-          v-for="item in CLIENT_FAQ_ITEMS"
-          :key="item.id"
-          class="faq__card"
-          :class="{ 'faq__card--open': openId === item.id }"
-        >
-          <button
-            type="button"
-            class="faq__card-trigger"
-            :aria-expanded="openId === item.id"
-            :aria-controls="`answer-${item.id}`"
-            @click="toggleItem(item.id)"
-          >
-            <div class="faq__card-head">
-              <span class="faq__card-category">{{ item.categoryLabel }}</span>
-              <h2 class="faq__card-question">{{ item.question }}</h2>
-            </div>
-            <span class="faq__card-icon" aria-hidden="true">
-              {{ openId === item.id ? '−' : '+' }}
-            </span>
-          </button>
-
-          <Transition name="faq-expand">
-            <div
-              v-show="openId === item.id"
-              :id="`answer-${item.id}`"
-              class="faq__card-answer"
+        <!-- Search Bar (Soft, no glare) -->
+        <div class="faq__search-wrap">
+          <div class="faq__search-box">
+            <svg class="faq__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              v-model="searchQuery"
+              type="search"
+              placeholder="Search (e.g. M-Pesa, packages, facial)..."
+              class="faq__search-input"
+              aria-label="Search questions"
+            />
+            <button
+              v-if="searchQuery"
+              type="button"
+              class="faq__search-clear"
+              aria-label="Clear search"
+              @click="searchQuery = ''"
             >
-              <p>{{ item.answer }}</p>
-            </div>
-          </Transition>
-        </article>
-      </div>
-
-      <aside class="faq__aside" aria-label="Still need help">
-        <div class="faq__aside-card">
-          <p class="faq__aside-eyebrow">Direct Assistance</p>
-          <h2 class="faq__aside-title">Still have a question?</h2>
-          <p class="faq__aside-copy">
-            We are here to help you get ready for your visit. Contact us directly or choose your date to book online.
-          </p>
-          <div class="faq__aside-actions">
-            <SiteButton to="/services" variant="outline">View services</SiteButton>
-            <SiteButton to="/book" variant="primary">Book now</SiteButton>
+              &times;
+            </button>
           </div>
         </div>
-      </aside>
+
+        <!-- Category Filter Tabs (Harmonious with Services Board) -->
+        <div class="faq__category-nav" role="tablist" aria-label="Filter by Category">
+          <button
+            v-for="cat in FAQ_CATEGORIES"
+            :key="cat.id"
+            type="button"
+            role="tab"
+            :aria-selected="activeCategory === cat.id"
+            class="faq__category-btn"
+            :class="{ 'faq__category-btn--active': activeCategory === cat.id }"
+            @click="activeCategory = cat.id"
+          >
+            {{ cat.label }}
+          </button>
+        </div>
+      </header>
+
+      <!-- Questions & Aside Grid -->
+      <div class="faq__body">
+        <div class="faq__grid" role="region" aria-label="Questions list">
+          <div v-if="filteredItems.length === 0" class="faq__empty">
+            <p>No questions matched your search.</p>
+            <button type="button" class="faq__reset-btn" @click="resetFilters">Show all questions</button>
+          </div>
+
+          <article
+            v-for="item in filteredItems"
+            :key="item.id"
+            class="faq__card"
+            :class="{ 'faq__card--open': openId === item.id }"
+          >
+            <button
+              type="button"
+              class="faq__card-trigger"
+              :aria-expanded="openId === item.id"
+              :aria-controls="`answer-${item.id}`"
+              @click="toggleItem(item.id)"
+            >
+              <div class="faq__card-head">
+                <span class="faq__card-category">{{ item.categoryLabel }}</span>
+                <h2 class="faq__card-question">{{ item.q }}</h2>
+              </div>
+              <span class="faq__card-icon" aria-hidden="true">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  :class="{ 'faq__icon-rotated': openId === item.id }"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </span>
+            </button>
+
+            <Transition name="faq-expand">
+              <div
+                v-show="openId === item.id"
+                :id="`answer-${item.id}`"
+                class="faq__card-answer"
+              >
+                <p>{{ item.a }}</p>
+              </div>
+            </Transition>
+          </article>
+        </div>
+
+        <!-- Aside Help Card (Rich Obsidian Accent) -->
+        <aside class="faq__aside" aria-label="Direct Assistance">
+          <div class="faq__aside-card">
+            <span class="faq__aside-tag">Direct Desk</span>
+            <h2 class="faq__aside-title">Need help with something else?</h2>
+            <p class="faq__aside-copy">
+              We are happy to answer any questions or help arrange a special time for your visit.
+            </p>
+            <div class="faq__aside-actions">
+              <NuxtLink to="/support" class="faq__aside-btn faq__aside-btn--outline">
+                Contact Us
+              </NuxtLink>
+              <NuxtLink to="/book" class="faq__aside-btn faq__aside-btn--primary">
+                Book appointment
+              </NuxtLink>
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   </main>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { buildFaqPageJsonLd } from '@/landing/agentSeo'
+
+import { buildFaqPageJsonLd } from '~/src/landing/agentSeo'
 import {
-  CLIENT_FAQ_ITEMS,
   FAQ_CATEGORIES,
-  filterFaqItems,
-  type FaqCategoryOption,
-} from '@/landing/clientFaqArchitecture'
-import { MELLIS_FLOWER_SRC } from '@/landing/clientPagesContent'
+  FAQ_ITEMS,
+  MELLIS_FLOWER_SRC,
+  type FaqItem,
+} from '~/src/landing/clientPagesContent'
 
 definePageMeta({ layout: 'landing' })
 
 const config = useRuntimeConfig()
 const siteUrl = (config.public.siteUrl as string) || 'https://sheeaesthetics.co.ke'
-const title = 'FAQ | Shee Aesthetics Meru — Booking, M-Pesa & Visits'
+const title = 'FAQ | Shee Aesthetics Meru'
 const description =
-  'Answers for booking Shee Aesthetics beauty salon in Meru Town: facials, waxing, massage, makeup, M-Pesa confirmation, and how to change a visit.'
+  'Answers for booking appointments at Shee Aesthetics in Meru Town: facials, waxing, massage, makeup, M-Pesa payments, and rescheduling.'
 
 useSeoMeta({
   title,
@@ -140,186 +186,246 @@ useHead({
 })
 
 const flowerSrc = MELLIS_FLOWER_SRC
-const activeCategory = ref<FaqCategoryOption['id']>('all')
-const openId = ref<string | null>('faq-days')
+const activeCategory = ref<string>('all')
+const searchQuery = ref('')
+const openId = ref<string | null>('faq-booking')
 
-const filteredItems = computed(() => filterFaqItems(CLIENT_FAQ_ITEMS, activeCategory.value))
+const filteredItems = computed(() => {
+  let list: FaqItem[] =
+    activeCategory.value === 'all'
+      ? FAQ_ITEMS
+      : FAQ_ITEMS.filter((item) => item.category === activeCategory.value)
+
+  const q = searchQuery.value.trim().toLowerCase()
+  if (q) {
+    list = list.filter(
+      (item) =>
+        item.q.toLowerCase().includes(q) ||
+        item.a.toLowerCase().includes(q) ||
+        item.categoryLabel.toLowerCase().includes(q),
+    )
+  }
+  return list
+})
 
 function toggleItem(id: string) {
   openId.value = openId.value === id ? null : id
+}
+
+function resetFilters() {
+  activeCategory.value = 'all'
+  searchQuery.value = ''
 }
 </script>
 
 <style scoped>
 .faq {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(176, 122, 113, 0.12), transparent 55%),
-    linear-gradient(180deg, var(--color-paper) 0%, var(--color-parchment) 100%);
-  min-height: 70vh;
+  min-height: 100vh;
+  padding: clamp(2.5rem, 5vh, 4.5rem) 1.25rem 5rem;
+  background: var(--color-paper, #e5e1dc);
+  color: var(--color-ink, #252223);
 }
 
-.faq__bloom {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.22;
-  filter: saturate(1.3) brightness(1.02);
-}
-
-.faq__bloom--tl {
-  top: 0.75rem;
-  left: max(0.35rem, env(safe-area-inset-left));
-  width: min(110px, 22vw);
-  transform: rotate(-18deg);
-}
-
-.faq__bloom--br {
-  right: max(0.35rem, env(safe-area-inset-right));
-  bottom: 2rem;
-  width: min(130px, 26vw);
-  transform: rotate(145deg);
+.faq__inner {
+  max-width: 62rem;
+  margin: 0 auto;
 }
 
 .faq__hero {
-  position: relative;
-  z-index: 1;
-  padding: clamp(2.5rem, 6vh, 4rem) 1rem 2rem;
-  border-bottom: 1px solid var(--color-line);
+  text-align: center;
+  max-width: 42rem;
+  margin: 0 auto clamp(2rem, 4vh, 2.75rem);
 }
 
-.faq__hero-inner {
-  width: var(--container);
-  max-width: 44rem;
-  margin: 0 auto;
-  text-align: center;
+.faq__script {
+  margin: 0 0 0.2rem;
+  font-family: var(--font-script);
+  font-size: clamp(2.2rem, 5.5vw, 3rem);
+  line-height: 1;
+  color: var(--color-rose, #b07a71);
+  opacity: 0.95;
 }
 
 .faq__eyebrow {
-  margin: 0 0 0.65rem;
+  display: inline-block;
+  margin-bottom: 0.5rem;
   text-transform: uppercase;
-  letter-spacing: 0.22em;
-  font: 600 0.72rem/1 var(--font-body);
-  color: var(--color-rose);
+  letter-spacing: 0.18em;
+  font: 700 0.7rem/1 var(--font-body);
+  color: var(--color-rose-dark, #965f57);
 }
 
-.faq__title-lockup {
+.title-lockup {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(0.5rem, 2vw, 0.9rem);
-  margin: 0 0 0.85rem;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
 }
 
-.faq__title-flower {
-  width: clamp(1.8rem, 4vw, 2.4rem);
+.title-lockup__flower {
+  width: 1.85rem;
   height: auto;
-  object-fit: contain;
-  opacity: 0.82;
   flex-shrink: 0;
+  opacity: 0.65;
+  pointer-events: none;
 }
 
-.faq__title-flower--left {
+.title-lockup__flower--left {
   transform: scaleX(-1) rotate(-8deg);
 }
 
-.faq__title-flower--right {
+.title-lockup__flower--right {
   transform: rotate(8deg);
 }
 
 .faq__title {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 500;
-  font-size: clamp(1.95rem, 4.8vw, 2.75rem);
-  line-height: 1.15;
+  font-weight: 400;
+  font-size: clamp(1.85rem, 4vw, 2.5rem);
   letter-spacing: -0.02em;
-  color: var(--color-ink);
+  color: var(--color-ink, #252223);
 }
 
 .faq__lead {
-  margin: 0 auto 1.75rem;
-  max-width: 36rem;
-  font: 400 1.02rem/1.65 var(--font-body);
-  color: var(--color-muted);
+  margin: 0 auto 1.5rem;
+  max-width: 36ch;
+  font: 400 0.98rem/1.6 var(--font-body);
+  color: var(--color-muted, #6b605c);
 }
 
-/* Category Filter Bar */
-.faq__categories {
+/* Search bar (calm, non-glaring) */
+.faq__search-wrap {
+  max-width: 26rem;
+  margin: 0 auto 1.25rem;
+}
+
+.faq__search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #ded8d2;
+  border: 1px solid rgba(176, 122, 113, 0.28);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  transition: border-color 0.18s ease;
+}
+
+.faq__search-box:focus-within {
+  border-color: var(--color-rose, #b07a71);
+}
+
+.faq__search-icon {
+  color: var(--color-muted, #6b605c);
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+}
+
+.faq__search-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font: 400 0.9rem/1 var(--font-body);
+  color: var(--color-ink, #252223);
+  outline: none;
+}
+
+.faq__search-input::placeholder {
+  color: var(--color-muted, #6b605c);
+  opacity: 0.7;
+}
+
+.faq__search-clear {
+  background: transparent;
+  border: none;
+  color: var(--color-muted, #6b605c);
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+  font-size: 1rem;
+}
+
+/* Category Filter Nav */
+.faq__category-nav {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
-.faq__cat-btn {
-  min-height: 2.35rem;
-  padding: 0.4rem 0.95rem;
-  border: 1px solid var(--color-line);
+.faq__category-btn {
+  padding: 0.38rem 0.85rem;
   border-radius: 999px;
-  background: var(--color-surface-raised, #ebe7e3);
-  color: var(--color-ink);
-  font: 600 0.74rem/1 var(--font-body);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  border: 1px solid rgba(176, 122, 113, 0.24);
+  background: #ded8d2;
+  font: 600 0.76rem/1 var(--font-body);
+  letter-spacing: 0.02em;
+  color: var(--color-ink, #252223);
   cursor: pointer;
-  transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.15s ease;
+  transition: all 0.18s ease;
 }
 
-.faq__cat-btn:hover {
-  border-color: var(--color-rose);
-  transform: translateY(-1px);
+.faq__category-btn:hover {
+  border-color: var(--color-rose, #b07a71);
+  color: var(--color-rose-dark, #965f57);
 }
 
-.faq__cat-btn--active {
-  border-color: var(--color-rose);
-  background: var(--color-rose);
-  color: #fff;
-  box-shadow: 0 6px 16px rgba(176, 122, 113, 0.3);
+.faq__category-btn--active {
+  background: var(--color-card-dark, #1e191b);
+  color: #ffffff;
+  border-color: var(--color-card-dark, #1e191b);
 }
 
-/* Body & Interactive Cards */
+/* Body & Grid */
 .faq__body {
-  position: relative;
-  z-index: 1;
-  width: var(--container);
-  max-width: 44rem;
-  margin: 0 auto;
-  padding: 2.25rem 1rem 4.5rem;
+  display: grid;
+  grid-template-columns: 1fr 18rem;
+  gap: 1.5rem;
+  align-items: start;
 }
 
 .faq__grid {
   display: grid;
-  gap: 0.85rem;
+  gap: 0.75rem;
+}
+
+.faq__empty {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  background: #ded8d2;
+  border-radius: 8px;
+  color: var(--color-muted, #6b605c);
+}
+
+.faq__reset-btn {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: var(--color-card-dark, #1e191b);
+  color: #fff;
+  border: none;
+  font: 600 0.78rem/1 var(--font-body);
+  cursor: pointer;
 }
 
 .faq__card {
-  border: 1px solid var(--color-line);
-  border-radius: 14px;
-  background: var(--color-surface-raised, #ebe7e3);
-  box-shadow: 0 4px 14px rgba(23, 21, 22, 0.05);
+  background:
+    radial-gradient(ellipse 80% 60% at 0% 0%, rgba(176, 122, 113, 0.08), transparent 60%),
+    linear-gradient(160deg, #f0eae4 0%, #e6ded6 100%);
+  border: 1px solid rgba(176, 122, 113, 0.28);
+  border-radius: 8px;
   overflow: hidden;
-  transition:
-    border-color 0.25s ease,
-    box-shadow 0.25s ease,
-    transform 0.2s ease;
+  box-shadow: 0 2px 8px rgba(23, 21, 22, 0.02);
+  transition: border-color 0.18s ease;
 }
 
 .faq__card:hover {
   border-color: rgba(176, 122, 113, 0.45);
-  transform: translateY(-1px);
 }
 
 .faq__card--open {
-  border-color: var(--color-rose);
-  box-shadow: 0 10px 24px rgba(176, 122, 113, 0.15);
+  border-color: var(--color-rose, #b07a71);
 }
 
 .faq__card-trigger {
@@ -328,127 +434,141 @@ function toggleItem(id: string) {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.25rem 1.35rem;
-  border: 0;
+  padding: 1.1rem 1.25rem;
   background: transparent;
+  border: none;
   text-align: left;
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .faq__card-head {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  display: grid;
+  gap: 0.15rem;
 }
 
 .faq__card-category {
-  font: 600 0.66rem/1 var(--font-body);
-  letter-spacing: 0.14em;
+  font: 700 0.65rem/1 var(--font-body);
   text-transform: uppercase;
-  color: var(--color-rose);
+  letter-spacing: 0.1em;
+  color: var(--color-rose-dark, #965f57);
 }
 
 .faq__card-question {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 500;
-  font-size: clamp(1.08rem, 2.4vw, 1.25rem);
-  line-height: 1.3;
-  letter-spacing: -0.015em;
-  color: var(--color-ink);
+  font-weight: 400;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  color: var(--color-ink, #252223);
 }
 
 .faq__card-icon {
-  display: grid;
-  place-content: center;
   flex-shrink: 0;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  border: 1px solid var(--color-line);
-  background: var(--color-paper);
-  color: var(--color-rose-dark);
-  font: 600 1.1rem/1 var(--font-body);
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
+  color: var(--color-rose, #b07a71);
+  display: grid;
+  place-items: center;
 }
 
-.faq__card--open .faq__card-icon {
-  background: var(--color-rose);
-  border-color: var(--color-rose);
-  color: #fff;
+.faq__card-icon svg {
+  transition: transform 0.2s ease;
+}
+
+.faq__icon-rotated {
+  transform: rotate(180deg);
 }
 
 .faq__card-answer {
-  padding: 0 1.35rem 1.35rem;
-  border-top: 1px dashed rgba(176, 122, 113, 0.25);
-  margin-top: 0.15rem;
+  padding: 0 1.25rem 1.25rem;
+  border-top: 1px solid rgba(176, 122, 113, 0.15);
+  padding-top: 0.75rem;
 }
 
 .faq__card-answer p {
-  margin: 0.85rem 0 0;
-  font: 400 0.96rem/1.7 var(--font-body);
-  color: var(--color-muted);
+  margin: 0;
+  font: 400 0.9rem/1.6 var(--font-body);
+  color: var(--color-muted, #6b605c);
 }
 
-/* Vue expand transition */
-.faq-expand-enter-active,
-.faq-expand-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
-}
-
-.faq-expand-enter-from,
-.faq-expand-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
-}
-
-/* Direct Help Card */
+/* Aside Card (Dark obsidian tone) */
 .faq__aside {
-  margin-top: 2.75rem;
+  position: sticky;
+  top: 5.5rem;
 }
 
 .faq__aside-card {
-  padding: 1.85rem 1.5rem;
-  border: 1px solid var(--color-line);
-  border-radius: 16px;
   background:
-    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(222, 150, 141, 0.15), transparent 65%),
-    var(--color-surface-raised, #ebe7e3);
-  text-align: center;
-  box-shadow: 0 8px 20px rgba(23, 21, 22, 0.06);
+    radial-gradient(ellipse 90% 70% at 100% 100%, rgba(176, 122, 113, 0.2), transparent 60%),
+    linear-gradient(165deg, #241e20 0%, #171516 100%);
+  border: 1px solid rgba(176, 122, 113, 0.35);
+  border-radius: 10px;
+  padding: 1.4rem;
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(23, 21, 22, 0.08);
 }
 
-.faq__aside-eyebrow {
-  margin: 0 0 0.45rem;
+.faq__aside-tag {
+  display: inline-block;
+  font: 700 0.65rem/1 var(--font-body);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  letter-spacing: 0.2em;
-  font: 600 0.68rem/1 var(--font-body);
-  color: var(--color-rose);
+  color: #f0b8ac;
+  margin-bottom: 0.5rem;
 }
 
 .faq__aside-title {
-  margin: 0 0 0.55rem;
+  margin: 0 0 0.45rem;
   font-family: var(--font-display);
-  font-size: clamp(1.4rem, 3.2vw, 1.75rem);
-  font-weight: 500;
-  color: var(--color-ink);
+  font-weight: 400;
+  font-size: 1.15rem;
+  color: #ffffff;
 }
 
 .faq__aside-copy {
-  margin: 0 auto 1.35rem;
-  max-width: 32ch;
-  font: 400 0.94rem/1.6 var(--font-body);
-  color: var(--color-muted);
+  margin: 0 0 1.25rem;
+  font: 400 0.86rem/1.55 var(--font-body);
+  color: rgba(255, 248, 244, 0.78);
 }
 
 .faq__aside-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.faq__aside-btn {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  gap: 0.75rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font: 700 0.72rem/1 var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: opacity 0.18s ease;
+}
+
+.faq__aside-btn--primary {
+  background: var(--color-rose, #b07a71);
+  color: #ffffff;
+}
+
+.faq__aside-btn--outline {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+.faq__aside-btn:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 900px) {
+  .faq__body {
+    grid-template-columns: 1fr;
+  }
+
+  .faq__aside {
+    position: static;
+  }
 }
 </style>
