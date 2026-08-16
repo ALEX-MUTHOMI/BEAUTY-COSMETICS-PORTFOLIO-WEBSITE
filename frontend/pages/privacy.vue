@@ -1,118 +1,158 @@
 <template>
-  <main class="legal-page">
-    <div class="legal-page__inner">
-      <div class="title-lockup">
-        <img
-          src="/images/flower.png"
-          alt=""
-          class="title-lockup__flower title-lockup__flower--left"
-          width="36"
-          height="36"
-          aria-hidden="true"
-        />
-        <h1>Privacy Policy</h1>
-        <img
-          src="/images/flower.png"
-          alt=""
-          class="title-lockup__flower title-lockup__flower--right"
-          width="36"
-          height="36"
-          aria-hidden="true"
-        />
-      </div>
-      <p>
-        Shee Aesthetics collects the information you provide when booking online: your name, email, and
-        phone number. We use this only to perform your booking contract — manage the visit, initiate
-        M-Pesa payment, send confirmation, and deliver your PDF receipt. This is not marketing.
-      </p>
-      <p>
-        You do not need a customer account or password to book. We do not sell your personal data.
-        Optional “remember this device” stores only an opaque HttpOnly cookie — never your email or
-        phone in browser storage. Staff accounts are separate and never share your remembered-device
-        cookie.
-      </p>
-      <p>
-        We process data under Kenya’s Data Protection Act, 2019 and apply GDPR-grade safeguards where
-        practical. Payment runs through M-Pesa; email providers deliver receipts and security messages.
-      </p>
+  <main class="privacy-page">
+    <div class="privacy-page__inner">
+      <!-- Header -->
+      <header class="privacy-page__header">
+        <p class="privacy-page__script" aria-hidden="true">Shee</p>
+        <span class="privacy-page__eyebrow">Client Privacy</span>
 
-      <h2>What we collect</h2>
-      <ul v-if="dataMapEntries.length" class="legal-page__map">
-        <li v-for="[field, meta] in dataMapEntries" :key="field">
-          <strong>{{ field }}</strong> — {{ meta.purpose }} ({{ meta.lawfulBasis }}; {{ meta.retention }})
-        </li>
-      </ul>
-      <p v-else>
-        Name, email, and phone for the appointment and M-Pesa STK; technical logs without cleartext contact
-        data. Retention is typically 24 months after your last completed booking, then soft-delete.
-      </p>
+        <div class="title-lockup">
+          <img
+            src="/images/flower.png"
+            alt=""
+            class="title-lockup__flower title-lockup__flower--left"
+            width="36"
+            height="36"
+            aria-hidden="true"
+          />
+          <h1 class="privacy-page__title">Privacy Policy</h1>
+          <img
+            src="/images/flower.png"
+            alt=""
+            class="title-lockup__flower title-lockup__flower--right"
+            width="36"
+            height="36"
+            aria-hidden="true"
+          />
+        </div>
 
-      <h2>Your rights</h2>
-      <p>
-        You may request access, correction, erasure, or objection. Submit the form below — you will receive
-        a ticket id only (we do not echo your details back). Staff fulfil requests; some financial records
-        may be retained for legal or accounting reasons.
-      </p>
-
-      <form class="privacy-form" @submit.prevent="onSubmit">
-        <label>
-          Request type
-          <select v-model="form.requestType" required>
-            <option value="access">Access</option>
-            <option value="rectification">Correction</option>
-            <option value="erasure">Erasure</option>
-            <option value="objection">Objection</option>
-          </select>
-        </label>
-        <label>
-          Email
-          <input v-model="form.email" type="email" autocomplete="email" required maxlength="120" />
-        </label>
-        <label>
-          Phone (optional, Kenya)
-          <input v-model="form.phone" type="tel" autocomplete="tel" maxlength="16" placeholder="07… or +2547…" />
-        </label>
-        <label>
-          Details (optional)
-          <textarea v-model="form.details" rows="3" maxlength="500" />
-        </label>
-        <p v-if="error" class="privacy-form__error" role="alert">{{ error }}</p>
-        <p v-if="ticketId" class="privacy-form__ok" role="status">
-          Request accepted. Ticket: <code>{{ ticketId }}</code>
+        <p class="privacy-page__lead">
+          We collect only what is necessary to confirm your booking, process M-Pesa payments, and send your receipt.
         </p>
-        <SiteButton type="submit" variant="primary" :disabled="submitting">
-          {{ submitting ? 'Sending…' : 'Submit privacy request' }}
-        </SiteButton>
-      </form>
+      </header>
 
-      <p>
-        Questions:
-        <a href="mailto:bookings@sheeaesthetics.co.ke">bookings@sheeaesthetics.co.ke</a>
-      </p>
-      <NuxtLink to="/" class="legal-page__back">Back to home</NuxtLink>
+      <!-- Clear Commitments -->
+      <section class="privacy-summary" aria-label="Privacy Summary">
+        <div class="summary-card">
+          <h2 class="summary-card__title">How we treat your data</h2>
+          <div class="summary-points">
+            <p><strong>Booking details:</strong> We ask for your full name, phone number, and email address strictly to reserve your slot, send the M-Pesa payment prompt, and email your receipt.</p>
+            <p><strong>No data sharing:</strong> We do not sell, rent, or share your contact details with advertisers or third parties.</p>
+            <p><strong>Guest checkout:</strong> You do not need to create or store a password to book an appointment.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Rights Submission Form -->
+      <section class="privacy-form-section" aria-label="Data Rights Request">
+        <h2 class="privacy-form-section__title">Request or update your records</h2>
+        <p class="privacy-form-section__lead">
+          Under the Kenya Data Protection Act, you can request a copy of your booking history or ask us to delete your contact details anytime.
+        </p>
+
+        <form class="privacy-form" @submit.prevent="onSubmit">
+          <div class="form-row">
+            <label class="form-field">
+              <span class="form-field__label">Request type</span>
+              <select v-model="form.requestType" required class="form-field__input">
+                <option value="access">Access my booking history</option>
+                <option value="rectification">Update my contact details</option>
+                <option value="erasure">Delete my contact details</option>
+                <option value="objection">Opt out of notifications</option>
+              </select>
+            </label>
+
+            <label class="form-field">
+              <span class="form-field__label">Email address</span>
+              <input
+                v-model="form.email"
+                type="email"
+                autocomplete="email"
+                required
+                maxlength="120"
+                placeholder="your.email@example.com"
+                class="form-field__input"
+              />
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label class="form-field">
+              <span class="form-field__label">Phone number (optional)</span>
+              <input
+                v-model="form.phone"
+                type="tel"
+                autocomplete="tel"
+                maxlength="16"
+                placeholder="07XX XXX XXX"
+                class="form-field__input"
+              />
+            </label>
+          </div>
+
+          <label class="form-field">
+            <span class="form-field__label">Additional notes (optional)</span>
+            <textarea
+              v-model="form.details"
+              rows="3"
+              maxlength="500"
+              placeholder="Provide any booking dates or details to help us locate your record..."
+              class="form-field__input form-field__textarea"
+            />
+          </label>
+
+          <p v-if="error" class="form-msg form-msg--error" role="alert">{{ error }}</p>
+          <p v-if="ticketId" class="form-msg form-msg--ok" role="status">
+            Request received. Your reference ticket is: <code>{{ ticketId }}</code>
+          </p>
+
+          <div class="form-actions">
+            <button type="submit" class="privacy-submit-btn" :disabled="submitting">
+              {{ submitting ? 'Sending...' : 'Submit request' }}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Footer Help & Links -->
+      <footer class="privacy-page__footer">
+        <p class="privacy-page__contact-text">
+          Direct inquiries: <a href="mailto:bookings@sheeaesthetics.co.ke" class="privacy-page__email-link">bookings@sheeaesthetics.co.ke</a>
+        </p>
+        <div class="privacy-page__sublinks">
+          <NuxtLink to="/terms" class="privacy-page__link">Terms of Service</NuxtLink>
+          <span class="privacy-page__sep" aria-hidden="true">&bull;</span>
+          <NuxtLink to="/support" class="privacy-page__link">Contact</NuxtLink>
+          <span class="privacy-page__sep" aria-hidden="true">&bull;</span>
+          <NuxtLink to="/" class="privacy-page__link">Home</NuxtLink>
+        </div>
+      </footer>
     </div>
   </main>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 
 import {
-  fetchPrivacyDataMap,
   submitPrivacyRightsRequest,
-  type PrivacyDataMapField,
   type PrivacyRequestType,
-} from '@/booking/privacyRightsApi'
+} from '~/src/booking/privacyRightsApi'
 
 definePageMeta({ layout: 'landing' })
 
-useHead({ title: 'Privacy Policy | Shee Aesthetics' })
+useHead({
+  title: 'Privacy Policy | Shee Aesthetics Meru',
+  meta: [
+    {
+      name: 'description',
+      content: 'Learn how Shee Aesthetics protects customer details for bookings and M-Pesa payments in Meru Town.',
+    },
+  ],
+})
 
 const config = useRuntimeConfig()
 const apiBaseUrl = String(config.public.apiBaseUrl || '')
-
-const dataMap = ref<Record<string, PrivacyDataMapField>>({})
-const dataMapEntries = computed(() => Object.entries(dataMap.value))
 
 const form = reactive({
   requestType: 'access' as PrivacyRequestType,
@@ -123,11 +163,6 @@ const form = reactive({
 const submitting = ref(false)
 const error = ref('')
 const ticketId = ref('')
-
-onMounted(async () => {
-  const result = await fetchPrivacyDataMap(apiBaseUrl)
-  if ('data' in result) dataMap.value = result.data
-})
 
 async function onSubmit() {
   error.value = ''
@@ -142,8 +177,8 @@ async function onSubmit() {
     })
     if ('error' in result) {
       error.value = result.throttled
-        ? 'Please wait a moment and try again.'
-        : 'Privacy request could not be accepted. Check your email and try again.'
+        ? 'Please wait a moment before trying again.'
+        : 'Could not process request. Please check your email and try again.'
       return
     }
     ticketId.value = result.data.ticketId
@@ -155,94 +190,274 @@ async function onSubmit() {
 </script>
 
 <style scoped>
-.legal-page .label {
-  margin: 0 0 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.22em;
-  font: 600 0.72rem var(--font-body);
-  color: var(--color-rose);
+.privacy-page {
+  min-height: 100vh;
+  padding: clamp(2.5rem, 5vh, 4.5rem) 1.25rem 5rem;
+  background: var(--color-paper, #e5e1dc);
+  color: var(--color-ink, #252223);
 }
 
-.legal-page {
-  padding: clamp(3rem, 8vh, 5rem) 1.5rem 4rem;
-}
-
-.legal-page__inner {
-  width: min(40rem, 100%);
+.privacy-page__inner {
+  max-width: 44rem;
   margin: 0 auto;
 }
 
-.legal-page h1,
-.legal-page h2 {
-  margin: 0 0 1rem;
+.privacy-page__header {
+  text-align: center;
+  margin: 0 auto clamp(2rem, 4vh, 3rem);
+}
+
+.privacy-page__script {
+  margin: 0 0 0.2rem;
+  font-family: var(--font-script);
+  font-size: clamp(2.2rem, 5.5vw, 3rem);
+  line-height: 1;
+  color: var(--color-rose, #b07a71);
+  opacity: 0.95;
+}
+
+.privacy-page__eyebrow {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font: 700 0.7rem/1 var(--font-body);
+  color: var(--color-rose-dark, #965f57);
+}
+
+.title-lockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.title-lockup__flower {
+  width: 1.85rem;
+  height: auto;
+  flex-shrink: 0;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.title-lockup__flower--left {
+  transform: scaleX(-1) rotate(-8deg);
+}
+
+.title-lockup__flower--right {
+  transform: rotate(8deg);
+}
+
+.privacy-page__title {
+  margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
+  font-size: clamp(1.85rem, 4vw, 2.5rem);
+  letter-spacing: -0.02em;
+  color: var(--color-ink, #252223);
 }
 
-.legal-page h1 {
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
-  margin-bottom: 1.25rem;
+.privacy-page__lead {
+  margin: 0 auto;
+  font: 400 0.98rem/1.6 var(--font-body);
+  color: var(--color-muted, #6b605c);
 }
 
-.legal-page h2 {
-  margin-top: 2rem;
-  font-size: 1.35rem;
+/* Summary Card */
+.privacy-summary {
+  margin-bottom: 1.5rem;
 }
 
-.legal-page p,
-.legal-page li {
-  margin: 0 0 1rem;
-  font: 400 1rem/1.75 var(--font-body);
-  color: var(--color-muted);
+.summary-card {
+  background:
+    radial-gradient(ellipse 80% 60% at 0% 0%, rgba(176, 122, 113, 0.08), transparent 60%),
+    linear-gradient(160deg, #f0eae4 0%, #e6ded6 100%);
+  border: 1px solid rgba(176, 122, 113, 0.28);
+  border-radius: 8px;
+  padding: clamp(1.35rem, 3.5vw, 1.75rem);
+  box-shadow: 0 2px 8px rgba(23, 21, 22, 0.02);
 }
 
-.legal-page a {
-  color: var(--color-rose);
+.summary-card__title {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.2rem;
+  color: var(--color-ink, #252223);
+  border-bottom: 1px solid rgba(176, 122, 113, 0.18);
+  padding-bottom: 0.5rem;
 }
 
-.legal-page__map {
-  padding-left: 1.1rem;
+.summary-points {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.summary-points p {
+  margin: 0;
+  font: 400 0.9rem/1.6 var(--font-body);
+  color: var(--color-muted, #6b605c);
+}
+
+.summary-points strong {
+  color: var(--color-ink, #252223);
+}
+
+/* Form Section */
+.privacy-form-section {
+  background:
+    radial-gradient(ellipse 80% 60% at 0% 0%, rgba(176, 122, 113, 0.08), transparent 60%),
+    linear-gradient(160deg, #f0eae4 0%, #e6ded6 100%);
+  border: 1px solid rgba(176, 122, 113, 0.28);
+  border-radius: 8px;
+  padding: clamp(1.35rem, 3.5vw, 1.75rem);
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(23, 21, 22, 0.02);
+}
+
+.privacy-form-section__title {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.2rem;
+  color: var(--color-ink, #252223);
+}
+
+.privacy-form-section__lead {
+  margin: 0 0 1.15rem;
+  font: 400 0.9rem/1.55 var(--font-body);
+  color: var(--color-muted, #6b605c);
 }
 
 .privacy-form {
   display: grid;
-  gap: 0.85rem;
-  margin: 1.25rem 0 1.75rem;
+  gap: 0.75rem;
 }
 
-.privacy-form label {
+.form-row {
   display: grid;
-  gap: 0.35rem;
-  font: 600 0.85rem/1.4 var(--font-body);
-  color: var(--color-ink, #1a1a1a);
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.75rem;
 }
 
-.privacy-form input,
-.privacy-form select,
-.privacy-form textarea {
-  font: 400 1rem/1.4 var(--font-body);
-  padding: 0.55rem 0.65rem;
-  border: 1px solid color-mix(in srgb, var(--color-rose) 35%, transparent);
-  border-radius: 0.35rem;
-  background: var(--color-parchment, #ddd8d3);
-  color: var(--color-ink);
+.form-field {
+  display: grid;
+  gap: 0.3rem;
 }
 
-.privacy-form__error {
-  color: #8b1e2d;
+.form-field__label {
+  font: 600 0.76rem/1.2 var(--font-body);
+  color: var(--color-ink, #252223);
 }
 
-.privacy-form__ok {
-  color: var(--color-ink, #1a1a1a);
+.form-field__input {
+  font: 400 0.9rem/1.4 var(--font-body);
+  padding: 0.55rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(176, 122, 113, 0.28);
+  background: #ded8d2;
+  color: var(--color-ink, #252223);
+  outline: none;
+  transition: border-color 0.18s ease;
 }
 
-.privacy-form__ok code {
-  font-size: 0.9em;
+.form-field__input:focus {
+  border-color: var(--color-rose, #b07a71);
 }
 
-.legal-page__back {
-  display: inline-block;
-  margin-top: 0.5rem;
-  font: 600 0.95rem var(--font-body);
+.form-field__textarea {
+  resize: vertical;
+  min-height: 4rem;
+}
+
+.form-msg {
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  font: 500 0.82rem/1.4 var(--font-body);
+  margin: 0;
+}
+
+.form-msg--error {
+  background: rgba(184, 51, 42, 0.12);
+  color: #a32a22;
+  border: 1px solid rgba(184, 51, 42, 0.25);
+}
+
+.form-msg--ok {
+  background: rgba(46, 125, 50, 0.12);
+  color: #256629;
+  border: 1px solid rgba(46, 125, 50, 0.25);
+}
+
+.privacy-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  border: none;
+  background: var(--color-card-dark, #1e191b);
+  color: #ffffff;
+  font: 700 0.72rem/1 var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.18s ease;
+}
+
+.privacy-submit-btn:hover {
+  opacity: 0.9;
+}
+
+/* Footer */
+.privacy-page__footer {
+  text-align: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(44, 44, 48, 0.08);
+}
+
+.privacy-page__contact-text {
+  font: 400 0.9rem/1.5 var(--font-body);
+  color: var(--color-muted, #6b605c);
+  margin-bottom: 1rem;
+}
+
+.privacy-page__email-link {
+  color: var(--color-rose-dark, #965f57);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.privacy-page__email-link:hover {
+  color: var(--color-rose, #b07a71);
+  text-decoration: underline;
+}
+
+.privacy-page__sublinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.privacy-page__link {
+  font: 600 0.74rem/1 var(--font-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--color-rose-dark, #965f57);
+  transition: color 0.18s ease;
+}
+
+.privacy-page__link:hover {
+  color: var(--color-rose, #b07a71);
+  text-decoration: underline;
+}
+
+.privacy-page__sep {
+  color: var(--color-muted, #6b605c);
+  opacity: 0.4;
 }
 </style>
