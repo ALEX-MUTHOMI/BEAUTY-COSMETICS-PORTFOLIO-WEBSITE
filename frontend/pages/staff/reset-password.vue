@@ -58,7 +58,7 @@ import StaffSheeBrand from '~/components/staff/StaffSheeBrand.vue'
 import StaffThemeToggle from '~/components/staff/StaffThemeToggle.vue'
 import { ensureBookingCsrfToken } from '~/src/booking/bookingCsrf'
 import { confirmStaffPasswordReset } from '~/src/staff/staffAuth'
-import { clientStaffPasswordHint, mapStaffPasswordApiMessage } from '~/src/staff/staffPasswordHints'
+import { clientStaffPasswordHint, mapStaffPasswordApiMessage } from '~/src/staff/staffUxHelpers'
 import { applyStaffTheme, resolveStaffTheme } from '~/src/staff/theme'
 
 definePageMeta({ layout: false })
