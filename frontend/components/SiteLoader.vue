@@ -117,6 +117,10 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * SiteLoader Component
+ * Uses aria-live="polite" to inform screen readers of background loading processes.
+ */
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { loaderSafetyTimeoutMs } from '~/src/landing/landingContent'
 
