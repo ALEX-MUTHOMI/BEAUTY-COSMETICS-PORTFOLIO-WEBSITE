@@ -19,6 +19,10 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * MellisServiceCard Component
+ * Displays individual service details. Accepts props for service name, duration, and price.
+ */
 import { computed } from 'vue'
 
 const props = withDefaults(
