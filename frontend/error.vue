@@ -3,9 +3,7 @@
     <main class="site-error">
       <div class="site-error__inner">
         <!-- Brand Script -->
-        <p class="site-error__script" aria-hidden="true">
-          {{ isNotFound ? NOT_FOUND_PAGE.script : SERVER_ERROR_PAGE.script }}
-        </p>
+        <span class="site-error__brand">Shee Aesthetics</span>
 
         <!-- Eyebrow Tag -->
         <span class="site-error__eyebrow">
@@ -120,13 +118,13 @@ function handleRetry() {
   margin: 0 auto;
 }
 
-.site-error__script {
-  margin: 0 0 0.2rem;
-  font-family: var(--font-script);
-  font-size: clamp(2.4rem, 6vw, 3.2rem);
-  line-height: 1;
+.site-error__brand {
+  display: block;
+  font-family: var(--font-script, 'Parisienne', cursive);
+  font-size: clamp(2rem, 4.5vw, 3rem);
   color: var(--color-rose, #b07a71);
-  opacity: 0.95;
+  line-height: 1.1;
+  margin-bottom: 0.35rem;
 }
 
 .site-error__eyebrow {
@@ -134,15 +132,15 @@ function handleRetry() {
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  font: 700 0.7rem/1 var(--font-body);
-  color: var(--color-rose-dark, #965f57);
+  font: 700 0.72rem/1 var(--font-body);
+  color: var(--color-muted, #786f6a);
 }
 
 .site-error__title {
   margin: 0 0 0.75rem;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(1.85rem, 4vw, 2.5rem);
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
   letter-spacing: -0.02em;
   color: var(--color-ink, #252223);
 }

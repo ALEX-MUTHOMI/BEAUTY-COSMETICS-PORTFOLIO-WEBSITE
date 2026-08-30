@@ -2,31 +2,13 @@
   <main class="not-found">
     <div class="not-found__inner">
       <!-- Brand Script -->
-      <p class="not-found__script" aria-hidden="true">{{ NOT_FOUND_PAGE.script }}</p>
+      <span class="not-found__brand">Shee Aesthetics</span>
 
       <!-- Eyebrow Tag -->
       <span class="not-found__eyebrow">{{ NOT_FOUND_PAGE.eyebrow }}</span>
 
-      <!-- Centered Title Lockup -->
-      <div class="title-lockup">
-        <img
-          :src="flowerSrc"
-          alt=""
-          class="title-lockup__flower title-lockup__flower--left"
-          width="36"
-          height="36"
-          aria-hidden="true"
-        />
-        <h1 class="not-found__title">{{ NOT_FOUND_PAGE.title }}</h1>
-        <img
-          :src="flowerSrc"
-          alt=""
-          class="title-lockup__flower title-lockup__flower--right"
-          width="36"
-          height="36"
-          aria-hidden="true"
-        />
-      </div>
+      <!-- Centered Title -->
+      <h1 class="not-found__title">{{ NOT_FOUND_PAGE.title }}</h1>
 
       <!-- Lead copy -->
       <p class="not-found__lead">{{ NOT_FOUND_PAGE.lead }}</p>
@@ -55,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { MELLIS_FLOWER_SRC, NOT_FOUND_PAGE } from '~/src/landing/clientPagesContent'
+import { NOT_FOUND_PAGE } from '~/src/landing/clientPagesContent'
 
 definePageMeta({ layout: 'landing' })
 
@@ -72,8 +54,6 @@ useHead({
     },
   ],
 })
-
-const flowerSrc = MELLIS_FLOWER_SRC
 </script>
 
 <style scoped>
@@ -93,13 +73,13 @@ const flowerSrc = MELLIS_FLOWER_SRC
   margin: 0 auto;
 }
 
-.not-found__script {
-  margin: 0 0 0.2rem;
-  font-family: var(--font-script);
-  font-size: clamp(2.4rem, 6vw, 3.2rem);
-  line-height: 1;
+.not-found__brand {
+  display: block;
+  font-family: var(--font-script, 'Parisienne', cursive);
+  font-size: clamp(2rem, 4.5vw, 3rem);
   color: var(--color-rose, #b07a71);
-  opacity: 0.95;
+  line-height: 1.1;
+  margin-bottom: 0.35rem;
 }
 
 .not-found__eyebrow {
@@ -107,39 +87,15 @@ const flowerSrc = MELLIS_FLOWER_SRC
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  font: 700 0.7rem/1 var(--font-body);
-  color: var(--color-rose-dark, #965f57);
-}
-
-.title-lockup {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.65rem;
-  margin-bottom: 0.75rem;
-}
-
-.title-lockup__flower {
-  width: 1.85rem;
-  height: auto;
-  flex-shrink: 0;
-  opacity: 0.65;
-  pointer-events: none;
-}
-
-.title-lockup__flower--left {
-  transform: scaleX(-1) rotate(-8deg);
-}
-
-.title-lockup__flower--right {
-  transform: rotate(8deg);
+  font: 700 0.72rem/1 var(--font-body);
+  color: var(--color-muted, #786f6a);
 }
 
 .not-found__title {
-  margin: 0;
+  margin: 0 0 0.75rem;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(1.85rem, 4vw, 2.5rem);
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
   letter-spacing: -0.02em;
   color: var(--color-ink, #252223);
 }

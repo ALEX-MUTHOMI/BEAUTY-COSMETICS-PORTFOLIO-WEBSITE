@@ -3,29 +3,9 @@
     <div class="faq__inner">
       <!-- Hero Header -->
       <header class="faq__hero">
-        <p class="faq__script" aria-hidden="true">Shee</p>
-        <span class="faq__eyebrow">Help &amp; Questions</span>
-        <div class="title-lockup">
-          <img
-            :src="flowerSrc"
-            alt=""
-            class="title-lockup__flower title-lockup__flower--left"
-            aria-hidden="true"
-            width="36"
-            height="36"
-            decoding="async"
-          />
-          <h1 class="faq__title">Frequently asked questions</h1>
-          <img
-            :src="flowerSrc"
-            alt=""
-            class="title-lockup__flower title-lockup__flower--right"
-            aria-hidden="true"
-            width="36"
-            height="36"
-            decoding="async"
-          />
-        </div>
+        <span class="faq__brand">Shee Aesthetics</span>
+        <span class="faq__eyebrow">Studio Guidance</span>
+        <h1 class="faq__title">Frequently asked questions</h1>
         <p class="faq__lead">Answers to common questions about booking, payments, and appointments in Meru.</p>
 
         <!-- Search Bar (Soft, no glare) -->
@@ -157,7 +137,6 @@ import { buildFaqPageJsonLd } from '~/src/landing/agentSeo'
 import {
   FAQ_CATEGORIES,
   FAQ_ITEMS,
-  MELLIS_FLOWER_SRC,
   type FaqItem,
 } from '~/src/landing/clientPagesContent'
 
@@ -189,7 +168,6 @@ useHead({
   ],
 })
 
-const flowerSrc = MELLIS_FLOWER_SRC
 const activeCategory = ref<string>('all')
 const searchQuery = ref('')
 const openId = ref<string | null>('faq-booking')
@@ -241,13 +219,13 @@ function resetFilters() {
   margin: 0 auto clamp(2rem, 4vh, 2.75rem);
 }
 
-.faq__script {
-  margin: 0 0 0.2rem;
-  font-family: var(--font-script);
-  font-size: clamp(2.2rem, 5.5vw, 3rem);
-  line-height: 1;
+.faq__brand {
+  display: block;
+  font-family: var(--font-script, 'Parisienne', cursive);
+  font-size: clamp(2rem, 4.5vw, 3rem);
   color: var(--color-rose, #b07a71);
-  opacity: 0.95;
+  line-height: 1.1;
+  margin-bottom: 0.35rem;
 }
 
 .faq__eyebrow {
@@ -255,32 +233,8 @@ function resetFilters() {
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  font: 700 0.7rem/1 var(--font-body);
-  color: var(--color-rose-dark, #965f57);
-}
-
-.title-lockup {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.65rem;
-  margin-bottom: 0.75rem;
-}
-
-.title-lockup__flower {
-  width: 1.85rem;
-  height: auto;
-  flex-shrink: 0;
-  opacity: 0.65;
-  pointer-events: none;
-}
-
-.title-lockup__flower--left {
-  transform: scaleX(-1) rotate(-8deg);
-}
-
-.title-lockup__flower--right {
-  transform: rotate(8deg);
+  font: 700 0.72rem/1 var(--font-body);
+  color: var(--color-muted, #786f6a);
 }
 
 .faq__title {

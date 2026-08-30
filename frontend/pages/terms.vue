@@ -3,28 +3,9 @@
     <div class="terms-page__inner">
       <!-- Header -->
       <header class="terms-page__header">
-        <p class="terms-page__script" aria-hidden="true">Shee</p>
+        <span class="terms-page__brand">Shee Aesthetics</span>
         <span class="terms-page__eyebrow">Studio Policies</span>
-
-        <div class="title-lockup">
-          <img
-            src="/images/flower.png"
-            alt=""
-            class="title-lockup__flower title-lockup__flower--left"
-            width="36"
-            height="36"
-            aria-hidden="true"
-          />
-          <h1 class="terms-page__title">Terms of Service</h1>
-          <img
-            src="/images/flower.png"
-            alt=""
-            class="title-lockup__flower title-lockup__flower--right"
-            width="36"
-            height="36"
-            aria-hidden="true"
-          />
-        </div>
+        <h1 class="terms-page__title">Terms of Service</h1>
 
         <p class="terms-page__lead">
           Clear, simple guidelines so every client enjoys a relaxing and timely appointment at our Meru studio.
@@ -111,13 +92,13 @@ useHead({
   margin: 0 auto clamp(2rem, 4vh, 3rem);
 }
 
-.terms-page__script {
-  margin: 0 0 0.2rem;
-  font-family: var(--font-script);
-  font-size: clamp(2.2rem, 5.5vw, 3rem);
-  line-height: 1;
+.terms-page__brand {
+  display: block;
+  font-family: var(--font-script, 'Parisienne', cursive);
+  font-size: clamp(2rem, 4.5vw, 3rem);
   color: var(--color-rose, #b07a71);
-  opacity: 0.95;
+  line-height: 1.1;
+  margin-bottom: 0.35rem;
 }
 
 .terms-page__eyebrow {
@@ -125,39 +106,15 @@ useHead({
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  font: 700 0.7rem/1 var(--font-body);
-  color: var(--color-rose-dark, #965f57);
-}
-
-.title-lockup {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.65rem;
-  margin-bottom: 0.75rem;
-}
-
-.title-lockup__flower {
-  width: 1.85rem;
-  height: auto;
-  flex-shrink: 0;
-  opacity: 0.65;
-  pointer-events: none;
-}
-
-.title-lockup__flower--left {
-  transform: scaleX(-1) rotate(-8deg);
-}
-
-.title-lockup__flower--right {
-  transform: rotate(8deg);
+  font: 700 0.72rem/1 var(--font-body);
+  color: var(--color-muted, #786f6a);
 }
 
 .terms-page__title {
-  margin: 0;
+  margin: 0 0 0.75rem;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(1.85rem, 4vw, 2.5rem);
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
   letter-spacing: -0.02em;
   color: var(--color-ink, #252223);
 }
