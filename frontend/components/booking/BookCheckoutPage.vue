@@ -21,6 +21,7 @@
             aria-hidden="true"
           />
         </div>
+        <p v-if="pageLead" class="book-hero__lead">{{ pageLead }}</p>
       </div>
     </header>
 

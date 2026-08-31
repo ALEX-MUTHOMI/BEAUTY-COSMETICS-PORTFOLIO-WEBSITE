@@ -38,7 +38,7 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.locator('#behind-the-glow .glow__line')).toHaveText('Beauty artist · Meru Town')
     await expect(page.locator('#behind-the-glow .glow__continue')).toHaveText(/See her work/i)
     await expect(page.locator('.hero__price')).toHaveCount(0)
-    await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible()
+    await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible()
 
     const logoLink = page.getByRole('banner').getByRole('link', { name: /Shee Aesthetics home/i })
     await expect(logoLink).toBeVisible()

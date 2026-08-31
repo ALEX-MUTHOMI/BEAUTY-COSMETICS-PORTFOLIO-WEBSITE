@@ -31,15 +31,19 @@ test.describe('Services page mobile UX', () => {
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)
   })
 
-  test('category board scrolls horizontally on mobile', async ({ page }) => {
+  test('category board shows a tappable two-column grid on mobile', async ({ page }) => {
     await page.goto(`${BASE_URL}/services#single-sessions`, { waitUntil: 'networkidle' })
 
     await expect(page.getByRole('heading', { name: /^Choose a treatment$/i })).toBeVisible()
 
     const board = page.getByRole('tablist', { name: 'Service categories' })
     await board.scrollIntoViewIfNeeded()
-    const overflowX = await board.evaluate((el) => getComputedStyle(el).overflowX)
-    expect(overflowX).toMatch(/auto|scroll/)
+    const boardStyle = await board.evaluate((el) => {
+      const style = getComputedStyle(el)
+      return { display: style.display, columns: style.gridTemplateColumns }
+    })
+    expect(boardStyle.display).toBe('grid')
+    expect(boardStyle.columns.split(' ').length).toBe(2)
 
     await expect(page.locator('.services-board__photo')).toHaveCount(0)
     await expect(page.locator('.services-board__icon')).toHaveCount(4)
