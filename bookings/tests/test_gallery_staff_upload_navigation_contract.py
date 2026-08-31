@@ -26,7 +26,7 @@ def test_staff_gallery_categories_endpoint_supports_upload_navigation(client):
 
 
 def test_staff_gallery_frontend_is_wired_to_upload_flow_without_backend_jargon():
-    component = Path("frontend/src/staff/StaffGalleryWorkspace.vue").read_text(encoding="utf-8")
+    component = Path("frontend/components/staff/StaffGalleryWorkspace.vue").read_text(encoding="utf-8")
 
     assert "Uploads are disabled" not in component
     assert "Upload images unavailable" not in component
