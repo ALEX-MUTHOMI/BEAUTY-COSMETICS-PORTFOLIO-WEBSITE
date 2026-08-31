@@ -27,6 +27,9 @@ const cspReportOnlyHeader = buildCspReportOnlyHeader()
 export default defineNuxtConfig({
   // Enforce Server-Side Rendering (SSR) for optimal SEO crawlability and index ranking
   ssr: true,
+  experimental: {
+    appManifest: false,
+  },
 
   // Staff desk uses credentialed calls to the API origin; SPA mode avoids SSR
   // session checks that cannot see cross-origin API cookies inside Docker.
