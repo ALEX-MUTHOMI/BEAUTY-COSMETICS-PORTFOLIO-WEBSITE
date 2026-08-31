@@ -99,8 +99,18 @@ Do **not** keep long-lived `audit/*`, `wip/*`, or ungrouped Dependabot farms.
 
 Dependabot ([`.github/dependabot.yml`](../../.github/dependabot.yml)):
 
-- Weekly (Monday), **one open PR per ecosystem**, minor/patch **grouped**
-- Runtime majors (Nuxt, Node image, Python image) are **ignored** until a planned upgrade PR
+- Weekly Monday 06:00 Africa/Nairobi, PRs target **`development`**
+- npm split into **prod** vs **dev** groups (avoids one 13-package `npm ci` bomb)
+- pip / Actions / Docker remain grouped minor+patch; **Python ≥3.14** and **Node ≥23** image majors ignored
+- `insecure-external-code-execution: deny` on pip and npm
+- Security updates stay on at repo level (Dependabot alerts + automated security fixes)
 - Close stale dependency PRs within **14 days** (merge or close — do not let them rot)
+
+Code scanning ([`.github/workflows/codeql.yml`](../../.github/workflows/codeql.yml)):
+
+- CodeQL **security-extended** for Python, JavaScript/TypeScript, and GitHub Actions
+- Own concurrency lane (`codeql-*`) — never part of `promotion-gate`
+- Do not require the CodeQL checks until the first soak is green
+- Secret scanning + push protection stay enabled on the public repo; private vulnerability reporting is on
 
 Feature work: short-lived branches off `development`, merge via PR, delete the branch on merge.

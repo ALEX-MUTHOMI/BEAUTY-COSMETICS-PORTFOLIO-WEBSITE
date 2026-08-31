@@ -6,6 +6,7 @@
 # docs/security/OWASP_CICD_AUDIT_AND_INFRA_CHECKLIST.md).
 
 /.github/workflows/  @ALEX-MUTHOMI
+/.github/codeql/  @ALEX-MUTHOMI
 /.github/dependabot.yml  @ALEX-MUTHOMI
 /.github/CODEOWNERS  @ALEX-MUTHOMI
 /scripts/ci/  @ALEX-MUTHOMI
