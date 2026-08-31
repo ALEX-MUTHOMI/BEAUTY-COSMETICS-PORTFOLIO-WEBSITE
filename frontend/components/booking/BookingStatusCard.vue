@@ -126,7 +126,7 @@ const modeLabel = computed(() =>
 )
 
 const config = useRuntimeConfig()
-const apiBaseUrl = (config.public.apiBaseUrl as string) || 'http://localhost:8000'
+const apiBaseUrl = String(config.public.apiBaseUrl || '')
 
 const publicId = computed(() => String(props.bookingPublicId ?? ''))
 const bookAgainHref = computed(() => {

@@ -9,16 +9,19 @@
 
     <div
       v-if="loading"
-      class="flo-slots__skeleton"
+      class="flo-slots__pending"
       role="status"
-      aria-label="Loading open hours"
+      aria-live="polite"
+      aria-label="Checking open hours"
     >
-      <div
-        v-for="n in 3"
-        :key="n"
-        class="flo-slots__skel-btn flo-slots__skel-shimmer"
-        aria-hidden="true"
-      />
+      <p class="flo-slots__loading">Checking open hours…</p>
+      <div class="flo-slots__skeleton" aria-hidden="true">
+        <div
+          v-for="n in 3"
+          :key="n"
+          class="flo-slots__skel-btn flo-slots__skel-shimmer"
+        />
+      </div>
     </div>
 
     <div v-else-if="slots.length === 0" class="flo-slots__empty">
@@ -238,6 +241,14 @@ const selectionSummary = computed(() => {
   margin: 0.85rem 0 0;
   font: 500 0.88rem var(--font-body);
   color: var(--color-muted);
+}
+
+.flo-slots__pending {
+  margin-top: 0.85rem;
+}
+
+.flo-slots__pending .flo-slots__loading {
+  margin: 0 0 0.55rem;
 }
 
 .flo-slots__skeleton {

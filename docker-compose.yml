@@ -309,10 +309,9 @@ services:
 
       # Frontend gets only public API URL / public keys.
       # Never expose Daraja secrets through NUXT_PUBLIC_*.
-      # Host must match the browser origin host (CSRF cookie SameSite=Strict):
-      # open the desk at http://127.0.0.1:3000 when API is 127.0.0.1:8000
+      # Empty = same-origin `/api` via frontend-edge. Split-host desks set an explicit origin.
       # (localhost ≠ 127.0.0.1 for cookies; Cursor browser often needs 127.0.0.1).
-      - NUXT_PUBLIC_API_BASE_URL=${NUXT_PUBLIC_API_BASE_URL:-http://127.0.0.1:8000}
+      - NUXT_PUBLIC_API_BASE_URL=${NUXT_PUBLIC_API_BASE_URL:-}
       # Real Meru business WhatsApp (E.164 digits). Empty = hide wa.me / tel CTAs.
       - NUXT_PUBLIC_WHATSAPP_E164=${NUXT_PUBLIC_WHATSAPP_E164:-}
       - NUXT_PUBLIC_STAFF_GOOGLE_ENABLED=${NUXT_PUBLIC_STAFF_GOOGLE_ENABLED:-false}
@@ -369,7 +368,7 @@ services:
     command: tail -f /dev/null
     environment:
       - NODE_ENV=test
-      - NUXT_PUBLIC_API_BASE_URL=${NUXT_PUBLIC_API_BASE_URL:-http://127.0.0.1:8000}
+      - NUXT_PUBLIC_API_BASE_URL=${NUXT_PUBLIC_API_BASE_URL:-}
       - NUXT_PUBLIC_STAFF_GOOGLE_ENABLED=${NUXT_PUBLIC_STAFF_GOOGLE_ENABLED:-false}
       - NUXT_PUBLIC_STAFF_APPLE_ENABLED=${NUXT_PUBLIC_STAFF_APPLE_ENABLED:-false}
     networks:
@@ -576,7 +575,8 @@ services:
           memory: 256M
     healthcheck:
       # Image HEALTHCHECK probes gunicorn :8000; beat is not an HTTP process.
-      test: ["CMD-SHELL", "pgrep -f 'celery -A core beat' >/dev/null"]
+      # PID 1 is celery beat; /proc works without pgrep (often missing in the image).
+      test: ["CMD-SHELL", "grep -qa beat /proc/1/cmdline"]
       interval: 30s
       timeout: 5s
       start_period: 15s

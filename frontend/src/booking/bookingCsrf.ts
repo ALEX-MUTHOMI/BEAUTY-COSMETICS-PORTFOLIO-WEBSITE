@@ -18,6 +18,7 @@ function readCsrfCookie(): string {
 export function bookingApiBase(apiBaseUrl: string): string {
   const trusted = resolveTrustedApiBaseUrl(apiBaseUrl)
   if (!trusted.ok) return ''
+  if (!trusted.origin) return ''
   try {
     const parsed = new URL(trusted.origin)
     if (['web', 'backend', 'django'].includes(parsed.hostname)) {
@@ -70,4 +71,3 @@ export async function ensureBookingCsrfToken(
     clearTimeout(timeoutId)
   }
 }
-

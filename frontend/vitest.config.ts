@@ -10,6 +10,8 @@ export default mergeConfig(
       exclude: [...configDefaults.exclude, 'e2e/**'],
       root: fileURLToPath(new URL('./', import.meta.url)),
       fileParallelism: false,
+      // Forks workers hang on this Windows/jsdom tree; threads stay deterministic in CI.
+      pool: 'threads',
     },
   }),
 )

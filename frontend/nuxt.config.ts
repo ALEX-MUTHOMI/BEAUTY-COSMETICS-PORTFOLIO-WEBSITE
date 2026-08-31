@@ -24,6 +24,29 @@ function buildCspReportOnlyHeader(): string | undefined {
 
 const cspReportOnlyHeader = buildCspReportOnlyHeader()
 
+/**
+ * Extra connect-src hosts only when the API is a *different* origin.
+ * Empty / same-origin uses CSP `'self'` (HTTPS tunnel and one-host prod).
+ * Never default-add localhost — that breaks mixed-content on public HTTPS.
+ */
+function extraApiConnectSrc(): string[] {
+  const raw = process.env.NUXT_PUBLIC_API_BASE_URL?.trim()
+  if (!raw || raw === 'same-origin' || raw === '/') return []
+  if (raw.includes('\\') || raw.includes('..')) return []
+  try {
+    const parsed = new URL(raw)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return []
+    if (parsed.username || parsed.password) return []
+    const host = parsed.hostname.toLowerCase()
+    if (!host || host === '0.0.0.0' || host === 'evil.example' || host.endsWith('.evil.example')) {
+      return []
+    }
+    return [parsed.origin]
+  } catch {
+    return []
+  }
+}
+
 export default defineNuxtConfig({
   // Enforce Server-Side Rendering (SSR) for optimal SEO crawlability and index ranking
   ssr: true,
@@ -66,8 +89,8 @@ export default defineNuxtConfig({
 
     // Keys exposed on both client and server contexts
     public: {
-      // Single source of truth for Nuxt (:3000) → Django (:8000). Never wildcard.
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000',
+      // Empty = same-origin `/api` via origin nginx. Split-host desks set an explicit origin.
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || '',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://sheeaesthetics.co.ke',
       // Empty-safe Sentry scaffold — live DSN via secrets later (PII scrubbers always on).
       sentryDsn: process.env.NUXT_PUBLIC_SENTRY_DSN || '',
@@ -110,6 +133,8 @@ export default defineNuxtConfig({
   // Reporting endpoint is operator-owned (Cloudflare / collector); origin does not accept CSP reports in-app.
   security: {
     nonce: true,
+    // Same-origin site: do not emit Access-Control-Allow-Origin: * on HTML.
+    corsHandler: false,
     headers: {
       contentSecurityPolicy: {
         'script-src': [
@@ -128,13 +153,11 @@ export default defineNuxtConfig({
         // Close plugin / base-tag injection vectors (CSP Level 2+).
         'object-src': ["'none'"],
         'base-uri': ["'none'"],
-        // Browser fetches: same origin + Django API + Turnstile + optional Sentry.
+        // Browser fetches: `'self'` covers same-origin `/api`. Extra origin only if split-host.
         'connect-src': [
           "'self'",
           'https://challenges.cloudflare.com',
-          ...(process.env.NUXT_PUBLIC_API_BASE_URL
-            ? [process.env.NUXT_PUBLIC_API_BASE_URL.replace(/\/$/, '')]
-            : ['http://127.0.0.1:8000', 'http://localhost:8000']),
+          ...extraApiConnectSrc(),
           ...(process.env.NUXT_PUBLIC_SENTRY_DSN ? ['https://*.ingest.sentry.io'] : []),
         ],
         // Enforcing Trusted Types only when explicitly enabled (can break Vue sinks — prefer report-only soak first).

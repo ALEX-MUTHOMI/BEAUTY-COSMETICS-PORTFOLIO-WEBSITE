@@ -184,7 +184,7 @@ const props = defineProps<{
 
 const router = useRouter()
 const config = useRuntimeConfig()
-const apiBaseUrl = (config.public.apiBaseUrl as string) || 'http://localhost:8000'
+const apiBaseUrl = String(config.public.apiBaseUrl || '')
 const contact = useLandingContact()
 const contactIsLive = contact.isLive
 const whatsappUrl = contact.whatsappUrl

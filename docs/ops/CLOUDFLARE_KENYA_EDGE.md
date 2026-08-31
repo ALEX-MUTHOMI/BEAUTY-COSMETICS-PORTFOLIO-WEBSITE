@@ -58,13 +58,15 @@ Set (examples):
 CSRF_TRUSTED_ORIGINS=https://sheeaesthetics.co.ke,https://www.sheeaesthetics.co.ke
 CORS_ALLOWED_ORIGINS=https://sheeaesthetics.co.ke,https://www.sheeaesthetics.co.ke
 NUXT_PUBLIC_SITE_URL=https://sheeaesthetics.co.ke
-NUXT_PUBLIC_API_BASE_URL=https://api.sheeaesthetics.co.ke   # or same-origin proxy path
+NUXT_PUBLIC_API_BASE_URL=   # empty = same-origin /api via frontend-edge; set api. host only if split
 ALLOWED_HOSTS=sheeaesthetics.co.ke,www.sheeaesthetics.co.ke,...
 TRUSTED_PROXY_CIDRS=<Cloudflare IP ranges>
 SECURE_SSL_REDIRECT=True
 ```
 
 Keep local compose defaults (`http://127.0.0.1:3000`) for desk development.
+
+Origin nginx (`frontend-edge`) proxies `/api/` and `/media/public/` to Django on the same public host. Leave `NUXT_PUBLIC_API_BASE_URL` empty so the browser uses same-origin `/api` (CSP `'self'`, no mixed-content to `:8000`). Split API host is opt-in only. Do not proxy `/admin` or private `/media/`. Django still owns CSRF, sessions, throttles, and webhooks. Leave `TRUSTED_PROXY_CIDRS` empty until the hop is real Cloudflare IP ranges — do not trust `X-Forwarded-For` from a local Quick Tunnel.
 
 ## Rollback
 

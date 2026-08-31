@@ -18,9 +18,10 @@ test.describe('Client pages (plain copy + Mellis flower)', () => {
   })
 
   test('Unknown route shows branded 404 with flower accents', async ({ page }) => {
-    await page.goto(`${BASE_URL}/this-route-should-not-exist-12345`, {
+    const response = await page.goto(`${BASE_URL}/this-route-should-not-exist-12345`, {
       waitUntil: 'domcontentloaded',
     })
+    expect(response?.status()).toBe(404)
 
     await expect(page.getByRole('heading', { name: /Page not found/i })).toBeVisible()
     await expect(page.getByRole('link', { name: /^Home$/i }).first()).toBeVisible()

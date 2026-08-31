@@ -19,8 +19,13 @@ export function resolvePublicGalleryMediaUrl(value: string, apiBaseUrl: string):
     return ''
   }
 
+  const base = String(apiBaseUrl || '').trim()
+  if (!base) {
+    return candidate
+  }
+
   try {
-    const apiOrigin = new URL(apiBaseUrl).origin
+    const apiOrigin = new URL(base).origin
     return new URL(candidate, apiOrigin).toString()
   } catch {
     return ''
@@ -209,4 +214,3 @@ export async function fetchHomeWorkGallery(
     clearTimeout(timer)
   }
 }
-

@@ -171,6 +171,7 @@
         </ScrollReveal>
 
         <div class="mellis-cta__card-wrap packages__band">
+          <!-- stacking above site-footer so Book this package stays tappable -->
           <ScrollReveal
             v-for="(pkg, index) in featuredPackages"
             :key="pkg.name"
@@ -541,6 +542,7 @@ const visitFocus = computed(() => primaryBookHrefKind())
 .book-visit__stage {
   position: relative;
   isolation: isolate;
+  z-index: 2;
   margin-top: 0;
   padding: clamp(2.5rem, 6vw, 3.75rem) 1rem clamp(2.25rem, 5vw, 3.25rem);
   overflow: hidden;
@@ -612,6 +614,7 @@ const visitFocus = computed(() => primaryBookHrefKind())
 
 .mellis-cta__card-wrap {
   position: relative;
+  z-index: 3;
   width: min(100%, 26rem);
   margin: 0 auto;
   padding-top: 0.65rem;

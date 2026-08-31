@@ -37,6 +37,23 @@ describe('origin cookie and CSP inventory', () => {
     expect(inventory.length).toBe(4)
   })
 
+  it('does not emit wildcard CORS on HTML documents', () => {
+    expect(nuxtConfig).toMatch(/corsHandler:\s*false/)
+  })
+
+  it('unknown catch-all routes set HTTP 404', () => {
+    const slug = readFileSync(join(__dirname, '../../pages/[...slug].vue'), 'utf8')
+    expect(slug).toContain('setResponseStatus(404)')
+    expect(slug).toContain('noindex')
+  })
+
+  it('does not default connect-src to localhost (breaks public HTTPS)', () => {
+    expect(nuxtConfig).toContain('extraApiConnectSrc')
+    expect(nuxtConfig).not.toMatch(
+      /connect-src':\s*\[[^\]]*http:\/\/127\.0\.0\.1:8000/,
+    )
+  })
+
   it('allowlists only Turnstile + Insights third-party scripts in script-src', () => {
     expect(nuxtConfig).toContain('https://challenges.cloudflare.com/turnstile/')
     expect(nuxtConfig).toContain('https://static.cloudflareinsights.com')

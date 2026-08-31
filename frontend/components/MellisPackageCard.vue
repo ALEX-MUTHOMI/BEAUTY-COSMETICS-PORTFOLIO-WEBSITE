@@ -96,6 +96,8 @@ const visibleIncludes = computed(() =>
 <style scoped>
 .mellis-card {
   position: relative;
+  z-index: 2;
+  scroll-margin-bottom: calc(var(--mobile-book-bar-height, 4.15rem) + 1.25rem);
   display: flex;
   flex-direction: column;
   align-items: center;

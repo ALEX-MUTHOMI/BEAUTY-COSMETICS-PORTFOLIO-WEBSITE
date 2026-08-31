@@ -3,8 +3,14 @@
  * Trust and security base for booking APIs.
  */
 /**
- * Fail-closed API base URL binding for Nuxt (:3000) → Django (:8000).
- * Rejects attacker-controlled host drift, credentials-in-URL, and non-http(s) schemes.
+ * Fail-closed API base URL binding.
+ *
+ * Empty / `same-origin` means relative `/api/**` on the page origin (nginx
+ * edge proxies to Django). That is the HTTPS / Cloudflare-tunnel shape:
+ * no mixed-content fetch to localhost, and CSP `'self'` is sufficient.
+ *
+ * A split API host (local `:8000` or `api.` subdomain) must be an explicit
+ * http(s) origin. Rejects credentials-in-URL, non-http(s) schemes, and host drift.
  */
 
 /** Explicit denylist for known phishing/lab hosts used in red-team fixtures. */
@@ -26,8 +32,8 @@ export type ApiBaseTrustResult =
  */
 export function resolveTrustedApiBaseUrl(apiBaseUrl: string | null | undefined): ApiBaseTrustResult {
   const raw = String(apiBaseUrl ?? '').trim()
-  if (!raw) {
-    return { ok: false, reason: 'empty' }
+  if (!raw || raw === 'same-origin' || raw === '/') {
+    return { ok: true, origin: '' }
   }
   if (raw.includes('\\') || raw.includes('..')) {
     return { ok: false, reason: 'path_traversal' }
@@ -56,9 +62,8 @@ export function resolveTrustedApiBaseUrl(apiBaseUrl: string | null | undefined):
   return { ok: true, origin: parsed.origin.replace(/\/$/, '') }
 }
 
-/** Convenience for booking clients — empty string means fail closed (no fetch). */
+/** Convenience for booking clients — empty string is same-origin relative `/api`. */
 export function trustedApiOriginOrEmpty(apiBaseUrl: string | null | undefined): string {
   const result = resolveTrustedApiBaseUrl(apiBaseUrl)
   return result.ok ? result.origin : ''
 }
-

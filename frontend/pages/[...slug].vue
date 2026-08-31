@@ -77,11 +77,18 @@ import { MELLIS_FLOWER_SRC, NOT_FOUND_PAGE } from '~/src/landing/clientPagesCont
 
 definePageMeta({ layout: 'landing' })
 
+setResponseStatus(404)
+
 useHead({
   title: 'Page not found | Shee Aesthetics',
   meta: [
-    { name: 'description', content: 'The requested page could not be found. Navigate back to Shee Aesthetics beauty services and booking.' }
-  ]
+    {
+      name: 'description',
+      content:
+        'The requested page could not be found. Navigate back to Shee Aesthetics beauty services and booking.',
+    },
+    { name: 'robots', content: 'noindex, follow' },
+  ],
 })
 
 const flowerSrc = MELLIS_FLOWER_SRC

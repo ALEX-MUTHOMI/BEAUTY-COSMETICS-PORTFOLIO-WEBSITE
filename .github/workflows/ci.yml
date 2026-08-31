@@ -855,7 +855,7 @@ jobs:
       - name: Pull prebuilt CI images (build-once reuse)
         run: bash scripts/ci/pull_ci_images.sh web frontend
       - name: Start API + frontend edge stack
-        # Book/availability e2e needs Django+Redis; browser hits NUXT_PUBLIC_API_BASE_URL on :8000.
+        # Book/availability e2e needs Django+Redis; browser uses same-origin /api via frontend-edge.
         run: docker compose up -d db redis web frontend frontend-edge
       - name: Wait for API readiness + frontend edge
         run: |

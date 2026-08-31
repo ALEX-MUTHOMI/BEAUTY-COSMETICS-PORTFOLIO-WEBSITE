@@ -85,4 +85,10 @@ describe('homeWorkGallery', () => {
     expect(resolvePublicGalleryMediaUrl('/media/gallery/variants/private/item.webp', 'http://localhost:8000')).toBe('')
     expect(resolvePublicGalleryMediaUrl('https://unexpected.example/object.webp', 'http://localhost:8000')).toBe('')
   })
+
+  it('keeps public media relative when the API is same-origin', () => {
+    expect(resolvePublicGalleryMediaUrl('/media/public/11111111-1111-4111-8111-111111111111.webp', '')).toBe(
+      '/media/public/11111111-1111-4111-8111-111111111111.webp',
+    )
+  })
 })

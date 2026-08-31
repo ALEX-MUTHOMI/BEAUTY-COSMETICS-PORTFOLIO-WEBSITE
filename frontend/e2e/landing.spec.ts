@@ -84,6 +84,17 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.locator('#packages .packages__band')).toBeVisible()
     await expect(page.locator('.mellis-card__badge', { hasText: 'Most booked' })).toBeVisible()
     await expect(page.getByRole('link', { name: /Book this package/i })).toBeVisible()
+    const bookPackage = page.getByRole('link', { name: /Book this package/i })
+    await expect(bookPackage).toHaveAttribute('href', /\/book\/package\//)
+    await bookPackage.scrollIntoViewIfNeeded()
+    await expect(bookPackage).toBeInViewport()
+    await Promise.all([
+      page.waitForURL(/\/book\/package\//, { timeout: 15_000 }),
+      bookPackage.click(),
+    ])
+    await page.goto(BASE_URL, { waitUntil: 'networkidle' })
+    await expect(page.locator('.site-boot-skeleton, .site-loader')).toHaveCount(0, { timeout: 5000 })
+    await page.locator('#packages').scrollIntoViewIfNeeded()
     await expect(page.getByRole('link', { name: /See all packages/i })).toBeVisible()
 
     await expect(page.getByRole('heading', { name: 'What clients say', level: 2 })).toBeVisible()
@@ -176,6 +187,9 @@ test.describe('Shee Aesthetics landing page', () => {
     expect(csp).toMatch(/object-src[^;]*'none'/)
     expect(csp).toMatch(/base-uri[^;]*'none'/)
     expect(csp).toMatch(/frame-ancestors[^;]*'self'/)
+    expect(csp).toMatch(/connect-src[^;]*'self'/)
+    expect(csp).not.toMatch(/127\.0\.0\.1:8000/)
+    expect(response.headers()['access-control-allow-origin'] ?? '').not.toBe('*')
 
     const xfo = response.headers()['x-frame-options']
     expect(xfo?.toUpperCase()).toBe('DENY')
