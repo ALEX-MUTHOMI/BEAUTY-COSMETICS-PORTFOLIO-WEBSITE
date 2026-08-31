@@ -161,7 +161,8 @@ jobs:
           bash scripts/ci/with_retry.sh 3 10 -- pip install pip-audit
           bash scripts/ci/with_retry.sh 3 10 -- poetry self add poetry-plugin-export
           poetry export --without-hashes --with dev -o /tmp/requirements-audit.txt
-          bash scripts/ci/with_retry.sh 3 15 -- pip-audit -r /tmp/requirements-audit.txt --desc
+          # Do not wrap pip-audit in with_retry: findings are deterministic, not flakes.
+          pip-audit -r /tmp/requirements-audit.txt --desc
 
       - name: Run Poetry lint and security gates
         run: |

@@ -574,6 +574,13 @@ services:
         limits:
           cpus: "0.25"
           memory: 256M
+    healthcheck:
+      # Image HEALTHCHECK probes gunicorn :8000; beat is not an HTTP process.
+      test: ["CMD-SHELL", "pgrep -f 'celery -A core beat' >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
     restart: unless-stopped
 
   notification-worker:
