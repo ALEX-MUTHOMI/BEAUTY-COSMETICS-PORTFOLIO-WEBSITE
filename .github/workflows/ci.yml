@@ -51,6 +51,8 @@ env:
   REDIS_PASSWORD: aesthetic_os_ci_redis_password
   SECRET_KEY: django-insecure-ci-placeholder-key-32-chars
   DEBUG: "False"
+  PUBLIC_BOOKING_ENABLED: "true"
+  NUXT_PUBLIC_BOOKING_ENABLED: "true"
   SECURE_SSL_REDIRECT: "False"
   CHECKOUT_MPESA_PROVIDER: fake
   PAYMENT_PROVIDER_MODE: fake

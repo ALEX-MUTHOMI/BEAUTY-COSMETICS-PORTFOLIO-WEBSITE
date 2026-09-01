@@ -1,5 +1,6 @@
 import base64
 import json
+from urllib.parse import urlparse
 
 import pytest
 from django.test import Client, override_settings
@@ -64,7 +65,10 @@ def test_staff_oauth_providers_reject_env_example_placeholders():
 def test_staff_google_start_redirects_when_fully_configured(client):
     response = client.get("/api/staff/auth/google/start/?next=https://evil.example", secure=True)
     assert response.status_code == 302
-    assert "accounts.google.com" in response["Location"]
+    location = urlparse(response["Location"])
+    assert location.scheme == "https"
+    assert location.hostname == "accounts.google.com"
+    assert location.path.startswith("/o/oauth2/") or location.path.startswith("/o/oauth2")
     assert client.session["staff_google_oauth_next"] == "/staff/dashboard"
 
 

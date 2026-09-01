@@ -155,7 +155,7 @@ def _safe_increment_counter(request_context):
     except Exception:
         logger.info(
             "booking.availability.degraded",
-            extra={"request_id": request_context.get("request_id"), "reason": "redis_unavailable"},
+            extra={"reason": "redis_unavailable"},
         )
         return "degraded"
     return "normal"
@@ -353,13 +353,13 @@ class AvailabilityService:
         logger.info(
             "booking.availability.generated",
             extra={
-                "service_public_id": str(service.id),
-                "resource_public_id": str(resource_id) if resource_id else "all",
-                "date_range_days": range_days,
+                "service_id_present": True,
+                "resource_filter": bool(resource_id),
+                "date_range_days": int(range_days),
                 "result_slot_count": sum(len(day["slots"]) for day in results),
-                "circuit_breaker_mode": circuit_mode,
+                "circuit_breaker_mode": str(circuit_mode),
                 "duration_ms": int((perf_counter() - started) * 1000),
-                "query_count": query_count,
+                "query_count": int(query_count),
             },
         )
         return results

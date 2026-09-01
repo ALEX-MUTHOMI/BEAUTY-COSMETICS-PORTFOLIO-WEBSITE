@@ -1,4 +1,3 @@
-import re
 import uuid
 from datetime import date, timedelta
 from decimal import Decimal
@@ -23,7 +22,7 @@ from bookings.models import (
     ReceiptPDFArtifact,
     StaffActionAuditEvent,
 )
-from bookings.privacy import decrypt_value, safe_display_name
+from bookings.privacy import decrypt_value, safe_display_name, strip_markup
 from bookings.services.staff_roles import is_beautician, scope_bookings_queryset
 from checkout.models import CheckoutSession
 
@@ -44,11 +43,7 @@ class StaffPortalValidationError(StaffPortalError):
 
 
 def _safe_text(value, *, max_length=128):
-    value = re.sub(r"<[^>]*>", " ", str(value or ""))
-    value = re.sub(r"(?i)\son[a-z]+\s*=\s*\S+", " ", value)
-    value = re.sub(r"[\x00-\x1f\x7f]", " ", value)
-    value = re.sub(r"\s+", " ", value).strip()
-    return value[:max_length]
+    return strip_markup(value, max_length=max_length)
 
 
 def _parse_date(value, *, field_name="date"):

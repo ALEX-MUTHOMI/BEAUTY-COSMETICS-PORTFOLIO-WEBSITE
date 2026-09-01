@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from bookings.models import Booking, BookingReceipt, ReceiptPDFArtifact
+from bookings.privacy import decrypt_bytes, encrypt_bytes, strip_markup
 from bookings.services.receipts import render_receipt_payload
 
 BLOCKED_RESOURCE_PATTERN = re.compile(
@@ -22,8 +23,7 @@ SENSITIVE_PROVIDER_PATTERN = re.compile(
 def _pdf_escape(value):
     value = BLOCKED_RESOURCE_PATTERN.sub("[blocked-resource]", str(value or ""))
     value = SENSITIVE_PROVIDER_PATTERN.sub("[redacted-provider-reference]", value)
-    value = re.sub(r"(?is)<script.*?>.*?</script>", "", value)
-    value = re.sub(r"<[^>]*>", "", value)
+    value = strip_markup(value)
     value = value.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
     value = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", " ", value)
     return " ".join(value.split())[:180]
@@ -141,8 +141,10 @@ class ReceiptPDFService:
         storage_key = f"receipt-{receipt.receipt_number}-{digest[:16]}.pdf"
         path = os.path.join(ReceiptPDFService._artifact_dir(), storage_key)
         try:
+            sealed = encrypt_bytes(pdf)
             with open(path, "wb") as handle:
-                handle.write(pdf)
+                handle.write(sealed)
+            os.chmod(path, 0o640)
         except OSError as exc:
             raise ValidationError(ReceiptPDFService.STORAGE_UNWRITABLE_MESSAGE) from exc
         artifact, _created = ReceiptPDFArtifact.objects.update_or_create(
@@ -176,8 +178,12 @@ class ReceiptPDFService:
         path = os.path.join(ReceiptPDFService._artifact_dir(), os.path.basename(artifact.storage_key))
         try:
             with open(path, "rb") as handle:
-                pdf = handle.read()
+                sealed = handle.read()
         except OSError as exc:
+            raise ValidationError("Receipt unavailable.") from exc
+        try:
+            pdf = decrypt_bytes(sealed)
+        except ValidationError as exc:
             raise ValidationError("Receipt unavailable.") from exc
         digest = hashlib.sha256(pdf).hexdigest()
         if digest != artifact.sha256_hash or len(pdf) != artifact.size_bytes:

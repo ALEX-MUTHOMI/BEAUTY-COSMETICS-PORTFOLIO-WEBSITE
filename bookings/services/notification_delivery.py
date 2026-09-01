@@ -1,5 +1,4 @@
 import logging
-import re
 from dataclasses import dataclass
 
 from django.conf import settings
@@ -9,7 +8,7 @@ from django.utils import timezone
 
 from billing.redaction import hash_sensitive_value
 from bookings.models import Booking, BookingNotification
-from bookings.privacy import decrypt_value
+from bookings.privacy import decrypt_value, strip_markup
 from bookings.services.email_provider import EmailProviderError, get_email_provider, redact_email_error
 from bookings.services.legal import NO_REFUND_NOTICE
 from bookings.services.receipt_pdf import ReceiptPDFService
@@ -33,10 +32,7 @@ class DeliveryResult:
 
 
 def _safe_text(value, max_length=160):
-    cleaned = re.sub(r"<[^>]*>", "", str(value or ""))
-    cleaned = re.sub(r"[\r\n]+", " ", cleaned)
-    cleaned = re.sub(r"[\x00-\x1f\x7f]", " ", cleaned)
-    return " ".join(cleaned.split())[:max_length]
+    return strip_markup(value, max_length=max_length)
 
 
 def _safe_download_url(receipt):

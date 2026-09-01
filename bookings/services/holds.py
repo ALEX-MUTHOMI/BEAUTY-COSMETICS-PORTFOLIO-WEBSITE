@@ -1,6 +1,5 @@
 import hashlib
 import logging
-import re
 from datetime import timedelta
 from time import perf_counter
 from zoneinfo import ZoneInfo
@@ -18,7 +17,7 @@ from bookings.models import (
     CustomerProfile,
     Service,
 )
-from bookings.privacy import hmac_email_hash, hmac_phone_hash, normalize_email, normalize_phone
+from bookings.privacy import hmac_email_hash, hmac_phone_hash, normalize_email, normalize_phone, strip_markup
 from bookings.services.availability import AvailabilityService
 from bookings.services.bundles import get_full_package_summary, validate_service_bundle
 from bookings.services.calendar_cache import invalidate_calendar_capacity_for_booking
@@ -34,9 +33,7 @@ logger = logging.getLogger("bookings.holds")
 
 
 def _safe_text(value, max_length=80):
-    cleaned = re.sub(r"<[^>]*>", "", str(value or ""))
-    cleaned = re.sub(r"[\x00-\x1f\x7f]", " ", cleaned)
-    return " ".join(cleaned.split())[:max_length] or "Customer"
+    return strip_markup(value, max_length=max_length) or "Customer"
 
 
 def _normalize_start(value):

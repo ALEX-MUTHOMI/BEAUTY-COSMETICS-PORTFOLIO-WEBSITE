@@ -21,16 +21,16 @@ from bookings.models import (
     BookingReminder,
     ReceiptPDFArtifact,
 )
+from bookings.privacy import strip_markup
 from bookings.services.legal import NO_REFUND_NOTICE
 
 NAIROBI = ZoneInfo("Africa/Nairobi")
-BLOCKED_SURFACE_PATTERN = re.compile(r"(?i)(https?://\S+|ftp://\S+|file://\S+|<[^>]*>)")
+BLOCKED_SURFACE_PATTERN = re.compile(r"(?i)(https?://\S+|ftp://\S+|file://\S+)")
 
 
 def _safe_text(value, max_length=80):
     cleaned = BLOCKED_SURFACE_PATTERN.sub("", str(value or ""))
-    cleaned = re.sub(r"[\r\n\x00-\x1f\x7f]+", " ", cleaned)
-    return " ".join(cleaned.split())[:max_length]
+    return strip_markup(cleaned, max_length=max_length)
 
 
 def payment_status(booking):

@@ -4,7 +4,9 @@ import logging
 import pytest
 
 from bookings.privacy import (
+    decrypt_bytes,
     decrypt_value,
+    encrypt_bytes,
     encrypt_value,
     hmac_phone_hash,
     redact_email,
@@ -35,6 +37,17 @@ def test_encryption_round_trips_without_storing_plaintext(settings):
 
     assert raw not in encrypted
     assert decrypt_value(encrypted) == raw
+
+
+def test_encrypt_bytes_round_trips_binary_without_plaintext_prefix(settings):
+    settings.PII_ENCRYPTION_KEY = "test-encryption-key"
+    raw = b"%PDF-1.4\nsecret-bytes"
+
+    sealed = encrypt_bytes(raw)
+
+    assert not sealed.startswith(b"%PDF-")
+    assert raw not in sealed
+    assert decrypt_bytes(sealed) == raw
 
 
 @pytest.mark.django_db

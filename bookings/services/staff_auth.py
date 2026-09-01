@@ -143,22 +143,25 @@ def audit_staff_event(event_type, *, staff_user=None, request=None, metadata=Non
         user_agent_hash_hmac=_hash_or_blank(_user_agent(request)),
         metadata_redacted=safe_meta,
     )
-    # Durable ops signal: event type + redacted metadata only — never passwords/tokens/raw IP.
+    # Durable ops signal: event type + allowlisted ids only — never passwords/tokens/raw IP/meta JSON.
+    reason = str(safe_meta.get("reason", "unknown"))
+    if not re.fullmatch(r"[a-z_]{1,64}", reason):
+        reason = "unknown"
+    staff_pk = getattr(staff_user, "pk", None)
+    staff_token = staff_pk if isinstance(staff_pk, int) else 0
     if event_type == StaffSecurityAudit.EventType.LOGIN_FAILURE:
         logger.info(
-            "login_failed reason=%s audit_id=%s staff_user_id=%s meta=%s",
-            safe_meta.get("reason", "unknown"),
+            "login_failed reason=%s audit_id=%s staff_user_id=%s",
+            reason,
             event.public_id,
-            getattr(staff_user, "pk", None) or "none",
-            json.dumps(safe_meta, sort_keys=True, default=str),
+            staff_token,
         )
     else:
         logger.info(
-            "staff_security_audit event=%s audit_id=%s staff_user_id=%s meta=%s",
+            "staff_security_audit event=%s audit_id=%s staff_user_id=%s",
             event_type,
             event.public_id,
-            getattr(staff_user, "pk", None) or "none",
-            json.dumps(safe_meta, sort_keys=True, default=str),
+            staff_token,
         )
     return event
 

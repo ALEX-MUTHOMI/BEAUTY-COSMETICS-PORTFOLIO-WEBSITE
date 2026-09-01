@@ -7,6 +7,9 @@ import re
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 
+_CONTROL_CHARS = re.compile(r"[\x00-\x1f\x7f]")
+_ON_ATTR = re.compile(r"(?i)\son[a-z]{1,32}\s*=\s*\S{1,200}")
+
 
 def _required_secret(name, value):
     if value:
@@ -70,34 +73,64 @@ def _keystream(key, nonce, length):
     return output[:length]
 
 
-def encrypt_value(value):
-    """Encrypt operational contact data needed later for reminders."""
+def encrypt_bytes(data):
+    """Encrypt binary artifacts (receipt PDFs) with the booking PII key."""
     key = _required_secret("PII_ENCRYPTION_KEY", getattr(settings, "PII_ENCRYPTION_KEY", ""))
+    payload = bytes(data)
     nonce = os.urandom(16)
-    data = value.encode()
-    stream = _keystream(key, nonce, len(data))
-    ciphertext = bytes(a ^ b for a, b in zip(data, stream, strict=True))
+    stream = _keystream(key, nonce, len(payload))
+    ciphertext = bytes(a ^ b for a, b in zip(payload, stream, strict=True))
     tag = hmac.new(key, nonce + ciphertext, hashlib.sha256).digest()
-    return base64.urlsafe_b64encode(nonce + tag + ciphertext).decode()
+    return nonce + tag + ciphertext
 
 
-def decrypt_value(value):
+def decrypt_bytes(blob):
     key = _required_secret("PII_ENCRYPTION_KEY", getattr(settings, "PII_ENCRYPTION_KEY", ""))
-    raw = base64.urlsafe_b64decode(value.encode())
+    raw = bytes(blob)
+    if len(raw) < 48:
+        raise ValidationError("Encrypted value failed integrity validation.")
     nonce, tag, ciphertext = raw[:16], raw[16:48], raw[48:]
     expected = hmac.new(key, nonce + ciphertext, hashlib.sha256).digest()
     if not hmac.compare_digest(tag, expected):
         raise ValidationError("Encrypted value failed integrity validation.")
     stream = _keystream(key, nonce, len(ciphertext))
-    return bytes(a ^ b for a, b in zip(ciphertext, stream, strict=True)).decode()
+    return bytes(a ^ b for a, b in zip(ciphertext, stream, strict=True))
+
+
+def encrypt_value(value):
+    """Encrypt operational contact data needed later for reminders."""
+    return base64.urlsafe_b64encode(encrypt_bytes(str(value).encode())).decode()
+
+
+def decrypt_value(value):
+    return decrypt_bytes(base64.urlsafe_b64decode(str(value).encode())).decode()
+
+
+def strip_markup(value, max_length=None):
+    """Linear HTML-tag strip for untrusted text. Avoids nested-regex ReDoS."""
+    out = []
+    in_tag = False
+    for ch in str(value or ""):
+        if ch == "<":
+            in_tag = True
+            continue
+        if ch == ">":
+            in_tag = False
+            continue
+        if not in_tag:
+            out.append(ch)
+    cleaned = _ON_ATTR.sub(" ", "".join(out))
+    cleaned = _CONTROL_CHARS.sub(" ", cleaned)
+    cleaned = " ".join(cleaned.split())
+    if max_length is not None:
+        cleaned = cleaned[:max_length]
+    return cleaned
 
 
 def safe_display_name(full_name):
     """Return dashboard-safe display text without exposing full raw PII."""
-    cleaned = re.sub(r"<[^>]*>", " ", str(full_name or ""))
-    cleaned = re.sub(r"(?i)\son[a-z]+\s*=\s*\S+", " ", cleaned)
-    cleaned = re.sub(r"[\x00-\x1f\x7f]", " ", cleaned)
-    parts = [part for part in cleaned.strip().split() if part]
+    cleaned = strip_markup(full_name)
+    parts = [part for part in cleaned.split() if part]
     if not parts:
         return "Customer"
     if len(parts) == 1:

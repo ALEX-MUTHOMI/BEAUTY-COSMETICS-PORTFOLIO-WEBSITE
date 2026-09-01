@@ -1,16 +1,15 @@
-import re
 from html import escape
 
 from django.conf import settings
 
 from bookings.models import GalleryCategory, GalleryImage
+from bookings.privacy import strip_markup
 from bookings.services.gallery_storage import public_variant_url
 
 
 def _safe_text(value, max_length=500):
-    text = re.sub(r"<[^>]*>", "", str(value or ""))
-    text = re.sub(r"(?i)alert\s*\([^)]*\)|script|javascript:|onerror|onload", "", text)
-    return escape(text[:max_length], quote=True)
+    text = strip_markup(value, max_length=max_length)
+    return escape(text, quote=True)
 
 
 def image_public_payload(image):

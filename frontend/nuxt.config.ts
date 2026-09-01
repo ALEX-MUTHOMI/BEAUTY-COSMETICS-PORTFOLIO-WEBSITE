@@ -100,6 +100,8 @@ export default defineNuxtConfig({
       turnstileSiteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY || '1x0000000000000000000000000000000AA',
       /** Live Meru WhatsApp E.164 digits only (no +). Empty/placeholder = CTAs fail closed. */
       whatsappE164: process.env.NUXT_PUBLIC_WHATSAPP_E164 || '',
+      /** Fail-closed public booking. Only `true` opens /book and related CTAs. */
+      bookingEnabled: process.env.NUXT_PUBLIC_BOOKING_ENABLED === 'true',
     },
   },
 

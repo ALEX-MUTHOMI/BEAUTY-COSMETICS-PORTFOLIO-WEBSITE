@@ -182,7 +182,7 @@ import {
   staffApiHostMismatch,
   staffPasswordLogin,
 } from '~/src/staff/staffAuth'
-import { readStoredGreetName, welcomeHeadline, writeStoredGreetName } from '~/src/staff/staffUxHelpers'
+import { firstNameFromDisplay, firstNameFromEmail, welcomeHeadline } from '~/src/staff/staffUxHelpers'
 import StaffThemeToggle from './StaffThemeToggle.vue'
 import { applyStaffTheme, resolveStaffTheme } from '~/src/staff/theme'
 
@@ -234,7 +234,7 @@ const headline = computed(() => welcomeHeadline(storedName.value, email.value))
 
 onMounted(() => {
   applyStaffTheme(resolveStaffTheme())
-  storedName.value = readStoredGreetName()
+  storedName.value = ''
   if (props.signInHint) {
     statusMessage.value = props.signInHint
     statusTone.value = 'error'
@@ -346,8 +346,7 @@ async function submitLogin() {
       return
     }
 
-    writeStoredGreetName(result.displayName || email.value)
-    storedName.value = readStoredGreetName()
+    storedName.value = firstNameFromDisplay(result.displayName) || firstNameFromEmail(email.value)
     password.value = ''
     statusTone.value = 'ok'
     statusMessage.value = storedName.value ? `Welcome back, ${storedName.value}.` : 'Signed in.'

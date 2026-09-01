@@ -12,3 +12,9 @@ paths-ignore:
   - "reports/**"
   - "**/.venv/**"
   - "**/__pycache__/**"
+  # Dummy secret-shaped fixtures live here on purpose (redaction / scanner tests).
+  - "**/tests/**"
+  - "**/test_*.py"
+  - "**/*.spec.ts"
+  - "frontend/e2e/**"
+  - "scripts/ci/secret_hygiene.py"

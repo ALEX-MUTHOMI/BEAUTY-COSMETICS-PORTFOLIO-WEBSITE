@@ -1,19 +1,16 @@
-import re
 from dataclasses import dataclass
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 
 from bookings.models import FullPackage, Service
+from bookings.privacy import strip_markup
 
 GENERIC_SELECTION_ERROR = "Booking selection unavailable."
 
 
 def safe_public_text(value, max_length=128):
-    cleaned = re.sub(r"<[^>]*>", " ", str(value or ""))
-    cleaned = re.sub(r"(?i)\son[a-z]+\s*=\s*\S+", " ", cleaned)
-    cleaned = re.sub(r"[\x00-\x1f\x7f]", " ", cleaned)
-    return " ".join(cleaned.split())[:max_length]
+    return strip_markup(value, max_length=max_length)
 
 
 @dataclass(frozen=True)

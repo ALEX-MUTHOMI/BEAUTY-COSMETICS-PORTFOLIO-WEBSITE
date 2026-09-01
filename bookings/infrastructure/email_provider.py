@@ -108,7 +108,7 @@ class FakeEmailProvider:
                 "message_hash": message_id,
             }
         )
-        logger.info("booking.email.fake_sent", extra={"recipient": to_redacted, "message_hash": message_id})
+        logger.info("booking.email.fake_sent", extra={"message_hash": message_id})
         return EmailSendResult(True, self.provider, f"fake-{message_id}")
 
 

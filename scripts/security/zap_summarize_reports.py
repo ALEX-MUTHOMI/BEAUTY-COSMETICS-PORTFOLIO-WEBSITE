@@ -88,11 +88,10 @@ def main() -> int:
     print(f"ZAP_SENSITIVE_MARKER_HITS={secret_markers}")
     print(f"ZAP_COOKIE_CONTROL_MARKER_HITS={cookie_markers}")
     for alert in alerts:
-        plugin = alert.get("pluginid")
-        name = alert.get("alert")
-        risk = alert.get("riskdesc")
+        plugin = str(alert.get("pluginid") or "unknown")
+        risk = str(alert.get("riskdesc") or "unknown").split(" ", maxsplit=1)[0]
         instances = len(alert.get("instances", []) or [])
-        print(f"ZAP_ALERT={plugin}|{name}|{risk}|instances={instances}")
+        print(f"ZAP_ALERT={plugin}|risk={risk}|instances={instances}")
     return 0
 
 

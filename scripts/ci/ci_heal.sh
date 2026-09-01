@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
-# EXPERIMENTAL, ADVISORY self-heal — the human-gated analog of Cloudflare's
-# HealingAgent, and a cloud sibling of scripts/ci/preflight_heal.ps1.
+# EXPERIMENTAL, ADVISORY self-heal — human-gated only.
 #
-# It proposes fixes on a fresh 'ci-fix/<sha>' branch and opens a PR into
+# Proposes fixes on a fresh 'ci-fix/<sha>' branch and opens a PR into
 # development. It NEVER merges, and NEVER pushes to development/staging/main.
 # Required checks (promotion-gate) still gate any human merge.
 #
-# With CURSOR_API_KEY set it runs a bounded Cursor CLI agent; otherwise it falls
-# back to safe, deterministic formatters (black/isort/ruff --fix via pipx) that
-# mirror the lint-security gate.
+# Deterministic formatters only (black/isort/ruff --fix). No remote agent and
+# no curl|bash installers — those would run untrusted code on a privileged job.
 set -euo pipefail
 
 SHA="${HEAL_SHA:?HEAL_SHA required}"
+if ! printf '%s' "${SHA}" | grep -Eq '^[0-9a-f]{40}$'; then
+  echo "HEAL_SHA must be a 40-char lowercase hex commit."
+  exit 1
+fi
 SHORT="${SHA:0:12}"
 BRANCH="ci-fix/${SHORT}"
 
@@ -21,25 +23,23 @@ git_c() { git -c "user.name=${BOT_NAME}" -c "user.email=${BOT_EMAIL}" "$@"; }
 
 summary() { echo "$@" >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"; }
 
+if [ -z "${GH_TOKEN:-}" ]; then
+  echo "GH_TOKEN is required to push the advisory branch."
+  exit 1
+fi
+if [ -z "${GITHUB_REPOSITORY:-}" ]; then
+  echo "GITHUB_REPOSITORY is required."
+  exit 1
+fi
+git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
 # Isolated fix branch from the failing commit (detached HEAD from checkout is OK).
 git_c checkout -B "${BRANCH}"
 
-if [ -n "${CURSOR_API_KEY:-}" ]; then
-  echo "== self-heal: bounded Cursor CLI agent =="
-  curl -fsS https://cursor.com/install | bash || true
-  export PATH="${HOME}/.local/bin:${PATH}"
-  log_hint=""
-  [ -f /tmp/ci-failed.log ] && log_hint="$(tail -c 6000 /tmp/ci-failed.log)"
-  prompt="CI failed for commit ${SHA}. Make the SMALLEST possible change to fix the failing lint/type/test errors. Do NOT change booking, checkout, payment, or security behavior. Do NOT edit .github/workflows, Dockerfiles, or infra. Failing log excerpt:
-${log_hint}"
-  # Best-effort; experimental. The deterministic fallback below is the reliable path.
-  cursor-agent -p "${prompt}" --output-format text || echo "::warning::cursor-agent exited non-zero (experimental)"
-else
-  echo "== self-heal: deterministic formatters (no CURSOR_API_KEY) =="
-  pipx run black . || true
-  pipx run isort . || true
-  pipx run ruff check --fix . || true
-fi
+echo "== self-heal: deterministic formatters =="
+pipx run black . || true
+pipx run isort . || true
+pipx run ruff check --fix . || true
 
 if git diff --quiet; then
   echo "self-heal produced no changes; no PR opened"

@@ -42,22 +42,12 @@ export function firstNameFromEmail(email: string): string {
   return firstNameFromDisplay(local)
 }
 
-export function readStoredGreetName(storage: Storage = localStorage): string {
-  try {
-    return firstNameFromDisplay(storage.getItem(GREET_STORAGE_KEY) || '')
-  } catch {
-    return ''
-  }
+export function readStoredGreetName(_storage?: Storage): string {
+  return ''
 }
 
-export function writeStoredGreetName(name: string, storage: Storage = localStorage): void {
-  const safe = firstNameFromDisplay(name)
-  if (!safe) return
-  try {
-    storage.setItem(GREET_STORAGE_KEY, safe.slice(0, 32))
-  } catch {
-    // Ignore quota / private-mode failures.
-  }
+export function writeStoredGreetName(_name: string, _storage?: Storage): void {
+  // Intentionally not persisted. Staff greetings stay in-memory for the page session.
 }
 
 export function timeOfDayLede(_now = new Date()): string {

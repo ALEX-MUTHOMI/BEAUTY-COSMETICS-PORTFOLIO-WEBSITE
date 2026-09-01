@@ -37,7 +37,7 @@ describe('staffUxHelpers', () => {
       expect(welcomeHeadline('', '')).toBe('Welcome back')
     })
 
-    it('reads and writes to storage safely', () => {
+    it('does not persist greet names to storage', () => {
       const store: Record<string, string> = {}
       const mockStorage = {
         getItem: (k: string) => store[k] ?? null,
@@ -45,7 +45,8 @@ describe('staffUxHelpers', () => {
       } as Storage
 
       writeStoredGreetName('Faith', mockStorage)
-      expect(readStoredGreetName(mockStorage)).toBe('Faith')
+      expect(readStoredGreetName(mockStorage)).toBe('')
+      expect(store).toEqual({})
     })
   })
 

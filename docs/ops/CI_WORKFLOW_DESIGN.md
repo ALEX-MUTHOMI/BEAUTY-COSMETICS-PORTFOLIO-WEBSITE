@@ -210,15 +210,16 @@ Changes:
 ### Self-healing lane (opt-in, money-path-safe)
 
 `.github/workflows/ci-heal.yml` is a **separate** workflow (so it can never be
-in `promotion-gate` / `fortress-gate` `needs`). It runs on manual dispatch, or —
-only when the repo variable `CI_HEAL_AUTO == 'true'` — after a genuine promotion
-**failure**. `scripts/ci/ci_heal.sh` proposes a fix on a `ci-fix/<sha>` branch
-and opens a PR into `development`; it **never auto-merges** and **never** writes
-to `development` / `staging` / `main`. With `CURSOR_API_KEY` set it runs a
-bounded Cursor CLI agent; otherwise it applies safe, deterministic formatters
-(`black`/`isort`/`ruff --fix`) that mirror the `lint-security` gate. This is the
-human-gated analog of Cloudflare's `HealingAgent`, and a cloud sibling of the
-local [preflight_heal.ps1](../../scripts/ci/preflight_heal.ps1).
+in `promotion-gate` / `fortress-gate` `needs`). It runs on **manual dispatch
+only** (no `workflow_run` auto-checkout of an untrusted SHA with write
+permissions). The job validates a 40-hex SHA that is already an ancestor of
+`development` / `staging` / `main`, checks out with `persist-credentials: false`,
+and applies deterministic formatters (`black`/`isort`/`ruff --fix`).
+`scripts/ci/ci_heal.sh` proposes a fix on a `ci-fix/<sha>` branch and opens a PR
+into `development`; it **never auto-merges** and **never** writes to
+`development` / `staging` / `main`. This is the human-gated analog of
+Cloudflare's `HealingAgent`, and a cloud sibling of the local
+[preflight_heal.ps1](../../scripts/ci/preflight_heal.ps1).
 
 ---
 

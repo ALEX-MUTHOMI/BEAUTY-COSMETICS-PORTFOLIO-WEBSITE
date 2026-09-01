@@ -89,9 +89,9 @@ def accept_privacy_rights_request(
     cleaned, error = validate_privacy_rights_payload(payload)
     if cleaned is None:
         logger.info(
-            "privacy_rights_rejected reason=%s correlation_id=%s",
-            error,
-            correlation_id or "none",
+            "privacy_rights_rejected reason=%s correlation_id_hash=%s",
+            error if error in {"invalid_request_type", "invalid_email", "invalid_phone"} else "invalid",
+            hashlib.sha256((correlation_id or "").encode("utf-8")).hexdigest()[:16],
         )
         return None
 
@@ -121,11 +121,11 @@ def accept_privacy_rights_request(
 
     # Audit without storing cleartext PII in logs (DPA 2019 security of processing).
     logger.info(
-        "privacy_rights_accepted ticket=%s type=%s email_hash=%s phone_hash=%s correlation_id=%s",
+        "privacy_rights_accepted ticket=%s type=%s email_hash=%s phone_hash=%s correlation_id_hash=%s",
         ticket_id,
         cleaned["request_type"],
         email_hash[:16],
         phone_hash[:16] if phone_hash else "none",
-        correlation_id or "none",
+        hashlib.sha256((correlation_id or "").encode("utf-8")).hexdigest()[:16],
     )
     return PrivacyRightsTicket(ticket_id=ticket_id, request_type=cleaned["request_type"], status="accepted")

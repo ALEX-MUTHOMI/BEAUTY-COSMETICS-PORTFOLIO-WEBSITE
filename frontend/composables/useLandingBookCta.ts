@@ -7,6 +7,7 @@
 import { computed } from 'vue'
 import { lastBookHref, SERVICES_BOOK_ENTRY } from '~/src/landing/bookingHandoff'
 import { primaryBookHref, primaryBookIsExternal } from '~/src/landing/primaryBookHref'
+import { isPublicBookingEnabled } from '~/src/booking/publicBookingGate'
 import { useLandingContact } from './useLandingContact'
 
 /**
@@ -17,8 +18,10 @@ import { useLandingContact } from './useLandingContact'
  */
 export function useLandingBookCta() {
   const contact = useLandingContact()
+  const bookingEnabled = isPublicBookingEnabled(useRuntimeConfig().public.bookingEnabled)
 
   const bookHref = computed(() => {
+    if (!bookingEnabled) return '/book'
     if (import.meta.client) {
       const last = lastBookHref()
       if (last && last !== SERVICES_BOOK_ENTRY) return last
@@ -29,7 +32,7 @@ export function useLandingBookCta() {
     })
   })
 
-  const bookIsExternal = computed(() => primaryBookIsExternal(bookHref.value))
+  const bookIsExternal = computed(() => bookingEnabled && primaryBookIsExternal(bookHref.value))
 
   return {
     bookHref,
