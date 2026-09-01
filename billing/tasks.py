@@ -1,4 +1,6 @@
+import hashlib
 import logging
+import re
 
 from celery import shared_task
 
@@ -6,16 +8,27 @@ from billing.redaction import hash_sensitive_value, redact_financial_payload
 
 logger = logging.getLogger(__name__)
 
+_REASON_TOKEN = re.compile(r"[A-Za-z0-9_ .,:;+/=-]{1,160}")
+
 
 @shared_task(name="billing.tasks.dlq_billing", queue="dlq_billing", ignore_result=True)
 def dlq_billing(payload, reason, correlation_id=None):
     safe_payload = redact_financial_payload(payload)
     correlation_id_hash = hash_sensitive_value(correlation_id)[:16] if correlation_id else ""
+    reason_token = str(reason or "unknown")
+    if not _REASON_TOKEN.fullmatch(reason_token):
+        reason_token = "unknown"
+    payload_digest = hashlib.sha256(
+        repr(sorted(safe_payload.items()) if isinstance(safe_payload, dict) else safe_payload).encode(
+            "utf-8",
+            "replace",
+        )
+    ).hexdigest()[:16]
     logger.critical(
-        "Billing webhook payload routed to DLQ. reason=%s correlation_id_hash=%s payload=%s",
-        reason,
+        "Billing webhook payload routed to DLQ. reason=%s correlation_id_hash=%s payload_sha256=%s",
+        reason_token,
         correlation_id_hash,
-        safe_payload,
+        payload_digest,
     )
     return True
 

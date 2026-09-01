@@ -57,7 +57,7 @@
         </svg>
       </a>
 
-      <nav class="site-header__nav" aria-label="Primary">
+      <nav class="site-header__nav" aria-label="Main navigation">
         <NuxtLink
           to="/services"
           :class="{ 'is-active': route.path === '/services' && !isPackagesHash && !isSinglesHash }"
@@ -143,6 +143,8 @@
             <NuxtLink to="/services" @click="closeMenu">Services</NuxtLink>
             <NuxtLink :to="SERVICES_ROUTES.fullPackages" @click="closeMenu">Packages</NuxtLink>
             <NuxtLink :to="SERVICES_ROUTES.singleSessions" @click="closeMenu">Treatments</NuxtLink>
+            <NuxtLink to="/faq" @click="closeMenu">FAQ</NuxtLink>
+            <NuxtLink to="/support" @click="closeMenu">Support</NuxtLink>
             <a href="/#contact" @click="closeMenu">Visit</a>
             <a
               v-if="contactIsLive"
@@ -195,7 +197,7 @@ import {
 } from '@/landing/landingContent'
 import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
 import { trackFunnelEvent } from '@/landing/funnelEvents'
-import { useLandingBookCta } from '@/landing/useLandingBookCta'
+import { useLandingBookCta } from '~/composables/useLandingBookCta'
 
 const route = useRoute()
 const menuOpen = ref(false)

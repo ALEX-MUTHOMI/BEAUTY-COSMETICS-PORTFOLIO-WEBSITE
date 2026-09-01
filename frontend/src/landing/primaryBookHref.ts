@@ -1,4 +1,8 @@
 /**
+ * @module primaryBookHref
+ * Primary URL resolution for booking.
+ */
+/**
  * Day-aware primary Book CTA — matches published hours in the footer.
  *
  * Schedule is evaluated in Africa/Nairobi (studio local), not the visitor’s

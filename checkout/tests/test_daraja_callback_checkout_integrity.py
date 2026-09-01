@@ -8,7 +8,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 
 from billing.models import LedgerTransaction
-from checkout.exceptions import CheckoutStateError, CheckoutValidationError
+from checkout.exceptions import CheckoutValidationError
 from checkout.models import CheckoutSession
 from checkout.providers.mpesa import MpesaProvider
 from checkout.services import create_checkout_session, initiate_mpesa_stk, process_mpesa_callback
@@ -86,13 +86,21 @@ def test_amount_mismatch_daraja_shaped_callback_does_not_pay():
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.parametrize("terminal_status", [CheckoutSession.Status.EXPIRED, CheckoutSession.Status.CANCELLED])
-def test_terminal_checkout_cannot_be_paid_by_daraja_shaped_callback(terminal_status):
+def test_terminal_checkout_late_success_records_ledger_without_paid_transition(terminal_status):
     session, event = _session_with_real_shape_attempt(status=terminal_status)
 
-    with pytest.raises(CheckoutStateError):
-        process_mpesa_callback(event, remote_addr="127.0.0.1")
+    result = process_mpesa_callback(event, remote_addr="127.0.0.1")
 
-    assert LedgerTransaction.objects.filter(external_correlation_id=str(session.id)).count() == 0
+    session.refresh_from_db()
+    assert result.session is not None
+    assert session.status == terminal_status
+    assert (
+        LedgerTransaction.objects.filter(
+            external_correlation_id=str(session.id),
+            status=LedgerTransaction.Status.SUCCESS,
+        ).count()
+        == 1
+    )
 
 
 @pytest.mark.django_db(transaction=True)

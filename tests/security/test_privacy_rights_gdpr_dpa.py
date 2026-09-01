@@ -8,7 +8,7 @@ from bookings.services.privacy_rights import BOOKING_PII_DATA_MAP, accept_privac
 
 def test_booking_pii_data_map_covers_contractual_fields():
     assert set(BOOKING_PII_DATA_MAP) >= {"full_name", "email", "phone"}
-    for field, meta in BOOKING_PII_DATA_MAP.items():
+    for _field, meta in BOOKING_PII_DATA_MAP.items():
         assert meta["purpose"]
         assert meta["lawful_basis"]
         assert meta["retention"]

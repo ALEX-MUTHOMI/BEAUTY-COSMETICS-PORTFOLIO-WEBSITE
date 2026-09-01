@@ -1,4 +1,8 @@
 /**
+ * @module sentryPiiScrubber
+ * Scrubber for removing PII from Sentry error reports.
+ */
+/**
  * GDPR / Kenya DPA 2019 — strip customer PII and secrets before any Sentry event leaves the browser.
  * Empty-safe: works without a live DSN.
  */

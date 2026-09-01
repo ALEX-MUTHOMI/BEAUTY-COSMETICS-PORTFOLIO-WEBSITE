@@ -9,9 +9,9 @@ from bookings.tests.test_staff_auth_helpers import make_staff
 def test_reset_token_hash_cannot_be_used_as_password_reset_token():
     staff = make_staff()
 
-    from bookings.services.staff_auth import STAFF_PASSWORD_RESET_OUTBOX
+    from bookings.infrastructure.email_provider import reset_fake_email_outbox
 
-    STAFF_PASSWORD_RESET_OUTBOX.clear()
+    reset_fake_email_outbox()
     Client().post(
         "/api/staff/auth/password-reset/request/",
         {"email": staff.email},

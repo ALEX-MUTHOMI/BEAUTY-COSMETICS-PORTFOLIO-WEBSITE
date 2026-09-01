@@ -1,3 +1,7 @@
+/**
+ * @module bookingHandoff
+ * Handles transition from landing to booking flow.
+ */
 import {
   getPackageBySlug,
   getTreatmentBySlug,

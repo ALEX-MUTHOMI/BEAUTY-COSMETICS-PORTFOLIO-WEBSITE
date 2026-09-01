@@ -9,9 +9,12 @@ cd "$ROOT"
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml)
 
 echo "CHAOS_COMPOSE=toxiproxy"
-"${COMPOSE[@]}" up -d --build db redis toxiproxy
+# No --build: the web image is prebuilt once by the build-images CI job and
+# pulled/retagged to aesthetic_os_web_app:latest before this script runs
+# (db/redis/toxiproxy are registry images with no build stage).
+"${COMPOSE[@]}" up -d db redis toxiproxy
 bash scripts/ci/setup_toxiproxy_proxies.sh
-"${COMPOSE[@]}" up -d --build web worker
+"${COMPOSE[@]}" up -d web worker
 bash scripts/ci/wait_for_compose_health.sh
 bash scripts/ci/bootstrap_web_db.sh
 

@@ -1,11 +1,11 @@
 <template>
-  <NuxtLink v-if="to" :to="to" class="site-btn" :class="variantClass">
+  <NuxtLink v-if="to" :to="to" class="site-btn" :class="variantClass" :aria-label="ariaLabel">
     <slot />
   </NuxtLink>
-  <a v-else-if="href" :href="href" class="site-btn" :class="variantClass">
+  <a v-else-if="href" :href="href" class="site-btn" :class="variantClass" :aria-label="ariaLabel">
     <slot />
   </a>
-  <button v-else type="button" class="site-btn" :class="variantClass">
+  <button v-else type="button" class="site-btn" :class="variantClass" :aria-label="ariaLabel">
     <slot />
   </button>
 </template>
@@ -18,6 +18,11 @@ const props = withDefaults(
     to?: string
     href?: string
     variant?: 'primary' | 'ghost' | 'outline' | 'light' | 'ghost-light' | 'text'
+    /**
+     * Accessible name for screen readers.
+     * Required if the button content is icon-only or visually obscured.
+     */
+    ariaLabel?: string
   }>(),
   { variant: 'primary' },
 )

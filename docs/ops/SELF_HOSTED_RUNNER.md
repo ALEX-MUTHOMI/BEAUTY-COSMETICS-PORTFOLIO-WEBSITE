@@ -63,7 +63,7 @@ cd ~/actions-runner && ./run.sh
 
 ### PowerShell 7 on Linux (ZAP job)
 
-`zap-passive-newman` calls `pwsh`. Install PowerShell 7 in the runner environment, or that job will fail closed.
+`zap-passive-surface` calls `pwsh`. Install PowerShell 7 in the runner environment, or that job will fail closed.
 
 ## Job hygiene
 
@@ -92,10 +92,27 @@ One runner ⇒ jobs **serialize** (T2 units queue). Scale later with more contai
 
 | Lane | When | Jobs |
 |------|------|------|
-| **Promotion gate** | `push` / `pull_request` | validate → lint → django-smoke → units → frontend → payment-security → integration → receipt → newman → docker-build |
-| **Full fortress** | weeknights `02:00` UTC schedule, or Actions → Run workflow with `run_full_fortress=true` | adds ZAP passive, payment-load, notification-backlog, latency, chaos, cass-certification |
+| **Promotion gate** | `push` / `pull_request` | validate → lint → django-smoke → units → frontend → payment-security → integration → receipt → newman → frontend-e2e → docker-build → **`promotion-gate`** |
+| **Full fortress** | weeknights `02:00` UTC schedule, or Actions → Run workflow with `run_full_fortress=true` | adds **platform-latency**, payment-load, notification-backlog, **zap-passive-surface**, chaos, cass-certification, **`fortress-gate`** |
 
-Do not require fortress-only job names in branch protection for staging merges.
+Branch protection must require the single check **`promotion-gate`**, not
+fortress job names. Prod promote requires fresh **`fortress-gate`** (≤7d).
+See [`BRANCH_PROTECTION.md`](BRANCH_PROTECTION.md) and
+[`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md).
+
+On a green **schedule**, the only intentional skip is `daraja-sandbox-contract`.
+Grey fortress nodes after a failed promo job are a GitHub `needs` cascade — not
+a broken schedule gate. `payment-security` no longer depends on `frontend-test`,
+so a FE unit flake does not wipe backend load/latency/chaos.
+
+`zap-passive-surface` calls `pwsh` and needs FE edge on `:3000` plus API on
+`:8000`. Install PowerShell 7 on self-hosted runners.
+
+Concurrency groups are split: `ci-promo-<ref>` vs `ci-fortress-<ref>` so a
+docs push cannot cancel a fortress run.
+
+Staging promote: [`.github/workflows/deploy-staging.yml`](../../.github/workflows/deploy-staging.yml)
+(GHCR pull + fortress freshness + smoke).
 
 ## Security
 

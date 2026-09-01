@@ -1,3 +1,7 @@
+/**
+ * @module theme
+ * Theme configuration and utilities.
+ */
 export type StaffTheme = 'light' | 'dark'
 
 export const STAFF_THEME_STORAGE_KEY = 'bc_theme_preference'

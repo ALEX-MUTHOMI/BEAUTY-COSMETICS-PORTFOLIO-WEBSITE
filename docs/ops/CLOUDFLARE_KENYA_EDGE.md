@@ -25,9 +25,19 @@ this document is the deploy checklist + rollback for `sheeaesthetics.co.ke`.
 | `/api/bookings/*` | **Bypass** cache |
 | `/api/customers/*` | **Bypass** cache (remember-device cookies) |
 | `/api/csrf/` | Bypass |
+| `/staff/*` | **Bypass** cache (session desk; never edge-cache HTML) |
 | HTML `/`, `/book/*`, `/booking/*` | Bypass or short TTL only if SSR is fully public |
 
 Respect origin `Cache-Control`. Do not “Cache Everything” on `/media/public/` without matching the 5-minute revoke policy in app code.
+
+## Phase 0 — Zone prerequisite (Agent Readiness)
+
+Orange-cloud alone is required before Cloudflare **Agent Readiness**, **Markdown for Agents**, **AI Labyrinth**, and edge Client-Side Security can apply to production traffic.
+
+1. Orange-cloud `sheeaesthetics.co.ke` / `www` with **Full (strict)** SSL (DNS section above).
+2. Confirm cache bypass for `/api/bookings/**`, `/api/customers/**`, `/api/csrf/`, `/staff/**`.
+3. Confirm `TRUSTED_PROXY_CIDRS`, CSRF/CORS origins for the HTTPS site + API (env section below).
+4. Follow the promote/defend checklist in [AGENTIC_AEO_CLOUDFLARE.md](./AGENTIC_AEO_CLOUDFLARE.md) (Content Signals `search=yes, ai-input=yes, ai-train=no`; never challenge STK after Turnstile).
 
 ## Booking API requirement
 
@@ -48,13 +58,15 @@ Set (examples):
 CSRF_TRUSTED_ORIGINS=https://sheeaesthetics.co.ke,https://www.sheeaesthetics.co.ke
 CORS_ALLOWED_ORIGINS=https://sheeaesthetics.co.ke,https://www.sheeaesthetics.co.ke
 NUXT_PUBLIC_SITE_URL=https://sheeaesthetics.co.ke
-NUXT_PUBLIC_API_BASE_URL=https://api.sheeaesthetics.co.ke   # or same-origin proxy path
+NUXT_PUBLIC_API_BASE_URL=   # empty = same-origin /api via frontend-edge; set api. host only if split
 ALLOWED_HOSTS=sheeaesthetics.co.ke,www.sheeaesthetics.co.ke,...
 TRUSTED_PROXY_CIDRS=<Cloudflare IP ranges>
 SECURE_SSL_REDIRECT=True
 ```
 
 Keep local compose defaults (`http://127.0.0.1:3000`) for desk development.
+
+Origin nginx (`frontend-edge`) proxies `/api/` and `/media/public/` to Django on the same public host. Leave `NUXT_PUBLIC_API_BASE_URL` empty so the browser uses same-origin `/api` (CSP `'self'`, no mixed-content to `:8000`). Split API host is opt-in only. Do not proxy `/admin` or private `/media/`. Django still owns CSRF, sessions, throttles, and webhooks. Leave `TRUSTED_PROXY_CIDRS` empty until the hop is real Cloudflare IP ranges — do not trust `X-Forwarded-For` from a local Quick Tunnel.
 
 ## Rollback
 
@@ -79,3 +91,44 @@ Recorded during implementation:
 - 100 visits × homepage + first-paint heroes → 0 failures, image p95 ≪ 2s
 
 Cloudflare PoP warm is expected to improve **first** Kenya cold loads further once DNS is orange-clouded.
+
+## Client-Side Security (formerly Page Shield)
+
+Origin already ships a nonce + `strict-dynamic` CSP via Nuxt (`object-src 'none'`, `base-uri 'none'`, tight `connect-src`). When the zone is **orange-clouded**, enable Cloudflare [Client-side security](https://developers.cloudflare.com/client-side-security/) so scripts/cookies are monitored at the edge.
+
+### Enable (dashboard)
+
+1. **Security → Client-side security** (or Page Shield): turn on **resource monitoring** (script inventory on Free).
+2. Review detected scripts — expect only:
+   - First-party `/_nuxt/*` bundles
+   - `challenges.cloudflare.com` (Turnstile)
+   - `static.cloudflareinsights.com` (if Web Analytics enabled)
+3. **Business+:** enable **cookie monitoring**. Expected first-party cookies:
+   | Cookie | Origin | Notes |
+   |--------|--------|-------|
+   | `csrftoken` | API | Django CSRF; not HttpOnly (readable for `X-CSRFToken`) |
+   | `sessionid` | API | Staff session; HttpOnly |
+   | remembered-device | API | Opaque token; HttpOnly, Secure, SameSite |
+   | Nuxt csurf | Frontend | Separate from Django booking CSRF; `SameSite=strict` |
+4. Configure alerts: **new script** / **new domain** (plan-dependent).
+5. **Content security rules:** create a rule in **Log** mode mirroring origin CSP allowlists; soak staging traffic; only then switch to **Allow** (positive blocking requires Advanced entitlements).
+6. Do **not** WAF-challenge STK/checkout POSTs after Turnstile success (see WAF section above).
+
+### Origin inventory (code)
+
+- CSP contract tests: `frontend/src/security/cookieCspInventory.spec.ts`, `frontend/src/landing/securityHeaders.spec.ts`
+- Third-party allowlist must stay in sync with CF script monitor — update both when adding analytics.
+
+### API (optional automation)
+
+```bash
+# List detected scripts (requires zone id + API token with Client Side Security read)
+curl -s "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/page_shield/scripts" \
+  -H "Authorization: Bearer $CF_API_TOKEN"
+```
+
+Do not treat CF Client-Side Security as a substitute for origin CSP hygiene.
+
+## Agent Readiness / AEO (pointer)
+
+Full promote vs defend matrix, Markdown for Agents, AI Labyrinth, managed-vs-origin robots, and STK never-challenge rules live in **[AGENTIC_AEO_CLOUDFLARE.md](./AGENTIC_AEO_CLOUDFLARE.md)**. Re-scan Agent Readiness Diagnostics after origin sitemap / `llms.txt` / robots Content Signals deploys.

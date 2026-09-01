@@ -1,3 +1,7 @@
+/**
+ * @module staffAuth
+ * Authentication and authorization logic for staff members.
+ */
 export interface StaffLoginPayload {
   email: string
   password: string

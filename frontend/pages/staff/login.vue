@@ -15,8 +15,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { ensureBookingCsrfToken } from '../../src/booking/bookingCsrf'
-import StaffLoginPanel from '../../src/staff/StaffLoginPanel.vue'
+import { ensureBookingCsrfToken } from '~/src/booking/bookingCsrf'
+import StaffLoginPanel from '~/components/staff/StaffLoginPanel.vue'
 
 definePageMeta({ layout: false })
 

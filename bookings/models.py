@@ -1,8 +1,7 @@
 import hashlib
 import secrets
 import uuid
-from datetime import timedelta
-from datetime import timezone as dt_timezone
+from datetime import UTC, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
@@ -435,7 +434,7 @@ class LegalDocument(AuditMixin):
         ):
             value = getattr(self, field)
             if value and timezone.is_aware(value):
-                setattr(self, field, value.astimezone(dt_timezone.utc))
+                setattr(self, field, value.astimezone(UTC))
         if not self.slug:
             self.slug = self.document_type.replace("_", "-")
         if self.status == self.Status.ACTIVE:
@@ -706,6 +705,8 @@ class Booking(AuditMixin):
             models.Index(fields=["resource", "starts_at"], name="bookings_resource_start_idx"),
             models.Index(fields=["resource", "starts_at", "ends_at"], name="bookings_resource_range_idx"),
             models.Index(fields=["status"], name="bookings_status_idx"),
+            # Bulk calendar capacity GROUP BY local_booking_date + status filter
+            # (see docs/plan/BACKEND_DSA_EFFICIENCY.md Concept 12).
             models.Index(fields=["local_booking_date", "status"], name="bookings_local_date_status_idx"),
             models.Index(
                 fields=["booking_type", "local_booking_date", "status"], name="bookings_type_local_status_idx"
@@ -755,7 +756,7 @@ class Booking(AuditMixin):
         ):
             value = getattr(self, field)
             if value is not None and timezone.is_aware(value):
-                setattr(self, field, value.astimezone(dt_timezone.utc))
+                setattr(self, field, value.astimezone(UTC))
         if self.starts_at:
             self.local_booking_date = self.starts_at.astimezone(ZoneInfo("Africa/Nairobi")).date()
         if not self.total_duration_minutes and self.starts_at and self.ends_at:
@@ -837,7 +838,7 @@ class BookingPolicyAcceptance(AuditMixin):
 
     def save(self, *args, **kwargs):
         if self.accepted_at and timezone.is_aware(self.accepted_at):
-            self.accepted_at = self.accepted_at.astimezone(dt_timezone.utc)
+            self.accepted_at = self.accepted_at.astimezone(UTC)
         self.full_clean(validate_constraints=False)
         super().save(*args, **kwargs)
 

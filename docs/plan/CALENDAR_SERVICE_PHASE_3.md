@@ -1,7 +1,7 @@
 # Calendar Service — Phase 3 Design
 
-**Status:** Design approved for implementation (discussion 2026-07-07)  
-**Owners:** Backend / booking domain  
+**Status:** Design approved for implementation (discussion 2026-07-07)
+**Owners:** Backend / booking domain
 **Related:** [SERVICES_PAGE_IA.md](./SERVICES_PAGE_IA.md) (handoff & `/book`), [BOOKING_APP_PRODUCTION_BLUEPRINT.md](../BOOKING_APP_PRODUCTION_BLUEPRINT.md), [BOOKING_CAPACITY_BOUNDARY.md](../security/BOOKING_CAPACITY_BOUNDARY.md)
 
 ---
@@ -232,7 +232,7 @@ FOR each d in offered_dates:
   classify(selection, policy(d), booked(d), len(slots.get(d, [])))
 ```
 
-**Never** call availability for `capacity_full` days.  
+**Never** call availability for `capacity_full` days.
 **Never** call availability for a range > 14 days in one request (`MAX_AVAILABILITY_RANGE_DAYS`).
 
 ### 5.6 Classification (pure)
@@ -281,8 +281,8 @@ sequenceDiagram
 
 | Endpoint | Method | Throttle scope | Auth |
 |----------|--------|----------------|------|
-| `/api/bookings/catalog/resolve-handoff/` | GET | `catalog_resolve` (15/min IP) | Anonymous |
-| `/api/bookings/catalog/resolve/` | GET | `catalog_resolve` (15/min IP) | Anonymous |
+| `/api/bookings/catalog/resolve-handoff/` | GET | `catalog_resolve` (60/min IP) | Anonymous |
+| `/api/bookings/catalog/resolve/` | GET | `catalog_resolve` (60/min IP) | Anonymous |
 | `/api/bookings/calendar/` | GET | `availability` (30/min IP) | Anonymous |
 | `/api/bookings/availability/` | GET | `availability` | Anonymous |
 
@@ -444,8 +444,8 @@ Calendar must never imply confirmed booking or final price.
 
 ### 9.2 Sync contract
 
-1. `frontend/src/landing/bookingCatalog.ts` — static allowlist for handoff URL validation  
-2. `seed_marketing_catalog` — DB rows for resolve + calendar  
+1. `frontend/src/landing/bookingCatalog.ts` — static allowlist for handoff URL validation
+2. `seed_marketing_catalog` — DB rows for resolve + calendar
 3. **Phase 3a test:** `tests/api/test_marketing_catalog_contract.py` — every frontend slug exists in DB and resolves
 
 Drift between (1) and (2) fails CI.
@@ -475,8 +475,8 @@ def test_every_treatment_slug_resolves_and_calendars(category, treatment): ...
 
 Each case:
 
-1. `resolve-handoff` → 200  
-2. `calendar` (no dates) → 200, `len(days)==8`, weekdays ⊆ offered set  
+1. `resolve-handoff` → 200
+2. `calendar` (no dates) → 200, `len(days)==8`, weekdays ⊆ offered set
 3. At least one day with `status in (available, capacity_full, no_slots)` — not all closed
 
 ### 10.3 Newman (Phase 3d — add folder)
@@ -580,10 +580,11 @@ def test_calendar_default_range_under_budget():
 - [x] All 23 marketing slugs pass contract test (resolve + calendar)
 - [x] Newman folder green in Docker CI
 - [x] Calendar p95 < 2s under latency test
+- [x] Efficiency contract: [`BACKEND_DSA_EFFICIENCY.md`](./BACKEND_DSA_EFFICIENCY.md) (batched slots, query/latency gates, capacity invalidation)
 - [ ] Turbo Pass + ZAP passive green (re-run after venv repair; initial run failed on broken `.venv`)
 - [ ] `/book?type=package&plan=classic-full-package` loads Tue/Wed weeks < 2s on local Docker
 - [ ] No booking policy logic in `frontend/src/booking/` beyond response validation
-- [ ] This document updated with implementation status
+- [x] This document updated with implementation status (efficiency slice; FE/ZAP items remain)
 
 ---
 

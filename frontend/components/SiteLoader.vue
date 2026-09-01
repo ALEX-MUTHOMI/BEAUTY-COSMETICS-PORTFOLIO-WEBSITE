@@ -117,8 +117,12 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * SiteLoader Component
+ * Uses aria-live="polite" to inform screen readers of background loading processes.
+ */
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { loaderSafetyTimeoutMs } from '@/landing/loaderTiming'
+import { loaderSafetyTimeoutMs } from '~/src/landing/landingContent'
 
 const props = withDefaults(
   defineProps<{
@@ -161,11 +165,11 @@ const alreadyDone = readLoaderDone()
 
 const visible = ref(!alreadyDone)
 
-useHead({
+useHead(() => ({
   htmlAttrs: {
-    class: computed(() => (visible.value ? 'is-loading' : undefined)),
+    class: visible.value ? 'is-loading' : undefined,
   },
-})
+}))
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))

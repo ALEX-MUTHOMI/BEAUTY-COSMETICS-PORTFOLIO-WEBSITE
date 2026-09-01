@@ -1,12 +1,12 @@
 # OWASP Top 10 CI/CD Security — Audit & Hardening Record
 
-**Scope:** `ALEX-MUTHOMI/aesthetic-os` (private repository), GitHub Actions pipeline (`.github/workflows/ci.yml`), Docker build system, and repository governance settings.
+**Scope:** `ALEX-MUTHOMI/aesthetic-os` (public repository as of 2026-08), GitHub Actions pipeline (`.github/workflows/ci.yml`), Docker build system, and repository governance settings.
 
 **Method:** Live audit against the repository via the GitHub REST API (`gh api`), direct inspection of the workflow file, both Dockerfiles, and repository secrets/permissions — not a theoretical checklist. Evidence for every finding was captured before any fix was applied.
 
 ## Executive summary
 
-This hardening pass closes every code-level (agent-executable) gap identified in the OWASP Top 10 CI/CD Security Risks audit, **and** was followed by a second pass that executed every *repository-configuration* fix reachable through the GitHub REST API (`gh api` / `gh secret` / `gh` CLI) rather than leaving them as manual checklist items. Of the ten risk categories, nine now have live, verified fixes. Exactly **one** residual gap remains — required PR reviews / branch protection on `main` — and it is a genuine GitHub billing-plan restriction (GitHub Free does not permit branch protection or repository rulesets on private repositories), confirmed by a live API call, not an assumption or a UI-only limitation.
+This hardening pass closes every code-level (agent-executable) gap identified in the OWASP Top 10 CI/CD Security Risks audit, **and** was followed by a second pass that executed every *repository-configuration* fix reachable through the GitHub REST API (`gh api` / `gh secret` / `gh` CLI) rather than leaving them as manual checklist items. Of the ten risk categories, nine had live fixes in the July 2026 private-repo pass. **Update 2026-08-04:** the repository is now **public**, so classic branch protection is available; `staging` and `main` require status check **`promotion-gate`** and Code Owner reviews (see [`docs/ops/BRANCH_PROTECTION.md`](../ops/BRANCH_PROTECTION.md)). Environment required-reviewers may still be plan-limited — re-verify with `gh api`.
 
 ### What was fixed in this pass (code)
 
@@ -62,8 +62,8 @@ This is a **GitHub Free-tier plan restriction on private repositories**, not a p
 
 | # | Residual risk | Severity | Compensating control today | Closed by |
 |---|---|---|---|---|
-| 1 | No enforced PR review before merge to `main` | Medium | Single maintainer; `CODEOWNERS` advisory; all changes reviewed by the agent/author before push | GitHub Pro/Team upgrade |
-| 2 | No required-reviewer gate on `daraja-sandbox` secrets | Low | Same secrets are sandbox-only (Daraja test credentials, not production M-Pesa); `environment:` scoping still isolates the job's secret access even without reviewers | GitHub Pro/Team upgrade |
-| 3 | `CODEOWNERS` not enforceable without branch protection | Low | Same as #1 | Same as #1 |
+| 1 | Single maintainer cannot self-approve Code Owner reviews on PRs | Low | `enforce_admins: false` allows owner emergency bypass; add second collaborator for true dual control | Second collaborator |
+| 2 | ~~No required-reviewer gate on Environments~~ | — | **Closed 2026-08-04** — `staging` + `daraja-sandbox` require `@ALEX-MUTHOMI` (self-review allowed) | Done |
+| 3 | ~~Branch protection unavailable on private Free~~ | — | **Closed 2026-08-04** — repo public; `promotion-gate` + CODEOWNERS required on `staging`/`main` | Done |
 
 None of these three residual items are exploitable by an external attacker without first compromising a maintainer's GitHub credentials or push access — at which point branch protection alone would also not have been a complete control (a compromised admin account can typically bypass or disable branch protection too, unless "Do not allow bypassing the above settings" and rules-for-admins are also explicitly enabled). They are recorded here for transparency, not because they represent an open remote attack surface today.

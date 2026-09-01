@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("health", "root", "api", "newman", "all-passive")]
+    [ValidateSet("health", "root", "api", "newman", "frontend", "all-passive")]
     [string]$Mode = "health",
     [string]$Target = "",
     [int]$SpiderMinutes = 2,
@@ -24,14 +24,15 @@ function Test-SafeLocalTarget {
     param([string]$Url)
     $uri = [Uri]$Url
     $allowedHosts = @("localhost", "127.0.0.1", "host.docker.internal")
+    $allowedPorts = @(8000, 3000)
     if ($uri.Scheme -ne "http") {
         throw "Unsafe ZAP target scheme for local passive scan: $($uri.Scheme)"
     }
     if ($allowedHosts -notcontains $uri.Host) {
         throw "Unsafe ZAP target host for local passive scan: $($uri.Host)"
     }
-    if ($uri.Port -ne 8000) {
-        throw "Unsafe ZAP target port for local passive scan: $($uri.Port)"
+    if ($allowedPorts -notcontains $uri.Port) {
+        throw "Unsafe ZAP target port for local passive scan: $($uri.Port) (allowed: 8000 API, 3000 FE edge)"
     }
 }
 
@@ -42,6 +43,10 @@ function New-ReportDir {
     $keep = Join-Path $dir ".gitkeep"
     if (!(Test-Path $keep)) {
         New-Item -ItemType File -Force -Path $keep | Out-Null
+    }
+    # ZAP stable image writes as uid 1000; Linux runners otherwise get AccessDeniedException.
+    if (Get-Command chmod -ErrorAction SilentlyContinue) {
+        & chmod -R a+rwX $dir
     }
     return $dir
 }
@@ -121,6 +126,7 @@ function Invoke-ZapBaseline {
     $dockerArgs = @(
         "run",
         "--rm",
+        "--add-host=host.docker.internal:host-gateway",
         "-v",
         "${reportDir}:/zap/wrk/:rw",
         $ZapImage,
@@ -164,6 +170,7 @@ function Invoke-ZapApiScan {
     $dockerArgs = @(
         "run",
         "--rm",
+        "--add-host=host.docker.internal:host-gateway",
         "-v",
         "${reportDir}:/zap/wrk/:rw",
         $ZapImage,
@@ -381,7 +388,8 @@ if ($Mode -eq "health" -or $Mode -eq "all-passive") {
     $exitCodes += Invoke-ZapBaseline -Name "health" -Url $url -Spider $SpiderMinutes -Max $MaxMinutes -Prefix "zap-health-baseline"
 }
 if ($Mode -eq "root" -or $Mode -eq "all-passive") {
-    $url = if ($Target -and $Mode -eq "root") { $Target } else { "http://host.docker.internal:8000/" }
+    # Django has no site root (/) — that lives on Nuxt :3000. Keep API root scan on /health/.
+    $url = if ($Target -and $Mode -eq "root") { $Target } else { "http://host.docker.internal:8000/health/" }
     $exitCodes += Invoke-ZapBaseline -Name "root" -Url $url -Spider $SpiderMinutes -Max $MaxMinutes -Prefix "zap-root-baseline"
 }
 if ($Mode -eq "api" -or $Mode -eq "all-passive") {
@@ -389,6 +397,17 @@ if ($Mode -eq "api" -or $Mode -eq "all-passive") {
 }
 if ($Mode -eq "newman" -or $Mode -eq "all-passive") {
     $exitCodes += Invoke-NewmanThroughZap
+}
+if ($Mode -eq "frontend" -or $Mode -eq "all-passive") {
+    # Bounded public FE edge paths (Nuxt via frontend-edge on :3000).
+    $fePaths = @(
+        @{ Name = "frontend-home"; Url = "http://host.docker.internal:3000/"; Prefix = "zap-frontend-home" },
+        @{ Name = "frontend-services"; Url = "http://host.docker.internal:3000/services"; Prefix = "zap-frontend-services" },
+        @{ Name = "frontend-book"; Url = "http://host.docker.internal:3000/book"; Prefix = "zap-frontend-book" }
+    )
+    foreach ($path in $fePaths) {
+        $exitCodes += Invoke-ZapBaseline -Name $path.Name -Url $path.Url -Spider $SpiderMinutes -Max $MaxMinutes -Prefix $path.Prefix
+    }
 }
 
 if (($exitCodes | Where-Object { $_ -ne 0 } | Measure-Object).Count -gt 0) {

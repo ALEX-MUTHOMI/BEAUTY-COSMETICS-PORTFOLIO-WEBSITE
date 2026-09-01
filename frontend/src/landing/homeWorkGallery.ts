@@ -1,4 +1,8 @@
 /**
+ * Module: homeWorkGallery
+ * Manages the homepage work gallery view.
+ */
+/**
  * Homepage “Our work” masonry — prefer staff-published public gallery,
  * fall back to curated static studio shots when the API is empty or offline.
  *
@@ -6,7 +10,27 @@
  * and render STATIC_HOME_WORK so nginx edge does not 504 the marketing site.
  */
 import { trimApiBaseUrl, safeApiText } from '../booking/bookingApi'
-import { resolvePublicGalleryMediaUrl } from '../gallery/publicMedia'
+
+const PUBLIC_MEDIA_PREFIX = '/media/public/'
+
+export function resolvePublicGalleryMediaUrl(value: string, apiBaseUrl: string): string {
+  const candidate = String(value || '')
+  if (!candidate.startsWith(PUBLIC_MEDIA_PREFIX)) {
+    return ''
+  }
+
+  const base = String(apiBaseUrl || '').trim()
+  if (!base) {
+    return candidate
+  }
+
+  try {
+    const apiOrigin = new URL(base).origin
+    return new URL(candidate, apiOrigin).toString()
+  } catch {
+    return ''
+  }
+}
 
 export type HomeWorkImage = {
   id: string
@@ -122,7 +146,13 @@ export function mapPublicGalleryToHomeWork(
 
   const mapped: HomeWorkImage[] = []
   for (let i = 0; i < images.length; i++) {
-    const item = images[i] as ApiImage
+    const item = images[i] as ApiImage & { category?: { slug?: string; name?: string } }
+    const categorySlug = String(item.category?.slug || '').toLowerCase()
+    const rawTitle = String(item.title || '')
+    if (categorySlug.startsWith('api-acceptance') || rawTitle.toLowerCase().includes('acceptance')) {
+      continue
+    }
+
     const variant = pickVariant(item.variants)
     const rawUrl = String(variant?.url || '')
     const src = resolvePublicGalleryMediaUrl(rawUrl, apiBaseUrl)

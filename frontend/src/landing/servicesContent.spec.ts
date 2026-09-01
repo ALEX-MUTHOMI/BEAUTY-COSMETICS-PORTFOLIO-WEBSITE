@@ -1,9 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import {
-  getSingleTreatmentHighlights,
+  FLUID_CARD_GROWTH_CONTRACT,
+  PORTRAIT_PACKAGE_CARD_CONTRACT,
+  SERVICE_DISTINCT_TILES_CONTRACT,
+  SERVICES_CITATION_LINE,
   SERVICES_PAGE_INTRO,
+  TREATMENT_TAB_ARCHITECTURE_CONTRACT,
+  getSingleTreatmentHighlights,
   serviceCategories,
+  validateFluidCardGrowth,
+  validatePortraitPackageCard,
   validateServiceCategories,
+  validateServiceDistinctTiles,
+  validateTreatmentTabArchitecture,
 } from './servicesContent'
 import { bookHrefForTreatment } from './bookingHandoff'
 import { SERVICE_CATEGORY_IDS } from './servicesNavigation'
@@ -28,6 +37,8 @@ describe('servicesContent', () => {
     expect(SERVICES_PAGE_INTRO.title).toMatch(/how would you like to visit/i)
     expect(SERVICES_PAGE_INTRO).not.toHaveProperty('lead')
     expect(SERVICES_PAGE_INTRO).not.toHaveProperty('note')
+    expect(SERVICES_CITATION_LINE).toMatch(/Shee Aesthetics/)
+    expect(SERVICES_CITATION_LINE).toMatch(/Meru/)
   })
 
   it('surfaces one directly-bookable specific treatment per category', () => {
@@ -44,5 +55,19 @@ describe('servicesContent', () => {
       const href = bookHrefForTreatment(highlight.category, highlight.name)
       expect(href.startsWith(`/book/${highlight.category}/`)).toBe(true)
     }
+  })
+
+  it('enforces slender portrait package card proportions and vertical offer list', () => {
+    expect(validatePortraitPackageCard(PORTRAIT_PACKAGE_CARD_CONTRACT)).toBe(true)
+    expect(PORTRAIT_PACKAGE_CARD_CONTRACT.cardAspectMode).toBe('portrait')
+    expect(PORTRAIT_PACKAGE_CARD_CONTRACT.isSingleColumnOffers).toBe(true)
+    expect(PORTRAIT_PACKAGE_CARD_CONTRACT.minCardHeightDesktop).toBe('28rem')
+  })
+
+  it('enforces distinct treatment tiles and mobile tab wrap architecture', () => {
+    expect(validateServiceDistinctTiles(SERVICE_DISTINCT_TILES_CONTRACT)).toBe(true)
+    expect(validateTreatmentTabArchitecture(TREATMENT_TAB_ARCHITECTURE_CONTRACT)).toBe(true)
+    expect(TREATMENT_TAB_ARCHITECTURE_CONTRACT.tabWrapMode).toBe('wrap')
+    expect(validateFluidCardGrowth(FLUID_CARD_GROWTH_CONTRACT)).toBe(true)
   })
 })

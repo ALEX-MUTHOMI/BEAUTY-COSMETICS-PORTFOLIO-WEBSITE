@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import StaffPaymentsWorkspace from '../../src/staff/StaffPaymentsWorkspace.vue'
+import StaffPaymentsWorkspace from '~/components/staff/StaffPaymentsWorkspace.vue'
 
 definePageMeta({ middleware: ['staff-auth'], layout: false })
 

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -40,6 +41,13 @@ DISABLE_DJANGO_ADMIN = os.environ.get("DISABLE_DJANGO_ADMIN", "False").lower() i
     "1",
     "t",
 )
+# Public booking is fail-closed unless explicitly enabled. Unset in production
+# keeps /api/bookings/holds|checkout|calendar closed. Pytest and CI set true.
+_PUBLIC_BOOKING_RAW = os.environ.get("PUBLIC_BOOKING_ENABLED")
+if _PUBLIC_BOOKING_RAW is None:
+    PUBLIC_BOOKING_ENABLED = "pytest" in sys.modules
+else:
+    PUBLIC_BOOKING_ENABLED = _PUBLIC_BOOKING_RAW.strip().lower() in ("true", "1", "t", "yes")
 SECURITY_SCAN_MODE = os.environ.get("SECURITY_SCAN_MODE", "False").lower() in (
     "true",
     "1",
@@ -96,6 +104,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "core.middleware.security_headers.SecurityHeadersMiddleware",
+    "core.middleware.public_booking_gate.PublicBookingGateMiddleware",
     "core.middleware.correlation_id.CorrelationIdMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",

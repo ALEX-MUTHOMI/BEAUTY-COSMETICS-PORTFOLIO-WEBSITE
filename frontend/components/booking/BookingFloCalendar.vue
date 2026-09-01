@@ -7,7 +7,7 @@
   >
     <header v-if="loading || orderedDays.length > 0" class="flo-calendar__head">
       <p class="flo-calendar__range">Next open dates</p>
-      <p class="flo-calendar__capacity">{{ capacityHint }}</p>
+      <p v-if="capacityHint" class="flo-calendar__capacity">{{ capacityHint }}</p>
     </header>
 
     <div v-if="loading" class="flo-calendar__loading" aria-live="polite">
@@ -201,7 +201,8 @@ function ariaForDay(day: CalendarDay): string {
   padding: 0.4rem 0.45rem;
   border: 1px solid var(--color-line);
   border-radius: 10px;
-  background: #fff;
+  background: var(--color-parchment, #ddd8d3);
+  color: var(--color-ink);
   cursor: pointer;
   touch-action: manipulation;
   scroll-snap-align: start;

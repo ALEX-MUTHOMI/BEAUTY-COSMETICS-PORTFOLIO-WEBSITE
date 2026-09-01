@@ -42,11 +42,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
-import StaffSheeBrand from '../../src/staff/StaffSheeBrand.vue'
-import StaffThemeToggle from '../../src/staff/StaffThemeToggle.vue'
-import { ensureBookingCsrfToken } from '../../src/booking/bookingCsrf'
-import { requestStaffPasswordReset } from '../../src/staff/staffAuth'
-import { applyStaffTheme, resolveStaffTheme } from '../../src/staff/theme'
+import StaffSheeBrand from '~/components/staff/StaffSheeBrand.vue'
+import StaffThemeToggle from '~/components/staff/StaffThemeToggle.vue'
+import { ensureBookingCsrfToken } from '~/src/booking/bookingCsrf'
+import { requestStaffPasswordReset } from '~/src/staff/staffAuth'
+import { applyStaffTheme, resolveStaffTheme } from '~/src/staff/theme'
 
 definePageMeta({ layout: false })
 useHead({

@@ -26,4 +26,15 @@ describe('BookingSubmitGovernor', () => {
     governor.noteHoldTtlMinutes(BOOKING_SUBMIT_LIMITS.abuseHoldTtlMinutes)
     expect(governor.abuseMode).toBe(true)
   })
+
+  it('permits hold and checkout inside an active submit (beginSubmit set)', () => {
+    // Regression: beginSubmit() owns concurrency. canAttemptHold/Checkout must not
+    // re-block on inFlight, otherwise every real booking throttles after the first click.
+    const governor = new BookingSubmitGovernor()
+    expect(governor.beginSubmit()).toBe(true)
+    expect(governor.canAttemptHold(1_000)).toBe(true)
+    governor.recordHoldAttempt(1_000)
+    expect(governor.canAttemptCheckout(2_000)).toBe(true)
+    governor.finishSubmit()
+  })
 })

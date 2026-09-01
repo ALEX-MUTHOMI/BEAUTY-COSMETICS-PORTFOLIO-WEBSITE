@@ -30,12 +30,12 @@ test.describe('Services page security and IA', () => {
     await page.goto(BASE_URL, { waitUntil: 'networkidle' })
     await expect(page.locator('.site-boot-skeleton, .site-loader')).toHaveCount(0, { timeout: 5000 })
 
-    await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Packages' }).click()
+    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Packages' }).click()
     await expect(page).toHaveURL(/\/services#full-packages/)
     await expect(page.getByRole('heading', { name: /Complete visits/i })).toBeVisible()
 
     await page.goto(BASE_URL, { waitUntil: 'networkidle' })
-    await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Treatments' }).click()
+    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Treatments' }).click()
     await expect(page).toHaveURL(/\/services#single-sessions/)
     await expect(page.getByRole('heading', { name: /^Choose a treatment$/i })).toBeVisible()
   })

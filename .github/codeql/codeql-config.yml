@@ -1,0 +1,20 @@
+# CodeQL — security-extended (default + extra security, not the noisier quality pack).
+# Money-path / PII repo: taint and injection queries over style nits.
+name: aesthetic-os-codeql
+disable-default-queries: false
+queries:
+  - uses: security-extended
+paths-ignore:
+  - "**/node_modules/**"
+  - "**/playwright-report/**"
+  - "frontend/.output/**"
+  - "frontend/.nuxt/**"
+  - "reports/**"
+  - "**/.venv/**"
+  - "**/__pycache__/**"
+  # Dummy secret-shaped fixtures live here on purpose (redaction / scanner tests).
+  - "**/tests/**"
+  - "**/test_*.py"
+  - "**/*.spec.ts"
+  - "frontend/e2e/**"
+  - "scripts/ci/secret_hygiene.py"

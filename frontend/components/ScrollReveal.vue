@@ -46,6 +46,8 @@ function isInViewport(el: HTMLElement): boolean {
 onMounted(() => {
   if (!root.value) return
 
+  // Respects prefers-reduced-motion: reduce for accessibility.
+  // Animations are disabled for users who prefer reduced motion.
   if (props.immediate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     reveal()
     return

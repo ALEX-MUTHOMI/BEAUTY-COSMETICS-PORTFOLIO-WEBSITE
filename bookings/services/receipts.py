@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 import uuid
 from zoneinfo import ZoneInfo
 
@@ -11,6 +10,7 @@ from django.utils import timezone
 from billing.models import LedgerTransaction
 from billing.redaction import hash_sensitive_value
 from bookings.models import Booking, BookingAuditEvent, BookingNotification, BookingReceipt
+from bookings.privacy import strip_markup
 from bookings.services.legal import NO_REFUND_NOTICE
 
 NAIROBI = ZoneInfo("Africa/Nairobi")
@@ -27,9 +27,7 @@ def enqueue_receipt_notification_task(notification_id):
 
 
 def _safe_text(value, max_length=120):
-    cleaned = re.sub(r"<[^>]*>", "", str(value or ""))
-    cleaned = re.sub(r"[\x00-\x1f\x7f]", " ", cleaned)
-    return " ".join(cleaned.split())[:max_length]
+    return strip_markup(value, max_length=max_length)
 
 
 def _receipt_number():

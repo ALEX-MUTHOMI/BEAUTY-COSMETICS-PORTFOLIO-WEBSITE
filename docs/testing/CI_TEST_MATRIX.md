@@ -12,20 +12,54 @@ connections when interrupted.
 | Turbo Pass | Fast local/CI preflight for common regressions | `.\scripts\ci\turbo_pass.ps1` |
 | Standard Backend | Full domain partitions without load/ZAP | `.\scripts\ci\run_ci_matrix.ps1` |
 | Performance | Load and latency with explicit budgets | `.\scripts\ci\run_performance_gate.ps1 -Mode standard` |
-| Passive Security | Bounded ZAP health/root/OpenAPI/Newman passive scans | `.\scripts\ci\run_security_passive_gate.ps1 -Mode all-passive` |
-| CASS certification | Calendar-as-a-service sign-off bundle | GitHub jobs `cass-calendar-service`, `bookings-unit`, `newman-acceptance`, `zap-passive-newman`, `cass-certification` |
-| Deep/Nightly | Future slow dependency/deep load/security expansion | scheduled CI only |
+| Passive Security | Bounded ZAP health/root/OpenAPI/Newman + FE edge | `.\scripts\ci\run_security_passive_gate.ps1 -Mode all-passive` |
+| CASS certification | Calendar-as-a-service sign-off bundle | GitHub jobs `cass-calendar-service`, `bookings-unit`, `newman-acceptance`, `zap-passive-surface`, `cass-certification` |
+| Fortress / schedule | Platform soak (load, latency, ZAP, chaos) | weeknights `02:00` UTC or `run_full_fortress=true` |
+
+### Promotion vs fortress vs Daraja
+
+| Lane | When | Required green | Intentional skips |
+|------|------|----------------|-------------------|
+| **Promotion** | every push/PR (and on schedule) | `promotion-gate` | Fortress jobs + Daraja |
+| **Fortress** | schedule or `run_full_fortress=true` | `fortress-gate` | **Only** `daraja-sandbox-contract` |
+| **Daraja** | dispatch + `run_daraja_sandbox=true` | that job | N/A |
+
+**Cascade rule:** GitHub skips any job whose `needs` failed. A red `frontend-test`
+greys `frontend-e2e` / `docker-build` / `promotion-gate`, but **does not** wipe
+backend fortress soak (`payment-security` no longer needs `frontend-test`).
+Grey fortress after a broken promo spine is still a dependency cascade — not a
+disabled schedule.
+
+**Chart vs coverage:** DAG wires show *when* jobs run. `platform-latency` sits
+after money-path gates for cost control, but `pytest tests/latency` covers
+gallery, staff, calendar, booking, and receipt p95 — not payments only.
+`zap-passive-surface` covers OpenAPI + Newman + FE `/` `/services` `/book`.
 
 ## GitHub Actions — CASS / Bookings gates (production pipeline)
 
 | Job | Partition | Reports artifact |
 | --- | --- | --- |
+| `build-images` | Build web/frontend/frontend-test images once → GHCR `:ci-<sha>` | (registry tags) |
 | `bookings-unit` | `bookings/tests` (~290 domain tests) | `reports/ci/junit/bookings.xml` |
 | `cass-calendar-service` | Marketing contract, Option A policy, calendar API/policy/latency/security | `reports/ci/junit/cass-calendar.xml` |
 | `tests-api-unit` | `tests/api` + `tests/unit` | `reports/ci/junit/api-unit.xml` |
 | `newman-acceptance` | Full acceptance incl. folder `06 Calendar and Handoff` | `reports/ci/newman/newman-local.json` |
-| `zap-passive-newman` | ZAP passive scan through Newman traffic | `reports/security/zap/` |
-| `cass-certification` | Aggregated markdown sign-off when all CASS jobs green | `reports/ci/cass-certification.md` |
+| `frontend-e2e` | Playwright chromium vs compose frontend edge (`PLAYWRIGHT_SKIP_WEBSERVER=1`) | `frontend-e2e-playwright` |
+| `docker-build` | Prod image + compose config; push digest to GHCR | `image-digest` |
+| `promotion-gate` | Aggregator — **required branch-protection check** | (status only) |
+| `platform-latency` | Fortress — gallery/staff/calendar/booking/receipt p95 | (logs) |
+| `payment-load-resilience` | Fortress — fake-provider payment load | (logs) |
+| `notification-backlog-load` | Fortress — 1000-notification backlog | (logs) |
+| `zap-passive-surface` | Fortress — ZAP all-passive (API+Newman+FE) | `reports/security/zap/` |
+| `chaos` | Fortress — Toxiproxy DB/Redis (fake provider) | (logs) |
+| `cass-certification` | Aggregated markdown sign-off when CASS jobs green | `reports/ci/cass-certification.md` |
+| `fortress-gate` | Aggregator — release soak / freshness marker | (status only) |
+| `coverage-map` | Report-only FE/BE/money-path map artifact | `ci-coverage-map` |
+| `daraja-sandbox-contract` | Opt-in real Daraja only | (logs) |
+
+CD / release: [`docs/ops/BRANCH_PROTECTION.md`](../ops/BRANCH_PROTECTION.md),
+[`docs/ops/RELEASE_CHECKLIST.md`](../ops/RELEASE_CHECKLIST.md),
+[`.github/workflows/deploy-staging.yml`](../../.github/workflows/deploy-staging.yml).
 
 ## Canonical Gates
 

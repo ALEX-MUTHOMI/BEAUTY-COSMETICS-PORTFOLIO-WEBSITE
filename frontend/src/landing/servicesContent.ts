@@ -1,3 +1,8 @@
+/**
+ * @module
+ * Defines the content and structure for the services offered on the platform.
+ * Includes categories, treatments, descriptions, and pricing information.
+ */
 import {
   LANDING_LOCATION_LABEL,
   LANDING_PRIMARY_CTA,
@@ -30,6 +35,11 @@ export const SERVICES_PAGE_INTRO = {
   eyebrow: LANDING_LOCATION_LABEL,
   title: 'How would you like to visit?',
 }
+
+/** SSR citation line for agents — keep short; shown under the services hero question. */
+export const SERVICES_CITATION_LINE =
+  'Shee Aesthetics beauty salon in Meru Town: facials, waxing, massage and makeup. Book online, confirm with M-Pesa.'
+
 
 /** Short lines for the treatments category board. */
 export const SERVICE_CATEGORY_BOARD_LINES: Record<string, string> = {
@@ -321,6 +331,106 @@ export function validateServiceCategories(list: ServiceCategory[]): boolean {
             treatment.highlights.every(assertSafeDisplayText),
         ),
     )
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Consolidated Service & Package Card Architecture Contracts        */
+/* ------------------------------------------------------------------ */
+
+export interface PortraitPackageCardContract {
+  cardAspectMode: 'portrait'
+  offerLayoutMode: 'vertical-list'
+  minCardHeightDesktop: string
+  isSingleColumnOffers: boolean
+  hasClearValueOffers: boolean
+}
+
+export const PORTRAIT_PACKAGE_CARD_CONTRACT: PortraitPackageCardContract = {
+  cardAspectMode: 'portrait',
+  offerLayoutMode: 'vertical-list',
+  minCardHeightDesktop: '28rem',
+  isSingleColumnOffers: true,
+  hasClearValueOffers: true,
+}
+
+export function validatePortraitPackageCard(
+  contract: PortraitPackageCardContract = PORTRAIT_PACKAGE_CARD_CONTRACT,
+): boolean {
+  return (
+    contract.cardAspectMode === 'portrait' &&
+    contract.offerLayoutMode === 'vertical-list' &&
+    contract.isSingleColumnOffers &&
+    contract.hasClearValueOffers &&
+    parseFloat(contract.minCardHeightDesktop) >= 26
+  )
+}
+
+export interface ServiceDistinctTilesContract {
+  borderSeparation: string
+  surfacePaddingMobile: string
+  surfacePaddingDesktop: string
+  hasShadowBoundary: boolean
+}
+
+export const SERVICE_DISTINCT_TILES_CONTRACT: ServiceDistinctTilesContract = {
+  borderSeparation: '1px solid rgba(44, 44, 48, 0.12)',
+  surfacePaddingMobile: 'clamp(1rem, 3vw, 1.25rem)',
+  surfacePaddingDesktop: 'clamp(1.15rem, 2.5vw, 1.5rem)',
+  hasShadowBoundary: true,
+}
+
+export function validateServiceDistinctTiles(
+  contract: ServiceDistinctTilesContract = SERVICE_DISTINCT_TILES_CONTRACT,
+): boolean {
+  return (
+    contract.hasShadowBoundary &&
+    contract.borderSeparation.includes('1px solid') &&
+    contract.surfacePaddingMobile.includes('clamp')
+  )
+}
+
+export interface TreatmentTabArchitectureContract {
+  tabWrapMode: 'wrap'
+  tabScrollbarHidden: boolean
+  tabMinTouchTarget: string
+}
+
+export const TREATMENT_TAB_ARCHITECTURE_CONTRACT: TreatmentTabArchitectureContract = {
+  tabWrapMode: 'wrap',
+  tabScrollbarHidden: true,
+  tabMinTouchTarget: '44px',
+}
+
+export function validateTreatmentTabArchitecture(
+  contract: TreatmentTabArchitectureContract = TREATMENT_TAB_ARCHITECTURE_CONTRACT,
+): boolean {
+  return (
+    contract.tabWrapMode === 'wrap' &&
+    contract.tabScrollbarHidden &&
+    parseInt(contract.tabMinTouchTarget, 10) >= 44
+  )
+}
+
+export interface FluidCardGrowthContract {
+  containerMaxWidth: string
+  gridStretchMode: 'stretch'
+  equalHeightColumns: boolean
+}
+
+export const FLUID_CARD_GROWTH_CONTRACT: FluidCardGrowthContract = {
+  containerMaxWidth: 'var(--container, 76rem)',
+  gridStretchMode: 'stretch',
+  equalHeightColumns: true,
+}
+
+export function validateFluidCardGrowth(
+  contract: FluidCardGrowthContract = FLUID_CARD_GROWTH_CONTRACT,
+): boolean {
+  return (
+    contract.equalHeightColumns &&
+    contract.gridStretchMode === 'stretch' &&
+    contract.containerMaxWidth.includes('76rem')
   )
 }
 

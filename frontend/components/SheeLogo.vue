@@ -17,6 +17,10 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * SheeLogo Component
+ * Uses aria-hidden="true" on the SVG since it is a decorative brand element.
+ */
 import { computed } from 'vue'
 
 const props = withDefaults(

@@ -5,7 +5,16 @@ from django.apps import apps
 from django.test import Client
 from django.utils import timezone
 
+from bookings.infrastructure.email_provider import reset_fake_email_outbox
+from bookings.services.staff_auth import harvest_staff_password_reset_token_for_tests
 from bookings.tests.test_staff_auth_helpers import make_customer, make_staff
+
+
+@pytest.fixture(autouse=True)
+def _clear_fake_email_outbox():
+    reset_fake_email_outbox()
+    yield
+    reset_fake_email_outbox()
 
 
 @pytest.mark.django_db
@@ -13,9 +22,6 @@ def test_staff_password_reset_request_is_generic_and_stores_hashed_token_only():
     staff = make_staff()
     make_customer()
 
-    from bookings.services.staff_auth import STAFF_PASSWORD_RESET_OUTBOX
-
-    STAFF_PASSWORD_RESET_OUTBOX.clear()
     existing = Client().post(
         "/api/staff/auth/password-reset/request/",
         {"email": staff.email},
@@ -37,11 +43,11 @@ def test_staff_password_reset_request_is_generic_and_stores_hashed_token_only():
 
     assert existing.status_code == unknown.status_code == customer.status_code == 200
     assert existing.json() == unknown.json() == customer.json()
-    assert len(STAFF_PASSWORD_RESET_OUTBOX) == 1
+    raw_token = harvest_staff_password_reset_token_for_tests()
+    assert raw_token
 
     challenge_model = apps.get_model("bookings", "StaffPasswordResetChallenge")
     challenge = challenge_model.objects.get(staff_user=staff)
-    raw_token = STAFF_PASSWORD_RESET_OUTBOX[0]["token"]
     assert raw_token not in challenge.token_hash_hmac
     assert challenge.status == "pending"
 
@@ -60,16 +66,13 @@ def test_staff_password_reset_confirm_expires_is_single_use_and_invalidates_old_
         == 200
     )
 
-    from bookings.services.staff_auth import STAFF_PASSWORD_RESET_OUTBOX
-
-    STAFF_PASSWORD_RESET_OUTBOX.clear()
     Client().post(
         "/api/staff/auth/password-reset/request/",
         {"email": staff.email},
         content_type="application/json",
         secure=True,
     )
-    token = STAFF_PASSWORD_RESET_OUTBOX[0]["token"]
+    token = harvest_staff_password_reset_token_for_tests()
     new_password = "Nairobi secure staff reset phrase 2026"
 
     confirm = Client().post(
@@ -92,14 +95,14 @@ def test_staff_password_reset_confirm_expires_is_single_use_and_invalidates_old_
     staff.refresh_from_db()
     assert staff.check_password(new_password)
 
-    STAFF_PASSWORD_RESET_OUTBOX.clear()
+    reset_fake_email_outbox()
     Client().post(
         "/api/staff/auth/password-reset/request/",
         {"email": staff.email},
         content_type="application/json",
         secure=True,
     )
-    expired_token = STAFF_PASSWORD_RESET_OUTBOX[0]["token"]
+    expired_token = harvest_staff_password_reset_token_for_tests()
     challenge_model = apps.get_model("bookings", "StaffPasswordResetChallenge")
     challenge = challenge_model.objects.order_by("-created_at").first()
     challenge.expires_at = timezone.now() - timedelta(minutes=1)

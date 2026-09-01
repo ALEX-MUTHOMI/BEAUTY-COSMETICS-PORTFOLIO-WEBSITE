@@ -1,3 +1,7 @@
+/**
+ * Plugin: sentry.client
+ * Configures Sentry for client-side error tracking.
+ */
 import { scrubSentryEvent } from '../src/security/sentryPiiScrubber'
 
 /**
@@ -27,3 +31,4 @@ export default defineNuxtPlugin(() => {
     )
   }
 })
+

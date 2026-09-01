@@ -28,11 +28,17 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.getByRole('heading', { name: 'Meet your therapist', level: 2 })).toBeVisible()
     await expect(page.locator('#behind-the-glow .glow__eyebrow')).toHaveText('Get to know us')
     await expect(page.locator('#behind-the-glow .glow__mirror .glow__photo')).toBeVisible()
+    await expect(page.locator('#behind-the-glow .glow__mirror .glow__photo')).toHaveAttribute(
+      'src',
+      '/images/therapist.png',
+    )
+    await expect(page.locator('#behind-the-glow .glow__flower-sketch')).toBeVisible()
+    await expect(page.locator('#behind-the-glow .glow__accent-circle')).toBeAttached()
     await expect(page.locator('#behind-the-glow .glow__name')).toHaveText('Shee')
     await expect(page.locator('#behind-the-glow .glow__line')).toHaveText('Beauty artist · Meru Town')
     await expect(page.locator('#behind-the-glow .glow__continue')).toHaveText(/See her work/i)
     await expect(page.locator('.hero__price')).toHaveCount(0)
-    await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible()
+    await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible()
 
     const logoLink = page.getByRole('banner').getByRole('link', { name: /Shee Aesthetics home/i })
     await expect(logoLink).toBeVisible()
@@ -46,7 +52,10 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.locator('.steps__compact').getByText('Pay with M-Pesa')).toBeVisible()
     await expect(page.locator('.steps__compact').getByText('Come in glowing')).toBeVisible()
     await expect(page.locator('.steps .steps__cta')).toHaveCount(0)
-    await expect(page.locator('.steps img')).toHaveCount(0)
+    // Compact list stays text-only; floral edge/title art is intentional.
+    await expect(page.locator('.steps__compact img')).toHaveCount(0)
+    await expect(page.locator('.steps .home-floral__edge')).toHaveCount(2)
+    await expect(page.locator('.steps .title-lockup__flower')).toHaveCount(2)
     await expect(page.getByRole('heading', { name: 'Clients by Shee', level: 2 })).toBeVisible()
     await expect(page.locator('#our-work .work__tile').count()).resolves.toBeGreaterThanOrEqual(8)
     await expect(page.getByRole('heading', { name: 'What we offer', level: 2 })).toBeAttached()
@@ -75,6 +84,17 @@ test.describe('Shee Aesthetics landing page', () => {
     await expect(page.locator('#packages .packages__band')).toBeVisible()
     await expect(page.locator('.mellis-card__badge', { hasText: 'Most booked' })).toBeVisible()
     await expect(page.getByRole('link', { name: /Book this package/i })).toBeVisible()
+    const bookPackage = page.getByRole('link', { name: /Book this package/i })
+    await expect(bookPackage).toHaveAttribute('href', /\/book\/package\//)
+    await bookPackage.scrollIntoViewIfNeeded()
+    await expect(bookPackage).toBeInViewport()
+    await Promise.all([
+      page.waitForURL(/\/book\/package\//, { timeout: 15_000 }),
+      bookPackage.click(),
+    ])
+    await page.goto(BASE_URL, { waitUntil: 'networkidle' })
+    await expect(page.locator('.site-boot-skeleton, .site-loader')).toHaveCount(0, { timeout: 5000 })
+    await page.locator('#packages').scrollIntoViewIfNeeded()
     await expect(page.getByRole('link', { name: /See all packages/i })).toBeVisible()
 
     await expect(page.getByRole('heading', { name: 'What clients say', level: 2 })).toBeVisible()
@@ -167,6 +187,9 @@ test.describe('Shee Aesthetics landing page', () => {
     expect(csp).toMatch(/object-src[^;]*'none'/)
     expect(csp).toMatch(/base-uri[^;]*'none'/)
     expect(csp).toMatch(/frame-ancestors[^;]*'self'/)
+    expect(csp).toMatch(/connect-src[^;]*'self'/)
+    expect(csp).not.toMatch(/127\.0\.0\.1:8000/)
+    expect(response.headers()['access-control-allow-origin'] ?? '').not.toBe('*')
 
     const xfo = response.headers()['x-frame-options']
     expect(xfo?.toUpperCase()).toBe('DENY')

@@ -1,13 +1,21 @@
 name: Secure Enterprise CI Pipeline
 
-# CICD-SEC-5: fail-closed default. GITHUB_TOKEN is read-only unless a job
-# explicitly elevates it. No job in this pipeline currently needs write access.
+# CICD-SEC-5: fail-closed default. Jobs elevate packages:write only where needed
+# (build-images / docker-build / ci-images-cleanup → GHCR). Everyday jobs get
+# read-only packages so they can PULL the build-once CI images from GHCR.
 permissions:
   contents: read
+  packages: read
 
-# Cancel superseded pushes on the same ref — fail-fast cushion for money-path CI.
+# Split lanes so a promo push cannot cancel a fortress/schedule run (and vice versa).
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: >-
+    ${{
+      (github.event_name == 'schedule' ||
+       (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true'))
+      && format('ci-fortress-{0}', github.ref)
+      || format('ci-promo-{0}', github.ref)
+    }}
   cancel-in-progress: true
 
 on:
@@ -15,7 +23,11 @@ on:
     branches:
       - development
   pull_request:
+    # development is the integration trunk: PRs into it run the promotion lane so
+    # promotion-gate can be a required check (with admin bypass) — see
+    # docs/ops/BRANCH_PROTECTION.md. staging/main gate promotion up the ladder.
     branches:
+      - development
       - staging
       - main
   # Full fortress (load / ZAP / chaos / latency) — not on every PR (cost + runtime).
@@ -39,6 +51,8 @@ env:
   REDIS_PASSWORD: aesthetic_os_ci_redis_password
   SECRET_KEY: django-insecure-ci-placeholder-key-32-chars
   DEBUG: "False"
+  PUBLIC_BOOKING_ENABLED: "true"
+  NUXT_PUBLIC_BOOKING_ENABLED: "true"
   SECURE_SSL_REDIRECT: "False"
   CHECKOUT_MPESA_PROVIDER: fake
   PAYMENT_PROVIDER_MODE: fake
@@ -70,22 +84,39 @@ defaults:
     shell: bash
 
 # =============================================================================
-# Two lanes (promotion gate vs full fortress):
+# Two lanes (promotion vs fortress) + Daraja opt-in:
 #
-# PROMOTION GATE (push / pull_request) — keep under ~60–90m serial:
-#   T0 validate → lint-security
-#   T1 django-smoke
-#   T2 domain units + frontend-test
-#   T3 payment-security
-#   T4 checkout-billing-integration → receipt-pipeline
-#   T5 newman-acceptance
-#   T8 docker-build
+# PROMOTION (push / PR / also on schedule) — merge confidence:
+#   P0 validate → lint-security
+#   P0.5 build-images (build web/frontend/frontend-test ONCE → GHCR :ci-<sha>)
+#   P1 django-smoke                (pulls prebuilt images)
+#   P2 domain units + frontend-test (FE lint/unit/type/build)
+#   P3 payment-security (BE abuse/authz — does NOT need frontend-test)
+#   P4 checkout-billing-integration → receipt-pipeline
+#   P5 newman-acceptance + frontend-e2e
+#   P6 docker-build (+ GHCR digest)
+#   promotion-gate aggregator (required branch-protection check)
 #
-# FULL FORTRESS (schedule weeknights 02:00 UTC, or workflow_dispatch
-#   run_full_fortress=true) — adds:
-#   zap-passive-newman, payment-load, notification-backlog, latency,
-#   chaos, cass-certification
-#   Opt-in: daraja-sandbox-contract
+# BUILD-ONCE REUSE (Cloudflare "install once, cache, reuse"):
+#   build-images builds the three CI images a single time and pushes run-scoped
+#   GHCR tags. Every downstream job PULLS + retags to the compose ':latest' and
+#   runs `docker compose up -d` WITHOUT --build. See docs/ops/CI_WORKFLOW_DESIGN.md
+#   and scripts/ci/{build_ci_images,pull_ci_images,cleanup_ci_images}.sh.
+#
+# FORTRESS (schedule weeknights 02:00 UTC, or run_full_fortress=true):
+#   Surfaces (coverage ≠ DAG wire position):
+#     platform-latency  → gallery/staff/calendar/booking/receipt/Kenya p95
+#     payment-load      → fake-provider payment storms
+#     notification-backlog → email backlog pressure
+#     zap-passive-surface → OpenAPI + Newman + FE edge public paths
+#     chaos             → Toxiproxy DB/Redis (fake provider only)
+#     cass-certification → CASS sign-off bundle
+#     fortress-gate     → aggregator; release freshness marker
+#   On a green schedule the ONLY intentional skip is daraja-sandbox-contract.
+#   Grey fortress after a red promo job is a GitHub needs-cascade, not a
+#   disabled schedule.
+#
+# DARAJA (opt-in only): workflow_dispatch + run_daraja_sandbox=true
 # =============================================================================
 
 jobs:
@@ -97,16 +128,16 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
+      - name: Install Poetry
+        run: pipx install poetry
+
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.13"
-
-      - name: Install Poetry
-        run: pip install poetry
+          cache: poetry
 
       - name: Validate Poetry files
-        run: |
-          poetry check --lock
+        run: poetry check --lock
 
   lint-security:
     name: lint-security
@@ -116,21 +147,23 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
+      - name: Install Poetry
+        run: pipx install poetry
+
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.13"
-
-      - name: Install Poetry
-        run: pip install poetry
+          cache: poetry
 
       - name: Install project dev dependencies
-        run: poetry install --with dev --no-root
+        run: bash scripts/ci/with_retry.sh 3 10 -- poetry install --with dev --no-root
 
       - name: Dependency vulnerability audit (CICD-SEC-3)
         run: |
-          pip install pip-audit
-          poetry self add poetry-plugin-export
+          bash scripts/ci/with_retry.sh 3 10 -- pip install pip-audit
+          bash scripts/ci/with_retry.sh 3 10 -- poetry self add poetry-plugin-export
           poetry export --without-hashes --with dev -o /tmp/requirements-audit.txt
+          # Do not wrap pip-audit in with_retry: findings are deterministic, not flakes.
           pip-audit -r /tmp/requirements-audit.txt --desc
 
       - name: Run Poetry lint and security gates
@@ -142,20 +175,57 @@ jobs:
           poetry run bandit -r . -x tests,.venv,.cache,frontend/node_modules -ll -ii
           poetry run python scripts/ci/secret_hygiene.py
 
+  # --- P0.5 build once, reuse everywhere ------------------------------------
+  # Cloudflare "install once, cache, reuse": build the three CI images a single
+  # time and push run-scoped GHCR tags. Every downstream job pulls instead of
+  # running `docker compose up --build`, turning ~13 cold builds into one.
+  build-images:
+    name: build-images
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: lint-security
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Start timer
+        run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push CI images once (web + frontend + frontend-test)
+        run: bash scripts/ci/build_ci_images.sh
+      - name: Record build-images wall-time
+        if: always()
+        run: bash scripts/ci/emit_job_timing.sh build-images
+
   # --- T1 -------------------------------------------------------------------
   django-smoke:
     name: django-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: lint-security
+    needs:
+      - lint-security
+      - build-images
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
 
-      - name: Build Docker services with plain output
-        run: docker compose --progress plain build web frontend
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
 
       - name: Start Docker services
         run: docker compose up -d
@@ -196,11 +266,20 @@ jobs:
     needs: django-smoke
     permissions:
       contents: read
+      packages: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
+      - run: docker compose up -d
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
       - name: Run bookings domain partition
@@ -226,7 +305,15 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
+      - run: docker compose up -d
       - run: docker compose exec -T web poetry run pytest billing/tests
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
@@ -242,7 +329,15 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
+      - run: docker compose up -d
       - run: docker compose exec -T web poetry run pytest checkout/tests
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
@@ -256,11 +351,20 @@ jobs:
     needs: django-smoke
     permissions:
       contents: read
+      packages: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
+      - run: docker compose up -d
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
       - name: Run API and unit partitions
@@ -284,11 +388,20 @@ jobs:
     needs: django-smoke
     permissions:
       contents: read
+      packages: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
+      - run: docker compose up -d
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
       - name: Run CASS calendar service gates
@@ -327,7 +440,15 @@ jobs:
         run: |
           bash scripts/ci/compose_reset.sh
           docker compose --profile test down --volumes --remove-orphans || true
-      - run: docker compose --profile test up -d --build frontend-test
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh frontend-test
+      - run: docker compose --profile test up -d frontend-test
       - name: npm dependency vulnerability audit (CICD-SEC-3)
         run: docker compose exec -T frontend-test npm audit --audit-level=high
       - run: docker compose exec -T frontend-test npm run lint:oxlint
@@ -341,23 +462,32 @@ jobs:
           docker compose --profile test down --volumes --remove-orphans || true
           bash scripts/ci/compose_reset.sh
 
-  # --- T3 money-path security (before heavy integration / load) -------------
+  # --- P3 money-path security (before heavy integration / load) -------------
+  # Backend-only needs: a red frontend-test must not cascade-skip fortress soak.
   payment-security:
     name: payment-security
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs:
+      - django-smoke
       - bookings-unit
       - billing-unit
       - checkout-unit
       - tests-api-unit
       - cass-calendar-service
-      - frontend-test
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
+      - run: docker compose up -d
       - run: docker compose exec -T web poetry run pytest tests/security
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
@@ -377,7 +507,15 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
+      - run: docker compose up -d
       - run: docker compose exec -T web poetry run pytest tests/integration
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
@@ -393,7 +531,15 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
+      - run: docker compose up -d
       - name: Run deterministic booking/billing/receipt pipeline
         run: |
           docker compose exec -T web poetry run pytest \
@@ -424,11 +570,20 @@ jobs:
       - receipt-pipeline
     permissions:
       contents: read
+      packages: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
+      - run: docker compose up -d
       - name: Wait for Docker health
         run: bash scripts/ci/wait_for_compose_health.sh
       - name: Migrate live web DB before Newman seeds
@@ -447,39 +602,64 @@ jobs:
       - if: always()
         run: bash scripts/ci/compose_reset.sh
 
+  # Job key kept for needs: stability; display name shows app-wide surface.
   zap-passive-newman:
-    name: zap-passive-newman
+    name: zap-passive-surface
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     if: >-
       github.event_name == 'schedule' ||
       (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
     needs: newman-acceptance
     permissions:
       contents: read
+      packages: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build
-      - name: Wait for Docker health
-        run: bash scripts/ci/wait_for_compose_health.sh
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
+      - name: Start API + frontend edge for passive surface scan
+        run: docker compose up -d db redis web worker frontend frontend-edge
+      - name: Wait for API + frontend edge
+        run: |
+          for i in $(seq 1 90); do
+            api_ok=0
+            fe_ok=0
+            if curl -fsS "http://127.0.0.1:8000/api/health-check/" >/dev/null; then api_ok=1; fi
+            if curl -fsS "http://127.0.0.1:3000/" >/dev/null; then fe_ok=1; fi
+            if [[ "${api_ok}" -eq 1 && "${fe_ok}" -eq 1 ]]; then
+              echo "api + frontend edge ready for ZAP"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "ZAP stack not ready"
+          docker compose logs --tail=200 db redis web frontend frontend-edge || true
+          exit 1
       - name: Migrate and seed live web DB for Newman-through-ZAP
         run: |
           bash scripts/ci/bootstrap_web_db.sh
           docker compose exec -T web poetry run python manage.py seed_api_acceptance_data
           docker compose exec -T web poetry run python manage.py seed_marketing_catalog
-      - name: Run ZAP passive Newman gate
-        run: pwsh -NoProfile -File scripts/ci/run_security_passive_gate.ps1 -Mode newman
+      - name: Run ZAP passive surface gate (API + Newman + FE public paths)
+        run: pwsh -NoProfile -File scripts/ci/run_security_passive_gate.ps1 -Mode all-passive
       - name: Upload ZAP passive reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zap-passive-newman-reports
+          name: zap-passive-surface-reports
           path: reports/security/zap/
           if-no-files-found: warn
       - if: failure()
-        run: docker compose logs --tail=300 web worker db redis || true
+        run: docker compose logs --tail=300 db redis web worker frontend frontend-edge || true
       - if: always()
         run: bash scripts/ci/compose_reset.sh
 
@@ -498,7 +678,15 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
+      - run: docker compose up -d
       - name: Run bounded fake-provider payment load tests
         run: |
           docker compose exec -T web poetry run pytest tests/load \
@@ -524,7 +712,15 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
+      - run: docker compose up -d
       - name: Run isolated 1000-notification backlog proof
         run: docker compose exec -T web poetry run pytest tests/load/test_notification_backlog_pressure.py -vv --durations=25
       - if: failure()
@@ -532,8 +728,9 @@ jobs:
       - if: always()
         run: bash scripts/ci/compose_reset.sh
 
+  # Job key `latency` kept for needs: stability; covers gallery/staff/calendar/etc.
   latency:
-    name: latency
+    name: platform-latency
     runs-on: ubuntu-latest
     timeout-minutes: 30
     if: >-
@@ -546,14 +743,23 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build
-      - run: docker compose exec -T web poetry run pytest tests/latency -m "latency" -vv
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
+      - run: docker compose up -d
+      - name: Run platform latency budgets (gallery/staff/calendar/booking/receipt)
+        run: docker compose exec -T web poetry run pytest tests/latency -m "latency" -vv
       - if: failure()
         run: docker compose logs --tail=300 web worker db redis || true
       - if: always()
         run: bash scripts/ci/compose_reset.sh
 
-  # --- T7 chaos -------------------------------------------------------------
+  # --- T7 chaos (not blocked by notification-backlog sibling) -----------------
   chaos:
     name: chaos
     runs-on: ubuntu-latest
@@ -563,14 +769,24 @@ jobs:
       (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
     needs:
       - payment-load-resilience
-      - notification-backlog-load
       - latency
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: |
           bash scripts/ci/compose_reset.sh
           docker compose -f docker-compose.yml -f docker-compose.toxiproxy.yml down --volumes --remove-orphans || true
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI web image (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web
       - name: Run Toxiproxy chaos gate (fake provider only)
         run: bash scripts/ci/run_chaos_toxiproxy.sh
       - if: failure()
@@ -608,7 +824,8 @@ jobs:
             "bookings-unit partition green" \
             "cass-calendar-service gates green" \
             "newman acceptance green" \
-            "latency partition includes calendar p95 gate" \
+            "platform-latency partition includes calendar/gallery/staff p95 gates" \
+            "zap-passive-surface (API+Newman+FE) green" \
             "payment-security partition includes calendar red-team" \
             "frontend-backend-trust and privacy-redaction gates green" \
             "frontend-test lint/type/build green"
@@ -618,21 +835,319 @@ jobs:
           name: cass-certification-report
           path: reports/ci/cass-certification.md
 
+  frontend-e2e:
+    name: frontend-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs:
+      - frontend-test
+      - django-smoke
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Start timer
+        run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+      - name: Reset leftover Compose state
+        run: bash scripts/ci/compose_reset.sh
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI images (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web frontend
+      - name: Start API + frontend edge stack
+        # Book/availability e2e needs Django+Redis; browser uses same-origin /api via frontend-edge.
+        run: docker compose up -d db redis web frontend frontend-edge
+      - name: Wait for API readiness + frontend edge
+        run: |
+          for i in $(seq 1 90); do
+            api_ok=0
+            fe_ok=0
+            if curl -fsS "http://127.0.0.1:8000/api/health-check/" >/dev/null; then
+              api_ok=1
+            fi
+            if curl -fsS "http://127.0.0.1:3000/" >/dev/null; then
+              fe_ok=1
+            fi
+            if [[ "${api_ok}" -eq 1 && "${fe_ok}" -eq 1 ]]; then
+              echo "api + frontend edge ready"
+              docker compose exec -T web poetry run python manage.py migrate --noinput
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "stack did not become ready"
+          docker compose logs --tail=200 db redis web frontend frontend-edge || true
+          exit 1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend deps + Playwright chromium
+        working-directory: frontend
+        run: |
+          # packageManager pin (npm@10.9.8) — keep lockfile strict on the same major as local/CI.
+          corepack enable
+          corepack prepare npm@10.9.8 --activate
+          bash ../scripts/ci/with_retry.sh 3 10 -- npm ci
+          bash ../scripts/ci/with_retry.sh 3 15 -- npx playwright install --with-deps chromium
+      - name: Run Playwright e2e (chromium)
+        working-directory: frontend
+        env:
+          CI: "true"
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+          PLAYWRIGHT_SKIP_WEBSERVER: "1"
+        run: npx playwright test --project=chromium
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-e2e-playwright
+          path: frontend/playwright-report/
+          if-no-files-found: warn
+      - name: Record frontend-e2e wall-time
+        if: always()
+        run: bash scripts/ci/emit_job_timing.sh frontend-e2e
+      - if: failure()
+        run: docker compose logs --tail=300 db redis web frontend frontend-edge || true
+      - if: always()
+        run: bash scripts/ci/compose_reset.sh
+
   docker-build:
     name: docker-build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     # Promotion lane: do not wait on fortress-only jobs (skipped on PR/push).
     needs:
       - newman-acceptance
       - frontend-test
+      - frontend-e2e
       - receipt-pipeline
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_digest: ${{ steps.push.outputs.digest }}
+      image_tag: ${{ steps.push.outputs.tag }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - run: docker build -t aesthetic-os-prod:latest .
-      - run: docker compose config -q
+      - name: Build production image
+        run: docker build -t aesthetic-os-prod:latest .
+      - name: Validate compose config
+        run: docker compose config -q
+      - name: Login to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push image digest to GHCR
+        id: push
+        run: |
+          set -euo pipefail
+          OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          REPO="$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')"
+          IMAGE="ghcr.io/${OWNER}/${REPO}/aesthetic-os-prod"
+          TAG="${{ github.sha }}"
+          docker tag aesthetic-os-prod:latest "${IMAGE}:${TAG}"
+          docker tag aesthetic-os-prod:latest "${IMAGE}:sha-${TAG}"
+          docker push "${IMAGE}:${TAG}"
+          docker push "${IMAGE}:sha-${TAG}"
+          DIGEST="$(docker image inspect --format='{{index .RepoDigests 0}}' "${IMAGE}:${TAG}" 2>/dev/null || true)"
+          if [[ -z "${DIGEST}" || "${DIGEST}" == "<no value>" ]]; then
+            DIGEST="${IMAGE}:${TAG}"
+            echo "::warning::RepoDigests empty after push; recording tag ${DIGEST}"
+          fi
+          echo "digest=${DIGEST}" >> "${GITHUB_OUTPUT}"
+          echo "tag=${IMAGE}:${TAG}" >> "${GITHUB_OUTPUT}"
+          mkdir -p reports/ci
+          {
+            echo "image_tag=${IMAGE}:${TAG}"
+            echo "image_digest=${DIGEST}"
+            echo "git_sha=${TAG}"
+          } > reports/ci/image-digest.txt
+          echo "Published ${DIGEST}"
+      - name: Upload image digest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-digest
+          path: reports/ci/image-digest.txt
+          if-no-files-found: error
 
-  # Opt-in only — real Daraja HTTP callback; never on push.
+  promotion-gate:
+    name: promotion-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+    needs:
+      - validate
+      - lint-security
+      - build-images
+      - django-smoke
+      - bookings-unit
+      - billing-unit
+      - checkout-unit
+      - tests-api-unit
+      - cass-calendar-service
+      - frontend-test
+      - payment-security
+      - checkout-billing-integration
+      - receipt-pipeline
+      - newman-acceptance
+      - frontend-e2e
+      - docker-build
+    steps:
+      - name: Assert all promotion jobs succeeded
+        env:
+          RESULTS: >-
+            validate=${{ needs.validate.result }}
+            lint-security=${{ needs.lint-security.result }}
+            build-images=${{ needs.build-images.result }}
+            django-smoke=${{ needs.django-smoke.result }}
+            bookings-unit=${{ needs.bookings-unit.result }}
+            billing-unit=${{ needs.billing-unit.result }}
+            checkout-unit=${{ needs.checkout-unit.result }}
+            tests-api-unit=${{ needs.tests-api-unit.result }}
+            cass-calendar-service=${{ needs.cass-calendar-service.result }}
+            frontend-test=${{ needs.frontend-test.result }}
+            payment-security=${{ needs.payment-security.result }}
+            checkout-billing-integration=${{ needs.checkout-billing-integration.result }}
+            receipt-pipeline=${{ needs.receipt-pipeline.result }}
+            newman-acceptance=${{ needs.newman-acceptance.result }}
+            frontend-e2e=${{ needs.frontend-e2e.result }}
+            docker-build=${{ needs.docker-build.result }}
+        run: |
+          set -euo pipefail
+          failed=0
+          for pair in ${RESULTS}; do
+            name="${pair%%=*}"
+            result="${pair#*=}"
+            echo "${name}: ${result}"
+            if [[ "${result}" != "success" ]]; then
+              failed=1
+            fi
+          done
+          if [[ "${failed}" -ne 0 ]]; then
+            echo "::error::promotion-gate red — one or more promotion jobs did not succeed"
+            exit 1
+          fi
+          echo "promotion-gate green"
+
+  coverage-map:
+    name: coverage-map
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true')
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Emit FE/BE/money-path coverage map
+        run: |
+          mkdir -p reports/ci
+          python3 - <<'PY'
+          from pathlib import Path
+          Path("reports/ci/coverage-map.md").write_text(
+          """# Secure Enterprise CI — coverage map
+
+          Chart wires show *when* jobs run. This map shows *what* they exercise.
+
+          | Job | Frontend | Backend | Money-path |
+          |-----|----------|---------|------------|
+          | build-images | one build of FE image | one build of web image | shared prebuilt images |
+          | frontend-test / frontend-e2e | lint/unit/type/build + Playwright | via edge→API | book handoff UI |
+          | bookings/billing/checkout/api/cass units | — | domain partitions | calendar/checkout units |
+          | payment-security | — | abuse/authz | STK/webhook/throttle/RBAC |
+          | newman-acceptance | — | Calendar/Handoff API | booking contracts |
+          | platform-latency | — | gallery/staff/legal/calendar | Kenya booking/receipt p95 |
+          | payment-load / notification-backlog | — | Celery/email pressure | fake-provider storms |
+          | zap-passive-surface | `/` `/services` `/book` passive | OpenAPI + Newman | — |
+          | chaos | — | Toxiproxy DB/Redis | fake M-Pesa callback chaos |
+          | promotion-gate | merge check | merge check | merge check |
+          | fortress-gate | release soak | release soak | release soak |
+          | daraja-sandbox-contract | — | — | real Daraja (opt-in only) |
+
+          On green **schedule**, expected skip set = `{daraja-sandbox-contract}` only.
+          """.replace("          ", ""),
+              encoding="utf-8",
+          )
+          print("wrote reports/ci/coverage-map.md")
+          PY
+      - name: Upload coverage map
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-coverage-map
+          path: reports/ci/coverage-map.md
+          if-no-files-found: error
+
+  fortress-gate:
+    name: fortress-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >-
+      always() &&
+      (github.event_name == 'schedule' ||
+       (github.event_name == 'workflow_dispatch' && inputs.run_full_fortress == 'true'))
+    needs:
+      - latency
+      - payment-load-resilience
+      - notification-backlog-load
+      - zap-passive-newman
+      - chaos
+      - cass-certification
+    steps:
+      - name: Assert fortress jobs succeeded (Daraja may stay skipped)
+        env:
+          RESULTS: >-
+            platform-latency=${{ needs.latency.result }}
+            payment-load-resilience=${{ needs.payment-load-resilience.result }}
+            notification-backlog-load=${{ needs.notification-backlog-load.result }}
+            zap-passive-surface=${{ needs.zap-passive-newman.result }}
+            chaos=${{ needs.chaos.result }}
+            cass-certification=${{ needs.cass-certification.result }}
+        run: |
+          set -euo pipefail
+          echo "Expected intentional skip on schedule: daraja-sandbox-contract only"
+          failed=0
+          for pair in ${RESULTS}; do
+            name="${pair%%=*}"
+            result="${pair#*=}"
+            echo "${name}: ${result}"
+            if [[ "${result}" != "success" ]]; then
+              failed=1
+            fi
+          done
+          if [[ "${failed}" -ne 0 ]]; then
+            echo "::error::fortress-gate red — one or more fortress jobs did not succeed"
+            exit 1
+          fi
+          echo "fortress-gate green (daraja remains opt-in)"
+
+  # Best-effort cleanup of run-scoped ':ci-<sha>' GHCR tags pushed by
+  # build-images. Non-blocking (never a required check); a scheduled retention
+  # policy is the reliable backstop (docs/ops/CI_WORKFLOW_DESIGN.md).
+  ci-images-cleanup:
+    name: ci-images-cleanup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: always()
+    needs:
+      - promotion-gate
+      - fortress-gate
+    permissions:
+      contents: read
+      packages: write
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Delete run-scoped CI image tags (best-effort)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/cleanup_ci_images.sh
+
+  # Opt-in only — real Daraja HTTP callback; never on push/schedule.
   daraja-sandbox-contract:
     name: daraja-sandbox-contract
     runs-on: ubuntu-latest
@@ -642,6 +1157,9 @@ jobs:
     # CICD-SEC-5: isolates real third-party (Daraja sandbox) secrets behind a
     # dedicated GitHub Environment with required-reviewer human approval gate.
     environment: daraja-sandbox
+    permissions:
+      contents: read
+      packages: read
     env:
       DARAJA_ENV: sandbox
       DARAJA_CONSUMER_KEY: ${{ secrets.DARAJA_CONSUMER_KEY }}
@@ -656,7 +1174,15 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Reset leftover Compose state
         run: bash scripts/ci/compose_reset.sh
-      - run: docker compose up -d --build web worker db redis
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull prebuilt CI web image (build-once reuse)
+        run: bash scripts/ci/pull_ci_images.sh web
+      - run: docker compose up -d web worker db redis
       - name: Run opt-in Daraja sandbox contract
         run: docker compose exec -T web poetry run pytest tests/external -m "daraja_sandbox" --run-external -vv
       - if: failure()

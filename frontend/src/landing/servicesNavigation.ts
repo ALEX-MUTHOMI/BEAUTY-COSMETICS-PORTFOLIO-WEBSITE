@@ -1,3 +1,7 @@
+/**
+ * Module: servicesNavigation
+ * Handles navigation for landing services.
+ */
 import { containsUnsafeDecodedToken } from '../security/textGuards'
 
 /** Canonical routes and hash allowlists for the services page (no user-controlled IDs). */
@@ -63,3 +67,4 @@ export function categoryHrefForSingle(name: string): string {
   }
   return `${SERVICES_ROUTES.page}#${category}`
 }
+

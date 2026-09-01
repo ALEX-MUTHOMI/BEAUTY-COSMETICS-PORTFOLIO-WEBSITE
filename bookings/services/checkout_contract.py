@@ -88,7 +88,7 @@ def _checkout_customer(booking):
         except IntegrityError:
             user = User.objects.filter(email=email).first()
             if user is None:
-                raise ValidationError(GENERIC_PAYMENT_ERROR)
+                raise ValidationError(GENERIC_PAYMENT_ERROR) from None
     return user
 
 
@@ -192,7 +192,7 @@ class BookingCheckoutContractService:
                 except IntegrityError:
                     session = CheckoutSession.objects.select_for_update().get(idempotency_key=idempotency_key)
                     if not _is_matching_checkout(session, booking, snapshot):
-                        raise ValidationError(GENERIC_PAYMENT_ERROR)
+                        raise ValidationError(GENERIC_PAYMENT_ERROR) from None
 
                 record_booking_policy_acceptance(
                     booking=booking,

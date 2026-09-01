@@ -28,6 +28,8 @@ def test_receipt_pdf_artifact_uses_ci_writable_configured_storage(settings, tmp_
 
     assert pdf.startswith(b"%PDF-")
     assert artifact_path.exists()
+    assert not artifact_path.read_bytes().startswith(b"%PDF-")
+    assert ReceiptPDFService.read_artifact(artifact).startswith(b"%PDF-")
     assert str(artifact_path).startswith(str(tmp_path))
     assert artifact.status == ReceiptPDFArtifact.Status.READY
-    assert artifact.size_bytes == artifact_path.stat().st_size
+    assert artifact.size_bytes == len(pdf)

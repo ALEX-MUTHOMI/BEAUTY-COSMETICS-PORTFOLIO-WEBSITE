@@ -1,7 +1,7 @@
 import hashlib
 import logging
-import re
 from datetime import timedelta
+from time import perf_counter
 from zoneinfo import ZoneInfo
 
 from django.core.exceptions import ValidationError
@@ -17,12 +17,13 @@ from bookings.models import (
     CustomerProfile,
     Service,
 )
-from bookings.privacy import hmac_email_hash, hmac_phone_hash, normalize_email, normalize_phone
+from bookings.privacy import hmac_email_hash, hmac_phone_hash, normalize_email, normalize_phone, strip_markup
 from bookings.services.availability import AvailabilityService
 from bookings.services.bundles import get_full_package_summary, validate_service_bundle
 from bookings.services.calendar_cache import invalidate_calendar_capacity_for_booking
 from bookings.services.circuit_breaker import BookingCircuitBreaker
 from bookings.services.day_policy import lock_and_validate_day_capacity
+from bookings.services.query_observability import count_db_queries
 
 BUSINESS_TZ = ZoneInfo("Africa/Nairobi")
 UTC = ZoneInfo("UTC")
@@ -32,9 +33,7 @@ logger = logging.getLogger("bookings.holds")
 
 
 def _safe_text(value, max_length=80):
-    cleaned = re.sub(r"<[^>]*>", "", str(value or ""))
-    cleaned = re.sub(r"[\x00-\x1f\x7f]", " ", cleaned)
-    return " ".join(cleaned.split())[:max_length] or "Customer"
+    return strip_markup(value, max_length=max_length) or "Customer"
 
 
 def _normalize_start(value):
@@ -137,10 +136,46 @@ class BookingHoldService:
         idempotency_key,
         request_context=None,
     ):
+        started = perf_counter()
         request_context = request_context or {}
         redis_client = request_context.get("redis_client")
         _safe_counter(redis_client, "booking:holds:attempted:10m")
 
+        with count_db_queries() as queries:
+            result = cls._create_hold_body(
+                service_public_id=service_public_id,
+                resource_public_id=resource_public_id,
+                starts_at=starts_at,
+                customer_payload=customer_payload,
+                idempotency_key=idempotency_key,
+                request_context=request_context,
+                redis_client=redis_client,
+            )
+            query_count = queries["n"]
+
+        logger.info(
+            "booking.hold.timing",
+            extra={
+                "booking_public_id": result.get("booking_public_id"),
+                "duration_ms": int((perf_counter() - started) * 1000),
+                "query_count": query_count,
+                "request_id": request_context.get("request_id"),
+            },
+        )
+        return result
+
+    @classmethod
+    def _create_hold_body(
+        cls,
+        *,
+        service_public_id,
+        resource_public_id,
+        starts_at,
+        customer_payload,
+        idempotency_key,
+        request_context,
+        redis_client,
+    ):
         service, resource = cls._get_service_and_resource(service_public_id, resource_public_id)
         starts_at_utc = _normalize_start(starts_at)
         ends_at_utc = starts_at_utc + timedelta(minutes=service.duration_minutes)

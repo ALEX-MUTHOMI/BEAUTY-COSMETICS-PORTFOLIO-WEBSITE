@@ -55,3 +55,27 @@ def test_candidate_generation_uses_free_intervals_only():
 
     starts = [candidate[0].strftime("%H:%M") for candidate in candidates]
     assert starts == ["07:00", "07:30", "08:00", "10:00", "10:30", "11:00"]
+
+
+def test_candidates_with_buffers_never_overlap_busy_core():
+    """Invariant: buffered service windows stay inside free intervals only."""
+    availability = _module()
+    free = availability.subtract_intervals(
+        [(_dt(7), _dt(12))],
+        [(_dt(9), _dt(10))],
+    )
+    candidates = availability.generate_candidates_from_free_intervals(
+        free,
+        duration_minutes=60,
+        buffer_before_minutes=15,
+        buffer_after_minutes=15,
+        slot_interval_minutes=30,
+    )
+    before = timedelta(minutes=15)
+    after = timedelta(minutes=15)
+    busy = [(_dt(9), _dt(10))]
+    for start, end in candidates:
+        window_start = start - before
+        window_end = end + after
+        for busy_start, busy_end in busy:
+            assert window_end <= busy_start or window_start >= busy_end

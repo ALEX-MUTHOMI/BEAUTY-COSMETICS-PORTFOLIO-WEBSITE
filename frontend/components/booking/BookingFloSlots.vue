@@ -9,16 +9,19 @@
 
     <div
       v-if="loading"
-      class="flo-slots__skeleton"
+      class="flo-slots__pending"
       role="status"
-      aria-label="Loading open hours"
+      aria-live="polite"
+      aria-label="Checking open hours"
     >
-      <div
-        v-for="n in 3"
-        :key="n"
-        class="flo-slots__skel-btn flo-slots__skel-shimmer"
-        aria-hidden="true"
-      />
+      <p class="flo-slots__loading">Checking open hours…</p>
+      <div class="flo-slots__skeleton" aria-hidden="true">
+        <div
+          v-for="n in 3"
+          :key="n"
+          class="flo-slots__skel-btn flo-slots__skel-shimmer"
+        />
+      </div>
     </div>
 
     <div v-else-if="slots.length === 0" class="flo-slots__empty">
@@ -240,6 +243,14 @@ const selectionSummary = computed(() => {
   color: var(--color-muted);
 }
 
+.flo-slots__pending {
+  margin-top: 0.85rem;
+}
+
+.flo-slots__pending .flo-slots__loading {
+  margin: 0 0 0.55rem;
+}
+
 .flo-slots__skeleton {
   margin-top: 0.85rem;
   display: grid;
@@ -290,8 +301,8 @@ const selectionSummary = computed(() => {
 .flo-slots__band {
   padding: 0.7rem 0.75rem 0.8rem;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(39, 37, 42, 0.06);
+  background: var(--color-paper, #e5e1dc);
+  border: 1px solid var(--color-line);
 }
 
 .flo-slots__band-head {
@@ -334,7 +345,7 @@ const selectionSummary = computed(() => {
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--color-line);
   border-radius: 10px;
-  background: #fff;
+  background: var(--color-parchment, #ddd8d3);
   color: var(--color-ink);
   cursor: pointer;
   text-align: left;

@@ -4,16 +4,21 @@
 
     <div class="service-treatment__body">
       <div class="service-treatment__row">
-        <h3 class="service-treatment__name">{{ name }}</h3>
-        <p class="service-treatment__duration">{{ duration }}</p>
-        <p class="service-treatment__price">{{ price }}</p>
-        <SiteButton
-          :to="bookTo"
-          variant="primary"
-          class="service-treatment__book"
-        >
-          Book
-        </SiteButton>
+        <div class="service-treatment__info">
+          <h3 class="service-treatment__name">{{ name }}</h3>
+          <p class="service-treatment__duration">{{ duration }}</p>
+        </div>
+
+        <div class="service-treatment__action">
+          <p class="service-treatment__price">{{ price }}</p>
+          <SiteButton
+            :to="bookTo"
+            variant="primary"
+            class="service-treatment__book"
+          >
+            Book
+          </SiteButton>
+        </div>
       </div>
       <p v-if="highlightLine" class="service-treatment__highlights">
         {{ highlightLine }}
@@ -48,33 +53,42 @@ const highlightLine = computed(() =>
 .service-treatment {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 0.85rem 1rem;
-  align-items: start;
-  margin: 0;
-  padding: 1.05rem 0;
-  border-bottom: 1px solid rgba(248, 242, 238, 0.12);
+  gap: 0.75rem 0.95rem;
+  align-items: center;
+  margin: 0 0 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: rgba(38, 30, 32, 0.85);
+  border: 1px solid rgba(222, 150, 141, 0.2);
   text-align: left;
-  transition: background-color 0.18s ease;
+  box-shadow: 0 4px 14px rgba(20, 15, 17, 0.16);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
-.service-treatment:first-child {
-  border-top: 1px solid rgba(248, 242, 238, 0.12);
+.service-treatment:last-child {
+  margin-bottom: 0;
 }
 
 .service-treatment:hover {
-  background: rgba(222, 150, 141, 0.06);
+  transform: translateY(-1px);
+  background: rgba(46, 36, 38, 0.95);
+  border-color: var(--color-rose, #b07a71);
+  box-shadow: 0 6px 18px rgba(20, 15, 17, 0.26);
 }
 
 .service-treatment:focus-within {
-  background: rgba(222, 150, 141, 0.08);
+  border-color: var(--color-rose);
   outline: none;
 }
 
 .service-treatment__badge {
-  margin-top: 0.15rem;
   font: 700 0.72rem/1 var(--font-body);
-  letter-spacing: 0.14em;
-  color: var(--color-rose);
+  letter-spacing: 0.12em;
+  color: var(--color-rose, #b07a71);
 }
 
 .service-treatment__body {
@@ -82,70 +96,86 @@ const highlightLine = computed(() =>
 }
 
 .service-treatment__row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.35rem 1rem;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.service-treatment__info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem 0.75rem;
 }
 
 .service-treatment__name {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.08rem, 2.4vw, 1.28rem);
+  font-size: clamp(1.02rem, 2.2vw, 1.18rem);
   font-weight: 500;
-  line-height: 1.3;
-  color: #fff;
+  line-height: 1.25;
+  color: #fcf8f5;
 }
 
 .service-treatment__duration {
   margin: 0;
-  font: 600 0.72rem/1.4 var(--font-body);
+  font: 600 0.68rem/1.3 var(--font-body);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 248, 244, 0.62);
+  color: rgba(255, 248, 244, 0.58);
+}
+
+.service-treatment__action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
 }
 
 .service-treatment__price {
   margin: 0;
-  font: 700 0.92rem/1.3 var(--font-body);
+  font: 700 0.9rem/1.2 var(--font-body);
   color: #f0b8ac;
 }
 
-.service-treatment__book {
-  justify-self: start;
-  margin-top: 0.35rem;
-}
-
 .service-treatment__book :deep(.site-btn) {
-  min-height: 2.5rem;
-  padding-inline: 1.15rem;
-  font-size: 0.72rem;
+  min-height: 2.15rem;
+  padding-inline: 0.95rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  border-radius: 6px;
 }
 
 .service-treatment__highlights {
-  margin: 0.55rem 0 0;
-  font: 400 0.82rem/1.5 var(--font-body);
-  color: rgba(255, 248, 244, 0.7);
+  margin: 0.35rem 0 0;
+  font: 400 0.78rem/1.45 var(--font-body);
+  color: rgba(255, 248, 244, 0.65);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .service-treatment {
-    padding: 1.15rem 0.65rem;
+    padding: 0.85rem 1.15rem;
   }
 
   .service-treatment__row {
-    grid-template-columns: minmax(0, 1.4fr) auto auto auto;
-    gap: 0.75rem 1.25rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 
-  .service-treatment__duration,
+  .service-treatment__info {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .service-treatment__action {
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    gap: 1.25rem;
+  }
+
   .service-treatment__price {
     white-space: nowrap;
-  }
-
-  .service-treatment__book {
-    margin-top: 0;
-    justify-self: end;
   }
 }
 

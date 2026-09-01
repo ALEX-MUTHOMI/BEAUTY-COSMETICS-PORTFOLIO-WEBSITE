@@ -1,5 +1,5 @@
 <template>
-  <footer id="contact" class="site-footer">
+  <footer id="contact" class="site-footer" aria-label="Site footer">
     <div class="site-footer__glow" aria-hidden="true" />
 
     <div class="site-footer__inner">
@@ -47,6 +47,8 @@
         <div class="site-footer__link-grid">
           <NuxtLink to="/">Home</NuxtLink>
           <NuxtLink to="/services">Services</NuxtLink>
+          <NuxtLink to="/faq">FAQ</NuxtLink>
+          <NuxtLink to="/support">Support</NuxtLink>
           <NuxtLink :to="SERVICES_ROUTES.fullPackages">Packages</NuxtLink>
           <NuxtLink :to="SERVICES_ROUTES.singleSessions">Treatments</NuxtLink>
         </div>
@@ -169,7 +171,7 @@ import {
 } from '@/landing/landingContent'
 import { SERVICES_ROUTES } from '@/landing/servicesNavigation'
 import { trackFunnelEvent } from '@/landing/funnelEvents'
-import { useLandingBookCta } from '@/landing/useLandingBookCta'
+import { useLandingBookCta } from '~/composables/useLandingBookCta'
 
 const year = new Date().getFullYear()
 

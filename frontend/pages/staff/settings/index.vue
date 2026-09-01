@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import StaffSettingsSecurity from '../../../src/staff/StaffSettingsSecurity.vue'
+import StaffSettingsSecurity from '~/components/staff/StaffSettingsSecurity.vue'
 
 definePageMeta({ middleware: ['staff-auth'], layout: false })
 

@@ -1,16 +1,15 @@
-import re
 from html import escape
 
 from django.conf import settings
 
 from bookings.models import GalleryCategory, GalleryImage
+from bookings.privacy import neutralize_script_payload, strip_markup
 from bookings.services.gallery_storage import public_variant_url
 
 
 def _safe_text(value, max_length=500):
-    text = re.sub(r"<[^>]*>", "", str(value or ""))
-    text = re.sub(r"(?i)alert\s*\([^)]*\)|script|javascript:|onerror|onload", "", text)
-    return escape(text[:max_length], quote=True)
+    text = neutralize_script_payload(strip_markup(value, max_length=max_length))
+    return escape(text, quote=True)
 
 
 def image_public_payload(image):
@@ -41,9 +40,15 @@ def image_public_payload(image):
 
 def _published_queryset():
     return (
-        GalleryImage.objects.filter(status=GalleryImage.Status.PUBLISHED)
+        GalleryImage.objects.filter(
+            status=GalleryImage.Status.PUBLISHED,
+            category__is_active=True,
+            variants__is_public=True,
+        )
+        .exclude(category__slug__startswith="api-acceptance")
         .select_related("category", "subcategory")
         .prefetch_related("variants")
+        .distinct()
         .order_by("-is_featured", "sort_order", "-published_at", "-created_at")
     )
 

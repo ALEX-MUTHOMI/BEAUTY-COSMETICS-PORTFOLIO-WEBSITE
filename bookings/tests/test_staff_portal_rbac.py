@@ -80,6 +80,12 @@ def test_beautician_only_sees_assigned_bookings():
     assert str(booking_a.public_id) in ids
     assert str(booking_b.public_id) not in ids
 
+    week = beautician_client.get(f"/api/staff/bookings/week/?start_date={day}", secure=True)
+    assert week.status_code == 200
+    # Beautician week overview must not include unassigned booking counts.
+    total_week_appts = sum(int(d.get("appointments_count", 0)) for d in week.json()["days"])
+    assert total_week_appts == 1
+
     detail_b = beautician_client.get(f"/api/staff/bookings/{booking_b.public_id}/", secure=True)
     assert detail_b.status_code == 404
 

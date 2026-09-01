@@ -3,7 +3,7 @@ import copy
 import pytest
 from django.test import Client, override_settings
 
-from bookings.models import GalleryCategory, GalleryImage
+from bookings.models import GalleryCategory, GalleryImage, GalleryImageVariant
 from bookings.tests.test_staff_auth_helpers import make_staff
 
 
@@ -16,13 +16,24 @@ def test_gallery_public_output_pressure_stays_capped(settings):
         staff = make_staff()
         category = GalleryCategory.objects.create(name="Makeup", slug="makeup")
         for index in range(100):
-            GalleryImage.objects.create(
+            image = GalleryImage.objects.create(
                 category=category,
                 uploaded_by=staff,
                 title=f"Image {index}",
                 status=GalleryImage.Status.PUBLISHED,
                 show_on_homepage=True,
                 is_featured=True,
+            )
+            GalleryImageVariant.objects.create(
+                gallery_image=image,
+                variant_type=GalleryImageVariant.VariantType.HERO,
+                storage_key=f"gallery/variants/hero_{index}.webp",
+                width=1600,
+                height=1200,
+                format="webp",
+                size_bytes=1000,
+                sha256_hash="b" * 64,
+                is_public=True,
             )
 
         for _ in range(100):

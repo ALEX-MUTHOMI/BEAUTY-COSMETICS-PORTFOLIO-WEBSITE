@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import StaffDashboard from '../../src/staff/StaffDashboard.vue'
+import StaffDashboard from '~/components/staff/StaffDashboard.vue'
 
 definePageMeta({ middleware: ['staff-auth'], layout: false })
 

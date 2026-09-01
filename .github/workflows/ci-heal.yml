@@ -1,0 +1,85 @@
+name: CI Self-Heal (advisory)
+
+# EXPERIMENTAL, money-path-safe self-heal lane. Separate workflow so it can never
+# join promotion-gate / fortress-gate. Manual dispatch only — never workflow_run
+# checkout of an untrusted head SHA with contents: write.
+# See docs/ops/CI_WORKFLOW_DESIGN.md §5.
+
+on:
+  workflow_dispatch:
+    inputs:
+      failed_sha:
+        description: "Commit SHA that failed CI (defaults to the dispatch ref)"
+        required: false
+        default: ""
+      failed_run_id:
+        description: "Failed CI run id to pull logs from (optional)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-heal-${{ github.event.inputs.failed_sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  ci-heal:
+    name: ci-heal (experimental, non-blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    steps:
+      - name: Validate heal SHA
+        id: sha
+        env:
+          RAW_SHA: ${{ github.event.inputs.failed_sha || github.sha }}
+        run: |
+          SHA="$(printf '%s' "${RAW_SHA}" | tr 'A-F' 'a-f' | tr -d '[:space:]')"
+          if ! printf '%s' "${SHA}" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::Heal target must be a 40-char commit SHA."
+            exit 1
+          fi
+          echo "sha=${SHA}" >> "${GITHUB_OUTPUT}"
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ steps.sha.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Confirm SHA belongs to this repository
+        env:
+          HEAL_SHA: ${{ steps.sha.outputs.sha }}
+        run: |
+          git fetch --no-tags origin development staging main
+          if ! git cat-file -t "${HEAL_SHA}" >/dev/null 2>&1; then
+            echo "::error::SHA is not present in this repository."
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "${HEAL_SHA}" origin/development \
+            && ! git merge-base --is-ancestor "${HEAL_SHA}" origin/staging \
+            && ! git merge-base --is-ancestor "${HEAL_SHA}" origin/main; then
+            echo "::error::SHA is not an ancestor of development, staging, or main."
+            exit 1
+          fi
+
+      - name: Download failed run logs (best-effort)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.event.inputs.failed_run_id }}
+        run: |
+          if [ -n "${RUN_ID:-}" ]; then
+            gh run view "${RUN_ID}" --log-failed > /tmp/ci-failed.log 2>/dev/null || true
+          fi
+
+      - name: Propose advisory fix (never auto-merges)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAL_SHA: ${{ steps.sha.outputs.sha }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: bash scripts/ci/ci_heal.sh

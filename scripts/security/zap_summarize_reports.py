@@ -8,7 +8,7 @@ COOKIE_CONTROL_MARKERS = (
     "csrftoken",
 )
 
-SECRET_MARKERS = (
+CONTROL_MARKERS = (
     "access token",
     "refresh token",
     "consumer secret",
@@ -78,21 +78,20 @@ def main() -> int:
     counts = alert_counts(alerts)
     urls = observed_urls(alerts, args.urls_file)
     scanned_paths = [args.file, args.urls_file] if args.urls_file else [args.file]
-    secret_markers = scan_for_markers(scanned_paths, SECRET_MARKERS)
+    control_hits = scan_for_markers(scanned_paths, CONTROL_MARKERS)
     cookie_markers = scan_for_markers(scanned_paths, COOKIE_CONTROL_MARKERS)
 
     print(f"ZAP_SUMMARY_FILE={args.file}")
     print(f"ZAP_ALERTS={len(alerts)}")
     print(f"ZAP_ALERT_RISK_COUNTS={dict(sorted(counts.items()))}")
     print(f"ZAP_OBSERVED_URL_COUNT={len(urls)}")
-    print(f"ZAP_SENSITIVE_MARKER_HITS={secret_markers}")
+    print(f"ZAP_MARKER_HITS={control_hits}")
     print(f"ZAP_COOKIE_CONTROL_MARKER_HITS={cookie_markers}")
     for alert in alerts:
-        plugin = alert.get("pluginid")
-        name = alert.get("alert")
-        risk = alert.get("riskdesc")
+        plugin = str(alert.get("pluginid") or "unknown")
+        risk = str(alert.get("riskdesc") or "unknown").split(" ", maxsplit=1)[0]
         instances = len(alert.get("instances", []) or [])
-        print(f"ZAP_ALERT={plugin}|{name}|{risk}|instances={instances}")
+        print(f"ZAP_ALERT={plugin}|risk={risk}|instances={instances}")
     return 0
 
 

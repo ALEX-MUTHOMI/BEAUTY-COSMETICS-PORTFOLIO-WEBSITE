@@ -30,4 +30,32 @@ describe('landing security headers contract', () => {
     expect(objectSrc).toBe("'none'")
     expect(baseUri).toBe("'none'")
   })
+
+  it('matches live nuxt.config object-src and base-uri none', async () => {
+    const { readFileSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const config = readFileSync(join(__dirname, '../../nuxt.config.ts'), 'utf8')
+    expect(config).toMatch(/'object-src':\s*\["'none'"\]/)
+    expect(config).toMatch(/'base-uri':\s*\["'none'"\]/)
+  })
+
+  it('declares Permissions-Policy camera/microphone/geolocation empty', async () => {
+    const { readFileSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const config = readFileSync(join(__dirname, '../../nuxt.config.ts'), 'utf8')
+    expect(config).toMatch(/permissionsPolicy:\s*\{/)
+    expect(config).toMatch(/camera:\s*\[\]/)
+    expect(config).toMatch(/microphone:\s*\[\]/)
+    expect(config).toMatch(/geolocation:\s*\[\]/)
+  })
+
+  it('gates CSP report-only and Trusted Types prep behind env flags', async () => {
+    const { readFileSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const config = readFileSync(join(__dirname, '../../nuxt.config.ts'), 'utf8')
+    expect(config).toContain('NUXT_PUBLIC_CSP_REPORT_ONLY')
+    expect(config).toContain('NUXT_PUBLIC_TRUSTED_TYPES_PREP')
+    expect(config).toContain('Content-Security-Policy-Report-Only')
+    expect(config).toContain("require-trusted-types-for")
+  })
 })

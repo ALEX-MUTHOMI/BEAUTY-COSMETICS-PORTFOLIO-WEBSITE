@@ -106,3 +106,12 @@ jobs:
 - Staff session hardening details
 
 Request a private walkthrough in interviews for depth on these areas.
+
+
+## Booking Flow Snippet
+
+```vue
+<template>
+  <button @click="startBooking" aria-label="Start booking process">Book Now</button>
+</template>
+```

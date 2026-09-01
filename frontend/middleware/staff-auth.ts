@@ -1,3 +1,7 @@
+/**
+ * Middleware: staff-auth
+ * Ensures that the user has staff privileges before accessing routes.
+ */
 import { getStaffMe } from '../src/staff/staffPortalApi'
 
 /**
@@ -27,3 +31,4 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo(`/staff/login?next=${encodeURIComponent(to.fullPath)}`)
   }
 })
+

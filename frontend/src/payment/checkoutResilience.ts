@@ -1,3 +1,7 @@
+/**
+ * Module: checkoutResilience
+ * Checkout retry and resilience logic.
+ */
 export type CheckoutBackendStatus =
   | 'created'
   | 'payment_pending'
@@ -70,3 +74,4 @@ export function retryAfterDelayMs(
 export function buildStablePaymentRetryKey(checkoutId: string, existingKey?: string): string {
   return existingKey || `stk:${checkoutId}`
 }
+

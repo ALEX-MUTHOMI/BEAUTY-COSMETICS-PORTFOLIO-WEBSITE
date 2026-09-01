@@ -1,14 +1,17 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 
-import StaffDashboard from './StaffDashboard.vue'
-import StaffLoginPanel from './StaffLoginPanel.vue'
-import StaffPortalShell from './StaffPortalShell.vue'
-import StaffReschedulesWorkspace from './StaffReschedulesWorkspace.vue'
-import StaffSettingsSecurity from './StaffSettingsSecurity.vue'
-import { staffLocalDateIso } from './staffLocalDate'
-import { clientStaffPasswordHint, mapStaffPasswordApiMessage } from './staffPasswordHints'
-import { dayCapacityBanner } from './statusCopy'
+import StaffDashboard from '../../components/staff/StaffDashboard.vue'
+import StaffLoginPanel from '../../components/staff/StaffLoginPanel.vue'
+import StaffPortalShell from '../../components/staff/StaffPortalShell.vue'
+import StaffReschedulesWorkspace from '../../components/staff/StaffReschedulesWorkspace.vue'
+import StaffSettingsSecurity from '../../components/staff/StaffSettingsSecurity.vue'
+import {
+  clientStaffPasswordHint,
+  dayCapacityBanner,
+  mapStaffPasswordApiMessage,
+  staffLocalDateIso,
+} from './staffUxHelpers'
 
 vi.mock('./staffAuth', async () => {
   const actual = await vi.importActual<typeof import('./staffAuth')>('./staffAuth')

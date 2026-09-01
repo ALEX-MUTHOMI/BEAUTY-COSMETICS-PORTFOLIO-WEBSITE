@@ -2,8 +2,25 @@
   <main class="book-page">
     <header class="book-hero" :class="{ 'book-hero--compact': checkoutStep === 'pick' }">
       <div class="book-hero__inner">
-        <p class="label">Book online</p>
-        <h1>{{ pageTitle }}</h1>
+        <div class="title-lockup">
+          <img
+            src="/images/flower.png"
+            alt=""
+            class="title-lockup__flower title-lockup__flower--left"
+            width="40"
+            height="40"
+            aria-hidden="true"
+          />
+          <h1>{{ pageTitle }}</h1>
+          <img
+            src="/images/flower.png"
+            alt=""
+            class="title-lockup__flower title-lockup__flower--right"
+            width="40"
+            height="40"
+            aria-hidden="true"
+          />
+        </div>
         <p v-if="pageLead" class="book-hero__lead">{{ pageLead }}</p>
       </div>
     </header>
@@ -33,6 +50,7 @@
             {{ handoff.type === 'package' ? 'Package' : 'Treatment' }}
           </p>
           <h2>{{ selectionName }}</h2>
+          <p class="book-summary__capacity" data-testid="book-capacity-hint">{{ capacityHint }}</p>
           <p v-if="flow.selection.value" class="book-summary__meta">
             {{ flow.selection.value.durationMinutes }} min
           </p>
@@ -85,7 +103,7 @@
             :range="flow.calendar.value?.range ?? null"
             :loading="flow.loading.value"
             :interaction-locked="calendarLocked"
-            :capacity-hint="capacityHint"
+            capacity-hint=""
             aria-label="Pick your visit date"
             @select="onSelectDate"
           />
@@ -146,11 +164,11 @@ import { computed, nextTick, ref, toRef, watch, type Ref } from 'vue'
 import BookingCustomerPanel from './BookingCustomerPanel.vue'
 import BookingFloCalendar from './BookingFloCalendar.vue'
 import BookingFloSlots from './BookingFloSlots.vue'
-import { useBookCheckout } from '@/booking/useBookCheckout'
-import { useBookFlow } from '@/booking/useBookFlow'
-import { GENERIC_BOOKING_THROTTLE_ERROR } from '@/booking/bookingRequestGovernor'
-import { SINGLE_DAYS_LABEL } from '@/landing/landingContent'
-import { useLandingContact } from '@/landing/useLandingContact'
+import { useBookCheckout } from '~/composables/useBookCheckout'
+import { useBookFlow } from '~/composables/useBookFlow'
+import { GENERIC_BOOKING_THROTTLE_ERROR } from '~/src/booking/bookingRequestGovernor'
+import { SINGLE_DAYS_LABEL } from '~/src/landing/landingContent'
+import { useLandingContact } from '~/composables/useLandingContact'
 import {
   persistBookHandoff,
   persistLastBookHandoff,
@@ -166,7 +184,7 @@ const props = defineProps<{
 
 const router = useRouter()
 const config = useRuntimeConfig()
-const apiBaseUrl = (config.public.apiBaseUrl as string) || 'http://localhost:8000'
+const apiBaseUrl = String(config.public.apiBaseUrl || '')
 const contact = useLandingContact()
 const contactIsLive = contact.isLive
 const whatsappUrl = contact.whatsappUrl
@@ -269,7 +287,9 @@ async function handleSubmit() {
   } catch {
     /* ignore quota / private mode */
   }
-  await router.push(result.statusUrl || `/booking/status/${result.bookingPublicId}/`)
+  const confirmationHref =
+    result.bookingPublicId ? `/booking/confirmation/${result.bookingPublicId}/` : result.statusUrl
+  await router.push(confirmationHref || `/booking/status/${result.bookingPublicId}/`)
 }
 
 const selectionName = computed(
@@ -299,7 +319,9 @@ const pageLead = computed(() => {
 
 <style scoped>
 .book-page {
-  background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 0%, rgba(222, 150, 141, 0.12), transparent 68%),
+    var(--color-paper, #e5e1dc);
   min-height: 70vh;
   /* Room for docked sticky actions once a slot is chosen. */
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
@@ -329,8 +351,32 @@ const pageLead = computed(() => {
   text-align: center;
 }
 
+.title-lockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 1.8vw, 0.85rem);
+}
+
+.title-lockup__flower {
+  width: clamp(1.6rem, 3.5vw, 2.2rem);
+  height: auto;
+  flex-shrink: 0;
+  opacity: 0.75;
+  pointer-events: none;
+  user-select: none;
+}
+
+.title-lockup__flower--left {
+  transform: scaleX(-1) rotate(-8deg);
+}
+
+.title-lockup__flower--right {
+  transform: rotate(8deg);
+}
+
 .book-hero h1 {
-  margin: 0 0 0.5rem;
+  margin: 0;
   font-family: var(--font-display);
   font-size: clamp(1.85rem, 4.5vw, 2.45rem);
 }
@@ -356,7 +402,7 @@ const pageLead = computed(() => {
   padding: 1.1rem 1.15rem 1.25rem;
   border: 1px solid var(--color-line);
   border-radius: 12px;
-  background: #fafafa;
+  background: var(--color-surface-raised, #ebe7e3);
 }
 
 .book-steps {
@@ -389,7 +435,7 @@ const pageLead = computed(() => {
   z-index: 2;
   margin: 0 -0.35rem 1rem;
   padding: 0.65rem 0.35rem 0.85rem;
-  background: #fafafa;
+  background: var(--color-surface-raised, #ebe7e3);
   border-bottom: 1px solid var(--color-line);
 }
 
@@ -408,8 +454,15 @@ const pageLead = computed(() => {
   color: var(--color-rose-dark);
 }
 
+.book-summary__capacity {
+  margin: 0.35rem 0 0;
+  color: var(--color-rose-dark, #b56b62);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 .book-summary__meta {
-  margin: 0;
+  margin: 0.35rem 0 0;
   color: var(--color-muted);
   font-size: 0.88rem;
 }
@@ -558,7 +611,7 @@ const pageLead = computed(() => {
     margin-left: -0.35rem;
     margin-right: -0.35rem;
     padding: 0.65rem 0.35rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(180deg, rgba(250, 250, 250, 0.72) 0%, #fafafa 38%);
+    background: linear-gradient(180deg, rgba(235, 231, 227, 0.72) 0%, var(--color-surface-raised, #ebe7e3) 38%);
     border-top: 1px solid var(--color-line);
   }
 }

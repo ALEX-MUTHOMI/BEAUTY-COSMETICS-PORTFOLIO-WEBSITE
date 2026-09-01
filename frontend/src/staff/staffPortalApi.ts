@@ -1,4 +1,8 @@
-import { friendlyStatus, safeDisplayText } from './statusCopy'
+/**
+ * @module staffPortalApi
+ * API client functions for staff portal interactions.
+ */
+import { friendlyStatus, safeDisplayText } from './staffUxHelpers'
 
 export interface StaffSessionProfile {
   displayName: string

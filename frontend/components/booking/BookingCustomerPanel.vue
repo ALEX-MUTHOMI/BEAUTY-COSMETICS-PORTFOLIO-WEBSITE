@@ -1,10 +1,25 @@
 <template>
   <section class="book-customer" aria-labelledby="book-customer-title">
     <header class="book-customer__head">
-      <h2 id="book-customer-title">Your details</h2>
-      <p class="book-customer__mpesa-hint">
-        You’ll approve M-Pesa on your phone to lock the slot.
-      </p>
+      <div class="title-lockup">
+        <img
+          src="/images/flower.png"
+          alt=""
+          class="title-lockup__flower title-lockup__flower--left"
+          width="32"
+          height="32"
+          aria-hidden="true"
+        />
+        <h2 id="book-customer-title">Your details</h2>
+        <img
+          src="/images/flower.png"
+          alt=""
+          class="title-lockup__flower title-lockup__flower--right"
+          width="32"
+          height="32"
+          aria-hidden="true"
+        />
+      </div>
     </header>
 
     <p v-if="submitError" class="book-customer__error" role="alert">{{ submitError }}</p>
@@ -184,10 +199,29 @@ const turnstileToken = defineModel<string>('turnstileToken', { required: true })
   font-weight: 400;
 }
 
-.book-customer__mpesa-hint {
-  margin: 0.4rem 0 1rem;
-  font: 500 0.88rem/1.4 var(--font-body);
-  color: var(--color-muted);
+.title-lockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.title-lockup__flower {
+  width: 1.65rem;
+  height: auto;
+  flex-shrink: 0;
+  opacity: 0.8;
+  pointer-events: none;
+  user-select: none;
+}
+
+.title-lockup__flower--left {
+  transform: scaleX(-1) rotate(-8deg);
+}
+
+.title-lockup__flower--right {
+  transform: rotate(8deg);
 }
 
 .book-customer__remembered {
@@ -281,8 +315,17 @@ const turnstileToken = defineModel<string>('turnstileToken', { required: true })
   min-height: 2.75rem;
   border: 1px solid var(--color-line);
   border-radius: 8px;
-  padding: 0 0.75rem;
+  padding: 0 0.85rem;
   font: inherit;
+  background: var(--color-parchment, #ddd8d3);
+  color: var(--color-ink);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.book-customer__field input:focus {
+  outline: none;
+  border-color: var(--color-rose);
+  box-shadow: 0 0 0 3px rgba(176, 122, 113, 0.2);
 }
 
 .book-customer__trap {
@@ -324,7 +367,7 @@ const turnstileToken = defineModel<string>('turnstileToken', { required: true })
 
 .book-customer__back {
   border: 1px solid var(--color-line);
-  background: #fff;
+  background: var(--color-parchment, #ddd8d3);
   color: var(--color-ink);
 }
 

@@ -1,4 +1,3 @@
-import re
 import uuid
 from datetime import date, timedelta
 from decimal import Decimal
@@ -23,7 +22,7 @@ from bookings.models import (
     ReceiptPDFArtifact,
     StaffActionAuditEvent,
 )
-from bookings.privacy import decrypt_value, safe_display_name
+from bookings.privacy import decrypt_value, safe_display_name, strip_markup
 from bookings.services.staff_roles import is_beautician, scope_bookings_queryset
 from checkout.models import CheckoutSession
 
@@ -44,11 +43,7 @@ class StaffPortalValidationError(StaffPortalError):
 
 
 def _safe_text(value, *, max_length=128):
-    value = re.sub(r"<[^>]*>", " ", str(value or ""))
-    value = re.sub(r"(?i)\son[a-z]+\s*=\s*\S+", " ", value)
-    value = re.sub(r"[\x00-\x1f\x7f]", " ", value)
-    value = re.sub(r"\s+", " ", value).strip()
-    return value[:max_length]
+    return strip_markup(value, max_length=max_length)
 
 
 def _parse_date(value, *, field_name="date"):
@@ -273,12 +268,13 @@ def get_daily_schedule(date_value, filters=None, *, staff_user=None):
     }
 
 
-def get_weekly_overview(start_date_value):
+def get_weekly_overview(start_date_value, *, staff_user=None):
     start_date = _parse_date(start_date_value, field_name="start_date")
     end_date = start_date + timedelta(days=MAX_STAFF_RANGE_DAYS)
-    bookings = list(
-        _base_booking_queryset().filter(local_booking_date__gte=start_date, local_booking_date__lt=end_date)
-    )
+    bookings_qs = _base_booking_queryset().filter(local_booking_date__gte=start_date, local_booking_date__lt=end_date)
+    # Beauticians must only see assigned bookings (same rule as daily schedule).
+    bookings_qs = scope_bookings_queryset(bookings_qs, staff_user) if staff_user is not None else bookings_qs
+    bookings = list(bookings_qs)
     bookings_by_date = {}
     for booking in bookings:
         bookings_by_date.setdefault(booking.local_booking_date, []).append(booking)

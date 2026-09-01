@@ -3,9 +3,56 @@
 // ==============================================================================
 import { fileURLToPath } from 'node:url'
 
+/** Additive report-only CSP (keeps enforcing CSP). Operator collector URL via env. */
+function buildCspReportOnlyHeader(): string | undefined {
+  if (process.env.NUXT_PUBLIC_CSP_REPORT_ONLY !== 'true') return undefined
+  const reportUri =
+    process.env.NUXT_PUBLIC_CSP_REPORT_URI?.trim() || 'https://sheeaesthetics.co.ke/csp-report'
+  const directives = [
+    "default-src 'self'",
+    "script-src 'self' 'strict-dynamic' https://challenges.cloudflare.com/turnstile/ https://static.cloudflareinsights.com",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "connect-src 'self' https://challenges.cloudflare.com",
+    `report-uri ${reportUri}`,
+  ]
+  if (process.env.NUXT_PUBLIC_TRUSTED_TYPES_PREP === 'true') {
+    directives.push("require-trusted-types-for 'script'")
+  }
+  return directives.join('; ')
+}
+
+const cspReportOnlyHeader = buildCspReportOnlyHeader()
+
+/**
+ * Extra connect-src hosts only when the API is a *different* origin.
+ * Empty / same-origin uses CSP `'self'` (HTTPS tunnel and one-host prod).
+ * Never default-add localhost — that breaks mixed-content on public HTTPS.
+ */
+function extraApiConnectSrc(): string[] {
+  const raw = process.env.NUXT_PUBLIC_API_BASE_URL?.trim()
+  if (!raw || raw === 'same-origin' || raw === '/') return []
+  if (raw.includes('\\') || raw.includes('..')) return []
+  try {
+    const parsed = new URL(raw)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return []
+    if (parsed.username || parsed.password) return []
+    const host = parsed.hostname.toLowerCase()
+    if (!host || host === '0.0.0.0' || host === 'evil.example' || host.endsWith('.evil.example')) {
+      return []
+    }
+    return [parsed.origin]
+  } catch {
+    return []
+  }
+}
+
 export default defineNuxtConfig({
   // Enforce Server-Side Rendering (SSR) for optimal SEO crawlability and index ranking
   ssr: true,
+  experimental: {
+    appManifest: false,
+  },
 
   // Staff desk uses credentialed calls to the API origin; SPA mode avoids SSR
   // session checks that cannot see cross-origin API cookies inside Docker.
@@ -16,6 +63,15 @@ export default defineNuxtConfig({
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     },
+    ...(cspReportOnlyHeader
+      ? {
+          '/**': {
+            headers: {
+              'Content-Security-Policy-Report-Only': cspReportOnlyHeader,
+            },
+          },
+        }
+      : {}),
   },
 
   // Mellis theme design tokens shared across the public site
@@ -33,8 +89,8 @@ export default defineNuxtConfig({
 
     // Keys exposed on both client and server contexts
     public: {
-      // Single source of truth for Nuxt (:3000) → Django (:8000). Never wildcard.
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000',
+      // Empty = same-origin `/api` via origin nginx. Split-host desks set an explicit origin.
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || '',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://sheeaesthetics.co.ke',
       // Empty-safe Sentry scaffold — live DSN via secrets later (PII scrubbers always on).
       sentryDsn: process.env.NUXT_PUBLIC_SENTRY_DSN || '',
@@ -44,6 +100,8 @@ export default defineNuxtConfig({
       turnstileSiteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY || '1x0000000000000000000000000000000AA',
       /** Live Meru WhatsApp E.164 digits only (no +). Empty/placeholder = CTAs fail closed. */
       whatsappE164: process.env.NUXT_PUBLIC_WHATSAPP_E164 || '',
+      /** Fail-closed public booking. Only `true` opens /book and related CTAs. */
+      bookingEnabled: process.env.NUXT_PUBLIC_BOOKING_ENABLED === 'true',
     },
   },
 
@@ -71,8 +129,14 @@ export default defineNuxtConfig({
   },
 
   // 3. Strict Security Headers auditing (mitigating XSS, Clickjacking, and injection vectors)
+  // CSP report-only soak + Trusted Types prep are env-gated and additive — enforcing CSP stays on.
+  // NUXT_PUBLIC_CSP_REPORT_ONLY=true → also emit Content-Security-Policy-Report-Only (see routeRules).
+  // NUXT_PUBLIC_TRUSTED_TYPES_PREP=true → include require-trusted-types-for 'script' in that report-only policy.
+  // Reporting endpoint is operator-owned (Cloudflare / collector); origin does not accept CSP reports in-app.
   security: {
     nonce: true,
+    // Same-origin site: do not emit Access-Control-Allow-Origin: * on HTML.
+    corsHandler: false,
     headers: {
       contentSecurityPolicy: {
         'script-src': [
@@ -88,6 +152,25 @@ export default defineNuxtConfig({
           'https://www.google.com/',
           'https://maps.google.com/',
         ],
+        // Close plugin / base-tag injection vectors (CSP Level 2+).
+        'object-src': ["'none'"],
+        'base-uri': ["'none'"],
+        // Browser fetches: `'self'` covers same-origin `/api`. Extra origin only if split-host.
+        'connect-src': [
+          "'self'",
+          'https://challenges.cloudflare.com',
+          ...extraApiConnectSrc(),
+          ...(process.env.NUXT_PUBLIC_SENTRY_DSN ? ['https://*.ingest.sentry.io'] : []),
+        ],
+        // Enforcing Trusted Types only when explicitly enabled (can break Vue sinks — prefer report-only soak first).
+        ...(process.env.NUXT_PUBLIC_TRUSTED_TYPES_ENFORCE === 'true'
+          ? { 'require-trusted-types-for': ["'script'"] }
+          : {}),
+      },
+      permissionsPolicy: {
+        camera: [],
+        microphone: [],
+        geolocation: [],
       },
       crossOriginEmbedderPolicy: 'unsafe-none',
       crossOriginOpenerPolicy: 'same-origin',

@@ -8,7 +8,8 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "django (>=6.0.7,<7.0.0)",
+    "django (>=6.0.8,<6.1)",
+    "sqlparse (>=0.6.0,<0.7.0)",
     "djangorestframework (>=3.17.1,<4.0.0)",
     "psycopg2-binary (>=2.9.12,<3.0.0)",
     "celery (>=5.4.0,<6.0.0)",
@@ -35,7 +36,8 @@ dev = [
     "ruff (>=0.14.0,<0.15.0)",
     "flake8 (>=7.0.0,<8.0.0)",
     "bandit (>=1.7.0,<2.0.0)",
-    "pre-commit (>=4.6.0,<5.0.0)"
+    "pre-commit (>=4.6.1,<5.0.0)",
+    "mypy (>=1.14.0,<2.0.0)",
 ]
 
 [tool.poetry]
@@ -57,6 +59,26 @@ extend-exclude = [
     "frontend/.nuxt",
     "frontend/.output",
     "frontend/node_modules",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+warn_unused_ignores = true
+check_untyped_defs = true
+follow_imports = "silent"
+files = [
+    "bookings/services/booking_calendar.py",
+    "bookings/services/hold_expiry.py",
+    "bookings/services/query_observability.py",
+    "bookings/services/calendar_cache.py",
+    "checkout/services.py",
+    "checkout/state_machine.py",
+    "billing/services.py",
+    "core/throttling.py",
 ]
 
 [tool.black]

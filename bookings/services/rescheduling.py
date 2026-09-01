@@ -8,6 +8,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from bookings.models import Booking, BookingAuditEvent, BookingPolicy, BookingRescheduleRequest, CustomerActionSession
+from bookings.privacy import strip_markup
 from bookings.services.customer_otp import CustomerOTPService
 from bookings.services.reminders import cancel_pending_reminders, schedule_booking_reminders
 
@@ -16,10 +17,9 @@ GENERIC_RESCHEDULE_ERROR = "Unable to reschedule booking."
 
 
 def _safe_reason(reason):
-    cleaned = re.sub(r"<[^>]*>", "", str(reason or ""))
+    cleaned = strip_markup(reason, max_length=255)
     cleaned = re.sub(r"(?i)refund", "policy", cleaned)
-    cleaned = re.sub(r"[\x00-\x1f\x7f]", " ", cleaned)
-    return " ".join(cleaned.split())[:255]
+    return cleaned
 
 
 def _policy():

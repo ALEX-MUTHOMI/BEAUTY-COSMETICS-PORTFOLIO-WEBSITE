@@ -1,3 +1,11 @@
+/**
+ * Module: bookingIdempotency
+ * Ensures booking idempotency.
+ */
+/**
+ * @module bookingIdempotency
+ * Helpers for enforcing idempotency during booking submissions.
+ */
 import { stableActionKey } from '../staff/botGuard'
 
 const IDEMPOTENCY_MAX_LENGTH = 128
@@ -31,3 +39,4 @@ export function buildStkIdempotencyKey(checkoutPublicId: string, attemptNonce: s
 export function createBookingAttemptNonce(): string {
   return crypto.randomUUID()
 }
+

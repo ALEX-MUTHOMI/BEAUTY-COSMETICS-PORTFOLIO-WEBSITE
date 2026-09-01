@@ -1,4 +1,8 @@
 /**
+ * @module funnelEvents
+ * Analytics tracking for funnel progression.
+ */
+/**
  * Minimal client funnel hooks for book→pay conversion measurement.
  * No PII — event names + optional string tags only.
  */

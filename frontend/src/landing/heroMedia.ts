@@ -1,4 +1,8 @@
 /**
+ * @module heroMedia
+ * Manages media assets for the landing hero section.
+ */
+/**
  * Homepage hero — Mellis-style ambient fade gallery.
  *
  * Inspected from https://mellis.ovathemewp.com/ (Revolution Slider):
