@@ -3,12 +3,12 @@ from html import escape
 from django.conf import settings
 
 from bookings.models import GalleryCategory, GalleryImage
-from bookings.privacy import strip_markup
+from bookings.privacy import neutralize_script_payload, strip_markup
 from bookings.services.gallery_storage import public_variant_url
 
 
 def _safe_text(value, max_length=500):
-    text = strip_markup(value, max_length=max_length)
+    text = neutralize_script_payload(strip_markup(value, max_length=max_length))
     return escape(text, quote=True)
 
 

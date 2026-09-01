@@ -241,7 +241,7 @@ describe('staff login panel', () => {
     expect(storageContainsStaffSecrets(sessionStorage)).toBe(false)
   })
 
-  it('prefers typed email name over a remembered greet name', async () => {
+    it('ignores localStorage greet names and uses the typed email', async () => {
     localStorage.setItem('shee.desk.greet', 'Desk')
     const wrapper = mount(StaffLoginPanel, {
       props: {
@@ -250,7 +250,7 @@ describe('staff login panel', () => {
       },
     })
     await wrapper.vm.$nextTick()
-    expect(wrapper.find('#staff-login-title').text()).toBe('Welcome back, Desk')
+    expect(wrapper.find('#staff-login-title').text()).toBe('Welcome back')
     await wrapper.find('input[type="email"]').setValue('amina.k@example.com')
     expect(wrapper.find('#staff-login-title').text()).toBe('Welcome back, Amina')
   })

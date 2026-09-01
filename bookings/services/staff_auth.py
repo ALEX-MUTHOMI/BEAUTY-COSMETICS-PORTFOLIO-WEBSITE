@@ -144,25 +144,12 @@ def audit_staff_event(event_type, *, staff_user=None, request=None, metadata=Non
         metadata_redacted=safe_meta,
     )
     # Durable ops signal: event type + allowlisted ids only — never passwords/tokens/raw IP/meta JSON.
-    reason = str(safe_meta.get("reason", "unknown"))
-    if not re.fullmatch(r"[a-z_]{1,64}", reason):
-        reason = "unknown"
     staff_pk = getattr(staff_user, "pk", None)
     staff_token = staff_pk if isinstance(staff_pk, int) else 0
     if event_type == StaffSecurityAudit.EventType.LOGIN_FAILURE:
-        logger.info(
-            "login_failed reason=%s audit_id=%s staff_user_id=%s",
-            reason,
-            event.public_id,
-            staff_token,
-        )
+        logger.info("login_failed audit_id=%s staff_user_id=%s", event.public_id, staff_token)
     else:
-        logger.info(
-            "staff_security_audit event=%s audit_id=%s staff_user_id=%s",
-            event_type,
-            event.public_id,
-            staff_token,
-        )
+        logger.info("staff_security_audit audit_id=%s staff_user_id=%s", event.public_id, staff_token)
     return event
 
 

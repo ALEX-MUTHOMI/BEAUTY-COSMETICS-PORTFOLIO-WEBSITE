@@ -127,6 +127,33 @@ def strip_markup(value, max_length=None):
     return cleaned
 
 
+_JS_PAYLOAD_TOKENS = ("javascript:", "onerror", "onload", "script", "alert")
+
+
+def neutralize_script_payload(text):
+    """Linear, case-insensitive drop of leftover JS tokens after tag strip."""
+    result = str(text or "")
+    guard = 0
+    while guard < 32:
+        guard += 1
+        lower = result.lower()
+        hit = -1
+        token = ""
+        for candidate in _JS_PAYLOAD_TOKENS:
+            idx = lower.find(candidate)
+            if idx != -1 and (hit == -1 or idx < hit):
+                hit = idx
+                token = candidate
+        if hit == -1:
+            break
+        end = hit + len(token)
+        if token == "alert" and end < len(result) and result[end] == "(":
+            close = result.find(")", end, end + 80)
+            end = close + 1 if close != -1 else min(end + 80, len(result))
+        result = result[:hit] + result[end:]
+    return " ".join(result.split())
+
+
 def safe_display_name(full_name):
     """Return dashboard-safe display text without exposing full raw PII."""
     cleaned = strip_markup(full_name)

@@ -144,7 +144,7 @@ class ReceiptPDFService:
             sealed = encrypt_bytes(pdf)
             with open(path, "wb") as handle:
                 handle.write(sealed)
-            os.chmod(path, 0o640)
+            os.chmod(path, 0o600)
         except OSError as exc:
             raise ValidationError(ReceiptPDFService.STORAGE_UNWRITABLE_MESSAGE) from exc
         artifact, _created = ReceiptPDFArtifact.objects.update_or_create(
