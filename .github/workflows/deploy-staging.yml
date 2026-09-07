@@ -39,7 +39,7 @@ jobs:
       STAGING_BASE_URL: ${{ vars.STAGING_BASE_URL }}
       STAGING_DEPLOY_HOOK_URL: ${{ secrets.STAGING_DEPLOY_HOOK_URL }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Fortress freshness gate
         if: ${{ inputs.skip_fortress_freshness != 'true' }}
@@ -67,7 +67,7 @@ jobs:
           echo "Resolved image tag ${TAG}"
 
       - name: Login to GHCR
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
